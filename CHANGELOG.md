@@ -1,8 +1,4 @@
 ### Version 0.4.2
-#### Fixes
-- Really fix sort bundles by name
-
-### Version 0.4.1
 
 #### Fixes
 - Fix download and Save To progess in production builds
