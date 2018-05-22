@@ -112,16 +112,28 @@ export function setupBundlesEventSource(authentication) {
     dispatch(updateDownloadStatus(bundleId, resourcesDownloaded, resourcesToDownload));
   }
 
-  function listenStorerDeleteResource(e) {
-    console.log(e);
-  }
-
   function updateDownloadStatus(_id, resourcesDownloaded, resourcesToDownload) {
     return {
       type: bundleConstants.DOWNLOAD_RESOURCES_UPDATED,
       id: _id,
       resourcesDownloaded,
       resourcesToDownload
+    };
+  }
+
+  function listenStorerDeleteResource(e, dispatch) {
+    console.log(e);
+    const data = JSON.parse(e.data);
+    const bundleId = data.args[0];
+    const resourceToDelete = data.args[1];
+    dispatch(updateRemoveResourcesStatus(bundleId, resourceToDelete));
+  }
+
+  function updateRemoveResourcesStatus(_id, resourceToDelete) {
+    return {
+      type: bundleConstants.REMOVE_RESOURCES_UPDATED,
+      id: _id,
+      resourceToDelete
     };
   }
 
@@ -144,6 +156,24 @@ export function downloadResources(id) {
   };
   function request(_id, manifestResourcePaths) {
     return { type: bundleConstants.DOWNLOAD_RESOURCES_REQUEST, id: _id, manifestResourcePaths };
+  }
+  function failure(_id, error) {
+    return { type: bundleConstants.DOWNLOAD_RESOURCES_FAILURE, id, error };
+  }
+}
+
+export function removeResources(id) {
+  return async dispatch => {
+    try {
+      const resourcePaths = await bundleService.getResourcePaths(id);
+      dispatch(request(id, resourcePaths));
+      await bundleService.removeResources(id);
+    } catch (error) {
+      dispatch(failure(id, error));
+    }
+  };
+  function request(_id, resourcePaths) {
+    return { type: bundleConstants.DOWNLOAD_RESOURCES_REQUEST, id: _id, resourcePaths };
   }
   function failure(_id, error) {
     return { type: bundleConstants.DOWNLOAD_RESOURCES_FAILURE, id, error };

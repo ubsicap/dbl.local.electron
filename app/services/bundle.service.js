@@ -11,6 +11,7 @@ export const bundleService = {
   update,
   getManifestResourcePaths,
   downloadResources,
+  removeResources,
   getResourcePaths,
   requestSaveResourceTo,
   delete: removeBundle
@@ -183,6 +184,10 @@ function getManifestResourcePaths(bundleId) {
 
 function downloadResources(bundleId) {
   return bundleAddTasks(bundleId, '<downloadResources/>');
+}
+
+function removeResources(bundleId) {
+  return bundleAddTasks(bundleId, '<removeLocalResources/>');
 }
 
 function bundleAddTasks(bundleId, innerTasks) {
