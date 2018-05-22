@@ -76,8 +76,10 @@ export function setupBundlesEventSource(authentication) {
     };
     const listeners = {
       'storer/execute_task': listenStorerExecuteTaskDownloadResources,
+      'storer/change_mode': listenStorerChangeMode,
       'downloader/receiver': listenDownloaderReceiver,
       'downloader/status': (e) => listenDownloaderStatus(e, dispatch),
+      'storer/delete_resource': listenStorerDeleteResource,
       'storer/update_from_download': listenStorerUpdateFromDownload,
     };
     Object.keys(listeners).forEach((evType) => {
@@ -87,6 +89,10 @@ export function setupBundlesEventSource(authentication) {
   };
 
   function listenStorerExecuteTaskDownloadResources(e) {
+    console.log(e);
+  }
+
+  function listenStorerChangeMode(e) {
     console.log(e);
   }
 
@@ -104,6 +110,10 @@ export function setupBundlesEventSource(authentication) {
     const resourcesDownloaded = data.args[1];
     const resourcesToDownload = data.args[2];
     dispatch(updateDownloadStatus(bundleId, resourcesDownloaded, resourcesToDownload));
+  }
+
+  function listenStorerDeleteResource(e) {
+    console.log(e);
   }
 
   function updateDownloadStatus(_id, resourcesDownloaded, resourcesToDownload) {
