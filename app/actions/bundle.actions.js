@@ -120,8 +120,9 @@ export function setupBundlesEventSource(authentication) {
 export function downloadResources(id) {
   return async dispatch => {
     try {
-      const manifestResourcePaths = await bundleService.getManifestResourcePaths(id);
-      manifestResourcePaths.unshift('metadata.xml');
+      /* NOTE: eslint complains about use of 'let' should be 'const'
+       * but that results in "TypeError: Assignment to constant variable." */
+      let manifestResourcePaths = await bundleService.getManifestResourcePaths(id); // eslint-disable-line prefer-const, max-len
       dispatch(request(id, manifestResourcePaths));
       await bundleService.downloadResources(id);
     } catch (error) {
@@ -187,13 +188,14 @@ export function requestSaveBundleTo(id, selectedFolder) {
             const bytesDiff = resourceTotalBytesSaved - originalResourceBytesTransferred;
             bundleBytesSaved += bytesDiff;
             if (resourceProgress && resourceProgress % 100 === 0) {
-              dispatch(updated(
-                id,
+              const updatedArgs = {
+                _id: id,
                 resourcePath,
                 resourceTotalBytesSaved,
                 bundleBytesSaved,
                 bundleBytesToSave
-              ));
+              };
+              dispatch(updated(updatedArgs));
             }
           }
         );
@@ -221,16 +223,16 @@ export function requestSaveBundleTo(id, selectedFolder) {
     };
   }
 
-  function updated(
+  function updated({
     _id,
     resourcePath,
     resourceTotalBytesSaved,
     bundleBytesSaved,
     bundleBytesToSave
-  ) {
+  }) {
     return {
       type: bundleConstants.SAVETO_UPDATED,
-      id,
+      id: _id,
       resourcePath,
       resourceTotalBytesSaved,
       bundleBytesSaved,
@@ -333,11 +335,9 @@ function getMockBundles() {
       progress: 100,
     }
   ];
-  const taskOrder = ['UPLOAD', 'DOWNLOAD', 'SAVETO'];
-  const statusOrder = ['IN_PROGRESS', 'DRAFT', 'COMPLETED', 'NOT_STARTED'];
+  // const taskOrder = ['UPLOAD', 'DOWNLOAD', 'SAVETO'];
+  // const statusOrder = ['IN_PROGRESS', 'DRAFT', 'COMPLETED', 'NOT_STARTED'];
   const sortedBundles = sort(bundles).asc([
-    b => statusOrder.indexOf(b.status),
-    b => taskOrder.indexOf(b.task),
     b => b.name
   ]);
   return sortedBundles;
