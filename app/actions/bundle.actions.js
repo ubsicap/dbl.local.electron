@@ -43,7 +43,10 @@ export function fetchAll() {
 
     return bundleService
       .fetchAll()
-      .then(bundles => dispatch(success(bundles)), error => dispatch(failure(error)));
+      .then(
+        bundles => dispatch(success(sort(bundles).asc([b => b.name]))),
+        error => dispatch(failure(error))
+      );
   };
 
   function request() {
