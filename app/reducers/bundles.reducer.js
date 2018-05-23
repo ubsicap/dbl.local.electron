@@ -35,9 +35,45 @@ export function bundles(state = {}, action) {
       return updateTaskStatusProgress(action.id, 'SAVETO', 'IN_PROGRESS', 0);
     }
     case bundleConstants.SAVETO_UPDATED: {
-      const progress = Math.floor((action.bundleBytesSaved / action.bundleBytesToSave) * 100);
+      const progress = calcProgress(action.bundleBytesSaved, action.bundleBytesToSave);
       const status = progress === 100 ? 'COMPLETED' : 'IN_PROGRESS';
       return updateTaskStatusProgress(action.id, 'SAVETO', status, progress);
+    }
+    case bundleConstants.REMOVE_RESOURCES_REQUEST: {
+      return updateTaskStatusProgress(action.id, 'REMOVE_RESOURCES', 'IN_PROGRESS', 0, () => {
+        const resourcesRemoved = [];
+        const resourcesToRemove = action.resourcesToRemove || (resourcesRemoved.length + 1);
+        return {
+          resourcesRemoved,
+          resourcesToRemove
+        };
+      });
+    }
+    case bundleConstants.REMOVE_RESOURCES_UPDATED: {
+      return updateTaskStatusProgress(action.id, 'REMOVE_RESOURCES', 'IN_PROGRESS', null, (bundle) => {
+        const { resourceToRemove } = action;
+        const originalResourceRemoved = bundle.resourcesRemoved || [];
+        const resourcesRemoved = originalResourceRemoved.includes(resourceToRemove) ?
+          resourcesRemoved : [...originalResourceRemoved, resourceToRemove];
+        const resourcesToRemove = bundle.resourcesToRemove || (resourcesRemoved.length + 1);
+        return {
+          progress: calcProgress(resourcesRemoved, resourcesToRemove),
+          resourcesRemoved,
+          resourcesToRemove
+        };
+      });
+    }
+    case bundleConstants.UPDATE_STATUS: {
+      const progress = action.status === 'COMPLETED' ? 100 : null;
+      return updateTaskStatusProgress(action.id, null, action.status, progress, (bundle) => {
+        const hasCompletedRemovingResources = action.status === 'COMPLETED' && bundle.task === 'REMOVE_RESOURCES';
+        const task = hasCompletedRemovingResources ? 'DOWNLOAD' : bundle.task;
+        const status = hasCompletedRemovingResources ? 'NOT_STARTED' : bundle.status;
+        return {
+          task,
+          status
+        };
+      });
     }
     case bundleConstants.TOGGLE_MODE_PAUSE_RESUME: {
       const updatedItems = forkArray(
@@ -76,13 +112,18 @@ export function bundles(state = {}, action) {
       return state;
   }
 
-  function updateTaskStatusProgress(bundleId, task, status, progress) {
+  function calcProgress(itemsDone, itemsToDo) {
+    Math.floor((itemsDone / itemsToDo) * 100);
+  }
+
+  function updateTaskStatusProgress(bundleId, task, status, progress, updateDecorators) {
     const items = state.items.map(bundle => (bundle.id === bundleId
       ? addBundleDecorators({
         ...bundle,
         task: (task || bundle.task),
         status: (status || bundle.status),
-        progress: (Number.isInteger(progress) ? progress : bundle.progress)
+        progress: Number.isInteger(progress) ? progress : bundle.progress,
+        ...(updateDecorators ? updateDecorators(bundle) : {})
       })
       : bundle));
     return {
@@ -125,15 +166,15 @@ function formatDisplayAs(bundle) {
 
 function formatStatus(bundle) {
   const formattedProgress = formatProgress(bundle);
-  const uploadingMsg = `Uploading ${formattedProgress}`;
-  const downloadingMsg = `Downloading ${formattedProgress}`;
   let newStatusDisplayAs;
   if (bundle.status === 'NOT_STARTED') {
     newStatusDisplayAs = 'Download';
   } else if (bundle.task === 'UPLOAD' && bundle.status === 'IN_PROGRESS') {
-    newStatusDisplayAs = (bundle.mode === 'PAUSED' ? `Resume Uploading ${formattedProgress}` : uploadingMsg);
+    newStatusDisplayAs = `Uploading ${formattedProgress}`;
   } else if (bundle.task === 'DOWNLOAD' && bundle.status === 'IN_PROGRESS') {
-    newStatusDisplayAs = (bundle.mode === 'PAUSED' ? `Resume Downloading ${formattedProgress}` : downloadingMsg);
+    newStatusDisplayAs = `Downloading ${formattedProgress}`;
+  } else if (bundle.task === 'REMOVE_RESOURCES' && bundle.status === 'IN_PROGRESS') {
+    newStatusDisplayAs = `Cleaning Resources ${formattedProgress}`;
   } else if (bundle.task === 'SAVETO' && bundle.status === 'IN_PROGRESS') {
     newStatusDisplayAs = `Saving to Folder ${formattedProgress}`;
   } else if (['UPLOAD', 'DOWNLOAD'].includes(bundle.task) && bundle.status === 'COMPLETED') {
