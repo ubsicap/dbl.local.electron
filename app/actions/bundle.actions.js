@@ -11,6 +11,7 @@ export const bundleActions = {
   setupBundlesEventSource,
   downloadResources,
   requestSaveBundleTo,
+  removeResources,
   toggleModePauseResume,
   toggleSelectBundle
 };
@@ -76,10 +77,10 @@ export function setupBundlesEventSource(authentication) {
     };
     const listeners = {
       'storer/execute_task': listenStorerExecuteTaskDownloadResources,
-      'storer/change_mode': listenStorerChangeMode,
+      'storer/change_mode': (e) => listenStorerChangeMode(e, dispatch),
       'downloader/receiver': listenDownloaderReceiver,
       'downloader/status': (e) => listenDownloaderStatus(e, dispatch),
-      'storer/delete_resource': listenStorerDeleteResource,
+      'storer/delete_resource': (e) => listenStorerDeleteResource(e, dispatch),
       'storer/update_from_download': listenStorerUpdateFromDownload,
     };
     Object.keys(listeners).forEach((evType) => {

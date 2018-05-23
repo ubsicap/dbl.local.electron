@@ -12,7 +12,10 @@ import CallSplit from 'material-ui/svg-icons/communication/call-split';
 import ActionInfo from 'material-ui/svg-icons/action/info';
 import ActionDelete from 'material-ui/svg-icons/action/delete';
 import { navigationConstants } from '../constants/navigation.constants';
-import { mockFetchAll, fetchAll, toggleSelectBundle, toggleModePauseResume, setupBundlesEventSource, downloadResources, requestSaveBundleTo } from '../actions/bundle.actions';
+import { mockFetchAll, fetchAll,
+  toggleSelectBundle, toggleModePauseResume,
+  setupBundlesEventSource, downloadResources, requestSaveBundleTo,
+  removeResources } from '../actions/bundle.actions';
 import { updateSearchInput, clearSearch } from '../actions/bundleFilter.actions';
 import styles from './Bundles.css';
 
@@ -25,6 +28,7 @@ type Props = {
   downloadResources: () => {},
   setupBundlesEventSource: () => {},
   requestSaveBundleTo: () => {},
+  removeResources: () => {},
   toggleSelectBundle: () => {},
   toggleModePauseResume: () => {},
   updateSearchInput: () => {},
@@ -52,6 +56,7 @@ const mapDispatchToProps = {
   setupBundlesEventSource,
   downloadResources,
   requestSaveBundleTo,
+  removeResources,
   toggleSelectBundle,
   toggleModePauseResume,
   updateSearchInput,
@@ -107,6 +112,11 @@ class Bundles extends Component<Props> {
 
   onClickDownloadResources(event, bundleId) {
     this.props.downloadResources(bundleId);
+    event.stopPropagation();
+  }
+
+  onClickRemoveResources(event, bundle) {
+    this.props.removeResources(bundle.id);
     event.stopPropagation();
   }
 
@@ -217,10 +227,9 @@ class Bundles extends Component<Props> {
                 />
                 <FlatButton
                   label="Save To"
-                  disabled={((d.isDownloaded === undefined || !d.isDownloaded) || (d.progress && d.progress < 100)) === true}
+                  disabled={hasNotYetDownloadedResources(d)}
                   icon={<SaveTo />}
-                  onKeyPress={(e) => this.startSaveBundleTo(e, d, savedToHistory)}
-                  onClick={(e) => this.startSaveBundleTo(e, d, savedToHistory)}
+                  {...onClickAndKeyPressProps((e) => this.startSaveBundleTo(e, d, savedToHistory))}
                 />
                 <FlatButton
                   label="Info"
@@ -229,11 +238,10 @@ class Bundles extends Component<Props> {
                   {...onClickAndKeyPressProps((e) => onOpenLink(e, `https://thedigitalbiblelibrary.org/entry?id=${d.dblId}`))}
                 />
                 <FlatButton
-                  label="Delete"
-                  disabled
+                  label="Clean"
+                  disabled={hasNotYetDownloadedResources(d)}
                   icon={<ActionDelete />}
-                  onKeyPress={(e) => stopPropagation(e)}
-                  onClick={(e) => stopPropagation(e)}
+                  {...onClickAndKeyPressProps((e) => this.onClickRemoveResources(e, d))}
                 />
               </div>
             }
@@ -247,6 +255,11 @@ export default connect(
   mapStateToProps,
   mapDispatchToProps,
 )(Bundles);
+
+function hasNotYetDownloadedResources(bundle) {
+  return ((bundle.isDownloaded === undefined || !bundle.isDownloaded)
+    || (bundle.progress && bundle.progress < 100)) === true;
+}
 
 function showStatusAsText(bundle) {
   return ((bundle.task === 'UPLOAD' || bundle.task === 'DOWNLOAD') &&
