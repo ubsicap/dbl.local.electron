@@ -188,11 +188,11 @@ class Bundles extends Component<Props> {
                     onClick={(e) => openInFolder(e, d, savedToHistory)}
                   />)
                 }
-                {(d.task === 'UPLOAD' || d.task === 'DOWNLOAD') && (d.status === 'COMPLETED' || d.status === 'DRAFT' || d.status === 'IN_PROGRESS') &&
+                {showStatusAsText(d) &&
                   <div style={{ paddingRight: '20px', paddingTop: '6px' }}>
                     <Highlighter textToHighlight={d.displayAs.status} {...highlighterSharedProps(d)} />
                   </div>}
-                {d.task === 'DOWNLOAD' && d.status === 'NOT_STARTED' &&
+                {showDownloadButton(d) &&
                 <FlatButton
                   labelPosition="before"
                   label={<Highlighter textToHighlight={d.displayAs.status} {...highlighterSharedProps(d)} />}
@@ -247,6 +247,16 @@ export default connect(
   mapStateToProps,
   mapDispatchToProps,
 )(Bundles);
+
+function showStatusAsText(bundle) {
+  return ((bundle.task === 'UPLOAD' || bundle.task === 'DOWNLOAD') &&
+    (bundle.status === 'COMPLETED' || bundle.status === 'DRAFT' || bundle.status === 'IN_PROGRESS')) ||
+    ((bundle.task === 'REMOVE_RESOURCES') && bundle.status === 'IN_PROGRESS');
+}
+
+function showDownloadButton(bundle) {
+  return (bundle.task === 'DOWNLOAD' && bundle.status === 'NOT_STARTED');
+}
 
 function displayRow(bundlesFilter, bundle) {
   return !(bundlesFilter.isSearchActive) ||

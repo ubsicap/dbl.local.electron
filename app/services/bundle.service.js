@@ -69,7 +69,13 @@ const RESOURCE_API_LIST = RESOURCE_API;
 
   TO this format:
    {
-      id: 'bundle02', name: 'Another Bundle', revision: 3, task: 'UPLOAD', status: 'IN_PROGRESS', progress: 63, mode: 'PAUSED'
+      id: 'bundle02',
+      name: 'Another Bundle',
+      revision: 3,
+      task: 'UPLOAD',
+      status: 'IN_PROGRESS',
+      progress: 63,
+      mode: 'PAUSED'
    },
  */
 function fetchAll() {
@@ -94,11 +100,28 @@ function convertBundleApiListToBundles(apiBundles) {
       const historyReversed = history.slice().reverse();
       const eventUpdateStore = historyReversed.find((event) => event.type === 'updateStore');
       if (eventUpdateStore && eventUpdateStore.message && eventUpdateStore.message === 'download') {
-        task = eventUpdateStore.message.toUpperCase();
-        const indexOfUpdateStoreDownload = historyReversed.indexOf(eventUpdateStore);
         const indexOfDownloadResources = historyReversed.findIndex((event) => event.type === 'executeTask' && event.message === 'downloadResources');
-        if (indexOfUpdateStoreDownload < indexOfDownloadResources) {
-          status = 'COMPLETED';
+        const indexOfUpdateStoreDownload = historyReversed.indexOf(eventUpdateStore);
+        const indexOfRemoveLocalResources = historyReversed.findIndex((event) => event.type === 'executeTask' && event.message === 'removeLocalResources');
+        const indexOfChangeModeStore = historyReversed.findIndex((event) => event.type === 'changeMode' && event.message === 'store');
+        if (indexOfRemoveLocalResources !== -1
+            && indexOfRemoveLocalResources < indexOfDownloadResources) {
+          if (indexOfChangeModeStore !== -1
+            && indexOfChangeModeStore < indexOfDownloadResources) {
+            task = 'DOWNLOAD';
+            status = 'NOT_STARTED';
+          } else {
+            task = 'REMOVE_RESOURCES';
+            status = 'IN_PROGRESS';
+          }
+        } else if (indexOfDownloadResources !== -1) {
+          task = 'DOWNLOAD';
+          if (indexOfUpdateStoreDownload !== -1
+            && indexOfUpdateStoreDownload < indexOfDownloadResources) {
+            status = 'COMPLETED';
+          } else {
+            status = 'IN_PROGRESS';
+          }
         }
       }
     }

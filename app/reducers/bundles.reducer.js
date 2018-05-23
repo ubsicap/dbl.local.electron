@@ -113,7 +113,7 @@ export function bundles(state = {}, action) {
   }
 
   function calcProgress(itemsDone, itemsToDo) {
-    Math.floor((itemsDone / itemsToDo) * 100);
+    return Math.floor((itemsDone / itemsToDo) * 100);
   }
 
   function updateTaskStatusProgress(bundleId, task, status, progress, updateDecorators) {
