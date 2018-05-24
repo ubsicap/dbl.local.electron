@@ -45,7 +45,7 @@ export function fetchAll() {
     return bundleService
       .fetchAll()
       .then(
-        bundles => dispatch(success(sort(bundles).asc([b => b.name]))),
+        bundles => dispatch(success(sort(bundles).asc([b => b.name, b => (1 / b.revision)]))),
         error => dispatch(failure(error))
       );
   };
@@ -398,7 +398,8 @@ function getMockBundles() {
   // const taskOrder = ['UPLOAD', 'DOWNLOAD', 'SAVETO'];
   // const statusOrder = ['IN_PROGRESS', 'DRAFT', 'COMPLETED', 'NOT_STARTED'];
   const sortedBundles = sort(bundles).asc([
-    b => b.name
+    b => b.name,
+    b => (1 / b.revision),
   ]);
   return sortedBundles;
 }
