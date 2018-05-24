@@ -88,6 +88,15 @@ export function setupBundlesEventSource(authentication) {
       const handler = listeners[evType];
       eventSource.addEventListener(evType, handler);
     });
+    dispatch(connectedToSessionEvents(eventSource, authentication));
+
+    function connectedToSessionEvents(_eventSource, _authentication) {
+      return {
+        type: bundleConstants.SESSION_EVENTS_CONNECTED,
+        eventSource: _eventSource,
+        authentication: _authentication
+      };
+    }
   };
 
   function listenStorerExecuteTaskDownloadResources(e) {

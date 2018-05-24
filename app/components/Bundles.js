@@ -76,10 +76,19 @@ class Bundles extends Component<Props> {
       // clear search results on location change
       clearSearchResults();
     });
-    console.log('Bundles Did mount');
+    console.log('Bundles did mount');
     const { authentication } = this.props;
     if (authentication.user) {
       this.props.setupBundlesEventSource(authentication);
+    }
+  }
+
+  componentWillUnmount() {
+    const { bundles } = this.props;
+    console.log('Bundles did unmount');
+    if (bundles.eventSource) {
+      bundles.eventSource.close();
+      console.log('bundles EventSource closed');
     }
   }
 

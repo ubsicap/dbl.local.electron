@@ -4,15 +4,20 @@ export function bundles(state = {}, action) {
   switch (action.type) {
     case bundleConstants.FETCH_REQUEST:
       return {
+        ...state,
         loading: true
       };
     case bundleConstants.FETCH_SUCCESS:
       return {
-        items: action.bundles.map(bundle => addBundleDecorators(bundle))
+        ...state,
+        items: action.bundles.map(bundle => addBundleDecorators(bundle)),
+        loading: false,
       };
     case bundleConstants.FETCH_FAILURE:
       return {
-        error: action.error
+        ...state,
+        error: action.error,
+        loading: false,
       };
     case bundleConstants.DELETE_REQUEST:
       // add 'deleting:true' property to bundle being deleted
@@ -90,8 +95,8 @@ export function bundles(state = {}, action) {
       const selectedBundle = state.selectedBundle && state.selectedBundle.id === action.id ?
         {} : state.items.find(bundle => bundle.id === action.id);
       return {
-        selectedBundle,
-        items: state.items
+        ...state,
+        selectedBundle
       };
     }
     case bundleConstants.DELETE_FAILURE:
@@ -108,6 +113,16 @@ export function bundles(state = {}, action) {
           return bundle;
         })
       };
+    case bundleConstants.SESSION_EVENTS_CONNECTED: {
+      if (state.eventSource && state.eventSource.readyState !== 2) {
+        state.eventSource.close();
+        console.log('session EventSource closed');
+      }
+      return {
+        ...state,
+        eventSource: action.eventSource
+      };
+    }
     default:
       return state;
   }
