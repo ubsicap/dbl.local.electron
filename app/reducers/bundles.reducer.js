@@ -55,9 +55,9 @@ export function bundles(state = {}, action) {
         const originalResourceRemoved = bundle.resourcesRemoved || [];
         const resourcesRemoved = originalResourceRemoved.includes(resourceToRemove) ?
           resourcesRemoved : [...originalResourceRemoved, resourceToRemove];
-        const resourcesToRemove = bundle.resourcesToRemove || (resourcesRemoved.length + 1);
+        const resourcesToRemove = bundle.resourcesToRemove || [...resourcesRemoved, 'unknown'];
         return {
-          progress: calcProgress(resourcesRemoved, resourcesToRemove),
+          progress: calcProgress(resourcesRemoved.length, resourcesToRemove.length),
           resourcesRemoved,
           resourcesToRemove
         };
