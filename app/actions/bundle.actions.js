@@ -74,6 +74,7 @@ export function setupBundlesEventSource(authentication) {
     eventSource.onerror = (error) => {
       console.log('EventSource failed.');
       console.log(error);
+      eventSource.close();
     };
     const listeners = {
       'storer/execute_task': listenStorerExecuteTaskDownloadResources,
