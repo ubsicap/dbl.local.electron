@@ -1,3 +1,15 @@
+### Version 0.5.0
+
+#### Features
+- Add Clean (Resources) tray button
+- Sort revisions in descending order
+- Add basic edit functions (Copy/Paste)
+
+#### Fixes
+- Fix downloaded status if user has used Clean
+- Close eventSource on error or if making a new eventSource (due to login or switching page)
+- Fix missing name from metadata.xml bug (a.k.a loading_metadata)
+
 ### Version 0.4.2
 
 #### Fixes
