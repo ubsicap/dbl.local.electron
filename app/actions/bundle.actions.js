@@ -11,6 +11,7 @@ export const bundleActions = {
   setupBundlesEventSource,
   downloadResources,
   requestSaveBundleTo,
+  removeResources,
   toggleModePauseResume,
   toggleSelectBundle
 };
@@ -44,7 +45,7 @@ export function fetchAll() {
     return bundleService
       .fetchAll()
       .then(
-        bundles => dispatch(success(sort(bundles).asc([b => b.name]))),
+        bundles => dispatch(success(sort(bundles).asc([b => b.name, b => (1 / b.revision)]))),
         error => dispatch(failure(error))
       );
   };
@@ -73,21 +74,51 @@ export function setupBundlesEventSource(authentication) {
     eventSource.onerror = (error) => {
       console.log('EventSource failed.');
       console.log(error);
+      eventSource.close();
     };
     const listeners = {
       'storer/execute_task': listenStorerExecuteTaskDownloadResources,
+      'storer/change_mode': (e) => listenStorerChangeMode(e, dispatch),
       'downloader/receiver': listenDownloaderReceiver,
       'downloader/status': (e) => listenDownloaderStatus(e, dispatch),
+      'storer/delete_resource': (e) => listenStorerDeleteResource(e, dispatch),
       'storer/update_from_download': listenStorerUpdateFromDownload,
     };
     Object.keys(listeners).forEach((evType) => {
       const handler = listeners[evType];
       eventSource.addEventListener(evType, handler);
     });
+    dispatch(connectedToSessionEvents(eventSource, authentication));
+
+    function connectedToSessionEvents(_eventSource, _authentication) {
+      return {
+        type: bundleConstants.SESSION_EVENTS_CONNECTED,
+        eventSource: _eventSource,
+        authentication: _authentication
+      };
+    }
   };
 
   function listenStorerExecuteTaskDownloadResources(e) {
     console.log(e);
+  }
+
+  function listenStorerChangeMode(e, dispatch) {
+    console.log(e);
+    const data = JSON.parse(e.data);
+    const bundleId = data.args[0];
+    const mode = data.args[1];
+    if (mode === 'store') {
+      dispatch(updateStatus(bundleId, 'COMPLETED'));
+    }
+  }
+
+  function updateStatus(_id, status) {
+    return {
+      type: bundleConstants.UPDATE_STATUS,
+      id: _id,
+      status,
+    };
   }
 
   function listenDownloaderReceiver(e) {
@@ -95,7 +126,9 @@ export function setupBundlesEventSource(authentication) {
   }
 
   /* downloader/status
-   * {'event': 'downloader/status', 'data': {'args': ('48a8e8fe-76ac-45d6-9b3a-d7d99ead7224', 4, 8), 'component': 'downloader', 'type': 'status'}}
+   * {'event': 'downloader/status',
+   * 'data': {'args': ('48a8e8fe-76ac-45d6-9b3a-d7d99ead7224', 4, 8),
+   *          'component': 'downloader', 'type': 'status'}}
    */
   function listenDownloaderStatus(e, dispatch) {
     console.log(e);
@@ -112,6 +145,22 @@ export function setupBundlesEventSource(authentication) {
       id: _id,
       resourcesDownloaded,
       resourcesToDownload
+    };
+  }
+
+  function listenStorerDeleteResource(e, dispatch) {
+    console.log(e);
+    const data = JSON.parse(e.data);
+    const bundleId = data.args[0];
+    const resourceToRemove = data.args[1];
+    dispatch(updateRemoveResourcesStatus(bundleId, resourceToRemove));
+  }
+
+  function updateRemoveResourcesStatus(_id, resourceToRemove) {
+    return {
+      type: bundleConstants.REMOVE_RESOURCES_UPDATED,
+      id: _id,
+      resourceToRemove
     };
   }
 
@@ -137,6 +186,24 @@ export function downloadResources(id) {
   }
   function failure(_id, error) {
     return { type: bundleConstants.DOWNLOAD_RESOURCES_FAILURE, id, error };
+  }
+}
+
+export function removeResources(id) {
+  return async dispatch => {
+    try {
+      const resourcePathsToRemove = await bundleService.getResourcePaths(id);
+      dispatch(request(id, resourcePathsToRemove));
+      await bundleService.removeResources(id);
+    } catch (error) {
+      dispatch(failure(id, error));
+    }
+  };
+  function request(_id, resourcesToRemove) {
+    return { type: bundleConstants.REMOVE_RESOURCES_REQUEST, id: _id, resourcesToRemove };
+  }
+  function failure(_id, error) {
+    return { type: bundleConstants.REMOVE_RESOURCES_FAILURE, id, error };
   }
 }
 
@@ -341,7 +408,8 @@ function getMockBundles() {
   // const taskOrder = ['UPLOAD', 'DOWNLOAD', 'SAVETO'];
   // const statusOrder = ['IN_PROGRESS', 'DRAFT', 'COMPLETED', 'NOT_STARTED'];
   const sortedBundles = sort(bundles).asc([
-    b => b.name
+    b => b.name,
+    b => (1 / b.revision),
   ]);
   return sortedBundles;
 }
