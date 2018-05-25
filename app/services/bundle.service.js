@@ -125,9 +125,10 @@ function convertBundleApiListToBundles(apiBundles) {
         }
       }
     }
+    const bundleName = metadata && metadata.name ? metadata.name : `loading_name (${dbl.id})`;
     return {
       id: bundleId,
-      name: metadata.name,
+      name: bundleName,
       revision: dbl.currentRevision,
       dblId: dbl.id,
       medium: dbl.medium,
