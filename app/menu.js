@@ -137,85 +137,100 @@ export default class MenuBuilder {
     const logFile = this.autoUpdater.logger.transports.file.file;
     // console.log('menu/buildDefaultTemplate');
     // console.log(loginLabel);
-    const templateDefault = [{
-      label: '&File',
-      submenu: [{
-        label: loginLabel,
-        accelerator: 'Ctrl+L',
-        click: () => {
-          this.navigate(navigationConstants.NAVIGATION_LOGIN);
-        }
+    const templateDefault = [
+      {
+        label: '&File',
+        submenu: [{
+          label: loginLabel,
+          accelerator: 'Ctrl+L',
+          click: () => {
+            this.navigate(navigationConstants.NAVIGATION_LOGIN);
+          }
+        },
+        {
+          label: 'Bundles (Demo)',
+          accelerator: 'Ctrl+B',
+          click: () => {
+            this.navigate(navigationConstants.NAVIGATION_BUNDLES_DEMO);
+          }
+        }, {
+          label: '&Exit',
+          accelerator: 'Ctrl+W',
+          click: () => {
+            this.mainWindow.close();
+          }
+        }]
       },
       {
-        label: 'Bundles (Demo)',
-        accelerator: 'Ctrl+B',
-        click: () => {
-          this.navigate(navigationConstants.NAVIGATION_BUNDLES_DEMO);
-        }
-      }, {
-        label: '&Exit',
-        accelerator: 'Ctrl+W',
-        click: () => {
-          this.mainWindow.close();
-        }
-      }]
-    }, {
-      label: '&View',
-      submenu: (process.env.NODE_ENV === 'development') ? [{
-        label: '&Reload',
-        accelerator: 'Ctrl+R',
-        click: () => {
-          this.mainWindow.webContents.reload();
-        }
-      }, {
-        label: 'Toggle &Full Screen',
-        accelerator: 'F11',
-        click: () => {
-          this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
-        }
-      }, {
-        label: 'Toggle &Developer Tools',
-        accelerator: 'Alt+Ctrl+I',
-        click: () => {
-          this.mainWindow.toggleDevTools();
-        }
-      }] : [{
-        label: 'Toggle &Full Screen',
-        accelerator: 'F11',
-        click: () => {
-          this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
-        }
-      }]
-    }, {
-      label: 'Help',
-      submenu: [{
-        label: 'Learn More',
-        click() {
-          shell.openExternal('https://github.com/ubsicap/dbl.local.electron');
-        }
-      }, {
-        label: 'Documentation (dbl.local.electron)',
-        click() {
-          shell.openExternal('https://github.com/ubsicap/dbl.local.electron/blob/master/README.md');
-        }
-      }, {
-        label: 'Documentation (DBL dot Local)',
-        click() {
-          shell.openExternal('https://github.com/ubsicap/dbl-uploader-clients');
-        }
-      }, {
-        label: 'Search Issues',
-        click() {
-          shell.openExternal('https://github.com/ubsicap/dbl.local.electron/issues');
-        }
+        label: 'Edit',
+        submenu: [
+          { label: 'Undo', accelerator: 'CmdOrCtrl+Z', selector: 'undo:' },
+          { label: 'Redo', accelerator: 'Shift+CmdOrCtrl+Z', selector: 'redo:' },
+          { type: 'separator' },
+          { label: 'Cut', accelerator: 'CmdOrCtrl+X', selector: 'cut:' },
+          { label: 'Copy', accelerator: 'CmdOrCtrl+C', selector: 'copy:' },
+          { label: 'Paste', accelerator: 'CmdOrCtrl+V', selector: 'paste:' },
+          { label: 'Select All', accelerator: 'CmdOrCtrl+A', selector: 'selectAll:' }
+        ]
       },
       {
-        label: `Open Log: ${logFile}`,
-        click() {
-          shell.openItem(logFile);
-        }
-      }]
-    }];
+        label: '&View',
+        submenu: (process.env.NODE_ENV === 'development') ? [{
+          label: '&Reload',
+          accelerator: 'Ctrl+R',
+          click: () => {
+            this.mainWindow.webContents.reload();
+          }
+        }, {
+          label: 'Toggle &Full Screen',
+          accelerator: 'F11',
+          click: () => {
+            this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
+          }
+        }, {
+          label: 'Toggle &Developer Tools',
+          accelerator: 'Alt+Ctrl+I',
+          click: () => {
+            this.mainWindow.toggleDevTools();
+          }
+        }] : [{
+          label: 'Toggle &Full Screen',
+          accelerator: 'F11',
+          click: () => {
+            this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
+          }
+        }]
+      },
+      {
+        label: 'Help',
+        submenu: [{
+          label: 'Learn More',
+          click() {
+            shell.openExternal('https://github.com/ubsicap/dbl.local.electron');
+          }
+        }, {
+          label: 'Documentation (dbl.local.electron)',
+          click() {
+            shell.openExternal('https://github.com/ubsicap/dbl.local.electron/blob/master/README.md');
+          }
+        }, {
+          label: 'Documentation (DBL dot Local)',
+          click() {
+            shell.openExternal('https://github.com/ubsicap/dbl-uploader-clients');
+          }
+        }, {
+          label: 'Search Issues',
+          click() {
+            shell.openExternal('https://github.com/ubsicap/dbl.local.electron/issues');
+          }
+        },
+        {
+          label: `Open Log: ${logFile}`,
+          click() {
+            shell.openItem(logFile);
+          }
+        }]
+      }];
 
     return templateDefault;
   }
