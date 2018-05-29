@@ -92,8 +92,8 @@ export function bundles(state = {}, action) {
       };
     }
     case bundleConstants.TOGGLE_SELECT: {
-      const selectedBundle = state.selectedBundle && state.selectedBundle.id === action.id ?
-        {} : state.items.find(bundle => bundle.id === action.id);
+      const selectedBundle = state.selectedBundle && state.selectedBundle.id === action.selectedBundle.id ?
+        {} : action.selectedBundle;
       return {
         ...state,
         selectedBundle

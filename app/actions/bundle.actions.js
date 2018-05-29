@@ -318,8 +318,8 @@ export function toggleModePauseResume(id) {
   return { type: bundleConstants.TOGGLE_MODE_PAUSE_RESUME, id };
 }
 
-export function toggleSelectBundle(id) {
-  return { type: bundleConstants.TOGGLE_SELECT, id };
+export function toggleSelectBundle(selectedBundle) {
+  return { type: bundleConstants.TOGGLE_SELECT, selectedBundle };
 }
 
 function getMockBundles() {

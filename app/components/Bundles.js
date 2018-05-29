@@ -92,15 +92,15 @@ class Bundles extends PureComponent<Props> {
     }
   }
 
-  onKeyPress(event, bundleId) {
+  onKeyPress(event, bundle) {
     if (['Enter', ' '].includes(event.key)) {
-      this.onClickBundleRow(event, bundleId);
+      this.onClickBundleRow(event, bundle);
     }
     console.log(event.key);
   }
 
-  onClickBundleRow(event, bundleId) {
-    this.props.toggleSelectBundle(bundleId);
+  onClickBundleRow(event, bundle) {
+    this.props.toggleSelectBundle(bundle);
   }
 
   startSaveBundleTo(event, bundle, savedToHistory) {
@@ -185,8 +185,8 @@ class Bundles extends PureComponent<Props> {
           <div
             className={styles.bundleRow}
             key={d.id}
-            onKeyPress={(e) => this.onKeyPress(e, d.id)}
-            onClick={(e) => this.onClickBundleRow(e, d.id)}
+            onKeyPress={(e) => this.onKeyPress(e, d)}
+            onClick={(e) => this.onClickBundleRow(e, d)}
             tabIndex={0}
             role="button"
             style={{ background: `${pickBackgroundColor(d.task, d.status)}` }}
