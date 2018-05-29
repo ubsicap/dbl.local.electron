@@ -99,12 +99,12 @@ export function setupBundlesEventSource(authentication) {
     }
   };
 
-  function listenStorerExecuteTaskDownloadResources(e) {
-    console.log(e);
+  function listenStorerExecuteTaskDownloadResources() {
+    // console.log(e);
   }
 
   function listenStorerChangeMode(e, dispatch) {
-    console.log(e);
+    // console.log(e);
     const data = JSON.parse(e.data);
     const bundleId = data.args[0];
     const mode = data.args[1];
@@ -121,8 +121,8 @@ export function setupBundlesEventSource(authentication) {
     };
   }
 
-  function listenDownloaderReceiver(e) {
-    console.log(e);
+  function listenDownloaderReceiver() {
+    // console.log(e);
   }
 
   /* downloader/status
@@ -131,7 +131,7 @@ export function setupBundlesEventSource(authentication) {
    *          'component': 'downloader', 'type': 'status'}}
    */
   function listenDownloaderStatus(e, dispatch) {
-    console.log(e);
+    // console.log(e);
     const data = JSON.parse(e.data);
     const bundleId = data.args[0];
     const resourcesDownloaded = data.args[1];
@@ -149,7 +149,7 @@ export function setupBundlesEventSource(authentication) {
   }
 
   function listenStorerDeleteResource(e, dispatch) {
-    console.log(e);
+    // console.log(e);
     const data = JSON.parse(e.data);
     const bundleId = data.args[0];
     const resourceToRemove = data.args[1];
@@ -164,8 +164,8 @@ export function setupBundlesEventSource(authentication) {
     };
   }
 
-  function listenStorerUpdateFromDownload(e) {
-    console.log(e);
+  function listenStorerUpdateFromDownload() {
+    // console.log(e);
   }
 }
 

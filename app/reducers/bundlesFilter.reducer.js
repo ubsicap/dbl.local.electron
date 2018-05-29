@@ -15,21 +15,10 @@ export function bundlesFilter(state = { isSearchActive: false }, action) {
           bundlesMatching: {},
         }
       };
-    } case bundleFilterConstants.ADD_SEARCH_MATCH: {
-      const oldBundlesMatching = state.searchResults.bundlesMatching;
-      const oldChunks = state.searchResults.chunks;
-      const oldMatches = state.searchResults.matches;
-      const key = action.bundle.id;
-      const newMatchingBundle = { [key]: action.bundle };
-      const newChunks = action.chunks;
-      const newMatches = action.matches;
+    } case bundleFilterConstants.UPDATE_SEARCH_RESULTS: {
       return {
         ...state,
-        searchResults: {
-          bundlesMatching: { ...oldBundlesMatching, ...newMatchingBundle },
-          chunks: { ...oldChunks, ...newChunks },
-          matches: { ...oldMatches, ...newMatches }
-        }
+        searchResults: { ...action.searchResults }
       };
     } case bundleFilterConstants.CLEAR_SEARCH_RESULTS:
       return {

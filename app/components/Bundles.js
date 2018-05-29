@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { DebounceInput } from 'react-debounce-input';
 import LinearProgress from 'material-ui/LinearProgress';
@@ -63,7 +63,7 @@ const mapDispatchToProps = {
   clearSearch
 };
 
-class Bundles extends Component<Props> {
+class Bundles extends PureComponent<Props> {
   props: Props;
   componentDidMount() {
     const { history, clearSearch: clearSearchResults } = this.props;
