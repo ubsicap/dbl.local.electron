@@ -88,11 +88,11 @@ function fetchAll() {
 }
 
 function convertBundleApiListToBundles(apiBundles) {
-  const bundles = Object.keys(apiBundles).map((bundleId) => {
-    const apiBundle = apiBundles[bundleId];
+  const bundles = Object.values(apiBundles).filter(apiBundle => apiBundle.metadata).map((apiBundle) => {
     const {
       mode, metadata, dbl, store
     } = apiBundle;
+    const bundleId = apiBundle.local_id;
     let task = dbl.currentRevision === '0' ? 'UPLOAD' : 'DOWNLOAD';
     let status = dbl.currentRevision === '0' ? 'DRAFT' : 'NOT_STARTED';
     if (mode === 'store') {
@@ -125,10 +125,9 @@ function convertBundleApiListToBundles(apiBundles) {
         }
       }
     }
-    const bundleName = metadata && metadata.name ? metadata.name : `loading_name (${dbl.id})`;
     return {
       id: bundleId,
-      name: bundleName,
+      name: metadata.name,
       revision: dbl.currentRevision,
       dblId: dbl.id,
       medium: dbl.medium,
