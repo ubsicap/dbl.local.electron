@@ -3,12 +3,12 @@ import { authHeader } from '../helpers';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 import download from './download-with-fetch.flow';
 
-
 export const bundleService = {
   create,
   fetchAll,
   fetchById,
   update,
+  convertApiBundleToNathanaelBundle,
   getManifestResourcePaths,
   downloadResources,
   removeResources,
@@ -83,69 +83,81 @@ function fetchAll() {
     method: 'GET',
     headers: authHeader()
   };
-  return fetch(`${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API_LIST}`, requestOptions)
-    .then(handleResponse).then(convertBundleApiListToBundles);
+  return fetch(
+    `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API_LIST}`,
+    requestOptions
+  )
+    .then(handleResponse)
+    .then(convertBundleApiListToBundles);
 }
 
 function convertBundleApiListToBundles(apiBundles) {
-  const bundles = Object.values(apiBundles).filter(apiBundle => apiBundle.metadata).map((apiBundle) => {
-    const {
-      mode, metadata, dbl, store
-    } = apiBundle;
-    const bundleId = apiBundle.local_id;
-    let task = dbl.currentRevision === '0' ? 'UPLOAD' : 'DOWNLOAD';
-    let status = dbl.currentRevision === '0' ? 'DRAFT' : 'NOT_STARTED';
-    if (mode === 'store') {
-      const { history } = store;
-      const historyReversed = history.slice().reverse();
-      const eventUpdateStore = historyReversed.find((event) => event.type === 'updateStore');
-      if (eventUpdateStore && eventUpdateStore.message && eventUpdateStore.message === 'download') {
-        const indexOfDownloadResources = historyReversed.findIndex((event) => event.type === 'executeTask' && event.message === 'downloadResources');
-        const indexOfUpdateStoreDownload = historyReversed.indexOf(eventUpdateStore);
-        const indexOfRemoveLocalResources = historyReversed.findIndex((event) => event.type === 'executeTask' && event.message === 'removeLocalResources');
-        const indexOfChangeModeStore = historyReversed.findIndex((event) => event.type === 'changeMode' && event.message === 'store');
-        if (indexOfRemoveLocalResources !== -1
-            && indexOfRemoveLocalResources < indexOfDownloadResources) {
-          if (indexOfChangeModeStore !== -1
-            && indexOfChangeModeStore < indexOfDownloadResources) {
-            task = 'DOWNLOAD';
-            status = 'NOT_STARTED';
-          } else {
-            task = 'REMOVE_RESOURCES';
-            status = 'IN_PROGRESS';
-          }
-        } else if (indexOfDownloadResources !== -1) {
-          task = 'DOWNLOAD';
-          if (indexOfUpdateStoreDownload !== -1
-            && indexOfUpdateStoreDownload < indexOfDownloadResources) {
-            status = 'COMPLETED';
-          } else {
-            status = 'IN_PROGRESS';
-          }
-        }
-      }
-    }
-    return {
-      id: bundleId,
-      name: metadata.name,
-      revision: dbl.currentRevision,
-      dblId: dbl.id,
-      medium: dbl.medium,
-      task,
-      status,
-    };
-  });
+  const bundles = Object.values(apiBundles)
+    .filter(apiBundle => apiBundle.metadata)
+    .map(apiBundle => convertApiBundleToNathanaelBundle(apiBundle));
   return bundles;
 }
 
+function convertApiBundleToNathanaelBundle(apiBundle) {
+  const {
+    mode, metadata, dbl, store
+  } = apiBundle;
+  const bundleId = apiBundle.local_id;
+  let task = dbl.currentRevision === '0' ? 'UPLOAD' : 'DOWNLOAD';
+  let status = dbl.currentRevision === '0' ? 'DRAFT' : 'NOT_STARTED';
+  if (mode === 'store') {
+    const { history } = store;
+    const historyReversed = history.slice().reverse();
+    const eventUpdateStore = historyReversed.find(event => event.type === 'updateStore');
+    if (eventUpdateStore && eventUpdateStore.message && eventUpdateStore.message === 'download') {
+      const indexOfDownloadResources = historyReversed.findIndex(event => event.type === 'executeTask' && event.message === 'downloadResources');
+      const indexOfUpdateStoreDownload = historyReversed.indexOf(eventUpdateStore);
+      const indexOfRemoveLocalResources = historyReversed.findIndex(event => event.type === 'executeTask' && event.message === 'removeLocalResources');
+      const indexOfChangeModeStore = historyReversed.findIndex(event => event.type === 'changeMode' && event.message === 'store');
+      if (
+        indexOfRemoveLocalResources !== -1 &&
+        indexOfRemoveLocalResources < indexOfDownloadResources
+      ) {
+        if (indexOfChangeModeStore !== -1 && indexOfChangeModeStore < indexOfDownloadResources) {
+          task = 'DOWNLOAD';
+          status = 'NOT_STARTED';
+        } else {
+          task = 'REMOVE_RESOURCES';
+          status = 'IN_PROGRESS';
+        }
+      } else if (indexOfDownloadResources !== -1) {
+        task = 'DOWNLOAD';
+        if (
+          indexOfUpdateStoreDownload !== -1 &&
+          indexOfUpdateStoreDownload < indexOfDownloadResources
+        ) {
+          status = 'COMPLETED';
+        } else {
+          status = 'IN_PROGRESS';
+        }
+      }
+    }
+  }
+  return {
+    id: bundleId,
+    name: metadata.name,
+    revision: dbl.currentRevision,
+    dblId: dbl.id,
+    medium: dbl.medium,
+    task,
+    status
+  };
+}
 
 function fetchById(id) {
   const requestOptions = {
     method: 'GET',
     headers: authHeader()
   };
-  return fetch(`${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${id}`, requestOptions)
-    .then(handleResponse);
+  return fetch(
+    `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${id}`,
+    requestOptions
+  ).then(handleResponse);
 }
 
 function create(bundle) {
@@ -155,8 +167,10 @@ function create(bundle) {
     body: JSON.stringify(bundle)
   };
 
-  return fetch(`${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/create`, requestOptions)
-    .then(handleResponse);
+  return fetch(
+    `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/create`,
+    requestOptions
+  ).then(handleResponse);
 }
 
 function update(bundle) {
@@ -201,8 +215,7 @@ function getManifestResourcePaths(bundleId) {
     headers: authHeader()
   };
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/manifest-resource`;
-  return fetch(url, requestOptions)
-    .then(handleResponse);
+  return fetch(url, requestOptions).then(handleResponse);
 }
 
 function downloadResources(bundleId) {
@@ -220,10 +233,8 @@ function bundleAddTasks(bundleId, innerTasks) {
     body: `xml=<tasks> ${innerTasks} </tasks>`
   };
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/add-tasks`;
-  return fetch(url, requestOptions)
-    .then(handleTextResponse);
+  return fetch(url, requestOptions).then(handleTextResponse);
 }
-
 
 function getResourcePaths(bundleId) {
   const requestOptions = {
@@ -231,8 +242,7 @@ function getResourcePaths(bundleId) {
     headers: authHeader()
   };
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${RESOURCE_API_LIST}`;
-  return fetch(url, requestOptions)
-    .then(handleResponse);
+  return fetch(url, requestOptions).then(handleResponse);
 }
 
 /*
@@ -244,4 +254,3 @@ function requestSaveResourceTo(selectedFolder, bundleId, resourcePath, progressC
   const targetPath = path.join(selectedFolder, resourcePath);
   return download(url, targetPath, progressCallback, authHeader());
 }
-

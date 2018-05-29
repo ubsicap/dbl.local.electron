@@ -1,3 +1,4 @@
+import SortedArray from 'sorted-array';
 import { bundleConstants } from '../constants/bundle.constants';
 
 export function bundles(state = {}, action) {
@@ -28,6 +29,14 @@ export function bundles(state = {}, action) {
             ? { ...bundle, deleting: true }
             : bundle))
       };
+    case bundleConstants.ADD_BUNDLE: {
+      const { bundle } = action;
+      const sorted = SortedArray.comparing((b) => b.name, [...state.items, bundle]);
+      return {
+        ...state,
+        items: sorted.array
+      };
+    }
     case bundleConstants.DOWNLOAD_RESOURCES_REQUEST: {
       return updateTaskStatusProgress(action.id, 'DOWNLOAD', 'IN_PROGRESS', 0);
     }
