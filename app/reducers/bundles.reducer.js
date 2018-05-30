@@ -8,12 +8,16 @@ export function bundles(state = {}, action) {
         ...state,
         loading: true
       };
-    case bundleConstants.FETCH_SUCCESS:
+    case bundleConstants.FETCH_SUCCESS: {
+      const items = action.bundles.map(bundle => addBundleDecorators(bundle));
+      const sorted = SortedArray.comparing((b) => b.name, items);
       return {
         ...state,
-        items: action.bundles.map(bundle => addBundleDecorators(bundle)),
+        items,
+        sorted,
         loading: false,
       };
+    }
     case bundleConstants.FETCH_FAILURE:
       return {
         ...state,
@@ -32,10 +36,12 @@ export function bundles(state = {}, action) {
     case bundleConstants.ADD_BUNDLE: {
       const { bundle } = action;
       const decoratedBundle = addBundleDecorators(bundle);
-      const sorted = SortedArray.comparing((b) => b.name, [...state.items, decoratedBundle]);
+      const { sorted } = state;
+      sorted.insert(decoratedBundle);
       return {
         ...state,
-        items: sorted.array
+        items: sorted.array,
+        sorted
       };
     }
     case bundleConstants.DOWNLOAD_RESOURCES_REQUEST: {
@@ -142,6 +148,10 @@ export function bundles(state = {}, action) {
   }
 
   function updateTaskStatusProgress(bundleId, task, status, progress, updateDecorators) {
+    const foundBundle = state.items.find(bundle => bundle.id === bundleId);
+    if (!foundBundle) {
+      return state;
+    }
     const items = state.items.map(bundle => (bundle.id === bundleId
       ? addBundleDecorators({
         ...bundle,
