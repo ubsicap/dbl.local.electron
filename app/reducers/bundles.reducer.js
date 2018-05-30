@@ -31,7 +31,8 @@ export function bundles(state = {}, action) {
       };
     case bundleConstants.ADD_BUNDLE: {
       const { bundle } = action;
-      const sorted = SortedArray.comparing((b) => b.name, [...state.items, bundle]);
+      const decoratedBundle = addBundleDecorators(bundle);
+      const sorted = SortedArray.comparing((b) => b.name, [...state.items, decoratedBundle]);
       return {
         ...state,
         items: sorted.array
