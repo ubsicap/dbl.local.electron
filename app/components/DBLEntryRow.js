@@ -95,9 +95,9 @@ class DBLEntryRow extends PureComponent<Props> {
   }
 
   getHighlighterSharedProps() {
-    const { bundlesFilter, emptySearchWords } = this.props;
+    const { bundlesFilter } = this.props;
     return {
-      searchWords: bundlesFilter.isSearchActive ? bundlesFilter.searchKeywords : emptySearchWords,
+      searchWords: bundlesFilter.isSearchActive ? bundlesFilter.searchKeywords : [],
       highlightClassName: styles.Highlight,
       findChunks: (options) => this.updateMatches(options)
     };
@@ -293,10 +293,3 @@ function onOpenLink(event, url) {
   shell.openExternal(url);
 }
 
-DBLEntryRow.propTypes = {
-  emptySearchWords: []
-};
-
-DBLEntryRow.defaultProps = {
-  emptySearchWords: []
-};
