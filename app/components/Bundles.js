@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import Perf from 'react-addons-perf';
 import { connect } from 'react-redux';
 import { DebounceInput } from 'react-debounce-input';
 import LinearProgress from 'material-ui/LinearProgress';
@@ -19,6 +20,7 @@ import { mockFetchAll, fetchAll,
 import { updateSearchInput, clearSearch } from '../actions/bundleFilter.actions';
 import styles from './Bundles.css';
 
+window.Perf = Perf;
 const { dialog, app } = require('electron').remote;
 const { shell } = require('electron');
 
