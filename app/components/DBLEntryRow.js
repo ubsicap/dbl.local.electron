@@ -23,7 +23,7 @@ type Props = {
   displayAs: {},
   bundlesFilter: {},
   bundlesSaveTo: {},
-  progress: ?integer,
+  progress?: ?number,
   isDownloaded: ?boolean,
   isSelected: ?boolean,
   toggleSelectBundle: () => {},
@@ -50,37 +50,37 @@ function mapStateToProps(state) {
 class DBLEntryRow extends PureComponent<Props> {
   props: Props;
 
-  onKeyPress(event) {
+  onKeyPress = (event) => {
     if (['Enter', ' '].includes(event.key)) {
       this.onClickBundleRow();
     }
     console.log(event.key);
   }
 
-  onClickBundleRow() {
+  onClickBundleRow = () => {
     const { bundleId: id, displayAs } = this.props;
     this.props.toggleSelectBundle({ id, displayAs });
   }
 
-  showStatusAsText() {
+  showStatusAsText = () => {
     const { task, status } = this.props;
     return ((task === 'UPLOAD' || task === 'DOWNLOAD') &&
       (status === 'COMPLETED' || status === 'DRAFT' || status === 'IN_PROGRESS')) ||
       ((task === 'REMOVE_RESOURCES') && status === 'IN_PROGRESS');
   }
 
-  showDownloadButton() {
+  showDownloadButton = () => {
     const { task, status } = this.props;
     return (task === 'DOWNLOAD' && status === 'NOT_STARTED');
   }
 
-  hasNotYetDownloadedResources() {
+  hasNotYetDownloadedResources = () => {
     const { isDownloaded, progress } = this.props;
     return ((isDownloaded === undefined || !isDownloaded)
       || (progress && progress < 100)) === true;
   }
 
-  updateMatches(options) {
+  updateMatches = (options) => {
     const { bundlesFilter, bundleId } = this.props;
     if (!bundlesFilter.isSearchActive) {
       return [];
@@ -94,21 +94,22 @@ class DBLEntryRow extends PureComponent<Props> {
     return [];
   }
 
-  getHighlighterSharedProps() {
+  getHighlighterSharedProps = () => {
     const { bundlesFilter } = this.props;
     return {
       searchWords: bundlesFilter.isSearchActive ? bundlesFilter.searchKeywords : [],
       highlightClassName: styles.Highlight,
-      findChunks: (options) => this.updateMatches(options)
+      findChunks: this.updateMatches
     };
   }
 
-  onClickDownloadResources(event, bundleId) {
+  onClickDownloadResources = (event) => {
+    const { bundleId } = this.props;
     this.props.downloadResources(bundleId);
     event.stopPropagation();
   }
 
-  startSaveBundleTo(event) {
+  startSaveBundleTo = (event) => {
     const { bundlesSaveTo: savedToHistory, bundleId } = this.props;
     stopPropagation(event);
     const bundleSavedToInfo = getBundleExportInfo(bundleId, savedToHistory);
@@ -125,7 +126,7 @@ class DBLEntryRow extends PureComponent<Props> {
     });
   }
 
-  openInFolder(event) {
+  openInFolder = (event) => {
     const { bundlesSaveTo: savedToHistory, bundleId } = this.props;
     event.stopPropagation();
     const bundleSavedToInfo = getBundleExportInfo(bundleId, savedToHistory);
@@ -135,12 +136,12 @@ class DBLEntryRow extends PureComponent<Props> {
     }
   }
 
-  onOpenDBLEntryLink(event) {
+  onOpenDBLEntryLink = (event) => {
     const { dblId } = this.props;
     onOpenLink(event, `https://thedigitalbiblelibrary.org/entry?id=${dblId}`);
   }
 
-  onClickRemoveResources(event) {
+  onClickRemoveResources = (event) => {
     const { bundleId } = this.props;
     this.props.removeResources(bundleId);
     event.stopPropagation();
@@ -169,7 +170,7 @@ class DBLEntryRow extends PureComponent<Props> {
       >
         <div className={styles.bundleRowTop}>
           <div className={styles.bundleRowTopLeftSide}>
-            <Highlighter textToHighlight={displayAs} {...this.getHighlighterSharedProps()} />
+            <Highlighter textToHighlight={displayAs.name} {...this.getHighlighterSharedProps()} />
           </div>
           <div className={styles.bundleRowTopMiddle}>
             <Highlighter
@@ -258,6 +259,10 @@ class DBLEntryRow extends PureComponent<Props> {
     );
   }
 }
+
+DBLEntryRow.defaultProps = {
+  progress: null
+};
 
 export default connect(
   mapStateToProps,
