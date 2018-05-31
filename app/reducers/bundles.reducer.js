@@ -1,3 +1,4 @@
+import SortedArray from 'sorted-array';
 import { bundleConstants } from '../constants/bundle.constants';
 
 export function bundles(state = {}, action) {
@@ -7,12 +8,16 @@ export function bundles(state = {}, action) {
         ...state,
         loading: true
       };
-    case bundleConstants.FETCH_SUCCESS:
+    case bundleConstants.FETCH_SUCCESS: {
+      const items = action.bundles.map(bundle => addBundleDecorators(bundle));
+      const sorted = SortedArray.comparing((b) => b.name, items);
       return {
         ...state,
-        items: action.bundles.map(bundle => addBundleDecorators(bundle)),
+        items,
+        sorted,
         loading: false,
       };
+    }
     case bundleConstants.FETCH_FAILURE:
       return {
         ...state,
@@ -28,6 +33,17 @@ export function bundles(state = {}, action) {
             ? { ...bundle, deleting: true }
             : bundle))
       };
+    case bundleConstants.ADD_BUNDLE: {
+      const { bundle } = action;
+      const decoratedBundle = addBundleDecorators(bundle);
+      const { sorted } = state;
+      sorted.insert(decoratedBundle);
+      return {
+        ...state,
+        items: sorted.array,
+        sorted
+      };
+    }
     case bundleConstants.DOWNLOAD_RESOURCES_REQUEST: {
       return updateTaskStatusProgress(action.id, 'DOWNLOAD', 'IN_PROGRESS', 0);
     }
@@ -61,8 +77,14 @@ export function bundles(state = {}, action) {
         const resourcesRemoved = originalResourceRemoved.includes(resourceToRemove) ?
           resourcesRemoved : [...originalResourceRemoved, resourceToRemove];
         const resourcesToRemove = bundle.resourcesToRemove || [...resourcesRemoved, 'unknown'];
+        const progress = calcProgress(resourcesRemoved.length, resourcesToRemove.length);
+        const hasCompletedRemovingResources = progress === 100;
+        const task = hasCompletedRemovingResources ? 'DOWNLOAD' : bundle.task;
+        const status = hasCompletedRemovingResources ? 'NOT_STARTED' : bundle.status;
         return {
-          progress: calcProgress(resourcesRemoved.length, resourcesToRemove.length),
+          task,
+          status,
+          progress,
           resourcesRemoved,
           resourcesToRemove
         };
@@ -70,15 +92,7 @@ export function bundles(state = {}, action) {
     }
     case bundleConstants.UPDATE_STATUS: {
       const progress = action.status === 'COMPLETED' ? 100 : null;
-      return updateTaskStatusProgress(action.id, null, action.status, progress, (bundle) => {
-        const hasCompletedRemovingResources = action.status === 'COMPLETED' && bundle.task === 'REMOVE_RESOURCES';
-        const task = hasCompletedRemovingResources ? 'DOWNLOAD' : bundle.task;
-        const status = hasCompletedRemovingResources ? 'NOT_STARTED' : bundle.status;
-        return {
-          task,
-          status
-        };
-      });
+      return updateTaskStatusProgress(action.id, null, action.status, progress);
     }
     case bundleConstants.TOGGLE_MODE_PAUSE_RESUME: {
       const updatedItems = forkArray(
@@ -92,8 +106,8 @@ export function bundles(state = {}, action) {
       };
     }
     case bundleConstants.TOGGLE_SELECT: {
-      const selectedBundle = state.selectedBundle && state.selectedBundle.id === action.id ?
-        {} : state.items.find(bundle => bundle.id === action.id);
+      const selectedBundle = state.selectedBundle && state.selectedBundle.id === action.selectedBundle.id ?
+        {} : action.selectedBundle;
       return {
         ...state,
         selectedBundle
@@ -132,6 +146,10 @@ export function bundles(state = {}, action) {
   }
 
   function updateTaskStatusProgress(bundleId, task, status, progress, updateDecorators) {
+    const foundBundle = state.items.find(bundle => bundle.id === bundleId);
+    if (!foundBundle) {
+      return state;
+    }
     const items = state.items.map(bundle => (bundle.id === bundleId
       ? addBundleDecorators({
         ...bundle,

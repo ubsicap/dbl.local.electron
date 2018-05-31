@@ -4,7 +4,7 @@ import { bundleFilterConstants } from '../constants/bundleFilter.constants';
 
 export const bundleFilterActions = {
   updateSearchInput,
-  addSearchMatch,
+  addSearchResults,
   clearSearch
 };
 
@@ -36,6 +36,11 @@ export function updateSearchInput(searchInput, bundles) {
     textToHighlight})
   */
   function updateAllSearchMatches(dispatch, searchableBundles, searchKeywords) {
+    let searchResults = {
+      chunks: {},
+      foundChunks: {},
+      bundlesMatching: {},
+    };
     const chunksAcrossBundles = {};
     searchableBundles.forEach((searchableBundle) => {
       const chunksInBundle = {};
@@ -55,15 +60,32 @@ export function updateSearchInput(searchInput, bundles) {
         }
       });
       if (Object.keys(matchesInBundle).length > 0) {
-        dispatch(addSearchMatch(searchableBundle, chunksInBundle, matchesInBundle));
+        searchResults = addSearchResults(searchResults, searchableBundle, chunksInBundle, matchesInBundle);
       }
     });
+    dispatch(updateSearchResults(searchResults));
   }
 }
 
-export function addSearchMatch(bundle, chunks, matches) {
+function addSearchResults(searchResults, bundle, chunks, matches) {
+  const oldBundlesMatching = searchResults.bundlesMatching;
+  const oldChunks = searchResults.chunks;
+  const oldMatches = searchResults.matches;
+  const key = bundle.id;
+  const newMatchingBundle = { [key]: bundle };
+  const newChunks = chunks;
+  const newMatches = matches;
   return {
-    type: bundleFilterConstants.ADD_SEARCH_MATCH, bundle, chunks, matches
+    bundlesMatching: { ...oldBundlesMatching, ...newMatchingBundle },
+    chunks: { ...oldChunks, ...newChunks },
+    matches: { ...oldMatches, ...newMatches }
+  };
+}
+
+
+export function updateSearchResults(searchResults) {
+  return {
+    type: bundleFilterConstants.UPDATE_SEARCH_RESULTS, searchResults
   };
 }
 

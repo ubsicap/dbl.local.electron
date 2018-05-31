@@ -78,11 +78,11 @@ export function setupBundlesEventSource(authentication) {
     };
     const listeners = {
       'storer/execute_task': listenStorerExecuteTaskDownloadResources,
-      'storer/change_mode': (e) => listenStorerChangeMode(e, dispatch),
+      'storer/change_mode': listenStorerChangeMode,
       'downloader/receiver': listenDownloaderReceiver,
       'downloader/status': (e) => listenDownloaderStatus(e, dispatch),
       'storer/delete_resource': (e) => listenStorerDeleteResource(e, dispatch),
-      'storer/update_from_download': listenStorerUpdateFromDownload,
+      'storer/update_from_download': (e) => listenStorerUpdateFromDownload(e, dispatch),
     };
     Object.keys(listeners).forEach((evType) => {
       const handler = listeners[evType];
@@ -99,30 +99,22 @@ export function setupBundlesEventSource(authentication) {
     }
   };
 
-  function listenStorerExecuteTaskDownloadResources(e) {
-    console.log(e);
+  function listenStorerExecuteTaskDownloadResources() {
+    // console.log(e);
   }
 
-  function listenStorerChangeMode(e, dispatch) {
-    console.log(e);
-    const data = JSON.parse(e.data);
-    const bundleId = data.args[0];
-    const mode = data.args[1];
-    if (mode === 'store') {
-      dispatch(updateStatus(bundleId, 'COMPLETED'));
-    }
+  function listenStorerChangeMode() {
+    // console.log(e);
+    // const data = JSON.parse(e.data);
+    // const bundleId = data.args[0];
+    // const mode = data.args[1];
+    // if (mode === 'store') {
+    //   dispatch(updateStatus(bundleId, 'COMPLETED'));
+    // }
   }
 
-  function updateStatus(_id, status) {
-    return {
-      type: bundleConstants.UPDATE_STATUS,
-      id: _id,
-      status,
-    };
-  }
-
-  function listenDownloaderReceiver(e) {
-    console.log(e);
+  function listenDownloaderReceiver() {
+    // console.log(e);
   }
 
   /* downloader/status
@@ -131,7 +123,7 @@ export function setupBundlesEventSource(authentication) {
    *          'component': 'downloader', 'type': 'status'}}
    */
   function listenDownloaderStatus(e, dispatch) {
-    console.log(e);
+    // console.log(e);
     const data = JSON.parse(e.data);
     const bundleId = data.args[0];
     const resourcesDownloaded = data.args[1];
@@ -149,7 +141,7 @@ export function setupBundlesEventSource(authentication) {
   }
 
   function listenStorerDeleteResource(e, dispatch) {
-    console.log(e);
+    // console.log(e);
     const data = JSON.parse(e.data);
     const bundleId = data.args[0];
     const resourceToRemove = data.args[1];
@@ -164,8 +156,23 @@ export function setupBundlesEventSource(authentication) {
     };
   }
 
-  function listenStorerUpdateFromDownload(e) {
-    console.log(e);
+  async function listenStorerUpdateFromDownload(e, dispatch) {
+    const data = JSON.parse(e.data);
+    const bundleId = data.args[0];
+    const apiBundle = await bundleService.fetchById(bundleId);
+    const fileInfoKeys = Object.keys(apiBundle.store.file_info);
+    if (fileInfoKeys.length === 1 && fileInfoKeys[0] === 'metadata.xml') {
+      // we just downloaded metadata.xml
+      const bundle = bundleService.convertApiBundleToNathanaelBundle(apiBundle);
+      dispatch(addBundle(bundle));
+    }
+  }
+
+  function addBundle(bundle) {
+    return {
+      type: bundleConstants.ADD_BUNDLE,
+      bundle
+    };
   }
 }
 
@@ -318,8 +325,8 @@ export function toggleModePauseResume(id) {
   return { type: bundleConstants.TOGGLE_MODE_PAUSE_RESUME, id };
 }
 
-export function toggleSelectBundle(id) {
-  return { type: bundleConstants.TOGGLE_SELECT, id };
+export function toggleSelectBundle(selectedBundle) {
+  return { type: bundleConstants.TOGGLE_SELECT, selectedBundle };
 }
 
 function getMockBundles() {

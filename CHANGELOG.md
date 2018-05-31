@@ -1,3 +1,14 @@
+### Version 0.6.0
+
+#### Features
+- Add new entry rows after DBL dot Local discovers and downloads their metadata
+
+#### Fixes
+- Improved Search input performance
+- Improved scroll bar performance when loading new entries
+- Improved entry row selection (toggling tray menu)
+- Filter out rows that are missing name (possibly loading_metadata)
+
 ### Version 0.5.0
 
 #### Features
