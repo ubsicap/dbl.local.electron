@@ -1,3 +1,8 @@
+### Version 0.6.1
+
+#### Fixes
+- fix Downloading message handling from latest dbl_dot_local
+
 ### Version 0.6.0
 
 #### Features
