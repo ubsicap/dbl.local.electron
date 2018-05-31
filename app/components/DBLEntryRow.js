@@ -110,7 +110,8 @@ class DBLEntryRow extends PureComponent<Props> {
   }
 
   startSaveBundleTo = (event) => {
-    const { bundlesSaveTo: savedToHistory, bundleId } = this.props;
+    const { bundlesSaveTo, bundleId } = this.props;
+    const { savedToHistory } = bundlesSaveTo;
     stopPropagation(event);
     const bundleSavedToInfo = getBundleExportInfo(bundleId, savedToHistory);
     const defaultPath = bundleSavedToInfo ? bundleSavedToInfo.folderName : app.getPath('downloads');
@@ -127,7 +128,8 @@ class DBLEntryRow extends PureComponent<Props> {
   }
 
   openInFolder = (event) => {
-    const { bundlesSaveTo: savedToHistory, bundleId } = this.props;
+    const { bundlesSaveTo, bundleId } = this.props;
+    const { savedToHistory } = bundlesSaveTo;
     event.stopPropagation();
     const bundleSavedToInfo = getBundleExportInfo(bundleId, savedToHistory);
     if (bundleSavedToInfo) {
