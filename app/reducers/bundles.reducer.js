@@ -77,8 +77,14 @@ export function bundles(state = {}, action) {
         const resourcesRemoved = originalResourceRemoved.includes(resourceToRemove) ?
           resourcesRemoved : [...originalResourceRemoved, resourceToRemove];
         const resourcesToRemove = bundle.resourcesToRemove || [...resourcesRemoved, 'unknown'];
+        const progress = calcProgress(resourcesRemoved.length, resourcesToRemove.length);
+        const hasCompletedRemovingResources = progress === 100;
+        const task = hasCompletedRemovingResources ? 'DOWNLOAD' : bundle.task;
+        const status = hasCompletedRemovingResources ? 'NOT_STARTED' : bundle.status;
         return {
-          progress: calcProgress(resourcesRemoved.length, resourcesToRemove.length),
+          task,
+          status,
+          progress,
           resourcesRemoved,
           resourcesToRemove
         };
@@ -86,15 +92,7 @@ export function bundles(state = {}, action) {
     }
     case bundleConstants.UPDATE_STATUS: {
       const progress = action.status === 'COMPLETED' ? 100 : null;
-      return updateTaskStatusProgress(action.id, null, action.status, progress, (bundle) => {
-        const hasCompletedRemovingResources = action.status === 'COMPLETED' && bundle.task === 'REMOVE_RESOURCES';
-        const task = hasCompletedRemovingResources ? 'DOWNLOAD' : bundle.task;
-        const status = hasCompletedRemovingResources ? 'NOT_STARTED' : bundle.status;
-        return {
-          task,
-          status
-        };
-      });
+      return updateTaskStatusProgress(action.id, null, action.status, progress);
     }
     case bundleConstants.TOGGLE_MODE_PAUSE_RESUME: {
       const updatedItems = forkArray(
