@@ -81,6 +81,7 @@ export function setupBundlesEventSource(authentication) {
       'storer/change_mode': listenStorerChangeMode,
       'downloader/receiver': listenDownloaderReceiver,
       'downloader/status': (e) => listenDownloaderStatus(e, dispatch),
+      'downloader/spec_status': (e) => listenDownloaderStatus(e, dispatch),
       'storer/delete_resource': (e) => listenStorerDeleteResource(e, dispatch),
       'storer/update_from_download': (e) => listenStorerUpdateFromDownload(e, dispatch),
     };
@@ -125,6 +126,9 @@ export function setupBundlesEventSource(authentication) {
   function listenDownloaderStatus(e, dispatch) {
     // console.log(e);
     const data = JSON.parse(e.data);
+    if (data.args.length !== 3) {
+      return;
+    }
     const bundleId = data.args[0];
     const resourcesDownloaded = data.args[1];
     const resourcesToDownload = data.args[2];
