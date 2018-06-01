@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import { DebounceInput } from 'react-debounce-input';
 import CircularProgress from 'material-ui/CircularProgress';
 import { navigationConstants } from '../constants/navigation.constants';
 import DBLEntryRow from './DBLEntryRow';
@@ -81,23 +80,26 @@ class Bundles extends PureComponent<Props> {
   render() {
     const { bundles, bundlesFilter } = this.props;
     return (
-      <div className={styles.container} data-tid="container">
+      <div className={styles.container} style={{ paddingTop: '60px' }} data-tid="container">
         <MenuAppBar
           onChangeSearchInput={this.onChangeSearchInput}
           searchInputValue={this.searchInputValue()}
         />
-        {bundles.loading &&
-          <div className="row" style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <CircularProgress size={80} thickness={5} />
-          </div>
-        }
-        {bundles.items && bundles.items.filter((b) => displayRow(bundlesFilter, b)).map((d) => (
-          <DBLEntryRow
-            key={d.id}
-            bundleId={d.id}
-            {...d}
-            isSelected={bundles.selectedBundle && bundles.selectedBundle.id === d.id}
-          />))}
+        <div>
+          {bundles.loading &&
+            <div className="row" style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <CircularProgress size={80} thickness={5} />
+            </div>
+          }
+          {bundles.items && bundles.items.filter((b) => displayRow(bundlesFilter, b)).map((d) => (
+            <DBLEntryRow
+              key={d.id}
+              bundleId={d.id}
+              {...d}
+              isSelected={bundles.selectedBundle && bundles.selectedBundle.id === d.id}
+            />))}
+        </div>
+
       </div>
     );
   }
