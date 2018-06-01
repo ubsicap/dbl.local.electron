@@ -8,6 +8,7 @@ import { mockFetchAll, fetchAll,
   setupBundlesEventSource } from '../actions/bundle.actions';
 import { updateSearchInput, clearSearch } from '../actions/bundleFilter.actions';
 import styles from './Bundles.css';
+import MenuAppBar from './MenuAppBar';
 
 type Props = {
   fetchAll: () => {},
@@ -75,6 +76,7 @@ class Bundles extends PureComponent<Props> {
     const { bundles, bundlesFilter } = this.props;
     return (
       <div className={styles.container} data-tid="container">
+        <MenuAppBar />
         <div className={styles.searchBar}>
           <div className={styles.searchBarFilters}>Show: <span>All</span> </div>
           <div className={styles.searchBarSearch}>Search:
