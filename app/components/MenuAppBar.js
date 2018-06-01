@@ -1,5 +1,5 @@
 import React from 'react';
-import { withStyles, MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
@@ -8,8 +8,6 @@ import MenuIcon from '@material-ui/icons/Menu';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
-import TextField from '@material-ui/core/TextField';
-import { white } from '@material-ui/core/colors';
 import { DebounceInput } from 'react-debounce-input';
 
 type Props = {
@@ -18,9 +16,9 @@ type Props = {
     onChangeSearchInput: () => {}
 };
 
-const styles = theme => ({
+const styles = {
   root: {
-    flexGrow: 1
+    flexGrow: 1,
   },
   flex: {
     flex: 1,
@@ -29,16 +27,7 @@ const styles = theme => ({
     marginLeft: -12,
     marginRight: 20,
   },
-  input: {
-    color: 'white'
-  },
-  textField: {
-    background: 'white',
-    marginLeft: theme.spacing.unit,
-    marginRight: theme.spacing.unit,
-    width: 200,
-  },
-});
+};
 
 class MenuAppBar extends React.Component {
   props: Props;
@@ -59,30 +48,6 @@ class MenuAppBar extends React.Component {
     this.setState({ anchorEl: null });
   };
 
-  customTextField = (props) => {
-    const theme = createMuiTheme({
-      palette: {
-        primary: white,
-      },
-    });
-    const { classes } = this.props;
-    return (
-      <MuiThemeProvider theme={theme}>
-        <TextField
-          id="search"
-          label="Search field"
-          type="search"
-          className={classes.textField}
-          margin="dense"
-          value={props.value}
-          onChange={props.onChange}
-          InputProps={{
-          className: classes.input
-        }}
-        />
-      </MuiThemeProvider>);
-  };
-
   render() {
     const { classes, onChangeSearchInput, searchInputValue } = this.props;
     const { auth, anchorEl } = this.state;
@@ -101,8 +66,8 @@ class MenuAppBar extends React.Component {
             <DebounceInput
               debounceTimeout={300}
               value={searchInputValue}
+              placeholder="Search"
               onChange={(event) => onChangeSearchInput(event, event.target.value)}
-              element={this.customTextField}
             />
             {auth && (
               <div>
