@@ -17,9 +17,17 @@
   height: 50px;
 }
 
+.bundleRowTopLeftSideIcon {
+  display: table-cell;
+  padding-left: 10px;
+  padding-right: 10px;
+  width: 30px;
+  vertical-align: middle;
+}
+
 .bundleRowTopLeftSide {
   display: table-cell;
-  padding-left: 20px;
+  text-align: left;
   vertical-align: middle;
   width: 33%;
 }

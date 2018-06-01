@@ -2,6 +2,10 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import LinearProgress from 'material-ui/LinearProgress';
 import Highlighter from 'react-highlight-words';
+import Book from '@material-ui/icons/Book';
+import Headset from '@material-ui/icons/Headset';
+import Videocam from '@material-ui/icons/Videocam';
+import Print from '@material-ui/icons/Print';
 import FlatButton from 'material-ui/FlatButton';
 import FileDownload from 'material-ui/svg-icons/file/file-download';
 import FolderOpen from 'material-ui/svg-icons/file/folder-open';
@@ -20,6 +24,7 @@ type Props = {
   dblId: string,
   task: string,
   status: string,
+  medium: string,
   displayAs: {},
   bundlesFilter: {},
   bundlesSaveTo: {},
@@ -154,6 +159,7 @@ class DBLEntryRow extends PureComponent<Props> {
     const {
       bundleId,
       dblId,
+      medium,
       task,
       status,
       displayAs,
@@ -171,6 +177,13 @@ class DBLEntryRow extends PureComponent<Props> {
         style={{ background: `${pickBackgroundColor(task, status)}` }}
       >
         <div className={styles.bundleRowTop}>
+          <div className={styles.bundleRowTopLeftSideIcon}>
+            { (medium === 'text' && <Book />)
+            || (medium === 'audio' && <Headset />)
+            || (medium === 'video' && <Videocam />)
+            || (medium === 'print' && <Print />)
+            || medium }
+          </div>
           <div className={styles.bundleRowTopLeftSide}>
             <Highlighter textToHighlight={displayAs.name} {...this.getHighlighterSharedProps()} />
           </div>
