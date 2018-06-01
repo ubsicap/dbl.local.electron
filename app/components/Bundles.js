@@ -68,25 +68,24 @@ class Bundles extends PureComponent<Props> {
     }
   }
 
-  onChangeSearchInput(event, inputValue) {
+  onChangeSearchInput = (event) => {
+    const inputValue = event.target.value;
     this.props.updateSearchInput(inputValue, this.props.bundles);
+  }
+
+  searchInputValue = () => {
+    const { bundlesFilter } = this.props;
+    return bundlesFilter.isSearchActive ? bundlesFilter.searchInput : '';
   }
 
   render() {
     const { bundles, bundlesFilter } = this.props;
     return (
       <div className={styles.container} data-tid="container">
-        <MenuAppBar />
-        <div className={styles.searchBar}>
-          <div className={styles.searchBarFilters}>Show: <span>All</span> </div>
-          <div className={styles.searchBarSearch}>Search:
-            <DebounceInput
-              debounceTimeout={300}
-              value={bundlesFilter.isSearchActive ? bundlesFilter.searchInput : ''}
-              onChange={(event) => this.onChangeSearchInput(event, event.target.value)}
-            />
-          </div>
-        </div>
+        <MenuAppBar
+          onChangeSearchInput={this.onChangeSearchInput}
+          searchInputValue={this.searchInputValue()}
+        />
         {bundles.loading &&
           <div className="row" style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <CircularProgress size={80} thickness={5} />

@@ -6,14 +6,14 @@ import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import AccountCircle from '@material-ui/icons/AccountCircle';
-import Switch from '@material-ui/core/Switch';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormGroup from '@material-ui/core/FormGroup';
 import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
+import { DebounceInput } from 'react-debounce-input';
 
 type Props = {
-    classes: {}
+    classes: {},
+    searchInputValue: string,
+    onChangeSearchInput: () => {}
 };
 
 const styles = {
@@ -49,28 +49,26 @@ class MenuAppBar extends React.Component {
   };
 
   render() {
-    const { classes } = this.props;
+    const { classes, onChangeSearchInput, searchInputValue } = this.props;
     const { auth, anchorEl } = this.state;
     const open = Boolean(anchorEl);
 
     return (
       <div className={classes.root}>
-        <FormGroup>
-          <FormControlLabel
-            control={
-              <Switch checked={auth} onChange={this.handleChange} aria-label="LoginSwitch" />
-            }
-            label={auth ? 'Logout' : 'Login'}
-          />
-        </FormGroup>
         <AppBar position="static">
           <Toolbar>
             <IconButton className={classes.menuButton} color="inherit" aria-label="Menu">
               <MenuIcon />
             </IconButton>
             <Typography variant="title" color="inherit" className={classes.flex}>
-              Title
+              Nathanael
             </Typography>
+            <DebounceInput
+              debounceTimeout={300}
+              value={searchInputValue}
+              placeholder="Search"
+              onChange={(event) => onChangeSearchInput(event, event.target.value)}
+            />
             {auth && (
               <div>
                 <IconButton
