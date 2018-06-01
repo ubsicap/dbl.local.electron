@@ -80,7 +80,7 @@ class Bundles extends PureComponent<Props> {
   render() {
     const { bundles, bundlesFilter } = this.props;
     return (
-      <div className={styles.container} style={{ paddingTop: '60px' }} data-tid="container">
+      <div className={styles.container} style={{ paddingTop: '68px' }} data-tid="container">
         <MenuAppBar
           onChangeSearchInput={this.onChangeSearchInput}
           searchInputValue={this.searchInputValue()}

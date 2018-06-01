@@ -63,12 +63,15 @@ class MenuAppBar extends React.Component {
             <Typography variant="title" color="inherit" className={classes.flex}>
               Nathanael
             </Typography>
-            <DebounceInput
-              debounceTimeout={300}
-              value={searchInputValue}
-              placeholder="Search"
-              onChange={(event) => onChangeSearchInput(event, event.target.value)}
-            />
+            <div>
+              <DebounceInput
+                debounceTimeout={300}
+                className="form-control"
+                value={searchInputValue}
+                placeholder="Search"
+                onChange={(event) => onChangeSearchInput(event, event.target.value)}
+              />
+            </div>
             {auth && (
               <div>
                 <IconButton
