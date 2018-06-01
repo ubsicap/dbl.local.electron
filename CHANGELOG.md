@@ -1,3 +1,9 @@
+### Version 0.7.0
+
+#### Features
+- Added AppMenuBar with Search box always visible at top when scrolling
+- Added Media icons (text, audio, video, print)
+
 ### Version 0.6.1
 
 #### Fixes

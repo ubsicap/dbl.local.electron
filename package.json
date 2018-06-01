@@ -1,7 +1,7 @@
 {
   "name": "nathanael",
   "productName": "Nathanael",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Electron frontend to DBL dot Local",
   "scripts": {
     "build": "concurrently \"npm run build-main\" \"npm run build-renderer\"",
@@ -188,6 +188,8 @@
     "webpack-merge": "^4.1.1"
   },
   "dependencies": {
+    "@material-ui/core": "^1.1.0",
+    "@material-ui/icons": "^1.1.0",
     "bootstrap": "4.0.0",
     "devtron": "^1.4.0",
     "electron-debug": "^1.5.0",

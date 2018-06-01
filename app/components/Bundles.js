@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import { DebounceInput } from 'react-debounce-input';
 import CircularProgress from 'material-ui/CircularProgress';
 import { navigationConstants } from '../constants/navigation.constants';
 import DBLEntryRow from './DBLEntryRow';
@@ -8,6 +7,7 @@ import { mockFetchAll, fetchAll,
   setupBundlesEventSource } from '../actions/bundle.actions';
 import { updateSearchInput, clearSearch } from '../actions/bundleFilter.actions';
 import styles from './Bundles.css';
+import MenuAppBar from './MenuAppBar';
 
 type Props = {
   fetchAll: () => {},
@@ -67,36 +67,39 @@ class Bundles extends PureComponent<Props> {
     }
   }
 
-  onChangeSearchInput(event, inputValue) {
+  onChangeSearchInput = (event) => {
+    const inputValue = event.target.value;
     this.props.updateSearchInput(inputValue, this.props.bundles);
+  }
+
+  searchInputValue = () => {
+    const { bundlesFilter } = this.props;
+    return bundlesFilter.isSearchActive ? bundlesFilter.searchInput : '';
   }
 
   render() {
     const { bundles, bundlesFilter } = this.props;
     return (
-      <div className={styles.container} data-tid="container">
-        <div className={styles.searchBar}>
-          <div className={styles.searchBarFilters}>Show: <span>All</span> </div>
-          <div className={styles.searchBarSearch}>Search:
-            <DebounceInput
-              debounceTimeout={300}
-              value={bundlesFilter.isSearchActive ? bundlesFilter.searchInput : ''}
-              onChange={(event) => this.onChangeSearchInput(event, event.target.value)}
-            />
-          </div>
+      <div className={styles.container} style={{ paddingTop: '68px' }} data-tid="container">
+        <MenuAppBar
+          onChangeSearchInput={this.onChangeSearchInput}
+          searchInputValue={this.searchInputValue()}
+        />
+        <div>
+          {bundles.loading &&
+            <div className="row" style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <CircularProgress size={80} thickness={5} />
+            </div>
+          }
+          {bundles.items && bundles.items.filter((b) => displayRow(bundlesFilter, b)).map((d) => (
+            <DBLEntryRow
+              key={d.id}
+              bundleId={d.id}
+              {...d}
+              isSelected={bundles.selectedBundle && bundles.selectedBundle.id === d.id}
+            />))}
         </div>
-        {bundles.loading &&
-          <div className="row" style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <CircularProgress size={80} thickness={5} />
-          </div>
-        }
-        {bundles.items && bundles.items.filter((b) => displayRow(bundlesFilter, b)).map((d) => (
-          <DBLEntryRow
-            key={d.id}
-            bundleId={d.id}
-            {...d}
-            isSelected={bundles.selectedBundle && bundles.selectedBundle.id === d.id}
-          />))}
+
       </div>
     );
   }
