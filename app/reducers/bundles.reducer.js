@@ -1,5 +1,12 @@
-import SortedArray from 'sorted-array';
+import sort from 'fast-sort';
 import { bundleConstants } from '../constants/bundle.constants';
+
+function sortBundles(unsorted) {
+  return sort(unsorted).asc([
+    b => b.name,
+    b => (1 / b.revision),
+  ]);
+}
 
 export function bundles(state = {}, action) {
   switch (action.type) {
@@ -9,12 +16,11 @@ export function bundles(state = {}, action) {
         loading: true
       };
     case bundleConstants.FETCH_SUCCESS: {
-      const items = action.bundles.map(bundle => addBundleDecorators(bundle));
-      const sorted = SortedArray.comparing((b) => b.name, items);
+      const unsorted = action.bundles.map(bundle => addBundleDecorators(bundle));
+      const items = sortBundles(unsorted);
       return {
         ...state,
         items,
-        sorted,
         loading: false,
       };
     }
@@ -35,13 +41,12 @@ export function bundles(state = {}, action) {
       };
     case bundleConstants.ADD_BUNDLE: {
       const { bundle } = action;
+      const { items: unsorted } = state;
       const decoratedBundle = addBundleDecorators(bundle);
-      const { sorted } = state;
-      sorted.insert(decoratedBundle);
+      const items = sortBundles([...unsorted, decoratedBundle]);
       return {
         ...state,
-        items: sorted.array,
-        sorted
+        items
       };
     }
     case bundleConstants.DOWNLOAD_RESOURCES_REQUEST: {

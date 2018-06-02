@@ -1,4 +1,3 @@
-import sort from 'fast-sort';
 import traverse from 'traverse';
 import { bundleConstants } from '../constants/bundle.constants';
 import { bundleService } from '../services/bundle.service';
@@ -45,7 +44,7 @@ export function fetchAll() {
     return bundleService
       .fetchAll()
       .then(
-        bundles => dispatch(success(sort(bundles).asc([b => b.name, b => (1 / b.revision)]))),
+        bundles => dispatch(success(bundles)),
         error => dispatch(failure(error))
       );
   };
@@ -337,6 +336,8 @@ function getMockBundles() {
   const bundles = [
     {
       id: 'bundle01',
+      dblId: 'dblId1',
+      medium: 'print',
       name: 'Test Bundle #1',
       revision: 3,
       task: 'UPLOAD',
@@ -344,6 +345,8 @@ function getMockBundles() {
     },
     {
       id: 'bundle02',
+      dblId: 'dblId2',
+      medium: 'text',
       name: 'Another Bundle',
       revision: 3,
       task: 'UPLOAD',
@@ -353,6 +356,8 @@ function getMockBundles() {
     },
     {
       id: 'bundle03',
+      dblId: 'dblId3',
+      medium: 'audio',
       name: 'Audio Bundle',
       revision: 52,
       task: 'DOWNLOAD',
@@ -362,30 +367,42 @@ function getMockBundles() {
     },
     {
       id: 'bundle04',
+      dblId: 'dblId4',
+      medium: 'audio',
       name: 'Unfinished Bundle',
       task: 'UPLOAD',
       status: 'DRAFT'
     },
     {
       id: 'bundle05',
+      dblId: 'dblId5',
+      medium: 'video',
       name: 'Unfinished Video Bundle',
       task: 'UPLOAD',
       status: 'DRAFT'
     },
     {
       id: 'bundle06',
+      dblId: 'dblId6',
+      medium: 'text',
+      revision: 3,
       name: 'DBL Bundle',
       task: 'DOWNLOAD',
       status: 'NOT_STARTED'
     },
     {
       id: 'bundle07',
-      name: 'DBL Bundle 3',
+      dblId: 'dblId7',
+      medium: 'text',
+      revision: 4,
+      name: 'DBL Bundle',
       task: 'DOWNLOAD',
       status: 'NOT_STARTED'
     },
     {
       id: 'bundle08',
+      dblId: 'dblId8',
+      medium: 'audio',
       name: 'Audio Bundle #2',
       revision: 40,
       task: 'DOWNLOAD',
@@ -393,6 +410,8 @@ function getMockBundles() {
     },
     {
       id: 'bundle09',
+      dblId: 'dblId9',
+      medium: 'audio',
       name: 'Audio Bundle #3',
       revision: 5,
       task: 'SAVETO',
@@ -401,6 +420,8 @@ function getMockBundles() {
     },
     {
       id: 'bundle10',
+      dblId: 'dblId10',
+      medium: 'audio',
       name: 'Audio Bundle #4',
       revision: 4,
       task: 'SAVETO',
@@ -409,6 +430,8 @@ function getMockBundles() {
     },
     {
       id: 'bundle11',
+      dblId: 'dblId5',
+      medium: 'audio',
       name: 'Audio Bundle #5',
       revision: 5,
       task: 'SAVETO',
@@ -418,9 +441,5 @@ function getMockBundles() {
   ];
   // const taskOrder = ['UPLOAD', 'DOWNLOAD', 'SAVETO'];
   // const statusOrder = ['IN_PROGRESS', 'DRAFT', 'COMPLETED', 'NOT_STARTED'];
-  const sortedBundles = sort(bundles).asc([
-    b => b.name,
-    b => (1 / b.revision),
-  ]);
-  return sortedBundles;
+  return bundles;
 }

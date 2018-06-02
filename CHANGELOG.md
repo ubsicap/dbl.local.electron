@@ -1,3 +1,9 @@
+### Version 0.7.1
+
+#### Fixes
+- Fix status (e.g. downloading) while loading & sorting other rows.
+- Fix File > Bundles (demo)
+
 ### Version 0.7.0
 
 #### Features
