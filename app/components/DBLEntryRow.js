@@ -94,7 +94,7 @@ class DBLEntryRow extends PureComponent<Props> {
     const { bundlesMatching, chunks } = searchResults;
     const hasMatchInBundle = bundleId in bundlesMatching;
     if (hasMatchInBundle) {
-      return chunks[options.textToHighlight];
+      return chunks[options.textToHighlight] || [];
     }
     return [];
   }
