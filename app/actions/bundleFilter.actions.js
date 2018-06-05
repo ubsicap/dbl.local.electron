@@ -4,7 +4,6 @@ import { bundleFilterConstants } from '../constants/bundleFilter.constants';
 
 export const bundleFilterActions = {
   updateSearchInput,
-  addSearchResults,
   clearSearch
 };
 
@@ -21,7 +20,8 @@ export function updateSearchInput(searchInput, bundles) {
         searchKeywords,
         bundles
       });
-      updateAllSearchMatches(dispatch, bundles.items, searchKeywords);
+      const searchResults = getAllSearchResults(bundles.items, searchKeywords);
+      dispatch(updateSearchResults(searchResults));
     } else {
       dispatch(clearSearch());
     }
@@ -35,39 +35,66 @@ export function updateSearchInput(searchInput, bundles) {
     searchWords,
     textToHighlight})
   */
-  function updateAllSearchMatches(dispatch, searchableBundles, searchKeywords) {
-    let searchResults = {
-      chunks: {},
-      foundChunks: {},
-      bundlesMatching: {},
-    };
-    const chunksAcrossBundles = {};
-    searchableBundles.forEach((searchableBundle) => {
-      const chunksInBundle = {};
-      const matchesInBundle = {};
-      Object.values(searchableBundle.displayAs).forEach((searchable) => {
-        let chunksForSearchable = chunksAcrossBundles[searchable];
-        if (!chunksForSearchable) {
-          chunksForSearchable = findChunks({
-            searchWords: searchKeywords,
-            textToHighlight: searchable
-          });
-          chunksAcrossBundles[searchable] = chunksForSearchable;
-        }
-        chunksInBundle[searchable] = chunksForSearchable;
-        if (chunksForSearchable.length > 0) {
-          matchesInBundle[searchable] = chunksForSearchable;
-        }
-      });
-      if (Object.keys(matchesInBundle).length > 0) {
-        searchResults = addSearchResults(searchResults, searchableBundle, chunksInBundle, matchesInBundle);
+  function getAllSearchResults(searchableBundles, searchKeywords) {
+    const searchResults = Object.values(searchableBundles).reduce((acc, searchableBundle) => {
+      const bundleSearchResults = getBundleSearchResults(
+        searchableBundle,
+        searchKeywords,
+        acc.chunks
+      );
+      const { chunks, matches } = bundleSearchResults;
+      if (Object.keys(matches).length > 0) {
+        return combineSearchResults(acc, searchableBundle, chunks, matches);
       }
-    });
-    dispatch(updateSearchResults(searchResults));
+      return acc;
+    }, { bundlesMatching: {}, chunks: {}, matches: {} });
+    return searchResults;
   }
 }
 
-function addSearchResults(searchResults, bundle, chunks, matches) {
+function getBundleSearchResults(searchableBundle, searchKeywords, chunksAcrossBundles) {
+  const bundleSearchResults = Object.values(searchableBundle.displayAs).reduce((acc, searchable) => {
+    let chunksForSearchable = chunksAcrossBundles[searchable];
+    if (!chunksForSearchable) {
+      chunksForSearchable = findChunks({
+        searchWords: searchKeywords,
+        textToHighlight: searchable
+      });
+    }
+    const chunksInBundle = { [searchable]: chunksForSearchable };
+    const hasMatches = chunksForSearchable.length > 0;
+    const matches = hasMatches ? { ...acc.matches, ...chunksInBundle } : acc.matches;
+    return {
+      chunks: { ...acc.chunks, ...chunksInBundle },
+      matches
+    };
+  }, {
+    chunks: {},
+    matches: {}
+  });
+  return bundleSearchResults;
+  /*
+  if (Object.keys(matchesInBundle).length > 0) {
+    dispatch(addSearchMatch(searchableBundle, chunksInBundle, matchesInBundle));
+  } else {
+    dispatch(removeSearchMatch(searchableBundle));
+  }
+  */
+}
+
+export function addSearchMatch(bundle, chunks, matches) {
+  return {
+    type: bundleFilterConstants.ADD_SEARCH_MATCH, bundle, chunks, matches
+  };
+}
+
+export function removeSearchMatch(bundle) {
+  return {
+    type: bundleFilterConstants.REMOVE_SEARCH_MATCH, bundle
+  };
+}
+
+function combineSearchResults(searchResults, bundle, chunks, matches) {
   const oldBundlesMatching = searchResults.bundlesMatching;
   const oldChunks = searchResults.chunks;
   const oldMatches = searchResults.matches;
