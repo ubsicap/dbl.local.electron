@@ -1,4 +1,5 @@
 import traverse from 'traverse';
+import log from 'electron-log';
 import { bundleConstants } from '../constants/bundle.constants';
 import { bundleService } from '../services/bundle.service';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
@@ -71,9 +72,9 @@ export function setupBundlesEventSource(authentication) {
       console.log('Connection to event source opened.');
     };
     eventSource.onerror = (error) => {
-      console.log('EventSource failed.');
+      console.log('EventSource error.');
       console.log(error);
-      eventSource.close();
+      log.error(JSON.stringify(error.data));
     };
     const listeners = {
       'storer/execute_task': listenStorerExecuteTaskDownloadResources,
