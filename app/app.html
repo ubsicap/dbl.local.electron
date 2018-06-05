@@ -2,9 +2,11 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Nathanael (electron.DBL.local)</title>
+    <title>Nathanael</title>
     <script>
       (function() {
+        const { app } = require('electron').remote;
+        document.getElementsByTagName('title')[0].innerText = `Nathanael (v${app.getVersion()})`;
         if (!process.env.HOT) {
           const link = document.createElement('link');
           link.rel = 'stylesheet';
