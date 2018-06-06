@@ -9,10 +9,11 @@ export const bundleFilterActions = {
 
 export default bundleFilterActions;
 
-export function updateSearchInput(searchInput, bundles) {
-  return dispatch => {
+export function updateSearchInput(searchInput) {
+  return (dispatch, getState) => {
     const trimmedSearchInput = searchInput.trim();
     const searchKeywords = split(searchInput, { separator: ' ' });
+    const { bundles } = getState();
     if (trimmedSearchInput.length > 0) {
       dispatch({
         type: bundleFilterConstants.UPDATE_SEARCH_INPUT,

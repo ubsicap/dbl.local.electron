@@ -69,7 +69,7 @@ class Bundles extends PureComponent<Props> {
 
   onChangeSearchInput = (event) => {
     const inputValue = event.target.value;
-    this.props.updateSearchInput(inputValue, this.props.bundles);
+    this.props.updateSearchInput(inputValue);
   }
 
   searchInputValue = () => {
