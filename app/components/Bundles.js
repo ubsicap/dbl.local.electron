@@ -77,6 +77,12 @@ class Bundles extends PureComponent<Props> {
     return bundlesFilter.isSearchActive ? bundlesFilter.searchInputRaw : '';
   }
 
+  displayRow = (bundle) => {
+    const { bundlesFilter } = this.props;
+    return !(bundlesFilter.isSearchActive) ||
+     bundle.id in bundlesFilter.searchResults.bundlesMatching;
+  }
+
   render() {
     const { bundles, bundlesFilter } = this.props;
     return (
@@ -91,7 +97,7 @@ class Bundles extends PureComponent<Props> {
               <CircularProgress size={80} thickness={5} />
             </div>
           }
-          {bundles.items && bundles.items.filter((b) => displayRow(bundlesFilter, b)).map((d) => (
+          {bundles.items && bundles.items.filter(this.displayRow).map((d) => (
             <DBLEntryRow
               key={d.id}
               bundleId={d.id}
@@ -109,8 +115,3 @@ export default connect(
   mapStateToProps,
   mapDispatchToProps,
 )(Bundles);
-
-function displayRow(bundlesFilter, bundle) {
-  return !(bundlesFilter.isSearchActive) ||
-   bundle.id in bundlesFilter.searchResults.bundlesMatching;
-}
