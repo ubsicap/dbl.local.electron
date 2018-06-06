@@ -2,6 +2,7 @@ import traverse from 'traverse';
 import log from 'electron-log';
 import { bundleConstants } from '../constants/bundle.constants';
 import { bundleService } from '../services/bundle.service';
+import { updateSearchResultsForBundle, updateSearchResultsForBundleId } from '../actions/bundleFilter.actions';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 
 export const bundleActions = {
@@ -62,7 +63,7 @@ export function fetchAll() {
 }
 
 export function setupBundlesEventSource(authentication) {
-  return dispatch => {
+  return (dispatch, getState) => {
     console.log('SSE connect to Bundles');
     const eventSource = new EventSource(`${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/events/${authentication.user.auth_token}`);
     eventSource.onmessage = (event) => {
@@ -80,10 +81,10 @@ export function setupBundlesEventSource(authentication) {
       'storer/execute_task': listenStorerExecuteTaskDownloadResources,
       'storer/change_mode': listenStorerChangeMode,
       'downloader/receiver': listenDownloaderReceiver,
-      'downloader/status': (e) => listenDownloaderStatus(e, dispatch),
-      'downloader/spec_status': (e) => listenDownloaderStatus(e, dispatch),
-      'storer/delete_resource': (e) => listenStorerDeleteResource(e, dispatch),
-      'storer/update_from_download': (e) => listenStorerUpdateFromDownload(e, dispatch),
+      'downloader/status': (e) => listenDownloaderSpecStatus(e, dispatch, getState),
+      'downloader/spec_status': (e) => listenDownloaderSpecStatus(e, dispatch, getState),
+      'storer/delete_resource': (e) => listenStorerDeleteResource(e, dispatch, getState),
+      'storer/update_from_download': (e) => listenStorerUpdateFromDownload(e, dispatch, getState),
     };
     Object.keys(listeners).forEach((evType) => {
       const handler = listeners[evType];
@@ -123,7 +124,7 @@ export function setupBundlesEventSource(authentication) {
    * 'data': {'args': ('48a8e8fe-76ac-45d6-9b3a-d7d99ead7224', 4, 8),
    *          'component': 'downloader', 'type': 'status'}}
    */
-  function listenDownloaderStatus(e, dispatch) {
+  function listenDownloaderSpecStatus(e, dispatch) {
     // console.log(e);
     const data = JSON.parse(e.data);
     if (data.args.length !== 3) {
@@ -133,6 +134,7 @@ export function setupBundlesEventSource(authentication) {
     const resourcesDownloaded = data.args[1];
     const resourcesToDownload = data.args[2];
     dispatch(updateDownloadStatus(bundleId, resourcesDownloaded, resourcesToDownload));
+    dispatch(updateSearchResultsForBundleId(bundleId));
   }
 
   function updateDownloadStatus(_id, resourcesDownloaded, resourcesToDownload) {
@@ -150,6 +152,7 @@ export function setupBundlesEventSource(authentication) {
     const bundleId = data.args[0];
     const resourceToRemove = data.args[1];
     dispatch(updateRemoveResourcesStatus(bundleId, resourceToRemove));
+    dispatch(updateSearchResultsForBundleId(bundleId));
   }
 
   function updateRemoveResourcesStatus(_id, resourceToRemove) {
@@ -169,6 +172,7 @@ export function setupBundlesEventSource(authentication) {
       // we just downloaded metadata.xml
       const bundle = bundleService.convertApiBundleToNathanaelBundle(apiBundle);
       dispatch(addBundle(bundle));
+      dispatch(updateSearchResultsForBundle(bundle));
     }
   }
 
@@ -187,6 +191,7 @@ export function downloadResources(id) {
        * but that results in "TypeError: Assignment to constant variable." */
       let manifestResourcePaths = await bundleService.getManifestResourcePaths(id); // eslint-disable-line prefer-const, max-len
       dispatch(request(id, manifestResourcePaths));
+      dispatch(updateSearchResultsForBundleId(id));
       await bundleService.downloadResources(id);
     } catch (error) {
       dispatch(failure(id, error));
@@ -205,6 +210,7 @@ export function removeResources(id) {
     try {
       const resourcePathsToRemove = await bundleService.getResourcePaths(id);
       dispatch(request(id, resourcePathsToRemove));
+      dispatch(updateSearchResultsForBundleId(id));
       await bundleService.removeResources(id);
     } catch (error) {
       dispatch(failure(id, error));
@@ -257,6 +263,7 @@ export function requestSaveBundleTo(id, selectedFolder) {
     }, {});
     let bundleBytesSaved = 0;
     dispatch(request(id, selectedFolder, bundleBytesToSave, resourcePaths));
+    dispatch(updateSearchResultsForBundleId(id));
     resourcePaths.forEach(async resourcePath => {
       try {
         const downloadItem = await bundleService.requestSaveResourceTo(
@@ -277,6 +284,7 @@ export function requestSaveBundleTo(id, selectedFolder) {
                 bundleBytesToSave
               };
               dispatch(updated(updatedArgs));
+              dispatch(updateSearchResultsForBundle(id));
             }
           }
         );

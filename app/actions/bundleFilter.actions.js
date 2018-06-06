@@ -5,6 +5,7 @@ import { bundleFilterConstants } from '../constants/bundleFilter.constants';
 export const bundleFilterActions = {
   updateSearchInput,
   updateSearchResultsForBundle,
+  updateSearchResultsForBundleId,
   clearSearch
 };
 
@@ -72,6 +73,14 @@ export function updateSearchInput(searchInput) {
   }
 }
 
+export function updateSearchResultsForBundleId(bundleId) {
+  return (dispatch, getState) => {
+    const { bundles } = getState();
+    const searchableBundle = bundles.items.find(bundle => bundle.id === bundleId);
+    dispatch(updateSearchResultsForBundle(searchableBundle));
+  };
+}
+
 export function updateSearchResultsForBundle(searchableBundle) {
   return (dispatch, getState) => {
     const { bundlesFilter } = getState();
@@ -80,9 +89,9 @@ export function updateSearchResultsForBundle(searchableBundle) {
       return;
     }
     const bundleSearchResults = getBundleSearchResults(searchableBundle, searchKeywords, {});
-    const { chunksInBundle, matchesInBundle } = bundleSearchResults;
-    if (Object.keys(matchesInBundle).length > 0) {
-      dispatch(addSearchMatch(searchableBundle, chunksInBundle, matchesInBundle));
+    const { chunks, matches } = bundleSearchResults;
+    if (Object.keys(matches).length > 0) {
+      dispatch(addSearchMatch(searchableBundle, chunks, matches));
     } else {
       dispatch(removeSearchMatch(searchableBundle));
     }
