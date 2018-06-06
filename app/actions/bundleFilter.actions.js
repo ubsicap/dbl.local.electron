@@ -17,7 +17,7 @@ export function updateSearchInput(searchInput) {
     const trimmedSearchInput = searchInput.trim();
     const searchKeywords = split(trimmedSearchInput, { separator: ' ' });
     const { bundles } = getState();
-    if (trimmedSearchInput.length > 0) {
+    if (trimmedSearchInput.length > 0 && !bundles.loading) {
       dispatch({
         type: bundleFilterConstants.UPDATE_SEARCH_INPUT,
         searchInput: trimmedSearchInput,
