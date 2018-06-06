@@ -57,6 +57,7 @@ export function bundlesFilter(state = { isSearchActive: false }, action) {
       return {
         isSearchActive: false,
         searchInput: '',
+        searchInputRaw: '',
         searchKeywords: [],
         searchResults: {}
       };
