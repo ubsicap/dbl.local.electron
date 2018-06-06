@@ -1,21 +1,32 @@
 import { bundleFilterConstants } from '../constants/bundleFilter.constants';
 
+function areArraysEqual(a1, a2) {
+  return JSON.stringify(a1 || []) === JSON.stringify(a2 || []);
+}
+
+const initialSearchResults = {
+  bundlesMatching: {},
+  chunks: {},
+  matches: {}
+};
+
 export function bundlesFilter(state = { isSearchActive: false }, action) {
   switch (action.type) {
     case bundleFilterConstants.UPDATE_SEARCH_INPUT: {
-      const bundles = { ...action.bundles };
+      const hasBundlesChanged = (state.bundles || { items: [] }).length !== action.bundles.items.length;
+      const bundles = hasBundlesChanged ? { ...action.bundles } : state.bundles;
+      const hasKeywordsChanged = !areArraysEqual(state.searchKeywords, action.searchKeywords);
+      const searchKeywords = hasKeywordsChanged ? action.searchKeywords : state.searchKeywords;
+      const isLoading = action.willRecomputeAllSearchResults;
+      const searchResults = isLoading ? initialSearchResults : state.searchResults;
       return {
         isSearchActive: true,
-        isLoading: true,
+        isLoading,
         searchInput: action.searchInput,
         searchInputRaw: action.searchInputRaw,
-        searchKeywords: action.searchKeywords,
+        searchKeywords,
         bundles,
-        searchResults: {
-          bundlesMatching: {},
-          chunks: {},
-          matches: {}
-        }
+        searchResults
       };
     } case bundleFilterConstants.UPDATE_SEARCH_RESULTS: {
       return {

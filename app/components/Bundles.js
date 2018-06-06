@@ -86,7 +86,7 @@ class Bundles extends PureComponent<Props> {
           searchInputValue={this.searchInputValue()}
         />
         <div>
-          {bundles.loading &&
+          {(bundles.loading || bundlesFilter.isLoading) &&
             <div className="row" style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <CircularProgress size={80} thickness={5} />
             </div>

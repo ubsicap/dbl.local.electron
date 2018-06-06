@@ -16,15 +16,20 @@ export function updateSearchInput(searchInput) {
   return (dispatch, getState) => {
     const trimmedSearchInput = searchInput.trim();
     const searchKeywords = split(trimmedSearchInput, { separator: ' ' });
-    const { bundles } = getState();
+    const { bundles, bundlesFilter } = getState();
     if (trimmedSearchInput.length > 0 && !bundles.loading) {
+      const willRecomputeAllSearchResults = trimmedSearchInput !== bundlesFilter.searchInput;
       dispatch({
         type: bundleFilterConstants.UPDATE_SEARCH_INPUT,
         searchInput: trimmedSearchInput,
-        seachInputRaw: searchInput,
+        searchInputRaw: searchInput,
         searchKeywords,
+        willRecomputeAllSearchResults,
         bundles
       });
+      if (!willRecomputeAllSearchResults) {
+        return; // don't try to find new results yet
+      }
       const searchResults = getAllSearchResults(bundles.items, searchKeywords, getState);
       if (searchResults === canceledState) {
         return; // cancel these results
