@@ -74,7 +74,7 @@ class Bundles extends PureComponent<Props> {
 
   searchInputValue = () => {
     const { bundlesFilter } = this.props;
-    return bundlesFilter.isSearchActive ? bundlesFilter.searchInput : '';
+    return bundlesFilter.isSearchActive ? bundlesFilter.searchInputRaw : '';
   }
 
   render() {

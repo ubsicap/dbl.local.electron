@@ -6,7 +6,9 @@ export function bundlesFilter(state = { isSearchActive: false }, action) {
       const bundles = { ...action.bundles };
       return {
         isSearchActive: true,
+        isLoading: true,
         searchInput: action.searchInput,
+        searchInputRaw: action.searchInputRaw,
         searchKeywords: action.searchKeywords,
         bundles,
         searchResults: {
@@ -18,6 +20,7 @@ export function bundlesFilter(state = { isSearchActive: false }, action) {
     } case bundleFilterConstants.UPDATE_SEARCH_RESULTS: {
       return {
         ...state,
+        isLoading: false,
         searchResults: { ...action.searchResults }
       };
     } case bundleFilterConstants.ADD_SEARCH_MATCH: {

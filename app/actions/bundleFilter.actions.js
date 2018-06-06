@@ -4,40 +4,54 @@ import { bundleFilterConstants } from '../constants/bundleFilter.constants';
 
 export const bundleFilterActions = {
   updateSearchInput,
+  updateSearchResultsForBundle,
   clearSearch
 };
 
 export default bundleFilterActions;
 
+const canceledState = { isCanceled: true };
+
 export function updateSearchInput(searchInput) {
   return (dispatch, getState) => {
     const trimmedSearchInput = searchInput.trim();
-    const searchKeywords = split(searchInput, { separator: ' ' });
+    const searchKeywords = split(trimmedSearchInput, { separator: ' ' });
     const { bundles } = getState();
     if (trimmedSearchInput.length > 0) {
       dispatch({
         type: bundleFilterConstants.UPDATE_SEARCH_INPUT,
         searchInput: trimmedSearchInput,
+        seachInputRaw: searchInput,
         searchKeywords,
         bundles
       });
-      const searchResults = getAllSearchResults(bundles.items, searchKeywords);
+      const searchResults = getAllSearchResults(bundles.items, searchKeywords, getState);
+      if (searchResults === canceledState) {
+        return; // cancel these results
+      }
       dispatch(updateSearchResults(searchResults));
     } else {
       dispatch(clearSearch());
     }
+
+    function updateSearchResults(searchResults) {
+      return {
+        type: bundleFilterConstants.UPDATE_SEARCH_RESULTS, searchResults
+      };
+    }
   };
 
-  /*
-  findChunks({
-    autoEscape,
-    caseSensitive,
-    sanitize,
-    searchWords,
-    textToHighlight})
-  */
-  function getAllSearchResults(searchableBundles, searchKeywords) {
+  function shouldCancelResults(getState, searchKeywords) {
+    const { bundlesFilter } = getState();
+    const { isSearchActive, searchKeywords: oldSearchKeywords } = bundlesFilter;
+    return !isSearchActive || oldSearchKeywords !== searchKeywords;
+  }
+
+  function getAllSearchResults(searchableBundles, searchKeywords, getState) {
     const searchResults = Object.values(searchableBundles).reduce((acc, searchableBundle) => {
+      if (shouldCancelResults(getState, searchKeywords)) {
+        return canceledState; // cancel results
+      }
       const bundleSearchResults = getBundleSearchResults(
         searchableBundle,
         searchKeywords,
@@ -53,6 +67,42 @@ export function updateSearchInput(searchInput) {
   }
 }
 
+export function updateSearchResultsForBundle(searchableBundle) {
+  return (dispatch, getState) => {
+    const { bundlesFilter } = getState();
+    const { isSearchActive, searchKeywords } = bundlesFilter;
+    if (!isSearchActive) {
+      return;
+    }
+    const bundleSearchResults = getBundleSearchResults(searchableBundle, searchKeywords, {});
+    const { chunksInBundle, matchesInBundle } = bundleSearchResults;
+    if (Object.keys(matchesInBundle).length > 0) {
+      dispatch(addSearchMatch(searchableBundle, chunksInBundle, matchesInBundle));
+    } else {
+      dispatch(removeSearchMatch(searchableBundle));
+    }
+  };
+
+  function addSearchMatch(bundle, chunks, matches) {
+    return {
+      type: bundleFilterConstants.ADD_SEARCH_MATCH, bundle, chunks, matches
+    };
+  }
+
+  function removeSearchMatch(bundle) {
+    return {
+      type: bundleFilterConstants.REMOVE_SEARCH_MATCH, bundle
+    };
+  }
+}
+/*
+findChunks({
+  autoEscape,
+  caseSensitive,
+  sanitize,
+  searchWords,
+  textToHighlight})
+*/
 function getBundleSearchResults(searchableBundle, searchKeywords, chunksAcrossBundles) {
   const bundleSearchResults = Object.values(searchableBundle.displayAs).reduce((acc, searchable) => {
     let chunksForSearchable = chunksAcrossBundles[searchable];
@@ -74,25 +124,6 @@ function getBundleSearchResults(searchableBundle, searchKeywords, chunksAcrossBu
     matches: {}
   });
   return bundleSearchResults;
-  /*
-  if (Object.keys(matchesInBundle).length > 0) {
-    dispatch(addSearchMatch(searchableBundle, chunksInBundle, matchesInBundle));
-  } else {
-    dispatch(removeSearchMatch(searchableBundle));
-  }
-  */
-}
-
-export function addSearchMatch(bundle, chunks, matches) {
-  return {
-    type: bundleFilterConstants.ADD_SEARCH_MATCH, bundle, chunks, matches
-  };
-}
-
-export function removeSearchMatch(bundle) {
-  return {
-    type: bundleFilterConstants.REMOVE_SEARCH_MATCH, bundle
-  };
 }
 
 function combineSearchResults(searchResults, bundle, chunks, matches) {
@@ -107,13 +138,6 @@ function combineSearchResults(searchResults, bundle, chunks, matches) {
     bundlesMatching: { ...oldBundlesMatching, ...newMatchingBundle },
     chunks: { ...oldChunks, ...newChunks },
     matches: { ...oldMatches, ...newMatches }
-  };
-}
-
-
-export function updateSearchResults(searchResults) {
-  return {
-    type: bundleFilterConstants.UPDATE_SEARCH_RESULTS, searchResults
   };
 }
 
