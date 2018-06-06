@@ -85,18 +85,20 @@ class DBLEntryRow extends PureComponent<Props> {
       || (progress && progress < 100)) === true;
   }
 
+  emptyMatches = [];
+
   updateMatches = (options) => {
     const { bundlesFilter, bundleId } = this.props;
     if (!bundlesFilter.isSearchActive) {
-      return [];
+      return this.emptyMatches;
     }
     const { searchResults } = bundlesFilter;
     const { bundlesMatching, chunks } = searchResults;
     const hasMatchInBundle = bundleId in bundlesMatching;
     if (hasMatchInBundle) {
-      return chunks[options.textToHighlight] || [];
+      return chunks[options.textToHighlight] || this.emptyMatches;
     }
-    return [];
+    return this.emptyMatches;
   }
 
   getHighlighterSharedProps = () => {
