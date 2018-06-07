@@ -6,6 +6,11 @@ import { configureStore, history } from './store/configureStore';
 import './app.global.scss';
 import { userService } from './services/user.service';
 
+if (process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true') {
+  const { registerObserver } = require('react-perf-devtool'); // eslint-disable-line global-require
+  registerObserver();
+}
+
 const store = configureStore();
 userService.logout().catch((error) => {
   console.log(error);
