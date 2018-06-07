@@ -35,11 +35,11 @@ const installExtensions = async () => {
   const extensions = [
     'REACT_DEVELOPER_TOOLS',
     'REDUX_DEVTOOLS',
-    'fcombecpigkkfcbfaeikoeegkmkjfbfm'
+    'fcombecpigkkfcbfaeikoeegkmkjfbfm' /* React Performance Devtool */
   ];
 
   return Promise
-    .all(extensions.map(name => (name in installer ? installer.default(installer[name], forceDownload) : installer.default(name, forceDownload))))
+    .all(extensions.map(name => installer.default(installer[name] || name, forceDownload)))
     .catch(console.log);
 };
 
