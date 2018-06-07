@@ -13,12 +13,11 @@ const initialSearchResults = {
 export function bundlesFilter(state = { isSearchActive: false }, action) {
   switch (action.type) {
     case bundleFilterConstants.UPDATE_SEARCH_INPUT: {
-      const hasBundlesChanged = (state.bundles || { items: [] }).length !== action.bundles.items.length;
-      const bundles = hasBundlesChanged ? { ...action.bundles } : state.bundles;
       const hasKeywordsChanged = !areArraysEqual(state.searchKeywords, action.searchKeywords);
       const searchKeywords = hasKeywordsChanged ? action.searchKeywords : state.searchKeywords;
       const isLoading = action.willRecomputeAllSearchResults;
       const searchResults = isLoading ? initialSearchResults : state.searchResults;
+      const { bundles } = isLoading ? action : state;
       return {
         isSearchActive: true,
         isLoading,
