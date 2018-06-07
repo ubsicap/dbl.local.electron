@@ -78,29 +78,35 @@ const RESOURCE_API_LIST = RESOURCE_API;
       mode: 'PAUSED'
    },
  */
-function fetchAll() {
+async function fetchAll() {
   const requestOptions = {
     method: 'GET',
     headers: authHeader()
   };
-  return fetch(
+  const response = await fetch(
     `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API_LIST}`,
     requestOptions
-  )
-    .then(handleResponse)
-    .then(convertBundleApiListToBundles);
-}
-
-function convertBundleApiListToBundles(apiBundles) {
-  const bundles = Object.values(apiBundles)
-    .filter(apiBundle => apiBundle.metadata)
-    .map(apiBundle => convertApiBundleToNathanaelBundle(apiBundle));
+  );
+  const apiBundles = await handleResponse(response);
+  const bundles = await convertBundleApiListToBundles(apiBundles);
   return bundles;
 }
 
-function convertApiBundleToNathanaelBundle(apiBundle) {
+function convertBundleApiListToBundles(apiBundles) {
+  const bundles = Promise.all(Object.values(apiBundles)
+    .filter(apiBundle => apiBundle.metadata)
+    .map(convertApiBundleToNathanaelBundle));
+  return bundles;
+}
+
+/* from https://stackoverflow.com/a/19746771 */
+function areEqualArrays(a1, a2) {
+  return a1.length === a2.length && a1.every((v, i) => v === a2[i]);
+}
+
+async function convertApiBundleToNathanaelBundle(apiBundle) {
   const {
-    mode, metadata, dbl, store
+    mode, metadata, dbl
   } = apiBundle;
   const bundleId = apiBundle.local_id;
   let task = dbl.currentRevision === '0' ? 'UPLOAD' : 'DOWNLOAD';
@@ -111,36 +117,18 @@ function convertApiBundleToNathanaelBundle(apiBundle) {
   } if (mode === 'upload') {
     task = 'UPLOAD';
     status = 'IN_PROGRESS';
-  } else if (mode === 'store') {
-    const { history } = store;
-    const historyReversed = history.slice().reverse();
-    const eventUpdateStore = historyReversed.find(event => event.type === 'updateStore');
-    if (eventUpdateStore && eventUpdateStore.message && eventUpdateStore.message === 'download') {
-      const indexOfDownloadResources = historyReversed.findIndex(event => event.type === 'executeTask' && event.message === 'downloadResources');
-      const indexOfUpdateStoreDownload = historyReversed.indexOf(eventUpdateStore);
-      const indexOfRemoveLocalResources = historyReversed.findIndex(event => event.type === 'executeTask' && event.message === 'removeLocalResources');
-      const indexOfChangeModeStore = historyReversed.findIndex(event => event.type === 'changeMode' && event.message === 'store');
-      if (
-        indexOfRemoveLocalResources !== -1 &&
-        indexOfRemoveLocalResources < indexOfDownloadResources
-      ) {
-        if (indexOfChangeModeStore !== -1 && indexOfChangeModeStore < indexOfDownloadResources) {
-          task = 'DOWNLOAD';
-          status = 'NOT_STARTED';
-        } else {
-          task = 'REMOVE_RESOURCES';
-          status = 'IN_PROGRESS';
-        }
-      } else if (indexOfDownloadResources !== -1) {
-        task = 'DOWNLOAD';
-        if (
-          indexOfUpdateStoreDownload !== -1 &&
-          indexOfUpdateStoreDownload < indexOfDownloadResources
-        ) {
-          status = 'COMPLETED';
-        }
-      }
+  } else if (mode === 'store' && task === 'DOWNLOAD') {
+    // compare the manifest and resources to determine whether user can download more or not.
+    const manifestPaths = await getManifestResourcePaths(bundleId);
+    const resourcePaths = await getResourcePaths(bundleId);
+    if (areEqualArrays(manifestPaths, resourcePaths)) {
+      status = 'COMPLETED';
+    } else {
+      status = 'NOT_STARTED';
     }
+    // btw. it's possible that it could be in the process of REMOVE_RESOURCES,
+    // but that's typically going to be so fast
+    // we can probably just display it as ready to download.
   }
   return {
     id: bundleId,
