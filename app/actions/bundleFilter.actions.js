@@ -4,7 +4,6 @@ import { bundleFilterConstants } from '../constants/bundleFilter.constants';
 
 export const bundleFilterActions = {
   updateSearchInput,
-  updateSearchResultsForBundle,
   updateSearchResultsForBundleId,
   clearSearch
 };
@@ -77,11 +76,14 @@ export function updateSearchResultsForBundleId(bundleId) {
   return (dispatch, getState) => {
     const { bundles } = getState();
     const searchableBundle = bundles.items.find(bundle => bundle.id === bundleId);
+    if (!searchableBundle) {
+      return;
+    }
     dispatch(updateSearchResultsForBundle(searchableBundle));
   };
 }
 
-export function updateSearchResultsForBundle(searchableBundle) {
+function updateSearchResultsForBundle(searchableBundle) {
   return (dispatch, getState) => {
     const { bundlesFilter } = getState();
     const { isSearchActive, searchKeywords } = bundlesFilter;

@@ -2,7 +2,7 @@ import traverse from 'traverse';
 import log from 'electron-log';
 import { bundleConstants } from '../constants/bundle.constants';
 import { bundleService } from '../services/bundle.service';
-import { updateSearchResultsForBundle, updateSearchResultsForBundleId } from '../actions/bundleFilter.actions';
+import { updateSearchResultsForBundleId } from '../actions/bundleFilter.actions';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 
 export const bundleActions = {
@@ -172,7 +172,7 @@ export function setupBundlesEventSource(authentication) {
       // we just downloaded metadata.xml
       const bundle = bundleService.convertApiBundleToNathanaelBundle(apiBundle);
       dispatch(addBundle(bundle));
-      dispatch(updateSearchResultsForBundle(bundle));
+      dispatch(updateSearchResultsForBundleId(bundle.id));
     }
   }
 
