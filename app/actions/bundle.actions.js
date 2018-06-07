@@ -170,7 +170,7 @@ export function setupBundlesEventSource(authentication) {
     const fileInfoKeys = Object.keys(apiBundle.store.file_info);
     if (fileInfoKeys.length === 1 && fileInfoKeys[0] === 'metadata.xml') {
       // we just downloaded metadata.xml
-      const bundle = bundleService.convertApiBundleToNathanaelBundle(apiBundle);
+      const bundle = await bundleService.convertApiBundleToNathanaelBundle(apiBundle);
       dispatch(addBundle(bundle));
       dispatch(updateSearchResultsForBundleId(bundle.id));
     }
