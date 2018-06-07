@@ -105,7 +105,13 @@ function convertApiBundleToNathanaelBundle(apiBundle) {
   const bundleId = apiBundle.local_id;
   let task = dbl.currentRevision === '0' ? 'UPLOAD' : 'DOWNLOAD';
   let status = dbl.currentRevision === '0' ? 'DRAFT' : 'NOT_STARTED';
-  if (mode === 'store') {
+  if (mode === 'download') {
+    task = 'DOWNLOAD';
+    status = 'IN_PROGRESS';
+  } if (mode === 'upload') {
+    task = 'UPLOAD';
+    status = 'IN_PROGRESS';
+  } else if (mode === 'store') {
     const { history } = store;
     const historyReversed = history.slice().reverse();
     const eventUpdateStore = historyReversed.find(event => event.type === 'updateStore');
@@ -132,8 +138,6 @@ function convertApiBundleToNathanaelBundle(apiBundle) {
           indexOfUpdateStoreDownload < indexOfDownloadResources
         ) {
           status = 'COMPLETED';
-        } else {
-          status = 'IN_PROGRESS';
         }
       }
     }
