@@ -16,8 +16,13 @@ import { updateSearchInput, clearSearch } from '../actions/bundleFilter.actions'
 
 function mapStateToProps(state) {
   const { bundlesFilter } = state;
+  const { isLoading: isLoadingSearch } = bundlesFilter;
+  const { isSearchActive } = bundlesFilter;
+  const { searchInputRaw } = bundlesFilter;
   return {
-    bundlesFilter
+    isLoadingSearch,
+    isSearchActive,
+    searchInputRaw
   };
 }
 
@@ -28,7 +33,8 @@ const mapDispatchToProps = {
 
 type Props = {
     classes: {},
-    bundlesFilter: {},
+    isSearchActive: boolean,
+    searchInputRaw: ?string,
     updateSearchInput: () => {},
     clearSearch: () => {}
 };
@@ -79,8 +85,8 @@ class MenuAppBar extends React.PureComponent {
   }
 
   searchInputValue = () => {
-    const { bundlesFilter } = this.props;
-    return bundlesFilter.isSearchActive ? bundlesFilter.searchInputRaw : '';
+    const { isSearchActive, searchInputRaw } = this.props;
+    return isSearchActive ? searchInputRaw : '';
   }
 
   render() {

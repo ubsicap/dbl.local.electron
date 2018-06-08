@@ -17,7 +17,14 @@ type Props = {
 };
 
 function mapStateToProps(state) {
-  const { bundles, bundlesFilter, authentication } = state;
+  const { bundles, bundlesFilter: origBundlesFilter, authentication } = state;
+  const bundlesMatching = origBundlesFilter.searchResults ?
+    origBundlesFilter.searchResults.bundlesMatching : {};
+  const bundlesFilter = {
+    isLoading: origBundlesFilter.isLoading || false,
+    isSearchActive: origBundlesFilter.isSearchActive || false,
+    bundlesMatching
+  };
   return {
     bundles,
     bundlesFilter,
@@ -58,7 +65,7 @@ class Bundles extends PureComponent<Props> {
   displayRow = (bundle) => {
     const { bundlesFilter } = this.props;
     return !(bundlesFilter.isSearchActive) ||
-     bundle.id in bundlesFilter.searchResults.bundlesMatching;
+     bundle.id in bundlesFilter.bundlesMatching;
   }
 
   render() {
