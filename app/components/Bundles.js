@@ -2,20 +2,15 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import CircularProgress from 'material-ui/CircularProgress';
 import { navigationConstants } from '../constants/navigation.constants';
+import { history } from '../store/configureStore';
 import DBLEntryRow from './DBLEntryRow';
 import { mockFetchAll, fetchAll,
   setupBundlesEventSource } from '../actions/bundle.actions';
-import { updateSearchInput, clearSearch } from '../actions/bundleFilter.actions';
-import styles from './Bundles.css';
-import MenuAppBar from './MenuAppBar';
 
 type Props = {
   fetchAll: () => {},
   mockFetchAll: () => {},
   setupBundlesEventSource: () => {},
-  updateSearchInput: () => {},
-  clearSearch: () => {},
-  history: {},
   bundles: {},
   bundlesFilter: {},
   authentication: {}
@@ -33,24 +28,17 @@ function mapStateToProps(state) {
 const mapDispatchToProps = {
   fetchAll,
   mockFetchAll,
-  setupBundlesEventSource,
-  updateSearchInput,
-  clearSearch
+  setupBundlesEventSource
 };
 
 class Bundles extends PureComponent<Props> {
   props: Props;
   componentDidMount() {
-    const { history, clearSearch: clearSearchResults } = this.props;
     if (history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO) {
       this.props.mockFetchAll();
     } else {
       this.props.fetchAll();
     }
-    history.listen(() => {
-      // clear search results on location change
-      clearSearchResults();
-    });
     console.log('Bundles did mount');
     const { authentication } = this.props;
     if (authentication.user) {
@@ -67,16 +55,6 @@ class Bundles extends PureComponent<Props> {
     }
   }
 
-  onChangeSearchInput = (event) => {
-    const inputValue = event.target.value;
-    this.props.updateSearchInput(inputValue);
-  }
-
-  searchInputValue = () => {
-    const { bundlesFilter } = this.props;
-    return bundlesFilter.isSearchActive ? bundlesFilter.searchInputRaw : '';
-  }
-
   displayRow = (bundle) => {
     const { bundlesFilter } = this.props;
     return !(bundlesFilter.isSearchActive) ||
@@ -86,26 +64,19 @@ class Bundles extends PureComponent<Props> {
   render() {
     const { bundles, bundlesFilter } = this.props;
     return (
-      <div className={styles.container} style={{ paddingTop: '68px' }} data-tid="container">
-        <MenuAppBar
-          onChangeSearchInput={this.onChangeSearchInput}
-          searchInputValue={this.searchInputValue()}
-        />
-        <div>
-          {(bundles.loading || bundlesFilter.isLoading) &&
-            <div className="row" style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <CircularProgress size={80} thickness={5} />
-            </div>
-          }
-          {bundles.items && bundles.items.filter(this.displayRow).map((d) => (
-            <DBLEntryRow
-              key={d.id}
-              bundleId={d.id}
-              {...d}
-              isSelected={bundles.selectedBundle && bundles.selectedBundle.id === d.id}
-            />))}
-        </div>
-
+      <div>
+        {(bundles.loading || bundlesFilter.isLoading) &&
+          <div className="row" style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <CircularProgress size={80} thickness={5} />
+          </div>
+        }
+        {bundles.items && bundles.items.filter(this.displayRow).map((d) => (
+          <DBLEntryRow
+            key={d.id}
+            bundleId={d.id}
+            {...d}
+            isSelected={bundles.selectedBundle && bundles.selectedBundle.id === d.id}
+          />))}
       </div>
     );
   }
