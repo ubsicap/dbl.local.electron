@@ -6,7 +6,6 @@ function areArraysEqual(a1, a2) {
 
 const initialSearchResults = {
   bundlesMatching: {},
-  chunks: {},
   matches: {}
 };
 
@@ -35,17 +34,14 @@ export function bundlesFilter(state = { isSearchActive: false }, action) {
       };
     } case bundleFilterConstants.ADD_SEARCH_MATCH: {
       const oldBundlesMatching = state.searchResults.bundlesMatching;
-      const oldChunks = state.searchResults.chunks;
       const oldMatches = state.searchResults.matches;
       const key = action.bundle.id;
-      const newMatchingBundle = { [key]: action.bundle };
-      const newChunks = action.chunks;
+      const newMatchingBundle = { [key]: action.matches };
       const newMatches = action.matches;
       return {
         ...state,
         searchResults: {
           bundlesMatching: { ...oldBundlesMatching, ...newMatchingBundle },
-          chunks: { ...oldChunks, ...newChunks },
           matches: { ...oldMatches, ...newMatches }
         }
       };

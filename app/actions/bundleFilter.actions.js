@@ -147,9 +147,9 @@ function combineSearchResults(searchResults, bundle, chunks, matches) {
   const oldChunks = searchResults.chunks;
   const oldMatches = searchResults.matches;
   const key = bundle.id;
-  const newMatchingBundle = { [key]: bundle };
-  const newChunks = chunks;
   const newMatches = matches;
+  const newMatchingBundle = { [key]: newMatches };
+  const newChunks = chunks;
   return {
     bundlesMatching: { ...oldBundlesMatching, ...newMatchingBundle },
     chunks: { ...oldChunks, ...newChunks },
