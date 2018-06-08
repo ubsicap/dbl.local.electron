@@ -14,6 +14,7 @@ import CallSplit from 'material-ui/svg-icons/communication/call-split';
 import ActionInfo from 'material-ui/svg-icons/action/info';
 import ActionDelete from 'material-ui/svg-icons/action/delete';
 import styles from './DBLEntryRow.css';
+import PureHighlighter from './PureHighlighter';
 import { toggleSelectBundle, requestSaveBundleTo, removeResources, downloadResources } from '../actions/bundle.actions';
 
 const { dialog, app } = require('electron').remote;
@@ -26,7 +27,8 @@ type Props = {
   status: string,
   medium: string,
   displayAs: {},
-  bundlesFilter: {},
+  isSearchActive: boolean,
+  matches: {},
   bundlesSaveTo: {},
   progress?: ?number,
   isDownloaded: ?boolean,
@@ -46,8 +48,11 @@ const mapDispatchToProps = {
 
 function mapStateToProps(state) {
   const { bundlesFilter, bundlesSaveTo } = state;
+  const { isSearchActive, searchResults = {} } = bundlesFilter;
+  const { matches = {} } = searchResults;
   return {
-    bundlesFilter,
+    isSearchActive,
+    matches,
     bundlesSaveTo
   };
 }
@@ -87,28 +92,15 @@ class DBLEntryRow extends PureComponent<Props> {
 
   emptyMatches = [];
 
-  updateMatches = (options) => {
-    const { bundlesFilter, bundleId } = this.props;
-    if (!bundlesFilter.isSearchActive) {
-      return this.emptyMatches;
-    }
-    const { searchResults } = bundlesFilter;
-    const { bundlesMatching, chunks } = searchResults;
-    const hasMatchInBundle = bundleId in bundlesMatching;
-    if (hasMatchInBundle) {
-      return chunks[options.textToHighlight] || this.emptyMatches;
-    }
-    return this.emptyMatches;
+  getMatches = (textToHighlight) => {
+    const { isSearchActive, matches } = this.props;
+    return isSearchActive ? (matches[textToHighlight] || this.emptyMatches) : this.emptyMatches;
   }
 
-  getHighlighterSharedProps = () => {
-    const { bundlesFilter } = this.props;
-    return {
-      searchWords: bundlesFilter.isSearchActive ? bundlesFilter.searchKeywords : [],
-      highlightClassName: styles.Highlight,
-      findChunks: this.updateMatches
-    };
-  }
+  getHighlighterSharedProps = (textToHighlight) => ({
+    textToHighlight,
+    matches: this.getMatches(textToHighlight)
+  })
 
   onClickDownloadResources = (event) => {
     const { bundleId } = this.props;
@@ -156,6 +148,9 @@ class DBLEntryRow extends PureComponent<Props> {
     event.stopPropagation();
   }
 
+  renderStatus = <PureHighlighter
+    {...this.getHighlighterSharedProps(this.props.displayAs.status)}
+  />;
 
   render() {
     const {
@@ -187,45 +182,29 @@ class DBLEntryRow extends PureComponent<Props> {
             || medium }
           </div>
           <div className={styles.bundleRowTopLeftSide}>
-            <Highlighter textToHighlight={displayAs.name} {...this.getHighlighterSharedProps()} />
+            <PureHighlighter {...this.getHighlighterSharedProps(displayAs.name)} />
           </div>
           <div className={styles.bundleRowTopMiddle}>
-            <Highlighter
-              textToHighlight={displayAs.revision}
-              {...this.getHighlighterSharedProps()}
-            />
+            <PureHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
           </div>
           <div className={styles.bundleRowTopRightSide}>
             {task === 'SAVETO' && (
               <FlatButton
                 labelPosition="before"
-                label={
-                  <Highlighter
-                    textToHighlight={displayAs.status}
-                    {...this.getHighlighterSharedProps()}
-                  />
-                }
+                label={this.renderStatus}
                 icon={<FolderOpen />}
                 onClick={this.openInFolder}
               />
             )}
             {this.showStatusAsText() && (
               <div style={{ paddingRight: '20px', paddingTop: '6px' }}>
-                <Highlighter
-                  textToHighlight={displayAs.status}
-                  {...this.getHighlighterSharedProps()}
-                />
+                {this.renderStatus}
               </div>
             )}
             {this.showDownloadButton() && (
               <FlatButton
                 labelPosition="before"
-                label={
-                  <Highlighter
-                    textToHighlight={displayAs.status}
-                    {...this.getHighlighterSharedProps()}
-                  />
-                }
+                label={this.renderStatus}
                 icon={<FileDownload />}
                 onClick={this.onClickDownloadResources}
               />

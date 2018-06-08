@@ -1,0 +1,6 @@
+/* override .mark in bootstrap.css */
+.Highlight {
+    background-color: inherit;
+    font-weight: bold;
+    padding: 0;
+  }
