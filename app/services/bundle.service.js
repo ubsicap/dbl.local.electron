@@ -1,5 +1,6 @@
 import path from 'path';
 import { authHeader } from '../helpers';
+import { utilities } from '../utils/utilities';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 import download from './download-with-fetch.flow';
 
@@ -99,11 +100,6 @@ function convertBundleApiListToBundles(apiBundles) {
   return bundles;
 }
 
-/* from https://stackoverflow.com/a/19746771 */
-function areEqualArrays(a1, a2) {
-  return a1.length === a2.length && a1.every((v, i) => v === a2[i]);
-}
-
 async function convertApiBundleToNathanaelBundle(apiBundle) {
   const {
     mode, metadata, dbl
@@ -121,7 +117,7 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
     // compare the manifest and resources to determine whether user can download more or not.
     const manifestPaths = await getManifestResourcePaths(bundleId);
     const resourcePaths = await getResourcePaths(bundleId);
-    if (areEqualArrays(manifestPaths, resourcePaths)) {
+    if (utilities.areEqualArrays(manifestPaths, resourcePaths)) {
       status = 'COMPLETED';
     } else {
       status = 'NOT_STARTED';
