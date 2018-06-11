@@ -1,5 +1,7 @@
 import React from 'react';
+import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
+import { DebounceInput } from 'react-debounce-input';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
@@ -8,12 +10,33 @@ import MenuIcon from '@material-ui/icons/Menu';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
-import { DebounceInput } from 'react-debounce-input';
+import { history } from '../store/configureStore';
+import { updateSearchInput, clearSearch } from '../actions/bundleFilter.actions';
+
+
+function mapStateToProps(state) {
+  const { bundlesFilter } = state;
+  const { isLoading: isLoadingSearch } = bundlesFilter;
+  const { isSearchActive } = bundlesFilter;
+  const { searchInputRaw } = bundlesFilter;
+  return {
+    isLoadingSearch,
+    isSearchActive,
+    searchInputRaw
+  };
+}
+
+const mapDispatchToProps = {
+  updateSearchInput,
+  clearSearch
+};
 
 type Props = {
     classes: {},
-    searchInputValue: string,
-    onChangeSearchInput: () => {}
+    isSearchActive: boolean,
+    searchInputRaw: ?string,
+    updateSearchInput: () => {},
+    clearSearch: () => {}
 };
 
 const styles = {
@@ -29,12 +52,20 @@ const styles = {
   },
 };
 
-class MenuAppBar extends React.Component {
+class MenuAppBar extends React.PureComponent {
   props: Props;
   state = {
     auth: true,
     anchorEl: null,
   };
+
+  componentDidMount() {
+    const { clearSearch: clearSearchResults } = this.props;
+    history.listen(() => {
+      // clear search results on location change
+      clearSearchResults();
+    });
+  }
 
   handleChange = (event, checked) => {
     this.setState({ auth: checked });
@@ -48,8 +79,18 @@ class MenuAppBar extends React.Component {
     this.setState({ anchorEl: null });
   };
 
+  onChangeSearchInput = (event) => {
+    const inputValue = event.target.value;
+    this.props.updateSearchInput(inputValue);
+  }
+
+  searchInputValue = () => {
+    const { isSearchActive, searchInputRaw } = this.props;
+    return isSearchActive ? searchInputRaw : '';
+  }
+
   render() {
-    const { classes, onChangeSearchInput, searchInputValue } = this.props;
+    const { classes } = this.props;
     const { auth, anchorEl } = this.state;
     const open = Boolean(anchorEl);
 
@@ -67,9 +108,9 @@ class MenuAppBar extends React.Component {
               <DebounceInput
                 debounceTimeout={300}
                 className="form-control"
-                value={searchInputValue}
+                value={this.searchInputValue()}
                 placeholder="Search"
-                onChange={(event) => onChangeSearchInput(event, event.target.value)}
+                onChange={(event) => this.onChangeSearchInput(event, event.target.value)}
               />
             </div>
             {auth && (
@@ -108,4 +149,9 @@ class MenuAppBar extends React.Component {
   }
 }
 
-export default withStyles(styles)(MenuAppBar);
+// from https://stackoverflow.com/a/45708498. Alternatively use npm 'recompose' module
+MenuAppBar = withStyles(styles, { name: 'MenuAppBar' })(MenuAppBar); // eslint-disable-line no-class-assign
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(MenuAppBar);

@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
+import { createSelector } from 'reselect';
 import LinearProgress from 'material-ui/LinearProgress';
-import Highlighter from 'react-highlight-words';
 import Book from '@material-ui/icons/Book';
 import Headset from '@material-ui/icons/Headset';
 import Videocam from '@material-ui/icons/Videocam';
@@ -14,6 +14,7 @@ import CallSplit from 'material-ui/svg-icons/communication/call-split';
 import ActionInfo from 'material-ui/svg-icons/action/info';
 import ActionDelete from 'material-ui/svg-icons/action/delete';
 import styles from './DBLEntryRow.css';
+import PureHighlighter from './PureHighlighter';
 import { toggleSelectBundle, requestSaveBundleTo, removeResources, downloadResources } from '../actions/bundle.actions';
 
 const { dialog, app } = require('electron').remote;
@@ -26,11 +27,12 @@ type Props = {
   status: string,
   medium: string,
   displayAs: {},
-  bundlesFilter: {},
+  bundleMatches: {},
   bundlesSaveTo: {},
   progress?: ?number,
   isDownloaded: ?boolean,
   isSelected: ?boolean,
+  shouldShowRow: boolean,
   toggleSelectBundle: () => {},
   downloadResources: () => {},
   requestSaveBundleTo: () => {},
@@ -44,13 +46,38 @@ const mapDispatchToProps = {
   removeResources
 };
 
-function mapStateToProps(state) {
-  const { bundlesFilter, bundlesSaveTo } = state;
-  return {
-    bundlesFilter,
-    bundlesSaveTo
+const getIsSearchActive = (state) => state.bundlesFilter.isSearchActive;
+const emptyBundleMatches = {};
+const getEmptryBundleMatches = () => emptyBundleMatches;
+
+const getBundleMatches = (state, props) =>
+  (state.bundlesFilter.searchResults && state.bundlesFilter.searchResults.bundlesMatching ?
+    (state.bundlesFilter.searchResults.bundlesMatching[props.bundleId] || emptyBundleMatches)
+    : emptyBundleMatches);
+
+const makeShouldShowRow = () => createSelector(
+  [getIsSearchActive, getBundleMatches],
+  (isActiveSearch, bundleMatches) => !isActiveSearch || Object.keys(bundleMatches).length > 0
+);
+
+const makeGetBundleMatches = () => createSelector(
+  [getIsSearchActive, getBundleMatches, getEmptryBundleMatches],
+  (isActiveSearch, bundleMatches, emptyMatches) => (isActiveSearch ? bundleMatches : emptyMatches)
+);
+
+const makeMapStateToProps = () => {
+  const shouldShowRow = makeShouldShowRow();
+  const getMatches = makeGetBundleMatches();
+  const mapStateToProps = (state, props) => {
+    const { bundlesSaveTo } = state;
+    return {
+      shouldShowRow: shouldShowRow(state, props),
+      bundleMatches: getMatches(state, props),
+      bundlesSaveTo
+    };
   };
-}
+  return mapStateToProps;
+};
 
 class DBLEntryRow extends PureComponent<Props> {
   props: Props;
@@ -85,28 +112,18 @@ class DBLEntryRow extends PureComponent<Props> {
       || (progress && progress < 100)) === true;
   }
 
-  updateMatches = (options) => {
-    const { bundlesFilter, bundleId } = this.props;
-    if (!bundlesFilter.isSearchActive) {
-      return [];
-    }
-    const { searchResults } = bundlesFilter;
-    const { bundlesMatching, chunks } = searchResults;
-    const hasMatchInBundle = bundleId in bundlesMatching;
-    if (hasMatchInBundle) {
-      return chunks[options.textToHighlight];
-    }
-    return [];
+  emptyMatches = [];
+
+  getMatches = (textToHighlight) => {
+    const { bundleMatches } = this.props;
+    const matches = bundleMatches[textToHighlight] || this.emptyMatches;
+    return matches;
   }
 
-  getHighlighterSharedProps = () => {
-    const { bundlesFilter } = this.props;
-    return {
-      searchWords: bundlesFilter.isSearchActive ? bundlesFilter.searchKeywords : [],
-      highlightClassName: styles.Highlight,
-      findChunks: this.updateMatches
-    };
-  }
+  getHighlighterSharedProps = (textToHighlight) => ({
+    textToHighlight,
+    matches: this.getMatches(textToHighlight)
+  })
 
   onClickDownloadResources = (event) => {
     const { bundleId } = this.props;
@@ -154,6 +171,9 @@ class DBLEntryRow extends PureComponent<Props> {
     event.stopPropagation();
   }
 
+  renderStatus = () => (
+    <PureHighlighter {...this.getHighlighterSharedProps(this.props.displayAs.status)} />
+  );
 
   render() {
     const {
@@ -164,9 +184,11 @@ class DBLEntryRow extends PureComponent<Props> {
       status,
       displayAs,
       progress,
-      isSelected
+      isSelected,
+      shouldShowRow
     } = this.props;
     return (
+      (!shouldShowRow && (null)) ||
       <div
         className={styles.bundleRow}
         key={bundleId}
@@ -185,45 +207,29 @@ class DBLEntryRow extends PureComponent<Props> {
             || medium }
           </div>
           <div className={styles.bundleRowTopLeftSide}>
-            <Highlighter textToHighlight={displayAs.name} {...this.getHighlighterSharedProps()} />
+            <PureHighlighter {...this.getHighlighterSharedProps(displayAs.name)} />
           </div>
           <div className={styles.bundleRowTopMiddle}>
-            <Highlighter
-              textToHighlight={displayAs.revision}
-              {...this.getHighlighterSharedProps()}
-            />
+            <PureHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
           </div>
           <div className={styles.bundleRowTopRightSide}>
             {task === 'SAVETO' && (
               <FlatButton
                 labelPosition="before"
-                label={
-                  <Highlighter
-                    textToHighlight={displayAs.status}
-                    {...this.getHighlighterSharedProps()}
-                  />
-                }
+                label={<PureHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
                 icon={<FolderOpen />}
                 onClick={this.openInFolder}
               />
             )}
             {this.showStatusAsText() && (
               <div style={{ paddingRight: '20px', paddingTop: '6px' }}>
-                <Highlighter
-                  textToHighlight={displayAs.status}
-                  {...this.getHighlighterSharedProps()}
-                />
+                {<PureHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
               </div>
             )}
             {this.showDownloadButton() && (
               <FlatButton
                 labelPosition="before"
-                label={
-                  <Highlighter
-                    textToHighlight={displayAs.status}
-                    {...this.getHighlighterSharedProps()}
-                  />
-                }
+                label={<PureHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
                 icon={<FileDownload />}
                 onClick={this.onClickDownloadResources}
               />
@@ -280,7 +286,7 @@ DBLEntryRow.defaultProps = {
 };
 
 export default connect(
-  mapStateToProps,
+  makeMapStateToProps,
   mapDispatchToProps,
 )(DBLEntryRow);
 

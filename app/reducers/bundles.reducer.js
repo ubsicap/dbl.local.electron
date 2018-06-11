@@ -8,7 +8,7 @@ function sortBundles(unsorted) {
   ]);
 }
 
-export function bundles(state = {}, action) {
+export function bundles(state = { items: [] }, action) {
   switch (action.type) {
     case bundleConstants.FETCH_REQUEST:
       return {
