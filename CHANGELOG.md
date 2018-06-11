@@ -1,3 +1,15 @@
+### Version 0.7.2
+- add version number to Nathanael app title
+
+#### Fixes
+- don't close SSE channel for errors. (Just log them).
+- fix apply search to progress update text
+- fix search bug
+- fix unresponsive UI due to search
+- don't erase spaces from user search input
+- fix status based on mode and downloaded resources vs. manifest
+- added code to determine whether to update highlighting
+
 ### Version 0.7.1
 
 #### Fixes
