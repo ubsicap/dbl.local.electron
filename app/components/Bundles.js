@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
+import { createSelector } from 'reselect';
 import CircularProgress from 'material-ui/CircularProgress';
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
@@ -11,16 +12,23 @@ type Props = {
   fetchAll: () => {},
   mockFetchAll: () => {},
   setupBundlesEventSource: () => {},
-  bundles: {},
-  bundlesFilter: {},
+  isLoadingBundles: boolean,
+  isSearchLoading: boolean,
+  eventSource: ?{},
+  bundleItems: [],
+  selectedBundleId: ?string,
   authentication: {}
 };
 
+
 function mapStateToProps(state) {
-  const { bundles, bundlesFilter, authentication } = state;
+  const { authentication, bundles, bundlesFilter } = state;
   return {
-    bundles,
-    bundlesFilter,
+    isLoadingBundles: bundles.loading || false,
+    isSearchLoading: bundlesFilter.isLoading || false,
+    bundleItems: bundles.items,
+    eventSource: bundles.eventSource,
+    selectedBundleId: bundles.selectedBundle ? bundles.selectedBundle.id : null,
     authentication
   };
 }
@@ -47,35 +55,34 @@ class Bundles extends PureComponent<Props> {
   }
 
   componentWillUnmount() {
-    const { bundles } = this.props;
+    const { eventSource } = this.props;
     console.log('Bundles did unmount');
-    if (bundles.eventSource) {
-      bundles.eventSource.close();
+    if (eventSource) {
+      eventSource.close();
       console.log('bundles EventSource closed');
     }
   }
 
-  displayRow = (bundle) => {
-    const { bundlesFilter } = this.props;
-    return !(bundlesFilter.isSearchActive) ||
-     bundle.id in bundlesFilter.searchResults.bundlesMatching;
-  }
-
   render() {
-    const { bundles, bundlesFilter } = this.props;
+    const { bundleItems, isSearchLoading, isLoadingBundles, selectedBundleId } = this.props;
     return (
       <div>
-        {(bundles.loading || bundlesFilter.isLoading) &&
-          <div className="row" style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        {(isLoadingBundles || isSearchLoading) &&
+          <div
+            className="row"
+            style={{
+ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center'
+}}
+          >
             <CircularProgress size={80} thickness={5} />
           </div>
         }
-        {bundles.items && bundles.items.filter(this.displayRow).map((d) => (
+        {bundleItems && bundleItems.map((d) => (
           <DBLEntryRow
             key={d.id}
             bundleId={d.id}
             {...d}
-            isSelected={bundles.selectedBundle && bundles.selectedBundle.id === d.id}
+            isSelected={selectedBundleId && selectedBundleId === d.id}
           />))}
       </div>
     );

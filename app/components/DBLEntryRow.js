@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
+import { createSelector } from 'reselect';
 import LinearProgress from 'material-ui/LinearProgress';
 import Book from '@material-ui/icons/Book';
 import Headset from '@material-ui/icons/Headset';
@@ -26,11 +27,12 @@ type Props = {
   status: string,
   medium: string,
   displayAs: {},
-  bundlesFilter: {},
+  bundleMatches: {},
   bundlesSaveTo: {},
   progress?: ?number,
   isDownloaded: ?boolean,
   isSelected: ?boolean,
+  shouldShowRow: boolean,
   toggleSelectBundle: () => {},
   downloadResources: () => {},
   requestSaveBundleTo: () => {},
@@ -44,6 +46,41 @@ const mapDispatchToProps = {
   removeResources
 };
 
+const getIsSearchActive = (state) => state.bundlesFilter.isSearchActive;
+const emptyBundleMatches = {};
+const getEmptryBundleMatches = () => emptyBundleMatches;
+
+const getBundleMatches = (state, props) =>
+  (state.bundlesFilter.searchResults && state.bundlesFilter.searchResults.bundlesMatching ?
+    (state.bundlesFilter.searchResults.bundlesMatching[props.bundleId] || emptyBundleMatches)
+    : emptyBundleMatches);
+
+const makeShouldShowRow = () => createSelector(
+  [getIsSearchActive, getBundleMatches],
+  (isActiveSearch, bundleMatches) => !isActiveSearch || Object.keys(bundleMatches).length > 0
+);
+
+const makeGetBundleMatches = () => createSelector(
+  [getIsSearchActive, getBundleMatches, getEmptryBundleMatches],
+  (isActiveSearch, bundleMatches, emptyMatches) => (isActiveSearch ? bundleMatches : emptyMatches)
+);
+
+const makeMapStateToProps = () => {
+  const shouldShowRow = makeShouldShowRow();
+  const getMatches = makeGetBundleMatches();
+  const mapStateToProps = (state, props) => {
+    const { bundlesSaveTo } = state;
+    return {
+      shouldShowRow: shouldShowRow(state, props),
+      bundleMatches: getMatches(state, props),
+      bundlesSaveTo
+    };
+  };
+  return mapStateToProps;
+};
+
+/*
+
 function mapStateToProps(state) {
   const { bundlesFilter, bundlesSaveTo } = state;
   return {
@@ -51,6 +88,8 @@ function mapStateToProps(state) {
     bundlesSaveTo
   };
 }
+
+*/
 
 class DBLEntryRow extends PureComponent<Props> {
   props: Props;
@@ -88,10 +127,9 @@ class DBLEntryRow extends PureComponent<Props> {
   emptyMatches = [];
 
   getMatches = (textToHighlight) => {
-    const { bundlesFilter } = this.props;
-    const { isSearchActive = false, searchResults = {} } = bundlesFilter;
-    const { matches = { [textToHighlight]: this.emptyMatches } } = searchResults;
-    return isSearchActive ? matches[textToHighlight] || this.emptyMatches : this.emptyMatches;
+    const { bundleMatches } = this.props;
+    const matches = bundleMatches[textToHighlight] || this.emptyMatches;
+    return matches;
   }
 
   getHighlighterSharedProps = (textToHighlight) => ({
@@ -158,9 +196,11 @@ class DBLEntryRow extends PureComponent<Props> {
       status,
       displayAs,
       progress,
-      isSelected
+      isSelected,
+      shouldShowRow
     } = this.props;
     return (
+      (!shouldShowRow && (null)) ||
       <div
         className={styles.bundleRow}
         key={bundleId}
@@ -258,7 +298,7 @@ DBLEntryRow.defaultProps = {
 };
 
 export default connect(
-  mapStateToProps,
+  makeMapStateToProps,
   mapDispatchToProps,
 )(DBLEntryRow);
 
