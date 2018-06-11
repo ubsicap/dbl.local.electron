@@ -79,18 +79,6 @@ const makeMapStateToProps = () => {
   return mapStateToProps;
 };
 
-/*
-
-function mapStateToProps(state) {
-  const { bundlesFilter, bundlesSaveTo } = state;
-  return {
-    bundlesFilter,
-    bundlesSaveTo
-  };
-}
-
-*/
-
 class DBLEntryRow extends PureComponent<Props> {
   props: Props;
 
