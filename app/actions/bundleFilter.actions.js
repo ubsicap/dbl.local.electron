@@ -15,7 +15,10 @@ const canceledState = { isCanceled: true };
 export function updateSearchInput(searchInput) {
   return (dispatch, getState) => {
     const trimmedSearchInput = searchInput.trim();
-    const searchKeywords = split(trimmedSearchInput, { separator: ' ' });
+    /* NOTE: eslint complains about use of 'let' should be 'const'
+     * but that results in "TypeError: Assignment to constant variable." 
+     * See https://github.com/mishoo/UglifyJS2/issues/2842 */
+    let searchKeywords = split(trimmedSearchInput, { separator: ' ' }); // eslint-disable-line prefer-const, max-len
     const { bundles, bundlesFilter } = getState();
     if (trimmedSearchInput.length > 0 && !bundles.loading) {
       const willRecomputeAllSearchResults = trimmedSearchInput !== bundlesFilter.searchInput;
@@ -30,7 +33,9 @@ export function updateSearchInput(searchInput) {
       if (!willRecomputeAllSearchResults) {
         return; // don't try to find new results yet
       }
-      const searchResults = getAllSearchResults(bundles.items, searchKeywords, getState);
+      /* NOTE: eslint complains about use of 'let' should be 'const'
+       * but that results in "TypeError: Assignment to constant variable." */
+      let searchResults = getAllSearchResults(bundles.items, searchKeywords); // eslint-disable-line prefer-const, max-len
       if (searchResults === canceledState) {
         return; // cancel these results
       }
@@ -45,31 +50,22 @@ export function updateSearchInput(searchInput) {
       };
     }
   };
+}
 
-  function shouldCancelResults(getState, searchKeywords) {
-    const { bundlesFilter } = getState();
-    const { isSearchActive, searchKeywords: oldSearchKeywords } = bundlesFilter;
-    return !isSearchActive || oldSearchKeywords !== searchKeywords;
-  }
-
-  function getAllSearchResults(searchableBundles, searchKeywords, getState) {
-    const searchResults = Object.values(searchableBundles).reduce((acc, searchableBundle) => {
-      if (shouldCancelResults(getState, searchKeywords)) {
-        return canceledState; // cancel results
-      }
-      const bundleSearchResults = getBundleSearchResults(
-        searchableBundle,
-        searchKeywords,
-        acc.chunks
-      );
-      const { chunks, matches } = bundleSearchResults;
-      if (Object.keys(matches).length > 0) {
-        return combineSearchResults(acc, searchableBundle, chunks, matches);
-      }
-      return acc;
-    }, { bundlesMatching: {}, chunks: {}, matches: {} });
-    return searchResults;
-  }
+function getAllSearchResults(searchableBundles, searchKeywords) {
+  const searchResults = Object.values(searchableBundles).reduce((acc, searchableBundle) => {
+    const bundleSearchResults = getBundleSearchResults(
+      searchableBundle,
+      searchKeywords,
+      acc.chunks
+    );
+    const { chunks, matches } = bundleSearchResults;
+    if (Object.keys(matches).length > 0) {
+      return combineSearchResults(acc, searchableBundle, chunks, matches);
+    }
+    return acc;
+  }, { bundlesMatching: {}, chunks: {}, matches: {} });
+  return searchResults;
 }
 
 export function updateSearchResultsForBundleId(bundleId) {
@@ -123,10 +119,12 @@ function getBundleSearchResults(searchableBundle, searchKeywords, chunksAcrossBu
   const bundleSearchResults = Object.values(searchableBundle.displayAs).reduce((acc, searchable) => {
     let chunksForSearchable = chunksAcrossBundles[searchable];
     if (!chunksForSearchable) {
-      chunksForSearchable = findChunks({
+      const findChunkOptions = {
+        autoEscape: true,
         searchWords: searchKeywords,
         textToHighlight: searchable
-      });
+      };
+      chunksForSearchable = findChunks(findChunkOptions);
     }
     const chunksInBundle = { [searchable]: chunksForSearchable };
     const hasMatches = chunksForSearchable.length > 0;

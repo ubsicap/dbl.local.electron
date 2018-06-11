@@ -187,8 +187,10 @@ class DBLEntryRow extends PureComponent<Props> {
       isSelected,
       shouldShowRow
     } = this.props;
+    if (!shouldShowRow) {
+      return (null);
+    }
     return (
-      (!shouldShowRow && (null)) ||
       <div
         className={styles.bundleRow}
         key={bundleId}
