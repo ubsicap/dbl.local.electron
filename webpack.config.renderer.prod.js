@@ -166,7 +166,14 @@ export default merge.smart(baseConfig, {
 
     new UglifyJSPlugin({
       parallel: true,
-      sourceMap: true
+      sourceMap: true,
+      uglifyOptions: {
+        /*
+            inlining is broken sometimes where inlined function uses the same variable name as inlining function.
+            See https://github.com/mishoo/UglifyJS2/issues/2842, https://github.com/mishoo/UglifyJS2/issues/2843
+         */
+        compress: { inline:false },
+      },
     }),
 
     new ExtractTextPlugin('style.css'),

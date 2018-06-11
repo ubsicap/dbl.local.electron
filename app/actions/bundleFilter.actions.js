@@ -15,10 +15,7 @@ const canceledState = { isCanceled: true };
 export function updateSearchInput(searchInput) {
   return (dispatch, getState) => {
     const trimmedSearchInput = searchInput.trim();
-    /* NOTE: eslint complains about use of 'let' should be 'const'
-     * but that results in "TypeError: Assignment to constant variable." 
-     * See https://github.com/mishoo/UglifyJS2/issues/2842 */
-    let searchKeywords = split(trimmedSearchInput, { separator: ' ' }); // eslint-disable-line prefer-const, max-len
+    const searchKeywords = split(trimmedSearchInput, { separator: ' ' });
     const { bundles, bundlesFilter } = getState();
     if (trimmedSearchInput.length > 0 && !bundles.loading) {
       const willRecomputeAllSearchResults = trimmedSearchInput !== bundlesFilter.searchInput;
@@ -33,9 +30,7 @@ export function updateSearchInput(searchInput) {
       if (!willRecomputeAllSearchResults) {
         return; // don't try to find new results yet
       }
-      /* NOTE: eslint complains about use of 'let' should be 'const'
-       * but that results in "TypeError: Assignment to constant variable." */
-      let searchResults = getAllSearchResults(bundles.items, searchKeywords); // eslint-disable-line prefer-const, max-len
+      const searchResults = getAllSearchResults(bundles.items, searchKeywords);
       if (searchResults === canceledState) {
         return; // cancel these results
       }

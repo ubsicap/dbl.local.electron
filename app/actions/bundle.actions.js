@@ -187,9 +187,7 @@ export function setupBundlesEventSource(authentication) {
 export function downloadResources(id) {
   return async dispatch => {
     try {
-      /* NOTE: eslint complains about use of 'let' should be 'const'
-       * but that results in "TypeError: Assignment to constant variable." */
-      let manifestResourcePaths = await bundleService.getManifestResourcePaths(id); // eslint-disable-line prefer-const, max-len
+      const manifestResourcePaths = await bundleService.getManifestResourcePaths(id);
       dispatch(request(id, manifestResourcePaths));
       dispatch(updateSearchResultsForBundleId(id));
       await bundleService.downloadResources(id);
