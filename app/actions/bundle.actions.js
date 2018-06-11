@@ -284,7 +284,7 @@ export function requestSaveBundleTo(id, selectedFolder) {
                 bundleBytesToSave
               };
               dispatch(updated(updatedArgs));
-              dispatch(updateSearchResultsForBundle(id));
+              dispatch(updateSearchResultsForBundleId(id));
             }
           }
         );
