@@ -1,3 +1,9 @@
+### Version 0.7.3
+
+#### Fixes
+- fix production build errors "TypeError: Assignment to constant variable." 
+- disabled regex search (to allow quoting anything)
+
 ### Version 0.7.2
 - add version number to Nathanael app title
 
