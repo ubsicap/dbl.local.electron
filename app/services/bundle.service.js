@@ -132,6 +132,8 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
     revision: dbl.currentRevision,
     dblId: dbl.id,
     medium: dbl.medium,
+    countryIso: metadata.countries || "",
+    languageIso: metadata.language,
     task,
     status
   };
