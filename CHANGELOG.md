@@ -1,3 +1,8 @@
+### Version 0.8.0
+
+#### Features
+- add language and country code column (and sort first by it)
+
 ### Version 0.7.3
 
 #### Fixes
