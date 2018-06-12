@@ -14,7 +14,7 @@ import CallSplit from 'material-ui/svg-icons/communication/call-split';
 import ActionInfo from 'material-ui/svg-icons/action/info';
 import ActionDelete from 'material-ui/svg-icons/action/delete';
 import styles from './DBLEntryRow.css';
-import PureHighlighter from './PureHighlighter';
+import ControlledHighlighter from './ControlledHighlighter';
 import { toggleSelectBundle, requestSaveBundleTo, removeResources, downloadResources } from '../actions/bundle.actions';
 
 const { dialog, app } = require('electron').remote;
@@ -172,7 +172,7 @@ class DBLEntryRow extends PureComponent<Props> {
   }
 
   renderStatus = () => (
-    <PureHighlighter {...this.getHighlighterSharedProps(this.props.displayAs.status)} />
+    <ControlledHighlighter {...this.getHighlighterSharedProps(this.props.displayAs.status)} />
   );
 
   render() {
@@ -208,30 +208,33 @@ class DBLEntryRow extends PureComponent<Props> {
             || (medium === 'print' && <Print />)
             || medium }
           </div>
-          <div className={styles.bundleRowTopLeftSide}>
-            <PureHighlighter {...this.getHighlighterSharedProps(displayAs.name)} />
+          <div className={styles.bundleRowTopLeftSideLanguageAndCountry}>
+            <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.languageAndCountry)} className={styles.languageAndCountryLabel} />
+          </div>
+          <div className={styles.bundleRowTopLeftSideName}>
+            <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.name)} />
           </div>
           <div className={styles.bundleRowTopMiddle}>
-            <PureHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
+            <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
           </div>
           <div className={styles.bundleRowTopRightSide}>
             {task === 'SAVETO' && (
               <FlatButton
                 labelPosition="before"
-                label={<PureHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
+                label={<ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
                 icon={<FolderOpen />}
                 onClick={this.openInFolder}
               />
             )}
             {this.showStatusAsText() && (
               <div style={{ paddingRight: '20px', paddingTop: '6px' }}>
-                {<PureHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
+                {<ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
               </div>
             )}
             {this.showDownloadButton() && (
               <FlatButton
                 labelPosition="before"
-                label={<PureHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
+                label={<ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
                 icon={<FileDownload />}
                 onClick={this.onClickDownloadResources}
               />

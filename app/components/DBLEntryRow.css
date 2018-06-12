@@ -25,7 +25,22 @@
   vertical-align: middle;
 }
 
-.bundleRowTopLeftSide {
+.bundleRowTopLeftSideLanguageAndCountry {
+  display: table-cell;
+  text-align: left;
+  vertical-align: middle;
+  width: 75px;
+  padding-right: 10px;
+}
+
+.languageAndCountryLabel {
+  font-size: small;
+  padding: 5px;
+  border-radius: 10px;
+  border: 1px solid darkgray;
+}
+
+.bundleRowTopLeftSideName {
   display: table-cell;
   text-align: left;
   vertical-align: middle;

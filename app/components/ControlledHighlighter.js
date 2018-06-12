@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import shallowCompare from 'react-addons-shallow-compare';
 import { connect } from 'react-redux';
 import Highlighter from 'react-highlight-words';
-import styles from './PureHighlighter.css';
+import styles from './ControlledHighlighter.css';
 import { utilities } from '../utils/utilities';
 
 type Props = {
@@ -10,7 +10,7 @@ type Props = {
   matches: []
 };
 
-class PureHighlighter extends Component<Props> {
+class ControlledHighlighter extends Component<Props> {
   props: Props;
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -26,16 +26,17 @@ class PureHighlighter extends Component<Props> {
   updateMatches = () => this.props.matches;
 
   render() {
-    const { textToHighlight } = this.props;
+    const { textToHighlight, matches, ...rest } = this.props;
     return (
       <Highlighter
         textToHighlight={textToHighlight}
         searchWords={this.emptyArray}
         highlightClassName={styles.Highlight}
         findChunks={this.updateMatches}
+        {...rest}
       />
     );
   }
 }
 
-export default connect()(PureHighlighter);
+export default connect()(ControlledHighlighter);

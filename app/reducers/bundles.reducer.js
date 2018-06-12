@@ -3,6 +3,7 @@ import { bundleConstants } from '../constants/bundle.constants';
 
 function sortBundles(unsorted) {
   return sort(unsorted).asc([
+    b => b.displayAs.languageAndCountry,
     b => b.displayAs.name,
     b => ~b.revision,
   ]);
@@ -195,16 +196,17 @@ function addBundleDecorators(bundle) {
 function formatDisplayAs(bundle) {
   return {
     displayAs: {
-      name: formatName(bundle),
+      languageAndCountry: formatLanguageAndCountry(bundle),
+      name: bundle.name,
       revision: `Revision ${bundle.revision || '0'}`,
       status: formatStatus(bundle)
     }
   };
 }
 
-function formatName(bundle) {
-  const { name, languageIso, countryIso } = bundle;
-  return `(${languageIso}-${countryIso}) ${bundle.name}`;
+function formatLanguageAndCountry(bundle) {
+  const { languageIso, countryIso } = bundle;
+  return `${languageIso}-${countryIso}`;
 }
 
 function formatStatus(bundle) {
