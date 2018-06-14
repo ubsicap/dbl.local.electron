@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
+import classNames from 'classnames';
 import { compose } from 'recompose';
 import { createSelector } from 'reselect';
 import LinearProgress from 'material-ui/LinearProgress';
@@ -9,28 +10,21 @@ import Headset from '@material-ui/icons/Headset';
 import Videocam from '@material-ui/icons/Videocam';
 import Print from '@material-ui/icons/Print';
 import FlatButton from 'material-ui/FlatButton';
+import Button from '@material-ui/core/Button';
+import Toolbar from '@material-ui/core/Toolbar';
 import FileDownload from 'material-ui/svg-icons/file/file-download';
 import FolderOpen from 'material-ui/svg-icons/file/folder-open';
-import SaveTo from 'material-ui/svg-icons/content/save';
-import CallSplit from 'material-ui/svg-icons/communication/call-split';
-import ActionInfo from 'material-ui/svg-icons/action/info';
-import ActionDelete from 'material-ui/svg-icons/action/delete';
+import Save from '@material-ui/icons/Save';
+import CallSplit from '@material-ui/icons/CallSplit';
+import Info from '@material-ui/icons/Info';
+import Delete from '@material-ui/icons/Delete';
+import Edit from '@material-ui/icons/Edit'
 import styles from './DBLEntryRow.css';
 import ControlledHighlighter from './ControlledHighlighter';
 import { toggleSelectBundle, requestSaveBundleTo, removeResources, downloadResources } from '../actions/bundle.actions';
 
 const { dialog, app } = require('electron').remote;
 const { shell } = require('electron');
-
-const materialStyles = {
-  root: {
-    flexGrow: 1,
-  },
-  flex: {
-    flex: 1,
-  }
-};
-
 
 type Props = {
   bundleId: string,
@@ -197,7 +191,8 @@ class DBLEntryRow extends PureComponent<Props> {
       displayAs,
       progress,
       isSelected,
-      shouldShowRow
+      shouldShowRow,
+      classes
     } = this.props;
     if (!shouldShowRow) {
       return (null);
@@ -262,36 +257,41 @@ class DBLEntryRow extends PureComponent<Props> {
           </div>
         )}
         {isSelected && (
-          <div className={`${styles.menuBar} + row`}>
-            <FlatButton
-              label="Revise"
-              icon={<CallSplit />}
-              disabled
+          <Toolbar style={{ minHeight: '36px' }}>
+            <Button variant="flat" size="small" className={classes.button} disabled
               onKeyPress={stopPropagation}
-              onClick={stopPropagation}
-            />
-            <FlatButton
-              label="Save To"
+              onClick={stopPropagation}>
+              <Edit className={classNames(classes.leftIcon, classes.iconSmall)} />
+              Edit
+            </Button>
+            <Button variant="flat" size="small" className={classes.button} disabled
+              onKeyPress={stopPropagation}
+              onClick={stopPropagation}>
+              <CallSplit className={classNames(classes.leftIcon, classes.iconSmall)} />
+              Revise
+            </Button>
+            <Button variant="flat" size="small" className={classes.button}
               disabled={this.hasNotYetDownloadedResources()}
-              icon={<SaveTo />}
               onKeyPress={this.startSaveBundleTo}
-              onClick={this.startSaveBundleTo}
-            />
-            <FlatButton
-              label="Info"
+              onClick={this.startSaveBundleTo}>
+              <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
+              Save To
+            </Button>
+            <Button variant="flat" size="small" className={classes.button}
               disabled={dblId === undefined}
-              icon={<ActionInfo />}
               onKeyPress={this.onOpenDBLEntryLink}
-              onClick={this.onOpenDBLEntryLink}
-            />
-            <FlatButton
-              label="Clean"
+              onClick={this.onOpenDBLEntryLink}>
+              <Info className={classNames(classes.leftIcon, classes.iconSmall)} />
+              Info
+            </Button>
+            <Button variant="flat" size="small" className={classes.button}
               disabled={this.hasNotYetDownloadedResources()}
-              icon={<ActionDelete />}
               onKeyPress={this.onClickRemoveResources}
-              onClick={this.onClickRemoveResources}
-            />
-          </div>
+              onClick={this.onClickRemoveResources}>
+              <Delete className={classNames(classes.leftIcon, classes.iconSmall)} />
+              Clean
+            </Button>
+          </Toolbar>
           )}
       </div>
     );
@@ -301,6 +301,22 @@ class DBLEntryRow extends PureComponent<Props> {
 DBLEntryRow.defaultProps = {
   progress: null
 };
+
+const materialStyles = theme => ({
+  button: {
+    margin: theme.spacing.unit,
+  },
+  leftIcon: {
+    marginRight: theme.spacing.unit,
+  },
+  rightIcon: {
+    marginLeft: theme.spacing.unit,
+  },
+  iconSmall: {
+    fontSize: 20,
+  },
+});
+
 
 export default compose(
   withStyles(materialStyles, { name: 'DBLEntryRow' }),
@@ -331,6 +347,7 @@ function pickBackgroundColor(task, status) {
 
 function stopPropagation(event) {
   event.stopPropagation();
+  return null;
 }
 
 function onOpenLink(event, url) {
