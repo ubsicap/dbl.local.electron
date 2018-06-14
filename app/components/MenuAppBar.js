@@ -2,6 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import { DebounceInput } from 'react-debounce-input';
+import { compose } from 'recompose';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
@@ -149,9 +150,12 @@ class MenuAppBar extends React.PureComponent {
   }
 }
 
-// from https://stackoverflow.com/a/45708498. Alternatively use npm 'recompose' module
-MenuAppBar = withStyles(styles, { name: 'MenuAppBar' })(MenuAppBar); // eslint-disable-line no-class-assign
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
+export default compose(
+  withStyles(styles, {
+      name: 'MenuAppBar',
+  }),
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  ),
 )(MenuAppBar);
