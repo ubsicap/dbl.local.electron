@@ -258,7 +258,7 @@ class DBLEntryRow extends PureComponent<Props> {
         )}
         {isSelected && (
           <Toolbar style={{ minHeight: '36px' }}>
-            <Button variant="flat" size="small" className={classes.button} disabled
+            <Button variant="flat" size="small" className={classes.button}
               onKeyPress={stopPropagation}
               onClick={stopPropagation}>
               <Edit className={classNames(classes.leftIcon, classes.iconSmall)} />
