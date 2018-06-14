@@ -1,5 +1,6 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React, { PureComponent } from 'react';
+import { connect } from 'react-redux';
+import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
@@ -13,8 +14,20 @@ import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import CloseIcon from '@material-ui/icons/Close';
 import Slide from '@material-ui/core/Slide';
+import { closeEditMetadata } from '../actions/bundle.actions';
 
-const styles = {
+function mapStateToProps(state) {
+  const { bundles } = state;
+  return {
+    open: Boolean(bundles.editingMetadata || false)
+  };
+}
+
+const mapDispatchToProps = {
+  closeEditMetadata
+};
+
+const materialStyles = {
   appBar: {
     position: 'relative',
   },
@@ -27,60 +40,59 @@ function Transition(props) {
   return <Slide direction="up" {...props} />;
 }
 
-class FullScreenDialog extends React.Component {
-  state = {
-    open: false,
-  };
+type Props = {
+  open: boolean,
+  closeEditMetadata: () => {},
+  classes: {}
+};
 
-  handleClickOpen = () => {
-    this.setState({ open: true });
-  };
+class EditEntryMetadata extends PureComponent<Props> {
+  props: Props;
 
   handleClose = () => {
-    this.setState({ open: false });
+    this.props.closeEditMetadata();
   };
 
   render() {
     const { classes } = this.props;
     return (
-      <div>
-        <Button onClick={this.handleClickOpen}>Open full-screen dialog</Button>
-        <Dialog
-          fullScreen
-          open={this.state.open}
-          onClose={this.handleClose}
-          TransitionComponent={Transition}
-        >
-          <AppBar className={classes.appBar}>
-            <Toolbar>
-              <IconButton color="inherit" onClick={this.handleClose} aria-label="Close">
-                <CloseIcon />
-              </IconButton>
-              <Typography variant="title" color="inherit" className={classes.flex}>
-                Sound
-              </Typography>
-              <Button color="inherit" onClick={this.handleClose}>
-                save
-              </Button>
-            </Toolbar>
-          </AppBar>
-          <List>
-            <ListItem button>
-              <ListItemText primary="Phone ringtone" secondary="Titania" />
-            </ListItem>
-            <Divider />
-            <ListItem button>
-              <ListItemText primary="Default notification ringtone" secondary="Tethys" />
-            </ListItem>
-          </List>
-        </Dialog>
-      </div>
+      <Dialog
+        fullScreen
+        open={this.props.open}
+        onClose={this.handleClose}
+        TransitionComponent={Transition}
+      >
+        <AppBar className={classes.appBar}>
+          <Toolbar>
+            <IconButton color="inherit" onClick={this.handleClose} aria-label="Close">
+              <CloseIcon />
+            </IconButton>
+            <Typography variant="title" color="inherit" className={classes.flex}>
+              Sound
+            </Typography>
+            <Button color="inherit" onClick={this.handleClose}>
+              save
+            </Button>
+          </Toolbar>
+        </AppBar>
+        <List>
+          <ListItem button>
+            <ListItemText primary="Phone ringtone" secondary="Titania" />
+          </ListItem>
+          <Divider />
+          <ListItem button>
+            <ListItemText primary="Default notification ringtone" secondary="Tethys" />
+          </ListItem>
+        </List>
+      </Dialog>
     );
   }
 }
 
-FullScreenDialog.propTypes = {
-  classes: PropTypes.object.isRequired,
-};
-
-export default withStyles(styles)(FullScreenDialog);
+export default compose(
+  withStyles(materialStyles, { name: 'EditEntryMetadata' }),
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  ),
+)(EditEntryMetadata);

@@ -143,6 +143,18 @@ export function bundles(state = { items: [] }, action) {
         eventSource: action.eventSource
       };
     }
+    case bundleConstants.OPEN_EDIT_METADATA: {
+      return {
+        ...state,
+        editingMetadata: action.bundleId
+      };
+    }
+    case bundleConstants.CLOSE_EDIT_METADATA: {
+      return {
+        ...state,
+        editingMetadata: null
+      };
+    }
     default:
       return state;
   }

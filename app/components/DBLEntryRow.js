@@ -21,7 +21,7 @@ import Delete from '@material-ui/icons/Delete';
 import Edit from '@material-ui/icons/Edit'
 import styles from './DBLEntryRow.css';
 import ControlledHighlighter from './ControlledHighlighter';
-import { toggleSelectBundle, requestSaveBundleTo, removeResources, downloadResources } from '../actions/bundle.actions';
+import { toggleSelectBundle, requestSaveBundleTo, removeResources, downloadResources, openEditMetadata } from '../actions/bundle.actions';
 
 const { dialog, app } = require('electron').remote;
 const { shell } = require('electron');
@@ -42,14 +42,16 @@ type Props = {
   toggleSelectBundle: () => {},
   downloadResources: () => {},
   requestSaveBundleTo: () => {},
-  removeResources: () => {}
+  removeResources: () => {},
+  openEditMetadata: () => {}
 };
 
 const mapDispatchToProps = {
   toggleSelectBundle,
   downloadResources,
   requestSaveBundleTo,
-  removeResources
+  removeResources,
+  openEditMetadata
 };
 
 const getIsSearchActive = (state) => state.bundlesFilter.isSearchActive;
@@ -134,6 +136,12 @@ class DBLEntryRow extends PureComponent<Props> {
   onClickDownloadResources = (event) => {
     const { bundleId } = this.props;
     this.props.downloadResources(bundleId);
+    event.stopPropagation();
+  }
+
+  onClickEditMetadata = (event) => {
+    const { bundleId } = this.props;
+    this.props.openEditMetadata(bundleId);
     event.stopPropagation();
   }
 
@@ -258,9 +266,10 @@ class DBLEntryRow extends PureComponent<Props> {
         )}
         {isSelected && (
           <Toolbar style={{ minHeight: '36px' }}>
-            <Button variant="flat" size="small" className={classes.button}
-              onKeyPress={stopPropagation}
-              onClick={stopPropagation}>
+            <Button 
+              variant="flat" size="small" className={classes.button}
+              onKeyPress={this.onClickEditMetadata}
+              onClick={this.onClickEditMetadata}>
               <Edit className={classNames(classes.leftIcon, classes.iconSmall)} />
               Edit
             </Button>
