@@ -1,5 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
+import { withStyles } from '@material-ui/core/styles';
+import { compose } from 'recompose';
 import { createSelector } from 'reselect';
 import LinearProgress from 'material-ui/LinearProgress';
 import Book from '@material-ui/icons/Book';
@@ -19,6 +21,16 @@ import { toggleSelectBundle, requestSaveBundleTo, removeResources, downloadResou
 
 const { dialog, app } = require('electron').remote;
 const { shell } = require('electron');
+
+const materialStyles = {
+  root: {
+    flexGrow: 1,
+  },
+  flex: {
+    flex: 1,
+  }
+};
+
 
 type Props = {
   bundleId: string,
@@ -290,9 +302,12 @@ DBLEntryRow.defaultProps = {
   progress: null
 };
 
-export default connect(
-  makeMapStateToProps,
-  mapDispatchToProps,
+export default compose(
+  withStyles(materialStyles, { name: 'DBLEntryRow' }),
+  connect(
+    makeMapStateToProps,
+    mapDispatchToProps
+  ),
 )(DBLEntryRow);
 
 function getBundleExportInfo(bundleId, savedToHistory) {

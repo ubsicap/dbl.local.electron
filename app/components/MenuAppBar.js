@@ -151,9 +151,7 @@ class MenuAppBar extends React.PureComponent {
 }
 
 export default compose(
-  withStyles(styles, {
-      name: 'MenuAppBar',
-  }),
+  withStyles(styles, { name: 'MenuAppBar' }),
   connect(
     mapStateToProps,
     mapDispatchToProps
