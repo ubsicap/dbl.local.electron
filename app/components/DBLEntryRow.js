@@ -21,7 +21,8 @@ import Delete from '@material-ui/icons/Delete';
 import Edit from '@material-ui/icons/Edit'
 import styles from './DBLEntryRow.css';
 import ControlledHighlighter from './ControlledHighlighter';
-import { toggleSelectBundle, requestSaveBundleTo, removeResources, downloadResources, openEditMetadata } from '../actions/bundle.actions';
+import { toggleSelectBundle, requestSaveBundleTo, removeResources, downloadResources } from '../actions/bundle.actions';
+import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
 
 const { dialog, app } = require('electron').remote;
 const { shell } = require('electron');

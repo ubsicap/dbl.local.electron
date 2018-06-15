@@ -16,8 +16,6 @@ export const bundleActions = {
   removeResources,
   toggleModePauseResume,
   toggleSelectBundle,
-  openEditMetadata,
-  closeEditMetadata
 };
 
 export default bundleActions;
@@ -340,14 +338,6 @@ export function toggleModePauseResume(id) {
 
 export function toggleSelectBundle(selectedBundle) {
   return { type: bundleConstants.TOGGLE_SELECT, selectedBundle };
-}
-
-export function openEditMetadata(bundleId) {
-  return { type: bundleEditMetadataConstants.OPEN_EDIT_METADATA, bundleId };
-}
-
-export function closeEditMetadata() {
-  return { type: bundleEditMetadataConstants.CLOSE_EDIT_METADATA };
 }
 
 function getMockBundles() {

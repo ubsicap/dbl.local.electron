@@ -14,7 +14,7 @@ import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import CloseIcon from '@material-ui/icons/Close';
 import Slide from '@material-ui/core/Slide';
-import { closeEditMetadata } from '../actions/bundle.actions';
+import { closeEditMetadata } from '../actions/bundleEditMetadata.actions';
 
 function mapStateToProps(state) {
   const { bundleEditMetadata } = state;
