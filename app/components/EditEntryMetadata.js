@@ -17,9 +17,9 @@ import Slide from '@material-ui/core/Slide';
 import { closeEditMetadata } from '../actions/bundle.actions';
 
 function mapStateToProps(state) {
-  const { bundles } = state;
+  const { bundleEditMetadata } = state;
   return {
-    open: Boolean(bundles.editingMetadata || false)
+    open: Boolean(bundleEditMetadata.editingMetadata || false)
   };
 }
 

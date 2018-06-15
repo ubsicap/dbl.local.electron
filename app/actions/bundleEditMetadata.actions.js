@@ -6,21 +6,12 @@ import { bundleService } from '../services/bundle.service';
 import { updateSearchResultsForBundleId } from '../actions/bundleFilter.actions';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 
-export const bundleActions = {
-  mockFetchAll,
-  fetchAll,
-  delete: removeBundle,
-  setupBundlesEventSource,
-  downloadResources,
-  requestSaveBundleTo,
-  removeResources,
-  toggleModePauseResume,
-  toggleSelectBundle,
+export const bundleEditMetadataActions = {
   openEditMetadata,
   closeEditMetadata
 };
 
-export default bundleActions;
+export default bundleEditMetadataActions;
 
 export function mockFetchAll() {
   return dispatch => {
@@ -479,7 +470,5 @@ function getMockBundles() {
       progress: 100,
     }
   ];
-  // const taskOrder = ['UPLOAD', 'DOWNLOAD', 'SAVETO'];
-  // const statusOrder = ['IN_PROGRESS', 'DRAFT', 'COMPLETED', 'NOT_STARTED'];
   return bundles;
 }

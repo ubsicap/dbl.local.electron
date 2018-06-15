@@ -6,6 +6,7 @@ import { authentication } from './authentication.reducer';
 import { bundles } from './bundles.reducer';
 import { bundlesFilter } from './bundlesFilter.reducer';
 import { bundlesSaveTo } from './bundlesSaveTo.reducer';
+import { bundleEditMetadata } from './bundleEditMetadata.reducer';
 import { alert } from './alert.reducer';
 
 const rootReducer = combineReducers({
@@ -14,8 +15,9 @@ const rootReducer = combineReducers({
   authentication,
   bundles,
   bundlesFilter,
+  bundleEditMetadata,
   bundlesSaveTo,
-  alert
+  alert,
 });
 
 export default rootReducer;
