@@ -1,13 +1,13 @@
 import traverse from 'traverse';
 import log from 'electron-log';
 import { bundleConstants } from '../constants/bundle.constants';
-import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 import { bundleService } from '../services/bundle.service';
 import { updateSearchResultsForBundleId } from '../actions/bundleFilter.actions';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
+import { history } from '../store/configureStore';
+import { navigationConstants } from '../constants/navigation.constants';
 
 export const bundleActions = {
-  mockFetchAll,
   fetchAll,
   delete: removeBundle,
   setupBundlesEventSource,
@@ -20,36 +20,21 @@ export const bundleActions = {
 
 export default bundleActions;
 
-export function mockFetchAll() {
-  return dispatch => {
-    dispatch(request());
-    return new Promise(resolve => {
-      const mockBundles = getMockBundles();
-      resolve(mockBundles);
-    }).then(bundles => dispatch(success(bundles)), error => dispatch(failure(error)));
-  };
-
-  function request() {
-    return { type: bundleConstants.FETCH_REQUEST };
-  }
-  function success(bundles) {
-    return { type: bundleConstants.FETCH_SUCCESS, bundles };
-  }
-  function failure(error) {
-    return { type: bundleConstants.FETCH_FAILURE, error };
-  }
-}
-
 export function fetchAll() {
   return dispatch => {
     dispatch(request());
-
-    return bundleService
-      .fetchAll()
-      .then(
-        bundles => dispatch(success(bundles)),
-        error => dispatch(failure(error))
-      );
+    const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO;
+    if (isDemoMode) {
+      const mockBundles = getMockBundles();
+      dispatch(success(mockBundles));
+    } else {
+      return bundleService
+        .fetchAll()
+        .then(
+          bundles => dispatch(success(bundles)),
+          error => dispatch(failure(error))
+        );
+    }
   };
 
   function request() {

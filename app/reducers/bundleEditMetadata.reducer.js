@@ -24,19 +24,19 @@ export function bundleEditMetadata(state = initialState, action) {
       return {
         ...state,
         formStructure: {},
-        formStructureLoading: true
+        formStructureLoading: action.bundleId
       };
     }
     case bundleEditMetadataConstants.METADATA_FORM_STRUCTURE_UPDATED: {
       return {
         ...state,
         formStructure: action.formStructure,
-        formStructureLoading: false
+        formStructureLoading: null
       };
     }
     case bundleEditMetadataConstants.METADATA_FORM_INPUTS_UPDATED: {
-      const { key, inputs } = action;
-      const formInputs = { ...state.formInputs, [key]: inputs };
+      const { formKey, inputs } = action;
+      const formInputs = { ...state.formInputs, [formKey]: inputs };
       return {
         ...state,
         formInputs

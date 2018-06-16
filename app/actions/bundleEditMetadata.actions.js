@@ -1,336 +1,62 @@
-import traverse from 'traverse';
-import log from 'electron-log';
-import { bundleConstants } from '../constants/bundle.constants';
+// import traverse from 'traverse';
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
-import { bundleService } from '../services/bundle.service';
-import { updateSearchResultsForBundleId } from '../actions/bundleFilter.actions';
-import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
+import { history } from '../store/configureStore';
+import { navigationConstants } from '../constants/navigation.constants';
+// import { bundleService } from '../services/bundle.service';
 
 export const bundleEditMetadataActions = {
   openEditMetadata,
-  closeEditMetadata
+  closeEditMetadata,
+  fetchFormStructure,
+  fetchFormInputs,
 };
 
 export default bundleEditMetadataActions;
 
-export function mockFetchAll() {
-  return dispatch => {
-    dispatch(request());
-    return new Promise(resolve => {
-      const mockBundles = getMockBundles();
-      resolve(mockBundles);
-    }).then(bundles => dispatch(success(bundles)), error => dispatch(failure(error)));
-  };
-
-  function request() {
-    return { type: bundleConstants.FETCH_REQUEST };
-  }
-  function success(bundles) {
-    return { type: bundleConstants.FETCH_SUCCESS, bundles };
-  }
-  function failure(error) {
-    return { type: bundleConstants.FETCH_FAILURE, error };
-  }
-}
-
-export function fetchAll() {
-  return dispatch => {
-    dispatch(request());
-
-    return bundleService
-      .fetchAll()
-      .then(
-        bundles => dispatch(success(bundles)),
-        error => dispatch(failure(error))
-      );
-  };
-
-  function request() {
-    return { type: bundleConstants.FETCH_REQUEST };
-  }
-  function success(bundles) {
-    return { type: bundleConstants.FETCH_SUCCESS, bundles };
-  }
-  function failure(error) {
-    return { type: bundleConstants.FETCH_FAILURE, error };
-  }
-}
-
-export function setupBundlesEventSource(authentication) {
-  return (dispatch, getState) => {
-    console.log('SSE connect to Bundles');
-    const eventSource = new EventSource(`${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/events/${authentication.user.auth_token}`);
-    eventSource.onmessage = (event) => {
-      console.log(event);
-    };
-    eventSource.onopen = () => {
-      console.log('Connection to event source opened.');
-    };
-    eventSource.onerror = (error) => {
-      console.log('EventSource error.');
-      console.log(error);
-      log.error(JSON.stringify(error.data));
-    };
-    const listeners = {
-      'storer/execute_task': listenStorerExecuteTaskDownloadResources,
-      'storer/change_mode': listenStorerChangeMode,
-      'downloader/receiver': listenDownloaderReceiver,
-      'downloader/status': (e) => listenDownloaderSpecStatus(e, dispatch, getState),
-      'downloader/spec_status': (e) => listenDownloaderSpecStatus(e, dispatch, getState),
-      'storer/delete_resource': (e) => listenStorerDeleteResource(e, dispatch, getState),
-      'storer/update_from_download': (e) => listenStorerUpdateFromDownload(e, dispatch, getState),
-    };
-    Object.keys(listeners).forEach((evType) => {
-      const handler = listeners[evType];
-      eventSource.addEventListener(evType, handler);
-    });
-    dispatch(connectedToSessionEvents(eventSource, authentication));
-
-    function connectedToSessionEvents(_eventSource, _authentication) {
-      return {
-        type: bundleConstants.SESSION_EVENTS_CONNECTED,
-        eventSource: _eventSource,
-        authentication: _authentication
-      };
-    }
-  };
-
-  function listenStorerExecuteTaskDownloadResources() {
-    // console.log(e);
-  }
-
-  function listenStorerChangeMode() {
-    // console.log(e);
-    // const data = JSON.parse(e.data);
-    // const bundleId = data.args[0];
-    // const mode = data.args[1];
-    // if (mode === 'store') {
-    //   dispatch(updateStatus(bundleId, 'COMPLETED'));
-    // }
-  }
-
-  function listenDownloaderReceiver() {
-    // console.log(e);
-  }
-
-  /* downloader/status
-   * {'event': 'downloader/status',
-   * 'data': {'args': ('48a8e8fe-76ac-45d6-9b3a-d7d99ead7224', 4, 8),
-   *          'component': 'downloader', 'type': 'status'}}
-   */
-  function listenDownloaderSpecStatus(e, dispatch) {
-    // console.log(e);
-    const data = JSON.parse(e.data);
-    if (data.args.length !== 3) {
-      return;
-    }
-    const bundleId = data.args[0];
-    const resourcesDownloaded = data.args[1];
-    const resourcesToDownload = data.args[2];
-    dispatch(updateDownloadStatus(bundleId, resourcesDownloaded, resourcesToDownload));
-    dispatch(updateSearchResultsForBundleId(bundleId));
-  }
-
-  function updateDownloadStatus(_id, resourcesDownloaded, resourcesToDownload) {
-    return {
-      type: bundleConstants.DOWNLOAD_RESOURCES_UPDATED,
-      id: _id,
-      resourcesDownloaded,
-      resourcesToDownload
-    };
-  }
-
-  function listenStorerDeleteResource(e, dispatch) {
-    // console.log(e);
-    const data = JSON.parse(e.data);
-    const bundleId = data.args[0];
-    const resourceToRemove = data.args[1];
-    dispatch(updateRemoveResourcesStatus(bundleId, resourceToRemove));
-    dispatch(updateSearchResultsForBundleId(bundleId));
-  }
-
-  function updateRemoveResourcesStatus(_id, resourceToRemove) {
-    return {
-      type: bundleConstants.REMOVE_RESOURCES_UPDATED,
-      id: _id,
-      resourceToRemove
-    };
-  }
-
-  async function listenStorerUpdateFromDownload(e, dispatch) {
-    const data = JSON.parse(e.data);
-    const bundleId = data.args[0];
-    const apiBundle = await bundleService.fetchById(bundleId);
-    const fileInfoKeys = Object.keys(apiBundle.store.file_info);
-    if (fileInfoKeys.length === 1 && fileInfoKeys[0] === 'metadata.xml') {
-      // we just downloaded metadata.xml
-      const bundle = await bundleService.convertApiBundleToNathanaelBundle(apiBundle);
-      dispatch(addBundle(bundle));
-      dispatch(updateSearchResultsForBundleId(bundle.id));
-    }
-  }
-
-  function addBundle(bundle) {
-    return {
-      type: bundleConstants.ADD_BUNDLE,
-      bundle
-    };
-  }
-}
-
-export function downloadResources(id) {
+export function fetchFormStructure(_bundleId) {
   return async dispatch => {
+    dispatch(request(_bundleId));
     try {
-      const manifestResourcePaths = await bundleService.getManifestResourcePaths(id);
-      dispatch(request(id, manifestResourcePaths));
-      dispatch(updateSearchResultsForBundleId(id));
-      await bundleService.downloadResources(id);
-    } catch (error) {
-      dispatch(failure(id, error));
-    }
-  };
-  function request(_id, manifestResourcePaths) {
-    return { type: bundleConstants.DOWNLOAD_RESOURCES_REQUEST, id: _id, manifestResourcePaths };
-  }
-  function failure(_id, error) {
-    return { type: bundleConstants.DOWNLOAD_RESOURCES_FAILURE, id, error };
-  }
-}
-
-export function removeResources(id) {
-  return async dispatch => {
-    try {
-      const resourcePathsToRemove = await bundleService.getResourcePaths(id);
-      dispatch(request(id, resourcePathsToRemove));
-      dispatch(updateSearchResultsForBundleId(id));
-      await bundleService.removeResources(id);
-    } catch (error) {
-      dispatch(failure(id, error));
-    }
-  };
-  function request(_id, resourcesToRemove) {
-    return { type: bundleConstants.REMOVE_RESOURCES_REQUEST, id: _id, resourcesToRemove };
-  }
-  function failure(_id, error) {
-    return { type: bundleConstants.REMOVE_RESOURCES_FAILURE, id, error };
-  }
-}
-
-function removeBundle(id) {
-  return dispatch => {
-    dispatch(request(id));
-
-    bundleService
-      .delete(id)
-      .then(() => {
-        dispatch(success(id));
-        return true;
-      })
-      .catch(error => {
-        dispatch(failure(id, error));
-        return true;
-      });
-  };
-
-  function request(_id) {
-    return { type: bundleConstants.DELETE_REQUEST, id: _id };
-  }
-  function success(_id) {
-    return { type: bundleConstants.DELETE_SUCCESS, id: _id };
-  }
-  function failure(_id, error) {
-    return { type: bundleConstants.DELETE_FAILURE, id: _id, error };
-  }
-}
-
-export function requestSaveBundleTo(id, selectedFolder) {
-  return async dispatch => {
-    const bundleInfo = await bundleService.fetchById(id);
-    const bundleBytesToSave = traverse(bundleInfo.store.file_info).reduce(addByteSize, 0);
-    const resourcePaths = await bundleService.getResourcePaths(id);
-    resourcePaths.unshift('metadata.xml');
-    const resourcePathsProgress = resourcePaths.reduce((acc, resourcePath) => {
-      acc[resourcePath] = 0;
-      return acc;
-    }, {});
-    let bundleBytesSaved = 0;
-    dispatch(request(id, selectedFolder, bundleBytesToSave, resourcePaths));
-    dispatch(updateSearchResultsForBundleId(id));
-    resourcePaths.forEach(async resourcePath => {
-      try {
-        const downloadItem = await bundleService.requestSaveResourceTo(
-          selectedFolder,
-          id,
-          resourcePath,
-          (resourceTotalBytesSaved, resourceProgress) => {
-            const originalResourceBytesTransferred = resourcePathsProgress[resourcePath];
-            resourcePathsProgress[resourcePath] = resourceTotalBytesSaved;
-            const bytesDiff = resourceTotalBytesSaved - originalResourceBytesTransferred;
-            bundleBytesSaved += bytesDiff;
-            if (resourceProgress && resourceProgress % 100 === 0) {
-              const updatedArgs = {
-                _id: id,
-                resourcePath,
-                resourceTotalBytesSaved,
-                bundleBytesSaved,
-                bundleBytesToSave
-              };
-              dispatch(updated(updatedArgs));
-              dispatch(updateSearchResultsForBundleId(id));
-            }
-          }
-        );
-        return downloadItem;
-      } catch (error) {
-        dispatch(failure(id, error));
+      const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO;
+      if (isDemoMode) {
+        dispatch(success(await getMockStructure()));
       }
-    });
-  };
-
-  function addByteSize(accBytes, fileInfoNode) {
-    if (fileInfoNode.is_dir || this.isRoot || fileInfoNode.size === undefined) {
-      return accBytes;
+    } catch (error) {
+      dispatch(failure(error));
     }
-    return accBytes + fileInfoNode.size;
+  };
+  function request(bundleId) {
+    return { type: bundleEditMetadataConstants.METADATA_FORM_STRUCTURE_REQUEST, bundleId };
   }
-
-  function request(_id, _folderName, bundleBytesToSave, resourcePaths) {
-    return {
-      type: bundleConstants.SAVETO_REQUEST,
-      id: _id,
-      folderName: _folderName,
-      bundleBytesToSave,
-      resourcePaths
-    };
+  function success(formStructure) {
+    return { type: bundleEditMetadataConstants.METADATA_FORM_STRUCTURE_UPDATED, formStructure };
   }
-
-  function updated({
-    _id,
-    resourcePath,
-    resourceTotalBytesSaved,
-    bundleBytesSaved,
-    bundleBytesToSave
-  }) {
-    return {
-      type: bundleConstants.SAVETO_UPDATED,
-      id: _id,
-      resourcePath,
-      resourceTotalBytesSaved,
-      bundleBytesSaved,
-      bundleBytesToSave
-    };
-  }
-  function failure(_id, error) {
-    return { type: bundleConstants.SAVETO_FAILURE, id: _id, error };
+  function failure(error) {
+    return { type: bundleEditMetadataConstants.METADATA_FORM_FETCH_ERROR, error };
   }
 }
 
-export function toggleModePauseResume(id) {
-  return { type: bundleConstants.TOGGLE_MODE_PAUSE_RESUME, id };
-}
-
-export function toggleSelectBundle(selectedBundle) {
-  return { type: bundleConstants.TOGGLE_SELECT, selectedBundle };
+export function fetchFormInputs(bundleId, _formKey) {
+  return async dispatch => {
+    dispatch(request(_formKey));
+    try {
+      const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO;
+      if (isDemoMode) {
+        dispatch(success(await getMockFormInputs(bundleId, _formKey)));
+      }
+    } catch (error) {
+      dispatch(failure(error));
+    }
+  };
+  function request(formKey) {
+    return { type: bundleEditMetadataConstants.METADATA_FORM_INPUTS_REQUEST, formKey };
+  }
+  function success(formKey, inputs) {
+    return { type: bundleEditMetadataConstants.METADATA_FORM_INPUTS_UPDATED, formKey, inputs };
+  }
+  function failure(error) {
+    return { type: bundleEditMetadataConstants.METADATA_FORM_FETCH_ERROR, error };
+  }
 }
 
 export function openEditMetadata(bundleId) {
@@ -341,134 +67,325 @@ export function closeEditMetadata() {
   return { type: bundleEditMetadataConstants.CLOSE_EDIT_METADATA };
 }
 
-function getMockBundles() {
-  const bundles = [
+function getMockStructure() {
+  const mockStructure = [
     {
-      id: 'bundle01',
-      dblId: 'dblId1',
-      medium: 'print',
-      name: 'Test Bundle #1',
-      languageIso: 'eng',
-      countryIso: 'us',
-      revision: 3,
-      task: 'UPLOAD',
-      status: 'COMPLETED'
+      id: 'identification',
+      name: 'Identification',
+      template: true,
+      contains: [
+        {
+          id: 'systemId',
+          name: 'System IDs',
+          contains: [
+            {
+              arity: '?',
+              id: 'gbc',
+              name: 'GBC',
+              template: true
+            },
+            {
+              arity: '?',
+              id: 'paratext',
+              name: 'PT',
+              template: true
+            },
+            {
+              arity: '?',
+              id: 'ptReg',
+              name: 'PT Registry',
+              template: true
+            },
+            {
+              arity: '?',
+              id: 'tms',
+              name: 'TMS',
+              template: true
+            },
+            {
+              arity: '?',
+              id: 'reap',
+              name: 'REAP',
+              template: true
+            },
+            {
+              arity: '?',
+              id: 'biblica',
+              name: 'Biblica',
+              template: true
+            },
+            {
+              arity: '?',
+              id: 'dbp',
+              name: 'DBP',
+              template: true
+            }
+          ]
+        },
+        {
+          id: 'canonSpec',
+          name: 'Canon Specification',
+          template: true
+        }
+      ]
     },
     {
-      id: 'bundle02',
-      dblId: 'dblId2',
-      medium: 'text',
-      name: 'Another Bundle',
-      languageIso: 'eng',
-      countryIso: 'us',
-      revision: 3,
-      task: 'UPLOAD',
-      status: 'IN_PROGRESS',
-      progress: 63,
-      mode: 'PAUSED'
+      id: 'relationships',
+      name: 'Relationships',
+      contains: [
+        {
+          arity: '*',
+          id: 'relation',
+          name: '{0}',
+          has_key: true,
+          template: true
+        }
+      ]
     },
     {
-      id: 'bundle03',
-      dblId: 'dblId3',
-      medium: 'audio',
-      name: 'Audio Bundle',
-      languageIso: 'eng',
-      countryIso: 'us',
-      revision: 52,
-      task: 'DOWNLOAD',
-      status: 'IN_PROGRESS',
-      progress: 12,
-      mode: 'RUNNING'
+      id: 'agencies',
+      name: 'Agencies',
+      contains: [
+        {
+          arity: '+',
+          id: 'rightsHolder',
+          name: '{0}',
+          has_key: true,
+          template: true
+        },
+        {
+          arity: '+',
+          id: 'contributor',
+          name: '{0}',
+          has_key: true,
+          template: true
+        },
+        {
+          arity: '?',
+          id: 'rightsAdmin',
+          name: '{0}',
+          has_key: true,
+          template: true
+        }
+      ]
     },
     {
-      id: 'bundle04',
-      dblId: 'dblId4',
-      medium: 'audio',
-      name: 'Unfinished Bundle',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'UPLOAD',
-      status: 'DRAFT'
+      id: 'fullLanguage',
+      name: 'Language',
+      template: true
     },
     {
-      id: 'bundle05',
-      dblId: 'dblId5',
-      medium: 'video',
-      name: 'Unfinished Video Bundle',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'UPLOAD',
-      status: 'DRAFT'
+      id: 'countries',
+      name: 'Countries',
+      contains: [
+        {
+          arity: '+',
+          id: 'country',
+          name: '{0}',
+          has_key: true,
+          template: true
+        }
+      ]
     },
     {
-      id: 'bundle06',
-      dblId: 'dblId6',
-      medium: 'text',
-      revision: 3,
-      name: 'DBL Bundle',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'DOWNLOAD',
-      status: 'NOT_STARTED'
+      id: 'textType',
+      name: 'Type',
+      template: true
     },
     {
-      id: 'bundle07',
-      dblId: 'dblId7',
-      medium: 'text',
-      revision: 4,
-      name: 'DBL Bundle',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'DOWNLOAD',
-      status: 'NOT_STARTED'
+      id: 'textFormat',
+      name: 'Type',
+      template: true
     },
     {
-      id: 'bundle08',
-      dblId: 'dblId8',
-      medium: 'audio',
-      name: 'Audio Bundle #2',
-      languageIso: 'eng',
-      countryIso: 'us',
-      revision: 40,
-      task: 'DOWNLOAD',
-      status: 'COMPLETED'
+      id: 'names',
+      name: 'Names',
+      contains: [
+        {
+          arity: '*',
+          id: 'name',
+          name: '{0}',
+          has_key: true,
+          template: true
+        }
+      ]
     },
     {
-      id: 'bundle09',
-      dblId: 'dblId9',
-      medium: 'audio',
-      name: 'Audio Bundle #3',
-      languageIso: 'eng',
-      countryIso: 'us',
-      revision: 5,
-      task: 'SAVETO',
-      status: 'IN_PROGRESS',
-      progress: 0,
+      id: 'publications',
+      name: 'Publications',
+      contains: [
+        {
+          arity: '+',
+          id: 'publication',
+          name: '{0}',
+          has_key: true,
+          template: true,
+          contains: [
+            {
+              id: 'countries',
+              arity: '?',
+              name: 'Countries',
+              contains: [
+                {
+                  arity: '+',
+                  id: 'country',
+                  name: '{0}',
+                  has_key: true,
+                  template: true
+                }
+              ]
+            },
+            {
+              id: 'canonSpec',
+              name: 'Canon Specification',
+              template: true
+            }
+          ]
+        }
+      ]
     },
     {
-      id: 'bundle10',
-      dblId: 'dblId10',
-      medium: 'audio',
-      name: 'Audio Bundle #4',
-      languageIso: 'eng',
-      countryIso: 'us',
-      revision: 4,
-      task: 'SAVETO',
-      status: 'IN_PROGRESS',
-      progress: 66,
+      id: 'copyright',
+      name: 'Copyright',
+      contains: [
+        {
+          arity: '?',
+          id: 'fullStatement',
+          name: 'Full Statement',
+          template: true
+        },
+        {
+          arity: '?',
+          id: 'shortStatement',
+          name: 'Short Statement',
+          template: true
+        }
+      ]
     },
     {
-      id: 'bundle11',
-      dblId: 'dblId5',
-      medium: 'audio',
-      name: 'Audio Bundle #5',
-      languageIso: 'eng',
-      countryIso: 'us',
-      revision: 5,
-      task: 'SAVETO',
-      status: 'COMPLETED',
-      progress: 100,
+      arity: '?',
+      id: 'promotion',
+      name: 'Promotion',
+      template: true
+    },
+    {
+      arity: '1',
+      id: 'archiveStatus',
+      name: 'Archive Status',
+      template: true
+    },
+    {
+      arity: '?',
+      id: 'progress',
+      name: 'Progress',
+      contains: [
+        {
+          arity: '1',
+          id: 'book',
+          name: 'Book',
+          template: true,
+          has_key: true
+        }
+      ]
     }
   ];
-  return bundles;
+  return new Promise(resolve => resolve(mockStructure));
+}
+
+function getMockFormInputs() {
+  const mockFormInputs = {
+    id: 'bfaa79fd-2c60-41e0-9599-3b77bbf7042e',
+    category: 'information',
+    fields: [
+      {
+        type: 'label',
+        level: '1',
+        text: 'Identification'
+      },
+      {
+        name: 'name',
+        nValues: '1',
+        type: 'string',
+        label: 'Name',
+        help: "The entry's name, in English",
+        default: 'DBL Unit Test Gospels',
+        regex: '\\S.*\\S'
+      },
+      {
+        name: 'nameLocal',
+        nValues: '?',
+        type: 'string',
+        label: 'Local Name',
+        help: "The entry's localized name",
+        default: '',
+        regex: '\\S.*\\S'
+      },
+      {
+        name: 'abbreviation',
+        nValues: '1',
+        type: 'string',
+        label: 'Abbreviation',
+        help: "The entry's abbreviation, in English (no exotic characters)",
+        default: 'DBLUTG',
+        regex: '[\\-A-Za-z0-9]{2,12}'
+      },
+      {
+        name: 'abbreviationLocal',
+        nValues: '?',
+        type: 'string',
+        label: 'Local Abbreviation',
+        help: "The entry's localized abbreviation",
+        default: '',
+        regex: '\\S.{0,10}\\S'
+      },
+      {
+        name: 'description',
+        nValues: '1',
+        type: 'string',
+        label: 'Description',
+        help: "The entry's description, in English",
+        default: 'English: DBL Unit Test Version with Gospels Only',
+        regex: '\\S.*\\S'
+      },
+      {
+        name: 'descriptionLocal',
+        nValues: '?',
+        type: 'string',
+        label: 'Local Description',
+        help: "The entry's localized description",
+        default: '',
+        regex: '\\S.*\\S'
+      },
+      {
+        name: 'scope',
+        nValues: '1',
+        type: 'string',
+        label: 'Scope',
+        help: "The entry's scope (across all publications)",
+        default: 'Portions',
+        options: [
+          'Bible',
+          'Bible with Deuterocanon',
+          'New Testament',
+          'New Testament+',
+          'Old Testament',
+          'Old Testament + Deuterocanon',
+          'Old Testament+',
+          'Portions',
+          'Selections',
+          'Shorter Bible'
+        ]
+      },
+      {
+        name: 'dateCompleted',
+        nValues: '?',
+        type: 'string',
+        label: 'Completion Date',
+        help: 'The date on which this entry was completed',
+        default: '2017-12-01',
+        regex: '[12]\\d{3}(-[01]\\d(-[0-3]\\d(T[012]\\d:[0-5]\\d:[0-5]\\d)?)?)?'
+      }
+    ]
+  };
+  return new Promise(resolve => resolve(mockFormInputs));
 }
