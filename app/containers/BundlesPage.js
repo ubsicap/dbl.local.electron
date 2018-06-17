@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import Bundles from '../components/Bundles';
-import EditEntryMetadata from '../components/EditEntryMetadata';
+import EditEntryMetadataDialog from '../components/EditEntryMetadataDialog';
 import MenuAppBar from '../components/MenuAppBar';
 import styles from './BundlesPage.css';
 
@@ -13,7 +13,7 @@ export default class BundlesPage extends PureComponent<Props> {
     return (
       <div className={styles.container} style={{ paddingTop: '68px' }} data-tid="container">
         <MenuAppBar />
-        <EditEntryMetadata />
+        <EditEntryMetadataDialog />
         <Bundles />
       </div>
     );

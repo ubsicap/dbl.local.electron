@@ -46,7 +46,7 @@ type Props = {
   classes: {}
 };
 
-class EditEntryMetadata extends PureComponent<Props> {
+class EditEntryMetadataDialog extends PureComponent<Props> {
   props: Props;
 
   handleClose = () => {
@@ -90,9 +90,9 @@ class EditEntryMetadata extends PureComponent<Props> {
 }
 
 export default compose(
-  withStyles(materialStyles, { name: 'EditEntryMetadata' }),
+  withStyles(materialStyles, { name: 'EditEntryMetadataDialog' }),
   connect(
     mapStateToProps,
     mapDispatchToProps
   ),
-)(EditEntryMetadata);
+)(EditEntryMetadataDialog);
