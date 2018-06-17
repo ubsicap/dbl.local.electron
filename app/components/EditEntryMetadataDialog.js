@@ -65,7 +65,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
               <CloseIcon />
             </IconButton>
             <Typography variant="title" color="inherit" className={classes.flex}>
-              Sound
+              Edit Metadata
             </Typography>
             <Button color="inherit" onClick={this.handleClose}>
               save

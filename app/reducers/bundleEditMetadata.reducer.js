@@ -2,6 +2,8 @@ import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.con
 
 const initialState = {
   editingMetadata: null,
+  formStructure: [],
+  formInputs: {}
 };
 
 export function bundleEditMetadata(state = initialState, action) {
@@ -9,9 +11,7 @@ export function bundleEditMetadata(state = initialState, action) {
     case bundleEditMetadataConstants.OPEN_EDIT_METADATA: {
       return {
         ...state,
-        editingMetadata: action.bundleId,
-        formStructure: {},
-        formInputs: {}
+        editingMetadata: action.bundleId
       };
     }
     case bundleEditMetadataConstants.CLOSE_EDIT_METADATA: {
@@ -23,7 +23,6 @@ export function bundleEditMetadata(state = initialState, action) {
     case bundleEditMetadataConstants.METADATA_FORM_STRUCTURE_REQUEST: {
       return {
         ...state,
-        formStructure: {},
         formStructureLoading: action.bundleId
       };
     }

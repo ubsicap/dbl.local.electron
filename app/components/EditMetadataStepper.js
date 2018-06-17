@@ -1,5 +1,7 @@
 import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
+import { connect } from 'react-redux';
+import { compose } from 'recompose';
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
@@ -7,8 +9,9 @@ import StepContent from '@material-ui/core/StepContent';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
+import { fetchFormStructure } from '../actions/bundleEditMetadata.actions';
 
-const styles = theme => ({
+const materialStyles = theme => ({
   root: {
     width: '90%',
   },
@@ -23,10 +26,6 @@ const styles = theme => ({
     padding: theme.spacing.unit * 3,
   },
 });
-
-function getSteps() {
-  return ['Select campaign settings', 'Create an ad group', 'Create an ad'];
-}
 
 function getStepContent(step) {
   switch (step) {
@@ -46,15 +45,33 @@ function getStepContent(step) {
   }
 }
 
-type Props = {
-    classes: {}
+function mapStateToProps(state) {
+  const { bundleEditMetadata } = state;
+  return {
+    formStructure: bundleEditMetadata.formStructure
+  };
+}
+
+const mapDispatchToProps = {
+  fetchFormStructure
 };
 
-class VerticalLinearStepper extends React.Component<Props> {
+
+type Props = {
+    classes: {},
+    fetchFormStructure: () => {},
+    formStructure: []
+};
+
+class EditMetadataStepper extends React.Component<Props> {
   props: Props;
   state = {
     activeStep: 0,
   };
+
+  componentDidMount() {
+    this.props.fetchFormStructure();
+  }
 
   handleNext = () => {
     this.setState({
@@ -74,9 +91,14 @@ class VerticalLinearStepper extends React.Component<Props> {
     });
   };
 
+  getSteps = () => {
+    return this.props.formStructure.map(section => section.name);
+    // return ['Select campaign settings', 'Create an ad group', 'Create an ad'];
+  };
+
   render() {
     const { classes } = this.props;
-    const steps = getSteps();
+    const steps = this.getSteps();
     const { activeStep } = this.state;
 
     return (
@@ -125,4 +147,10 @@ class VerticalLinearStepper extends React.Component<Props> {
   }
 }
 
-export default withStyles(styles)(VerticalLinearStepper);
+export default compose(
+  withStyles(materialStyles, { name: 'EditMetadataStepper' }),
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  ),
+)(EditMetadataStepper);
