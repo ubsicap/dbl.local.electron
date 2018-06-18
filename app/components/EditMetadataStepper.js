@@ -10,7 +10,7 @@ import StepContent from '@material-ui/core/StepContent';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
-import { fetchFormStructure } from '../actions/bundleEditMetadata.actions';
+import { fetchFormStructure, fetchFormInputs } from '../actions/bundleEditMetadata.actions';
 
 const materialStyles = theme => ({
   root: {
@@ -47,19 +47,27 @@ const makeShouldShowRow = () => createSelector(
 function mapStateToProps(state) {
   const { bundleEditMetadata } = state;
   return {
-    formStructure: bundleEditMetadata.formStructure
+    bundleId: bundleEditMetadata.editingMetadata,
+    formStructure: bundleEditMetadata.formStructure,
+    myStructurePath: '',
+    shouldLoadDetails: false
   };
 }
 
 const mapDispatchToProps = {
-  fetchFormStructure
+  fetchFormStructure,
+  fetchFormInputs
 };
 
 
 type Props = {
     classes: {},
     fetchFormStructure: () => {},
-    formStructure: []
+    fetchFormInputs: () => {},
+    bundleId: string,
+    formStructure: [],
+    myStructurePath: string,
+    shouldLoadDetails: boolean
 };
 
 function formatSectionName(section) {
@@ -86,6 +94,9 @@ class EditMetadataStepper extends React.Component<Props> {
   componentDidMount() {
     if (this.props.formStructure.length === 0) {
       this.props.fetchFormStructure();
+    }
+    if (this.props.shouldLoadDetails) {
+      this.props.fetchFormInputs(this.props.bundleId, this.props.myStructurePath);
     }
   }
 
@@ -125,12 +136,19 @@ class EditMetadataStepper extends React.Component<Props> {
   getStepContent = (step) => {
     const { formStructure } = this.props;
     const section = formStructure[step];
-    const { template, contains } = section;
+    const { template, contains, id } = section;
     if (contains) {
-      // const message = 'Another stepper';
-      // const hasForm = template === true;
-      // return `${message}${hasForm ? ' w/Details' : ''}`;
-      return <EditMetadataStepper formStructure={contains} classes={this.props.classes} fetchFormStructure={this.props.fetchFormStructure} />;
+      const hasTemplate = template === true;
+      return (
+        <EditMetadataStepper
+          bundleId={this.props.bundleId}
+          myStructurePath={`${this.props.myStructurePath}/${id}`}
+          shouldLoadDetails={hasTemplate}
+          formStructure={contains}
+          classes={this.props.classes}
+          fetchFormStructure={this.props.fetchFormStructure}
+          fetchFormInputs={this.props.fetchFormInputs}
+        />);
     }
     if (template) {
       return 'has a form';
