@@ -42,7 +42,7 @@ export function fetchFormInputs(bundleId, _formKey) {
     try {
       const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO;
       if (isDemoMode) {
-        dispatch(success(await getMockFormInputs(bundleId, _formKey)));
+        dispatch(success(_formKey, await getMockFormInputs(bundleId, _formKey)));
       }
     } catch (error) {
       dispatch(failure(error));
