@@ -77,7 +77,7 @@ class EditMetadataStepper extends React.Component<Props> {
 
   handleStep = step => () => {
     this.setState({
-      activeStep: step,
+      activeStep: this.state.activeStep !== step ? step : null,
     });
   };
 
@@ -100,8 +100,8 @@ class EditMetadataStepper extends React.Component<Props> {
   };
 
   getSteps = () => {
-    return this.props.formStructure.map(section => section.name);
-    // return ['Select campaign settings', 'Create an ad group', 'Create an ad'];
+    return this.props.formStructure.map(section =>
+      (section.name !== '{0}' ? section.name : `Add ${section.id}`));
   };
 
   getStepContent = (step) => {
@@ -109,9 +109,10 @@ class EditMetadataStepper extends React.Component<Props> {
     const section = formStructure[step];
     const { template, contains } = section;
     if (contains) {
-      const message = 'Another stepper';
-      const hasForm = template === true;
-      return `${message}${hasForm ? ' w/Details' : ''}`;
+      // const message = 'Another stepper';
+      // const hasForm = template === true;
+      // return `${message}${hasForm ? ' w/Details' : ''}`;
+      return <EditMetadataStepper formStructure={contains} classes={this.props.classes} fetchFormStructure={this.props.fetchFormStructure} />;
     }
     if (template) {
       return 'has a form';
@@ -137,7 +138,7 @@ class EditMetadataStepper extends React.Component<Props> {
                   {label}
                 </StepLabel>
                 <StepContent>
-                  <Typography>{this.getStepContent(index)}</Typography>
+                  {this.getStepContent(index)}
                   <div className={classes.actionsContainer}>
                     <div>
                       <Button
