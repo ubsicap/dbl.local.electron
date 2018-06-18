@@ -2,9 +2,9 @@ import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
+// import { createSelector } from 'reselect';
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
-import StepButton from '@material-ui/core/StepButton';
 import StepLabel from '@material-ui/core/StepLabel';
 import StepContent from '@material-ui/core/StepContent';
 import Button from '@material-ui/core/Button';
@@ -28,23 +28,21 @@ const materialStyles = theme => ({
   },
 });
 
-function getStepContent(step) {
-  switch (step) {
-    case 0:
-      return `For each ad campaign that you create, you can control how much
-              you're willing to spend on clicks and conversions, which networks
-              and geographical locations you want your ads to show on, and more.`;
-    case 1:
-      return 'An ad group contains one or more ads which target a shared set of keywords.';
-    case 2:
-      return `Try out different ad text to see what brings in the most customers,
-              and learn how to enhance your ads using features like ad extensions.
-              If you run into any problems with your ads, find out how to tell if
-              they're running and how to resolve approval issues.`;
-    default:
-      return 'Unknown step';
-  }
-}
+/*
+const getIsSearchActive = (state) => state.bundlesFilter.isSearchActive;
+const emptyBundleMatches = {};
+const getEmptryBundleMatches = () => emptyBundleMatches;
+
+const getBundleMatches = (state, props) =>
+  (state.bundlesFilter.searchResults && state.bundlesFilter.searchResults.bundlesMatching ?
+    (state.bundlesFilter.searchResults.bundlesMatching[props.bundleId] || emptyBundleMatches)
+    : emptyBundleMatches);
+
+const makeShouldShowRow = () => createSelector(
+  [getIsSearchActive, getBundleMatches],
+  (isActiveSearch, bundleMatches) => !isActiveSearch || Object.keys(bundleMatches).length > 0
+);
+*/
 
 function mapStateToProps(state) {
   const { bundleEditMetadata } = state;
@@ -72,7 +70,9 @@ class EditMetadataStepper extends React.Component<Props> {
   };
 
   componentDidMount() {
-    this.props.fetchFormStructure();
+    if (this.props.formStructure.length === 0) {
+      this.props.fetchFormStructure();
+    }
   }
 
   handleStep = step => () => {
@@ -104,6 +104,21 @@ class EditMetadataStepper extends React.Component<Props> {
     // return ['Select campaign settings', 'Create an ad group', 'Create an ad'];
   };
 
+  getStepContent = (step) => {
+    const { formStructure } = this.props;
+    const section = formStructure[step];
+    const { template, contains } = section;
+    if (contains) {
+      const message = 'Another stepper';
+      const hasForm = template === true;
+      return `${message}${hasForm ? ' w/Details' : ''}`;
+    }
+    if (template) {
+      return 'has a form';
+    }
+    return 'what??';
+  }
+
   render() {
     const { classes } = this.props;
     const steps = this.getSteps();
@@ -122,7 +137,7 @@ class EditMetadataStepper extends React.Component<Props> {
                   {label}
                 </StepLabel>
                 <StepContent>
-                  <Typography>{getStepContent(index)}</Typography>
+                  <Typography>{this.getStepContent(index)}</Typography>
                   <div className={classes.actionsContainer}>
                     <div>
                       <Button
