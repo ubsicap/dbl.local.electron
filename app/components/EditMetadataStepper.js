@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
+import StepButton from '@material-ui/core/StepButton';
 import StepLabel from '@material-ui/core/StepLabel';
 import StepContent from '@material-ui/core/StepContent';
 import Button from '@material-ui/core/Button';
@@ -67,11 +68,18 @@ class EditMetadataStepper extends React.Component<Props> {
   props: Props;
   state = {
     activeStep: 0,
+    completed: {},
   };
 
   componentDidMount() {
     this.props.fetchFormStructure();
   }
+
+  handleStep = step => () => {
+    this.setState({
+      activeStep: step,
+    });
+  };
 
   handleNext = () => {
     this.setState({
@@ -103,11 +111,16 @@ class EditMetadataStepper extends React.Component<Props> {
 
     return (
       <div className={classes.root}>
-        <Stepper activeStep={activeStep} orientation="vertical">
+        <Stepper nonLinear activeStep={activeStep} orientation="vertical">
           {steps.map((label, index) => {
             return (
               <Step key={label}>
-                <StepLabel>{label}</StepLabel>
+                <StepLabel
+                  onClick={this.handleStep(index)}
+                  completed={this.state.completed[index]}
+                >
+                  {label}
+                </StepLabel>
                 <StepContent>
                   <Typography>{getStepContent(index)}</Typography>
                   <div className={classes.actionsContainer}>
