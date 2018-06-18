@@ -62,6 +62,20 @@ type Props = {
     formStructure: []
 };
 
+function formatSectionName(section) {
+  if (!section) {
+    return '';
+  }
+  return (section.name !== '{0}' ? section.name : `Add ${section.id}`);
+}
+
+function formatSectionNameAffixed(section, prefix, postfix) {
+  if (!section) {
+    return '';
+  }
+  return (prefix || '') + formatSectionName(section) + (postfix || '');
+}
+
 class EditMetadataStepper extends React.Component<Props> {
   props: Props;
   state = {
@@ -99,10 +113,14 @@ class EditMetadataStepper extends React.Component<Props> {
     });
   };
 
-  getSteps = () => {
-    return this.props.formStructure.map(section =>
-      (section.name !== '{0}' ? section.name : `Add ${section.id}`));
-  };
+  getSteps = () => this.props.formStructure.map(formatSectionName);
+  isLastStep = (activeStep, steps) => activeStep === steps.length - 1;
+  getBackSection = () => this.props.formStructure[this.state.activeStep - 1];
+  getNextSection = () => this.props.formStructure[this.state.activeStep + 1];
+  getBackSectionName = (prefix, postfix) =>
+    formatSectionNameAffixed(this.getBackSection(), prefix, postfix);
+  getNextSectionName = (prefix, postfix) =>
+    formatSectionNameAffixed(this.getNextSection(), prefix, postfix);
 
   getStepContent = (step) => {
     const { formStructure } = this.props;
@@ -146,7 +164,7 @@ class EditMetadataStepper extends React.Component<Props> {
                         onClick={this.handleBack}
                         className={classes.button}
                       >
-                        Back
+                        Back{this.getBackSectionName(' (', ')')}
                       </Button>
                       <Button
                         variant="contained"
@@ -154,7 +172,7 @@ class EditMetadataStepper extends React.Component<Props> {
                         onClick={this.handleNext}
                         className={classes.button}
                       >
-                        {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+                        {this.isLastStep(activeStep, steps) ? 'Finish' : `Next${this.getNextSectionName(' (', ')')}`}
                       </Button>
                     </div>
                   </div>
