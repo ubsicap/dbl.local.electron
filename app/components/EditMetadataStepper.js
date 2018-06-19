@@ -50,6 +50,7 @@ function mapStateToProps(state) {
     bundleId: bundleEditMetadata.editingMetadata,
     formStructure: bundleEditMetadata.formStructure,
     myStructurePath: '',
+    formInputs: bundleEditMetadata.formInputs,
     shouldLoadDetails: false
   };
 }
@@ -67,6 +68,7 @@ type Props = {
     bundleId: string,
     formStructure: [],
     myStructurePath: string,
+    formInputs: {},
     shouldLoadDetails: boolean
 };
 
@@ -134,24 +136,31 @@ class EditMetadataStepper extends React.Component<Props> {
     formatSectionNameAffixed(this.getNextSection(), prefix, postfix);
 
   getStepContent = (step) => {
-    const { formStructure } = this.props;
+    const { formStructure, formInputs } = this.props;
     const section = formStructure[step];
     const { template, contains, id } = section;
+    const formKey = `${this.props.myStructurePath}/${id}`;
     if (contains) {
       const hasTemplate = template === true;
       return (
         <EditMetadataStepper
           bundleId={this.props.bundleId}
-          myStructurePath={`${this.props.myStructurePath}/${id}`}
+          myStructurePath={formKey}
           shouldLoadDetails={hasTemplate}
           formStructure={contains}
+          formInputs={formInputs}
           classes={this.props.classes}
           fetchFormStructure={this.props.fetchFormStructure}
           fetchFormInputs={this.props.fetchFormInputs}
         />);
     }
     if (template) {
-      return 'has a form';
+      const myForm = formInputs[formKey];
+      if (myForm) {
+        return JSON.stringify(myForm);
+      }
+      this.props.fetchFormInputs(this.props.bundleId, formKey);
+      return 'Loading form...';
     }
     return 'what??';
   }
