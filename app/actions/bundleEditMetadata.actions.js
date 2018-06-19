@@ -2,13 +2,13 @@
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
-// import { bundleService } from '../services/bundle.service';
+import { bundleService } from '../services/bundle.service';
 
 export const bundleEditMetadataActions = {
   openEditMetadata,
   closeEditMetadata,
   fetchFormStructure,
-  fetchFormInputs,
+  fetchFormInputs
 };
 
 export default bundleEditMetadataActions;
@@ -18,9 +18,10 @@ export function fetchFormStructure(_bundleId) {
     dispatch(request(_bundleId));
     try {
       const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO;
-      if (isDemoMode) {
-        dispatch(success(await getMockStructure()));
-      }
+      const response = isDemoMode ?
+        await getMockStructure() :
+        await bundleService.getFormBundleTree(_bundleId);
+      dispatch(success(response));
     } catch (error) {
       dispatch(failure(error));
     }
@@ -41,9 +42,10 @@ export function fetchFormInputs(bundleId, _formKey) {
     dispatch(request(_formKey));
     try {
       const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO;
-      if (isDemoMode) {
-        dispatch(success(_formKey, await getMockFormInputs(bundleId, _formKey)));
-      }
+      const response = isDemoMode ?
+        await getMockFormInputs(bundleId, _formKey) :
+        await bundleService.getFormFields(bundleId, _formKey);
+      dispatch(success(_formKey, response));
     } catch (error) {
       dispatch(failure(error));
     }
@@ -82,50 +84,59 @@ function getMockStructure() {
               arity: '?',
               id: 'gbc',
               name: 'GBC',
-              template: true
+              template: true,
+              present: false
             },
             {
               arity: '?',
               id: 'paratext',
               name: 'PT',
-              template: true
+              template: true,
+              present: false
             },
             {
               arity: '?',
               id: 'ptReg',
               name: 'PT Registry',
-              template: true
+              template: true,
+              present: false
             },
             {
               arity: '?',
               id: 'tms',
               name: 'TMS',
-              template: true
+              template: true,
+              present: false
             },
             {
               arity: '?',
               id: 'reap',
               name: 'REAP',
-              template: true
+              template: true,
+              present: false
             },
             {
               arity: '?',
               id: 'biblica',
               name: 'Biblica',
-              template: true
+              template: true,
+              present: false
             },
             {
               arity: '?',
               id: 'dbp',
               name: 'DBP',
-              template: true
+              template: true,
+              present: false
             }
           ]
         },
         {
+          arity: '?',
           id: 'canonSpec',
           name: 'Canon Specification',
-          template: true
+          template: true,
+          present: false
         }
       ]
     },
@@ -138,7 +149,8 @@ function getMockStructure() {
           id: 'relation',
           name: '{0}',
           has_key: true,
-          template: true
+          template: true,
+          instances: {}
         }
       ]
     },
@@ -151,21 +163,32 @@ function getMockStructure() {
           id: 'rightsHolder',
           name: '{0}',
           has_key: true,
-          template: true
+          template: true,
+          instances: {
+            d41b7b7e1c41d27efc13f05f: {
+              has_key: true
+            }
+          }
         },
         {
           arity: '+',
           id: 'contributor',
           name: '{0}',
           has_key: true,
-          template: true
+          template: true,
+          instances: {
+            '54650cd05117ad67b3826e99': {
+              has_key: true
+            }
+          }
         },
         {
           arity: '?',
           id: 'rightsAdmin',
           name: '{0}',
           has_key: true,
-          template: true
+          template: true,
+          instances: {}
         }
       ]
     },
@@ -183,7 +206,12 @@ function getMockStructure() {
           id: 'country',
           name: '{0}',
           has_key: true,
-          template: true
+          template: true,
+          instances: {
+            US: {
+              has_key: true
+            }
+          }
         }
       ]
     },
@@ -194,7 +222,7 @@ function getMockStructure() {
     },
     {
       id: 'textFormat',
-      name: 'Type',
+      name: 'Format',
       template: true
     },
     {
@@ -206,7 +234,21 @@ function getMockStructure() {
           id: 'name',
           name: '{0}',
           has_key: true,
-          template: true
+          template: true,
+          instances: {
+            'book-mat': {
+              has_key: true
+            },
+            'book-mrk': {
+              has_key: true
+            },
+            'book-luk': {
+              has_key: true
+            },
+            'book-jhn': {
+              has_key: true
+            }
+          }
         }
       ]
     },
@@ -233,14 +275,47 @@ function getMockStructure() {
                   has_key: true,
                   template: true
                 }
-              ]
+              ],
+              present: false
             },
             {
+              arity: '?',
               id: 'canonSpec',
               name: 'Canon Specification',
-              template: true
+              template: true,
+              present: false
             }
-          ]
+          ],
+          instances: {
+            p1: {
+              has_key: true,
+              contains: [
+                {
+                  id: 'countries',
+                  arity: '?',
+                  name: 'Countries',
+                  contains: [
+                    {
+                      arity: '+',
+                      id: 'country',
+                      name: '{0}',
+                      has_key: true,
+                      template: true,
+                      instances: {}
+                    }
+                  ],
+                  present: false
+                },
+                {
+                  arity: '?',
+                  id: 'canonSpec',
+                  name: 'Canon Specification',
+                  template: true,
+                  present: false
+                }
+              ]
+            }
+          }
         }
       ]
     },
@@ -252,13 +327,15 @@ function getMockStructure() {
           arity: '?',
           id: 'fullStatement',
           name: 'Full Statement',
-          template: true
+          template: true,
+          present: true
         },
         {
           arity: '?',
           id: 'shortStatement',
           name: 'Short Statement',
-          template: true
+          template: true,
+          present: false
         }
       ]
     },
@@ -266,7 +343,8 @@ function getMockStructure() {
       arity: '?',
       id: 'promotion',
       name: 'Promotion',
-      template: true
+      template: true,
+      present: true
     },
     {
       arity: '1',
@@ -280,13 +358,15 @@ function getMockStructure() {
       name: 'Progress',
       contains: [
         {
-          arity: '1',
+          arity: '+',
           id: 'book',
           name: 'Book',
           template: true,
-          has_key: true
+          has_key: true,
+          instances: {}
         }
-      ]
+      ],
+      present: false
     }
   ];
   return new Promise(resolve => resolve(mockStructure));
