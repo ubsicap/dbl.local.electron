@@ -96,7 +96,7 @@ class EditMetadataStepper extends React.Component<Props> {
 
   componentDidMount() {
     if (this.props.formStructure.length === 0) {
-      this.props.fetchFormStructure();
+      this.props.fetchFormStructure(this.props.bundleId);
     }
     if (this.props.shouldLoadDetails) {
       this.props.fetchFormInputs(this.props.bundleId, this.props.myStructurePath);
