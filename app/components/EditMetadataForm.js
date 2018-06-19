@@ -69,33 +69,35 @@ class EditMetadataForm extends React.Component<Props> {
     const { classes, inputs } = this.props;
     const { fields = [] } = inputs;
     return (
-      <form className={classes.container} noValidate autoComplete="off">
+      <form className={classes.container} noValidate>
         {fields.filter(filterStringFields).map(field => (
           <TextField
             key={field.name}
             id={field.name}
             label={field.label}
             className={classes.textField}
-            value={this.state.name}
+            select={Boolean(field.options)}
             /* error */
+            /* fullWidth */
             /* defaultValue={field.default} */
+            value={this.state[field.name] ? this.state[field.name] : field.default}
             /* placeholder="Placeholder" */
-            autoComplete={field.default}
+            /* autoComplete={field.default} */
             helperText={field.help}
             required={field.nValues !== '?'}
             onChange={this.handleChange(field.name)}
-            /* SelectProps={{
+            SelectProps={{
               MenuProps: {
                 className: classes.menu,
               },
-            }} */
+            }}
             margin="normal"
           >
-            { /* currencies.map(option => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
+            { field.options && field.options.map(option => (
+              <MenuItem key={option} value={option}>
+                {option}
               </MenuItem>
-            )) */}
+            )) }
           </TextField>))
         }
       </form>
