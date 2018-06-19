@@ -4,7 +4,10 @@ import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
 
 type Props = {
-  classes: {}
+  classes: {},
+  bundleId: string,
+  formKey: string,
+  inputs: {}
 };
 
 const materialStyles = theme => ({

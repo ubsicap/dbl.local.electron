@@ -11,6 +11,7 @@ import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import { fetchFormStructure, fetchFormInputs } from '../actions/bundleEditMetadata.actions';
+import EditMetadataForm from './EditMetadataForm';
 
 const materialStyles = theme => ({
   root: {
@@ -136,7 +137,7 @@ class EditMetadataStepper extends React.Component<Props> {
     formatSectionNameAffixed(this.getNextSection(), prefix, postfix);
 
   getStepContent = (step) => {
-    const { formStructure, formInputs } = this.props;
+    const { formStructure, formInputs, bundleId } = this.props;
     const section = formStructure[step];
     const { template, contains, id } = section;
     const formKey = `${this.props.myStructurePath}/${id}`;
@@ -144,7 +145,8 @@ class EditMetadataStepper extends React.Component<Props> {
       const hasTemplate = template === true;
       return (
         <EditMetadataStepper
-          bundleId={this.props.bundleId}
+          key={formKey}
+          bundleId={bundleId}
           myStructurePath={formKey}
           shouldLoadDetails={hasTemplate}
           formStructure={contains}
@@ -155,12 +157,8 @@ class EditMetadataStepper extends React.Component<Props> {
         />);
     }
     if (template) {
-      const myForm = formInputs[formKey];
-      if (myForm) {
-        return JSON.stringify(myForm);
-      }
-      this.props.fetchFormInputs(this.props.bundleId, formKey);
-      return 'Loading form...';
+      const myInputs = (formInputs[formKey] || {});
+      return (<EditMetadataForm bundleId={bundleId} formKey={formKey} inputs={myInputs} />);
     }
     return 'what??';
   }
