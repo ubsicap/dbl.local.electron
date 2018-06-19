@@ -158,7 +158,12 @@ class EditMetadataStepper extends React.Component<Props> {
     }
     if (template) {
       const myInputs = (formInputs[formKey] || {});
-      return (<EditMetadataForm bundleId={bundleId} formKey={formKey} inputs={myInputs} />);
+      return (<EditMetadataForm
+        bundleId={bundleId}
+        formKey={formKey}
+        inputs={myInputs}
+        fetchFormInputs={this.props.fetchFormInputs}
+      />);
     }
     return 'what??';
   }
