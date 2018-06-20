@@ -77,7 +77,7 @@ function formatSectionName(section) {
   if (!section) {
     return '';
   }
-  return (section.name !== '{0}' ? section.name : `Add ${section.id}`);
+  return (!section.name.includes('{0}') ? section.name : `Add ${section.id}`);
 }
 
 function formatSectionNameAffixed(section, prefix, postfix) {
@@ -127,20 +127,35 @@ class EditMetadataStepper extends React.Component<Props> {
     });
   };
 
-  getSteps = () => this.props.formStructure.map(formatSectionName);
+  getSteps = () => {
+    const steps = this.props.formStructure.map(formatSectionName);
+    if (this.props.shouldLoadDetails) {
+      return ['Details', ...steps];
+    }
+    return steps;
+  };
+
   isLastStep = (activeStep, steps) => activeStep === steps.length - 1;
-  getBackSection = () => this.props.formStructure[this.state.activeStep - 1];
-  getNextSection = () => this.props.formStructure[this.state.activeStep + 1];
+  getFormStructureIndex = (step) => (!this.props.shouldLoadDetails ? step : step - 1);
+  getSection = (step) => {
+    const formStructureIndex = this.getFormStructureIndex(step);
+    if (formStructureIndex === -1) {
+      return { id: '_myDetails', name: 'Details', template: true };
+    }
+    return this.props.formStructure[formStructureIndex];
+  }
+  getBackSection = () => this.getSection(this.state.activeStep - 1);
+  getNextSection = () => this.getSection(this.state.activeStep + 1);
   getBackSectionName = (prefix, postfix) =>
     formatSectionNameAffixed(this.getBackSection(), prefix, postfix);
   getNextSectionName = (prefix, postfix) =>
     formatSectionNameAffixed(this.getNextSection(), prefix, postfix);
 
   getStepContent = (step) => {
-    const { formStructure, formInputs, bundleId } = this.props;
-    const section = formStructure[step];
+    const { formInputs, bundleId } = this.props;
+    const section = this.getSection(step);
     const { template, contains, id } = section;
-    const formKey = `${this.props.myStructurePath}/${id}`;
+    const formKey = id !== '_myDetails' ? `${this.props.myStructurePath}/${id}` : this.props.myStructurePath;
     if (contains) {
       const hasTemplate = template === true;
       return (
