@@ -128,7 +128,12 @@ class EditMetadataStepper extends React.Component<Props> {
   };
 
   getSteps = () => {
-    const steps = this.props.formStructure.map(formatSectionName);
+    const steps = this.props.formStructure
+      .reduce((acc, section) => {
+        const instanceNames = Object.keys(section.instances || {}).map((k, index) => `section.id ${index + 1}`);
+        const sectionName = formatSectionName(section);
+        return [...acc, ...instanceNames, sectionName];
+      }, []);
     if (this.props.shouldLoadDetails) {
       return ['Details', ...steps];
     }
