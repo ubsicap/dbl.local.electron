@@ -99,8 +99,8 @@ class EditMetadataForm extends React.Component<Props> {
               </MenuItem>
             ))) ||
             (field.type === 'boolean' &&
-              [<MenuItem key="true" value="True">True</MenuItem>,
-                <MenuItem key="false" value="False">False</MenuItem>]
+              [<MenuItem key="true" value="true">True</MenuItem>,
+                <MenuItem key="false" value="false">False</MenuItem>]
             )
             }
           </TextField>))
