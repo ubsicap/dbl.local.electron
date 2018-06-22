@@ -2,7 +2,7 @@ import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
-// import { createSelector } from 'reselect';
+import { createSelector } from 'reselect';
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
@@ -29,30 +29,59 @@ const materialStyles = theme => ({
   },
 });
 
-/*
-const getIsSearchActive = (state) => state.bundlesFilter.isSearchActive;
-const emptyBundleMatches = {};
-const getEmptryBundleMatches = () => emptyBundleMatches;
+const detailsStep = {
+  id: '_myDetails',
+  name: 'Details',
+  label: 'Details',
+  content: '',
+  template: true
+};
 
-const getBundleMatches = (state, props) =>
-  (state.bundlesFilter.searchResults && state.bundlesFilter.searchResults.bundlesMatching ?
-    (state.bundlesFilter.searchResults.bundlesMatching[props.bundleId] || emptyBundleMatches)
-    : emptyBundleMatches);
+const getFormStructure = (state) => state.bundleEditMetadata.formStructure;
 
-const makeShouldShowRow = () => createSelector(
-  [getIsSearchActive, getBundleMatches],
-  (isActiveSearch, bundleMatches) => !isActiveSearch || Object.keys(bundleMatches).length > 0
+const makeGetSteps = () => createSelector(
+  [getFormStructure, state => state.shouldLoadDetails],
+  (formStructure, shouldLoadDetails) => {
+    const msgLoadingForm = 'loading form...';
+    const steps = formStructure
+      .reduce((accSteps, section) => {
+        const instanceSteps = Object.keys(section.instances || {})
+          .reduce((accInstances, instanceKey, index) => {
+            const label = `${section.id} ${index + 1}`;
+            const content = msgLoadingForm;
+            const instance = section.instances[instanceKey];
+            return [...accInstances,
+              {
+                label, content, template: true, ...instance
+              }];
+          }, []);
+        const label = formatSectionName(section);
+        const content = msgLoadingForm;
+        return [
+          ...accSteps,
+          ...instanceSteps,
+          {
+            ...section, label, content
+          }];
+      }, []);
+    if (shouldLoadDetails) {
+      return [detailsStep, ...steps];
+    }
+    return steps;
+  }
 );
-*/
 
 function mapStateToProps(state) {
   const { bundleEditMetadata } = state;
+  const getSteps = makeGetSteps();
+  const steps = getSteps(state);
   return {
     bundleId: bundleEditMetadata.editingMetadata,
-    formStructure: bundleEditMetadata.formStructure,
+    formStructure: getFormStructure(state),
     myStructurePath: '',
     formInputs: bundleEditMetadata.formInputs,
-    shouldLoadDetails: false
+    shouldLoadDetails: false,
+    steps
   };
 }
 
@@ -68,6 +97,7 @@ type Props = {
     fetchFormInputs: () => {},
     bundleId: string,
     formStructure: [],
+    steps: [],
     myStructurePath: string,
     formInputs: {},
     shouldLoadDetails: boolean
@@ -87,7 +117,7 @@ function formatSectionNameAffixed(section, prefix, postfix) {
   return (prefix || '') + formatSectionName(section) + (postfix || '');
 }
 
-class EditMetadataStepper extends React.Component<Props> {
+class _EditMetadataStepper extends React.Component<Props> {
   props: Props;
   state = {
     activeStep: 0,
@@ -127,30 +157,11 @@ class EditMetadataStepper extends React.Component<Props> {
     });
   };
 
-  getSteps = () => {
-    const steps = this.props.formStructure
-      .reduce((acc, section) => {
-        const instanceNames = Object.keys(section.instances || {}).map((k, index) => `section.id ${index + 1}`);
-        const sectionName = formatSectionName(section);
-        return [...acc, ...instanceNames, sectionName];
-      }, []);
-    if (this.props.shouldLoadDetails) {
-      return ['Details', ...steps];
-    }
-    return steps;
-  };
-
   isLastStep = (activeStep, steps) => activeStep === steps.length - 1;
-  getFormStructureIndex = (step) => (!this.props.shouldLoadDetails ? step : step - 1);
-  getSection = (step) => {
-    const formStructureIndex = this.getFormStructureIndex(step);
-    if (formStructureIndex === -1) {
-      return { id: '_myDetails', name: 'Details', template: true };
-    }
-    return this.props.formStructure[formStructureIndex];
-  }
-  getBackSection = () => this.getSection(this.state.activeStep - 1);
-  getNextSection = () => this.getSection(this.state.activeStep + 1);
+  getFormStructureIndex = (stepIndex) => (!this.props.shouldLoadDetails ? stepIndex : stepIndex - 1);
+  getStep = (stepIndex) => this.props.steps[stepIndex];
+  getBackSection = () => this.getStep(this.state.activeStep - 1);
+  getNextSection = () => this.getStep(this.state.activeStep + 1);
   getBackSectionName = (prefix, postfix) =>
     formatSectionNameAffixed(this.getBackSection(), prefix, postfix);
   getNextSectionName = (prefix, postfix) =>
@@ -158,8 +169,7 @@ class EditMetadataStepper extends React.Component<Props> {
 
   getStepContent = (step) => {
     const { formInputs, bundleId } = this.props;
-    const section = this.getSection(step);
-    const { template, contains, id } = section;
+    const { template, contains, id } = step;
     const formKey = id !== '_myDetails' ? `${this.props.myStructurePath}/${id}` : this.props.myStructurePath;
     if (contains) {
       const hasTemplate = template === true;
@@ -189,24 +199,23 @@ class EditMetadataStepper extends React.Component<Props> {
   }
 
   render() {
-    const { classes } = this.props;
-    const steps = this.getSteps();
+    const { classes, steps = [] } = this.props;
     const { activeStep } = this.state;
 
     return (
       <div className={classes.root}>
         <Stepper nonLinear activeStep={activeStep} orientation="vertical">
-          {steps.map((label, index) => {
+          {steps.map((step, index) => {
             return (
-              <Step key={label}>
+              <Step key={step.label}>
                 <StepLabel
                   onClick={this.handleStep(index)}
                   completed={this.state.completed[index]}
                 >
-                  {label}
+                  {step.label}
                 </StepLabel>
                 <StepContent>
-                  {this.getStepContent(index)}
+                  {this.getStepContent(step)}
                   <div className={classes.actionsContainer}>
                     <div>
                       <Button
@@ -244,10 +253,12 @@ class EditMetadataStepper extends React.Component<Props> {
   }
 }
 
-export default compose(
-  withStyles(materialStyles, { name: 'EditMetadataStepper' }),
+const EditMetadataStepper = compose(
+  withStyles(materialStyles, { name: '_EditMetadataStepper' }),
   connect(
     mapStateToProps,
     mapDispatchToProps
   ),
-)(EditMetadataStepper);
+)(_EditMetadataStepper);
+
+export default EditMetadataStepper;
