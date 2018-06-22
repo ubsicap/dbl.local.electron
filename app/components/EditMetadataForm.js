@@ -45,6 +45,7 @@ const currencies = [
   },
 ];
 
+/* string, boolean, integer, decimal, xml */
 function filterFields(field) {
   return field.type === 'string' || field.type === 'boolean';
 }
