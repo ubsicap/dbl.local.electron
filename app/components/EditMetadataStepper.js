@@ -41,7 +41,7 @@ const getFormStructure = (state, props) =>
   props.formStructure || state.bundleEditMetadata.formStructure;
 
 const makeGetSteps = () => createSelector(
-  [getFormStructure, state => state.shouldLoadDetails],
+  [getFormStructure, (state, props) => props.shouldLoadDetails],
   (formStructure, shouldLoadDetails) => {
     const msgLoadingForm = 'loading form...';
     const steps = formStructure
