@@ -47,16 +47,17 @@ const makeGetSteps = () => createSelector(
     const steps = formStructure
       .reduce((accSteps, section) => {
         const instanceSteps = Object.keys(section.instances || {})
-          .reduce((accInstances, instanceKey, index) => {
-            const label = `${section.id} ${index + 1}`;
+          .reduce((accInstances, instanceKey) => {
+            const label = `${section.id} ${instanceKey}`;
             const content = msgLoadingForm;
             const instance = section.instances[instanceKey];
+            const id = `${section.id}/${instanceKey}`;
             return [...accInstances,
               {
-                label, content, template: true, ...instance
+                id, label, content, template: true, ...instance
               }];
           }, []);
-        const label = formatSectionName(section);
+        const label = formatStepLabel(section);
         const content = msgLoadingForm;
         return [
           ...accSteps,
@@ -108,10 +109,14 @@ type Props = {
     shouldLoadDetails: boolean
 };
 
-function formatSectionName(section) {
-  if (!section) {
+function formatStepLabel(step) {
+  if (!step) {
     return '';
   }
+  if (step.label) {
+    return step.label;
+  }
+  const section = step;
   return (!section.name.includes('{0}') ? section.name : `Add ${section.id}`);
 }
 
@@ -119,7 +124,7 @@ function formatSectionNameAffixed(section, prefix, postfix) {
   if (!section) {
     return '';
   }
-  return (prefix || '') + formatSectionName(section) + (postfix || '');
+  return (prefix || '') + formatStepLabel(section) + (postfix || '');
 }
 
 class _EditMetadataStepper extends React.Component<Props> {
