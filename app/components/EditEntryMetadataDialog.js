@@ -72,7 +72,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
             </Button>
           </Toolbar>
         </AppBar>
-        <EditMetadataStepper />
+        <EditMetadataStepper myStructurePath="" shouldLoadDetails={false} />
       </Dialog>
     );
   }

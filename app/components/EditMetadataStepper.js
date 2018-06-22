@@ -37,7 +37,8 @@ const detailsStep = {
   template: true
 };
 
-const getFormStructure = (state) => state.bundleEditMetadata.formStructure;
+const getFormStructure = (state, props) =>
+  props.formStructure || state.bundleEditMetadata.formStructure;
 
 const makeGetSteps = () => createSelector(
   [getFormStructure, state => state.shouldLoadDetails],
@@ -71,19 +72,23 @@ const makeGetSteps = () => createSelector(
   }
 );
 
-function mapStateToProps(state) {
-  const { bundleEditMetadata } = state;
+const makeMapStateToProps = () => {
   const getSteps = makeGetSteps();
-  const steps = getSteps(state);
-  return {
-    bundleId: bundleEditMetadata.editingMetadata,
-    formStructure: getFormStructure(state),
-    myStructurePath: '',
-    formInputs: bundleEditMetadata.formInputs,
-    shouldLoadDetails: false,
-    steps
+  const mapStateToProps = (state, props) => {
+    const { bundleEditMetadata } = state;
+    const steps = getSteps(state, props);
+    const { formInputs } = bundleEditMetadata;
+    const formStructure = getFormStructure(state, props);
+    const bundleId = bundleEditMetadata.editingMetadata;
+    return {
+      bundleId,
+      formStructure,
+      formInputs,
+      steps
+    };
   };
-}
+  return mapStateToProps;
+};
 
 const mapDispatchToProps = {
   fetchFormStructure,
@@ -174,16 +179,11 @@ class _EditMetadataStepper extends React.Component<Props> {
     if (contains) {
       const hasTemplate = template === true;
       return (
-        <EditMetadataStepper
+        <EditMetadataStepperComposed
           key={formKey}
-          bundleId={bundleId}
           myStructurePath={formKey}
           shouldLoadDetails={hasTemplate}
           formStructure={contains}
-          formInputs={formInputs}
-          classes={this.props.classes}
-          fetchFormStructure={this.props.fetchFormStructure}
-          fetchFormInputs={this.props.fetchFormInputs}
         />);
     }
     if (template) {
@@ -253,12 +253,12 @@ class _EditMetadataStepper extends React.Component<Props> {
   }
 }
 
-const EditMetadataStepper = compose(
+const EditMetadataStepperComposed = compose(
   withStyles(materialStyles, { name: '_EditMetadataStepper' }),
   connect(
-    mapStateToProps,
+    makeMapStateToProps,
     mapDispatchToProps
   ),
 )(_EditMetadataStepper);
 
-export default EditMetadataStepper;
+export default EditMetadataStepperComposed;
