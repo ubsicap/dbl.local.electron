@@ -45,8 +45,8 @@ const currencies = [
   },
 ];
 
-function filterStringFields(field) {
-  return field.type === 'string';
+function filterFields(field) {
+  return field.type === 'string' || field.type === 'boolean';
 }
 
 class EditMetadataForm extends React.Component<Props> {
@@ -70,13 +70,13 @@ class EditMetadataForm extends React.Component<Props> {
     const { fields = [] } = inputs;
     return (
       <form className={classes.container} noValidate>
-        {fields.filter(filterStringFields).map(field => (
+        {fields.filter(filterFields).map(field => (
           <TextField
             key={field.name}
             id={field.name}
             label={field.label}
             className={classes.textField}
-            select={Boolean(field.options)}
+            select={Boolean(field.options) || (field.type === 'boolean')}
             /* error */
             /* fullWidth */
             /* defaultValue={field.default} */
@@ -93,11 +93,16 @@ class EditMetadataForm extends React.Component<Props> {
             }}
             margin="normal"
           >
-            { field.options && field.options.map(option => (
+            { (field.options && field.options.map(option => (
               <MenuItem key={option} value={option}>
                 {option}
               </MenuItem>
-            )) }
+            ))) ||
+            (field.type === 'boolean' &&
+              [<MenuItem key="true" value="True">True</MenuItem>,
+                <MenuItem key="false" value="False">False</MenuItem>]
+            )
+            }
           </TextField>))
         }
       </form>
