@@ -54,7 +54,7 @@ class EditMetadataForm extends React.Component<Props> {
             label={field.label}
             className={classes.textField}
             select={Boolean(field.options) || (field.type === 'boolean')}
-            multiline={field.type === 'xml'}
+            multiline
             /* error */
             /* fullWidth */
             /* defaultValue={field.default} */
