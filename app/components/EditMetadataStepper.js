@@ -15,7 +15,6 @@ import EditMetadataForm from './EditMetadataForm';
 
 const materialStyles = theme => ({
   root: {
-    width: '90%',
   },
   button: {
     marginTop: theme.spacing.unit,
