@@ -142,22 +142,22 @@ class _EditMetadataStepper extends React.Component<Props> {
     }
   }
 
-  handleStep = step => () => {
+  trySaveFormAndMoveStep = (newStep) => {
     this.setState({
-      activeStep: this.state.activeStep !== step ? step : null,
+      activeStep: newStep,
     });
+  };
+
+  handleStep = step => () => {
+    this.trySaveFormAndMoveStep(this.state.activeStep !== step ? step : null);
   };
 
   handleNext = () => {
-    this.setState({
-      activeStep: this.state.activeStep + 1,
-    });
+    this.trySaveFormAndMoveStep(this.state.activeStep + 1);
   };
 
   handleBack = () => {
-    this.setState({
-      activeStep: this.state.activeStep - 1,
-    });
+    this.trySaveFormAndMoveStep(this.state.activeStep - 1);
   };
 
   handleReset = () => {
