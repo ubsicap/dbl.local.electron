@@ -15,10 +15,7 @@ export function bundleEditMetadata(state = initialState, action) {
       };
     }
     case bundleEditMetadataConstants.CLOSE_EDIT_METADATA: {
-      return {
-        ...state,
-        editingMetadata: null
-      };
+      return initialState;
     }
     case bundleEditMetadataConstants.METADATA_FORM_STRUCTURE_REQUEST: {
       return {
