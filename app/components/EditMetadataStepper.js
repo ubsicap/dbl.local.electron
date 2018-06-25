@@ -100,7 +100,7 @@ type Props = {
     classes: {},
     fetchFormStructure: () => {},
     fetchFormInputs: () => {},
-    bundleId: string,
+    bundleId: ?string,
     formStructure: [],
     steps: [],
     myStructurePath: string,
@@ -203,9 +203,11 @@ class _EditMetadataStepper extends React.Component<Props> {
   }
 
   render() {
-    const { classes, steps = [] } = this.props;
+    const { bundleId, classes, steps = [] } = this.props;
     const { activeStep } = this.state;
-
+    if (!bundleId) {
+      return (null);
+    }
     return (
       <div className={classes.root}>
         <Stepper nonLinear activeStep={activeStep} orientation="vertical">
