@@ -69,6 +69,50 @@ export function closeEditMetadata() {
   return { type: bundleEditMetadataConstants.CLOSE_EDIT_METADATA };
 }
 
+/*
+    {
+      "formId": "37b60a8e-296e-4502-963d-c15b5bdc607e",
+      "fields": [
+          {"type": "values", "name": "name", "valueList": ["New Name"]},
+          {"type": "values", "name": "nameLocal", "valueList": ["New Localized Name"]},
+          {"type": "values", "name": "abbreviation", "valueList": ["NEWABBR"]},
+          {"type": "values", "name": "description", "valueList": ["New Description"]},
+          {"type": "values", "name": "dateCompleted", "valueList": ["2018-06-01T12:23:34"]}
+      ]
+    }
+ */
+export function saveMetadata(bundleId, formKey, formId, fieldNameValues) {
+  return async dispatch => {
+    const requestOnly = { type: bundleEditMetadataConstants.SAVE_METADATA_REQUEST };
+    if (!formKey) {
+      return dispatch(requestOnly);
+    }
+    if (formId && Object.keys(fieldNameValues) === 0) {
+      dispatch(requestOnly);
+      return saveMetadataSuccess(bundleId, formKey, formId);
+    }
+    const fields = Object.keys(fieldNameValues).reduce((acc, name) => {
+      const newFieldValue = fieldNameValues[name];
+      return [...acc, { type: 'values', name, valueList: [newFieldValue] }];
+    }, []);
+    dispatch({ ...requestOnly, formId, fields });
+    try {
+      await bundleService.postFormFields(bundleId, formKey, { formId, fields });
+      dispatch(saveMetadataSuccess(bundleId, formKey, formId));
+    } catch (error) {
+      dispatch(saveMetadataFailed(error));
+    }
+  }
+}
+
+export function saveMetadataSuccess(formId) {
+  return { type: bundleEditMetadataConstants.SAVE_METADATA_SUCCESS, formId };
+}
+
+export function saveMetadataFailed(message) {
+  return { type: bundleEditMetadataConstants.SAVE_METADATA_FAILED, message };
+}
+
 function getMockStructure() {
   const mockStructure = [
     {

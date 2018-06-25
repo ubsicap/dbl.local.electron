@@ -17,7 +17,8 @@ export const bundleService = {
   requestSaveResourceTo,
   delete: removeBundle,
   getFormBundleTree,
-  getFormFields
+  getFormFields,
+  postFormFields
 };
 export default bundleService;
 
@@ -264,4 +265,14 @@ function getFormFields(bundleId, formKey) {
   };
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${FORM_API}/${bundleId}${formKey}`;
   return fetch(url, requestOptions).then(handleResponse);
+}
+
+function postFormFields(bundleId, formKey, payload) {
+  const requestOptions = {
+    method: 'POST',
+    headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: JSON.stringify(payload)
+  };
+  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${FORM_API}/${bundleId}${formKey}`;
+  return fetch(url, requestOptions).then(handleTextResponse);
 }

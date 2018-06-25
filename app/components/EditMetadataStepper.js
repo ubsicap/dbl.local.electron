@@ -10,7 +10,7 @@ import StepContent from '@material-ui/core/StepContent';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
-import { fetchFormStructure, fetchFormInputs } from '../actions/bundleEditMetadata.actions';
+import { fetchFormStructure, fetchFormInputs, saveMetadataSuccess } from '../actions/bundleEditMetadata.actions';
 import EditMetadataForm from './EditMetadataForm';
 
 const materialStyles = theme => ({
@@ -76,6 +76,7 @@ const makeMapStateToProps = () => {
   const getSteps = makeGetSteps();
   const mapStateToProps = (state, props) => {
     const { bundleEditMetadata } = state;
+    const { requestingSaveMetadata = false } = bundleEditMetadata;
     const steps = getSteps(state, props);
     const { formInputs } = bundleEditMetadata;
     const formStructure = getFormStructure(state, props);
@@ -84,7 +85,8 @@ const makeMapStateToProps = () => {
       bundleId,
       formStructure,
       formInputs,
-      steps
+      steps,
+      requestingSaveMetadata
     };
   };
   return mapStateToProps;
@@ -92,7 +94,8 @@ const makeMapStateToProps = () => {
 
 const mapDispatchToProps = {
   fetchFormStructure,
-  fetchFormInputs
+  fetchFormInputs,
+  saveMetadataSuccess
 };
 
 
@@ -100,12 +103,14 @@ type Props = {
     classes: {},
     fetchFormStructure: () => {},
     fetchFormInputs: () => {},
+    saveMetadataSuccess: () => {},
     bundleId: ?string,
     formStructure: [],
     steps: [],
     myStructurePath: string,
     formInputs: {},
-    shouldLoadDetails: boolean
+    shouldLoadDetails: boolean,
+    requestingSaveMetadata: boolean
 };
 
 function formatStepLabel(step) {
@@ -129,7 +134,7 @@ function formatSectionNameAffixed(section, prefix, postfix) {
 class _EditMetadataStepper extends React.Component<Props> {
   props: Props;
   state = {
-    activeStep: 0,
+    activeStepIndex: 0,
     completed: {},
   };
 
@@ -142,44 +147,55 @@ class _EditMetadataStepper extends React.Component<Props> {
     }
   }
 
+  componentDidUpdate(prevProps) {
+    if (this.props.requestingSaveMetadata && !prevProps.requestingSaveMetadata) {
+      const activeStep = this.getStep(this.state.activeStepIndex);
+      if (!activeStep) {
+        this.props.saveMetadataSuccess(); // nothing to save
+      }
+    }
+  }
+
   trySaveFormAndMoveStep = (newStep) => {
     this.setState({
-      activeStep: newStep,
+      activeStepIndex: newStep,
     });
   };
 
   handleStep = step => () => {
-    this.trySaveFormAndMoveStep(this.state.activeStep !== step ? step : null);
+    this.trySaveFormAndMoveStep(this.state.activeStepIndex !== step ? step : null);
   };
 
   handleNext = () => {
-    this.trySaveFormAndMoveStep(this.state.activeStep + 1);
+    this.trySaveFormAndMoveStep(this.state.activeStepIndex + 1);
   };
 
   handleBack = () => {
-    this.trySaveFormAndMoveStep(this.state.activeStep - 1);
+    this.trySaveFormAndMoveStep(this.state.activeStepIndex - 1);
   };
 
   handleReset = () => {
     this.setState({
-      activeStep: 0,
+      activeStepIndex: 0,
     });
   };
 
-  isLastStep = (activeStep, steps) => activeStep === steps.length - 1;
+  isLastStep = (stepIndex, steps) => stepIndex === steps.length - 1;
   getFormStructureIndex = (stepIndex) => (!this.props.shouldLoadDetails ? stepIndex : stepIndex - 1);
   getStep = (stepIndex) => this.props.steps[stepIndex];
-  getBackSection = () => this.getStep(this.state.activeStep - 1);
-  getNextSection = () => this.getStep(this.state.activeStep + 1);
+  getBackSection = () => this.getStep(this.state.activeStepIndex - 1);
+  getNextSection = () => this.getStep(this.state.activeStepIndex + 1);
   getBackSectionName = (prefix, postfix) =>
     formatSectionNameAffixed(this.getBackSection(), prefix, postfix);
   getNextSectionName = (prefix, postfix) =>
     formatSectionNameAffixed(this.getNextSection(), prefix, postfix);
 
-  getStepContent = (step) => {
+  getFormKey = (stepId) => (stepId !== '_myDetails' ? `${this.props.myStructurePath}/${stepId}` : this.props.myStructurePath);
+  getStepContent = (stepIndex) => {
+    const step = this.getStep(stepIndex);
     const { formInputs, bundleId } = this.props;
     const { template, contains, id } = step;
-    const formKey = id !== '_myDetails' ? `${this.props.myStructurePath}/${id}` : this.props.myStructurePath;
+    const formKey = this.getFormKey(id);
     if (contains) {
       const hasTemplate = template === true;
       return (
@@ -197,6 +213,7 @@ class _EditMetadataStepper extends React.Component<Props> {
         formKey={formKey}
         inputs={myInputs}
         fetchFormInputs={this.props.fetchFormInputs}
+        isActiveForm={this.activeStepIndex === stepIndex}
       />);
     }
     return 'what??';
@@ -204,13 +221,13 @@ class _EditMetadataStepper extends React.Component<Props> {
 
   render() {
     const { bundleId, classes, steps = [] } = this.props;
-    const { activeStep } = this.state;
+    const { activeStepIndex } = this.state;
     if (!bundleId) {
       return (null);
     }
     return (
       <div className={classes.root}>
-        <Stepper nonLinear activeStep={activeStep} orientation="vertical">
+        <Stepper nonLinear activeStep={activeStepIndex} orientation="vertical">
           {steps.map((step, index) => {
             return (
               <Step key={step.label}>
@@ -221,11 +238,11 @@ class _EditMetadataStepper extends React.Component<Props> {
                   {step.label}
                 </StepLabel>
                 <StepContent>
-                  {this.getStepContent(step)}
+                  {this.getStepContent(index)}
                   <div className={classes.actionsContainer}>
                     <div>
                       <Button
-                        disabled={activeStep === 0}
+                        disabled={activeStepIndex === 0}
                         onClick={this.handleBack}
                         className={classes.button}
                       >
@@ -237,7 +254,7 @@ class _EditMetadataStepper extends React.Component<Props> {
                         onClick={this.handleNext}
                         className={classes.button}
                       >
-                        {this.isLastStep(activeStep, steps) ? 'Finish' : `Next${this.getNextSectionName(' (', ')')}`}
+                        {this.isLastStep(activeStepIndex, steps) ? 'Finish' : `Next${this.getNextSectionName(' (', ')')}`}
                       </Button>
                     </div>
                   </div>
@@ -246,7 +263,7 @@ class _EditMetadataStepper extends React.Component<Props> {
             );
           })}
         </Stepper>
-        {activeStep === steps.length && (
+        {activeStepIndex === steps.length && (
           <Paper square elevation={0} className={classes.resetContainer}>
             <Typography>All steps completed - you&quot;re finished</Typography>
             <Button onClick={this.handleReset} className={classes.button}>

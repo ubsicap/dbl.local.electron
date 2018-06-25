@@ -1,14 +1,32 @@
 import React from 'react';
+import { connect } from 'react-redux';
+import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
 import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
+import { saveMetadata } from '../actions/bundleEditMetadata.actions';
 
 type Props = {
   classes: {},
   bundleId: string,
   formKey: string,
   inputs: {},
-  fetchFormInputs: () => {}
+  isActiveForm: boolean,
+  requestingSaveMetadata: boolean,
+  fetchFormInputs: () => {},
+  saveMetadata: () => {}
+};
+
+function mapStateToProps(state) {
+  const { bundleEditMetadata } = state;
+  const { requestingSaveMetadata = false } = bundleEditMetadata;
+  return {
+    requestingSaveMetadata
+  };
+}
+
+const mapDispatchToProps = {
+  saveMetadata
 };
 
 const materialStyles = theme => ({
@@ -40,6 +58,14 @@ class EditMetadataForm extends React.Component<Props> {
     this.props.fetchFormInputs(this.props.bundleId, this.props.formKey);
   }
 
+  componentDidUpdate(prevProps) {
+    if (this.props.isActiveForm && this.props.requestingSaveMetadata && !prevProps.requestingSaveMetadata) {
+      const { inputs, bundleId, formKey } = this.props;
+      const { formId } = inputs;
+      this.props.saveMetadata(bundleId, formKey, formId, { ...this.state });
+    }
+  }
+
 
   handleChange = name => event => {
     this.setState({
@@ -49,13 +75,13 @@ class EditMetadataForm extends React.Component<Props> {
 
   render() {
     const { classes, inputs, formKey } = this.props;
-    const { fields = [] } = inputs;
+    const { formId, fields = [] } = inputs;
     return (
       <form className={classes.container} noValidate>
         {fields.filter(field => field.name).map(field => (
           <TextField
-            key={`${formKey}/${field.name}`}
-            id={field.name}
+            key={formId}
+            id={`${formKey}/${field.name}`}
             label={field.label}
             className={field.type === 'xml' ? classes.xmlField : classes.textField}
             select={Boolean(field.options) || (field.type === 'boolean')}
@@ -93,4 +119,10 @@ class EditMetadataForm extends React.Component<Props> {
   }
 }
 
-export default withStyles(materialStyles)(EditMetadataForm);
+export default compose(
+  withStyles(materialStyles, { name: 'EditMetadataForm' }),
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  ),
+)(EditMetadataForm);

@@ -38,6 +38,29 @@ export function bundleEditMetadata(state = initialState, action) {
         formInputs
       };
     }
+    case bundleEditMetadataConstants.SAVE_METADATA_REQUEST: {
+      return {
+        ...state,
+        requestingSaveMetadata: true,
+        shouldSaveActiveForm: true
+      };
+    }
+    case bundleEditMetadataConstants.SAVE_METADATA_SUCCESS: {
+      return {
+        ...state,
+        requestingSaveMetadata: false,
+        wasMetadataSaved: true,
+        shouldSaveActiveForm: false
+      };
+    }
+    case bundleEditMetadataConstants.SAVE_METADATA_FAILED: {
+      return {
+        ...state,
+        requestingSaveMetadata: false,
+        wasMetadataSaved: false,
+        couldNotSaveMetadataMessage: action.message
+      };
+    }
     default: {
       return state;
     }
