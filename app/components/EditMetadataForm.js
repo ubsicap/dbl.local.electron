@@ -21,6 +21,11 @@ const materialStyles = theme => ({
     marginRight: theme.spacing.unit,
     width: 200,
   },
+  xmlField: {
+    marginLeft: theme.spacing.unit,
+    marginRight: theme.spacing.unit,
+    width: '100%',
+  },
   menu: {
     width: 200,
   },
@@ -52,11 +57,11 @@ class EditMetadataForm extends React.Component<Props> {
             key={`${formKey}/${field.name}`}
             id={field.name}
             label={field.label}
-            className={classes.textField}
+            className={field.type === 'xml' ? classes.xmlField : classes.textField}
             select={Boolean(field.options) || (field.type === 'boolean')}
             multiline
             /* error */
-            /* fullWidth */
+            /* fullWidth={field.type === 'xml'} */
             /* defaultValue={field.default} */
             value={this.state[field.name] ? this.state[field.name] : field.default}
             /* placeholder="Placeholder" */
