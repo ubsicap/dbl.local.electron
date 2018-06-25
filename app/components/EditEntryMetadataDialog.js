@@ -12,6 +12,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import Slide from '@material-ui/core/Slide';
 import { closeEditMetadata } from '../actions/bundleEditMetadata.actions';
 import EditMetadataStepper from './EditMetadataStepper';
+import appBarStyles from './AppBar.css';
 
 function mapStateToProps(state) {
   const { bundleEditMetadata } = state;
@@ -26,7 +27,7 @@ const mapDispatchToProps = {
 
 const materialStyles = {
   appBar: {
-    position: 'relative',
+    position: 'fixed'
   },
   flex: {
     flex: 1,
@@ -59,20 +60,22 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
         onClose={this.handleClose}
         TransitionComponent={Transition}
       >
-        <AppBar className={classes.appBar}>
-          <Toolbar>
-            <IconButton color="inherit" onClick={this.handleClose} aria-label="Close">
-              <CloseIcon />
-            </IconButton>
-            <Typography variant="title" color="inherit" className={classes.flex}>
-              Edit Metadata
-            </Typography>
-            <Button color="inherit" onClick={this.handleClose}>
-              save
-            </Button>
-          </Toolbar>
-        </AppBar>
-        <EditMetadataStepper myStructurePath="" shouldLoadDetails={false} />
+        <div className={appBarStyles.appContainer}>
+          <AppBar className={classes.appBar}>
+            <Toolbar>
+              <IconButton color="inherit" onClick={this.handleClose} aria-label="Close">
+                <CloseIcon />
+              </IconButton>
+              <Typography variant="title" color="inherit" className={classes.flex}>
+                Edit Metadata
+              </Typography>
+              <Button color="inherit" onClick={this.handleClose}>
+                save
+              </Button>
+            </Toolbar>
+          </AppBar>
+          <EditMetadataStepper myStructurePath="" shouldLoadDetails={false} />
+        </div>
       </Dialog>
     );
   }
