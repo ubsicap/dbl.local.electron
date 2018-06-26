@@ -75,12 +75,12 @@ class EditMetadataForm extends React.Component<Props> {
 
   render() {
     const { classes, inputs, formKey } = this.props;
-    const { formId, fields = [] } = inputs;
+    const { fields = [] } = inputs;
     return (
       <form className={classes.container} noValidate>
         {fields.filter(field => field.name).map(field => (
           <TextField
-            key={formId}
+            key={`${formKey}/${field.name}`}
             id={`${formKey}/${field.name}`}
             label={field.label}
             className={field.type === 'xml' ? classes.xmlField : classes.textField}

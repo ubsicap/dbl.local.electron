@@ -49,7 +49,7 @@ type Props = {
   classes: {},
   saveMetadata: () => {},
   wasMetadataSaved: boolean,
-  couldNotSaveMetadataMessage: string,
+  couldNotSaveMetadataMessage: ?string,
   requestingSaveMetadata: boolean
 };
 
@@ -82,13 +82,13 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
         <div className={appBarStyles.appContainer}>
           <AppBar className={classes.appBar}>
             <Toolbar>
-              <IconButton color="inherit" disable={this.props.requestingSaveMetadata} onClick={this.handleClose} aria-label="Close">
+              <IconButton color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose} aria-label="Close">
                 <CloseIcon />
               </IconButton>
               <Typography variant="title" color="inherit" className={classes.flex}>
                 Edit Metadata
               </Typography>
-              <Button color="inherit" disable={this.props.requestingSaveMetadata} onClick={this.handleClose}>
+              <Button color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose}>
                 save
               </Button>
             </Toolbar>
