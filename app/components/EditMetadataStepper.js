@@ -39,9 +39,12 @@ const detailsStep = {
 const getFormStructure = (state, props) =>
   props.formStructure || state.bundleEditMetadata.formStructure;
 
+const getStructurePath = (state, props) => props.myStructurePath;
+const getShouldLoadDetails = (state, props) => props.shouldLoadDetails;
+
 const makeGetSteps = () => createSelector(
-  [getFormStructure, (state, props) => props.shouldLoadDetails],
-  (formStructure, shouldLoadDetails) => {
+  [getFormStructure, getShouldLoadDetails, getStructurePath],
+  (formStructure, shouldLoadDetails, myStructurePath) => {
     const msgLoadingForm = 'loading form...';
     const steps = formStructure
       .reduce((accSteps, section) => {
@@ -51,22 +54,25 @@ const makeGetSteps = () => createSelector(
             const content = msgLoadingForm;
             const instance = section.instances[instanceKey];
             const id = `${section.id}/${instanceKey}`;
+            const formKey = getStepFormKey(id, myStructurePath);
             return [...accInstances,
               {
-                id, label, content, template: true, ...instance
+                id, formKey, label, content, template: true, ...instance
               }];
           }, []);
+        const formKey = getStepFormKey(section.id, myStructurePath);
         const label = formatStepLabel(section);
         const content = msgLoadingForm;
         return [
           ...accSteps,
           ...instanceSteps,
           {
-            ...section, label, content
+            ...section, formKey, label, content
           }];
       }, []);
     if (shouldLoadDetails) {
-      return [detailsStep, ...steps];
+      const formKey = getStepFormKey(detailsStep.id, myStructurePath);
+      return [{ ...detailsStep, formKey }, ...steps];
     }
     return steps;
   }
@@ -98,6 +104,9 @@ const mapDispatchToProps = {
   saveMetadataSuccess
 };
 
+function getStepFormKey(stepId, structurePath) {
+  return (stepId !== '_myDetails' ? `${structurePath}/${stepId}` : structurePath);
+}
 
 type Props = {
     classes: {},
@@ -156,14 +165,14 @@ class _EditMetadataStepper extends React.Component<Props> {
     }
   }
 
-  trySaveFormAndMoveStep = (newStep) => {
+  trySaveFormAndMoveStep = (newStepIndex) => {
     this.setState({
-      activeStepIndex: newStep,
+      activeStepIndex: newStepIndex,
     });
   };
 
-  handleStep = step => () => {
-    this.trySaveFormAndMoveStep(this.state.activeStepIndex !== step ? step : null);
+  handleStep = stepIndex => () => {
+    this.trySaveFormAndMoveStep(this.state.activeStepIndex !== stepIndex ? stepIndex : null);
   };
 
   handleNext = () => {
@@ -182,20 +191,17 @@ class _EditMetadataStepper extends React.Component<Props> {
 
   isLastStep = (stepIndex, steps) => stepIndex === steps.length - 1;
   getFormStructureIndex = (stepIndex) => (!this.props.shouldLoadDetails ? stepIndex : stepIndex - 1);
-  getStep = (stepIndex) => this.props.steps[stepIndex];
+  getStep = (stepIndex) => (stepIndex < this.props.steps.length ? this.props.steps[stepIndex] : null);
   getBackSection = () => this.getStep(this.state.activeStepIndex - 1);
   getNextSection = () => this.getStep(this.state.activeStepIndex + 1);
   getBackSectionName = (prefix, postfix) =>
     formatSectionNameAffixed(this.getBackSection(), prefix, postfix);
   getNextSectionName = (prefix, postfix) =>
     formatSectionNameAffixed(this.getNextSection(), prefix, postfix);
-
-  getFormKey = (stepId) => (stepId !== '_myDetails' ? `${this.props.myStructurePath}/${stepId}` : this.props.myStructurePath);
   getStepContent = (stepIndex) => {
     const step = this.getStep(stepIndex);
     const { formInputs, bundleId } = this.props;
-    const { template, contains, id } = step;
-    const formKey = this.getFormKey(id);
+    const { template, contains, formKey } = step;
     if (contains) {
       const hasTemplate = template === true;
       return (
