@@ -271,7 +271,7 @@ function postFormFields(bundleId, formKey, payload) {
   const requestOptions = {
     method: 'POST',
     headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: JSON.stringify(payload)
+    body: `response=${JSON.stringify(payload)}`
   };
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${FORM_API}/${bundleId}${formKey}`;
   return fetch(url, requestOptions).then(handleTextResponse);

@@ -49,6 +49,10 @@ const materialStyles = theme => ({
   },
 });
 
+function getIsRequired(field) {
+  return field.nValues !== '?';
+}
+
 class EditMetadataForm extends React.Component<Props> {
   props: Props;
   state = {
@@ -59,10 +63,22 @@ class EditMetadataForm extends React.Component<Props> {
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props.isActiveForm && this.props.requestingSaveMetadata && !prevProps.requestingSaveMetadata) {
+    if (this.props.isActiveForm && this.props.requestingSaveMetadata
+      && !prevProps.requestingSaveMetadata) {
       const { inputs, bundleId, formKey } = this.props;
-      const { formId } = inputs;
-      this.props.saveMetadata(bundleId, formKey, formId, { ...this.state });
+      const { fields } = inputs;
+      // get the values for all required fields and all non-empty values optional fields.
+      const fieldValues = fields.filter(field => field.name).reduce((acc, field) => {
+        const updatedValue = this.state[field.name];
+        const originalValue = field.default;
+        const fieldValue = updatedValue !== undefined ? updatedValue : originalValue;
+        const isRequired = getIsRequired(field);
+        if (isRequired || fieldValue.length > 0) {
+          return { ...acc, [field.name]: fieldValue };
+        }
+        return acc;
+      }, {});
+      this.props.saveMetadata(bundleId, formKey, fieldValues);
     }
   }
 
@@ -93,7 +109,7 @@ class EditMetadataForm extends React.Component<Props> {
             /* placeholder="Placeholder" */
             /* autoComplete={field.default} */
             helperText={field.help}
-            required={field.nValues !== '?'}
+            required={getIsRequired(field)}
             onChange={this.handleChange(field.name)}
             SelectProps={{
               MenuProps: {

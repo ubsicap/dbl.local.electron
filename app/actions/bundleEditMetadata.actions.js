@@ -81,20 +81,21 @@ export function closeEditMetadata() {
       ]
     }
  */
-export function saveMetadata(bundleId, formKey, formId, fieldNameValues) {
+export function saveMetadata(bundleId, formKey, fieldNameValues) {
   return async dispatch => {
     const requestOnly = { type: bundleEditMetadataConstants.SAVE_METADATA_REQUEST };
     if (!formKey) {
       return dispatch(requestOnly);
     }
-    if (formId && Object.keys(fieldNameValues) === 0) {
+    if (bundleId && Object.keys(fieldNameValues) === 0) {
       dispatch(requestOnly);
-      return saveMetadataSuccess(bundleId, formKey, formId);
+      return saveMetadataSuccess(bundleId, formKey);
     }
     const fields = Object.keys(fieldNameValues).reduce((acc, name) => {
       const newFieldValue = fieldNameValues[name];
       return [...acc, { type: 'values', name, valueList: [newFieldValue] }];
     }, []);
+    const formId = bundleId;
     dispatch({ ...requestOnly, formId, fields });
     try {
       await bundleService.postFormFields(bundleId, formKey, { formId, fields });
