@@ -93,9 +93,20 @@ class EditMetadataForm extends React.Component<Props> {
 
   getErrorInField = (field) => {
     const { formErrors } = this.props;
-    const { [field.name]: errorInField = null } = formErrors;
+    const { [field.name]: errorInField = {} } = formErrors;
     return errorInField;
   };
+
+  getValue = (field) => {
+    const { [field.name]: stateValue } = this.state;
+    if (stateValue === undefined || stateValue === null) {
+      return field.default;
+    }
+    return this.state[field.name];
+  }
+
+  hasError = (field) => Boolean(Object.keys(this.getErrorInField(field)).length > 0);
+  helperOrErrorText = (field) => this.getErrorInField(field).rule || field.help;
 
   render() {
     const { classes, inputs, formKey } = this.props;
@@ -110,13 +121,13 @@ class EditMetadataForm extends React.Component<Props> {
             className={field.type === 'xml' ? classes.xmlField : classes.textField}
             select={Boolean(field.options) || (field.type === 'boolean')}
             multiline
-            error={Boolean(this.getErrorInField(field))}
+            error={this.hasError(field)}
             /* fullWidth={field.type === 'xml'} */
             /* defaultValue={field.default} */
-            value={this.state[field.name] ? this.state[field.name] : field.default}
+            value={this.getValue(field)}
             /* placeholder="Placeholder" */
             /* autoComplete={field.default} */
-            helperText={field.help}
+            helperText={this.helperOrErrorText(field)}
             required={getIsRequired(field)}
             onChange={this.handleChange(field.name)}
             SelectProps={{
