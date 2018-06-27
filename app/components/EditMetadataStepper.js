@@ -39,12 +39,20 @@ const detailsStep = {
 const getFormStructure = (state, props) =>
   props.formStructure || state.bundleEditMetadata.formStructure;
 
+const emptyFormFieldIssues = {};
 const getStructurePath = (state, props) => props.myStructurePath;
 const getShouldLoadDetails = (state, props) => props.shouldLoadDetails;
+const getFormFieldIssues = (state) => state.bundleEditMetadata.formFieldIssues
+  || emptyFormFieldIssues;
+
+function getErrorsInForm(formFieldIssues, formKey) {
+  const { [formKey]: formIssues = emptyFormFieldIssues } = formFieldIssues;
+  return formIssues;
+}
 
 const makeGetSteps = () => createSelector(
-  [getFormStructure, getShouldLoadDetails, getStructurePath],
-  (formStructure, shouldLoadDetails, myStructurePath) => {
+  [getFormStructure, getShouldLoadDetails, getStructurePath, getFormFieldIssues],
+  (formStructure, shouldLoadDetails, myStructurePath, formFieldIssues) => {
     const msgLoadingForm = 'loading form...';
     const steps = formStructure
       .reduce((accSteps, section) => {
@@ -55,24 +63,27 @@ const makeGetSteps = () => createSelector(
             const instance = section.instances[instanceKey];
             const id = `${section.id}/${instanceKey}`;
             const formKey = getStepFormKey(id, myStructurePath);
+            const formErrors = getErrorsInForm(formFieldIssues, formKey);
             return [...accInstances,
               {
-                id, formKey, label, content, template: true, ...instance
+                id, formKey, label, content, formErrors, template: true, ...instance
               }];
           }, []);
         const formKey = getStepFormKey(section.id, myStructurePath);
+        const formErrors = getErrorsInForm(formFieldIssues, formKey);
         const label = formatStepLabel(section);
         const content = msgLoadingForm;
         return [
           ...accSteps,
           ...instanceSteps,
           {
-            ...section, formKey, label, content
+            ...section, formKey, label, content, formErrors
           }];
       }, []);
     if (shouldLoadDetails) {
       const formKey = getStepFormKey(detailsStep.id, myStructurePath);
-      return [{ ...detailsStep, formKey }, ...steps];
+      const formErrors = getErrorsInForm(formFieldIssues, formKey);
+      return [{ ...detailsStep, formKey, formErrors }, ...steps];
     }
     return steps;
   }
@@ -201,7 +212,7 @@ class _EditMetadataStepper extends React.Component<Props> {
   getStepContent = (stepIndex) => {
     const step = this.getStep(stepIndex);
     const { formInputs, bundleId } = this.props;
-    const { template, contains, formKey } = step;
+    const { template, contains, formKey, formErrors } = step;
     if (contains) {
       const hasTemplate = template === true;
       return (
@@ -218,6 +229,7 @@ class _EditMetadataStepper extends React.Component<Props> {
         key={formKey}
         bundleId={bundleId}
         formKey={formKey}
+        formErrors={formErrors}
         inputs={myInputs}
         fetchFormInputs={this.props.fetchFormInputs}
         isActiveForm={this.state.activeStepIndex === stepIndex}
@@ -241,6 +253,7 @@ class _EditMetadataStepper extends React.Component<Props> {
                 <StepLabel
                   onClick={this.handleStep(index)}
                   completed={this.state.completed[index]}
+                  error={Object.keys(step.formErrors).length > 0}
                 >
                   {step.label}
                 </StepLabel>

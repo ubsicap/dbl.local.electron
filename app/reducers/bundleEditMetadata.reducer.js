@@ -54,11 +54,21 @@ export function bundleEditMetadata(state = initialState, action) {
       };
     }
     case bundleEditMetadataConstants.SAVE_METADATA_FAILED: {
+      const { error } = action;
+      const { field_issues: fieldIssues = [] } = error;
+      const formFieldIssues = fieldIssues.reduce((acc, issue) => {
+        const { formKey } = action;
+        const name = issue[0];
+        const fieldError = { name, rule: issue[1], value: issue[2] };
+        const { [formKey]: formErrors = {} } = acc;
+        return { ...acc, [formKey]: { ...formErrors, [name]: fieldError } };
+      }, {});
       return {
         ...state,
         requestingSaveMetadata: false,
         wasMetadataSaved: false,
-        couldNotSaveMetadataMessage: action.message
+        couldNotSaveMetadataMessage: null, /* todo */
+        formFieldIssues
       };
     }
     default: {

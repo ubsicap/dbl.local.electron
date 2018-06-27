@@ -13,15 +13,17 @@ type Props = {
   inputs: {},
   isActiveForm: boolean,
   requestingSaveMetadata: boolean,
+  formErrors: {},
   fetchFormInputs: () => {},
   saveMetadata: () => {}
 };
 
 function mapStateToProps(state) {
   const { bundleEditMetadata } = state;
-  const { requestingSaveMetadata = false } = bundleEditMetadata;
+  const { requestingSaveMetadata = false, formFieldIssues = {} } = bundleEditMetadata;
   return {
-    requestingSaveMetadata
+    requestingSaveMetadata,
+    formFieldIssues
   };
 }
 
@@ -89,6 +91,12 @@ class EditMetadataForm extends React.Component<Props> {
     });
   };
 
+  getErrorInField = (field) => {
+    const { formErrors } = this.props;
+    const { [field.name]: errorInField = null } = formErrors;
+    return errorInField;
+  };
+
   render() {
     const { classes, inputs, formKey } = this.props;
     const { fields = [] } = inputs;
@@ -102,7 +110,7 @@ class EditMetadataForm extends React.Component<Props> {
             className={field.type === 'xml' ? classes.xmlField : classes.textField}
             select={Boolean(field.options) || (field.type === 'boolean')}
             multiline
-            /* error */
+            error={Boolean(this.getErrorInField(field))}
             /* fullWidth={field.type === 'xml'} */
             /* defaultValue={field.default} */
             value={this.state[field.name] ? this.state[field.name] : field.default}

@@ -195,6 +195,14 @@ function handleResponse(response) {
   return response.json();
 }
 
+function handleJsonResponse(response) {
+  if (!response.ok) {
+    return Promise.reject(response);
+  }
+
+  return response.json();
+}
+
 function handleTextResponse(response) {
   if (!response.ok) {
     return Promise.reject(response.statusText);
@@ -266,7 +274,20 @@ function getFormFields(bundleId, formKey) {
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${FORM_API}/${bundleId}${formKey}`;
   return fetch(url, requestOptions).then(handleResponse);
 }
-
+/*
+  {
+    "field_issues": [
+      [
+        "name",
+        "no_regex_match_\\S.*\\S",
+        ""
+      ]
+    ],
+    "document_issues": [],
+    "response_format_valid": true,
+    "response_valid": false
+  }
+ */
 function postFormFields(bundleId, formKey, payload) {
   const requestOptions = {
     method: 'POST',
@@ -274,5 +295,5 @@ function postFormFields(bundleId, formKey, payload) {
     body: `response=${JSON.stringify(payload)}`
   };
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${FORM_API}/${bundleId}${formKey}`;
-  return fetch(url, requestOptions).then(handleTextResponse);
+  return fetch(url, requestOptions).then(handleJsonResponse);
 }

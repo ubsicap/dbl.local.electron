@@ -99,19 +99,20 @@ export function saveMetadata(bundleId, formKey, fieldNameValues) {
     dispatch({ ...requestOnly, formId, fields });
     try {
       await bundleService.postFormFields(bundleId, formKey, { formId, fields });
-      dispatch(saveMetadataSuccess(bundleId, formKey, formId));
-    } catch (error) {
-      dispatch(saveMetadataFailed(error));
+      dispatch(saveMetadataSuccess(bundleId, formKey));
+    } catch (errorReadable) {
+      const error = await errorReadable.json();
+      dispatch(saveMetadataFailed(bundleId, formKey, error));
     }
-  }
+  };
 }
 
-export function saveMetadataSuccess(formId) {
-  return { type: bundleEditMetadataConstants.SAVE_METADATA_SUCCESS, formId };
+export function saveMetadataSuccess(bundleId, formKey) {
+  return { type: bundleEditMetadataConstants.SAVE_METADATA_SUCCESS, bundleId, formKey };
 }
 
-export function saveMetadataFailed(message) {
-  return { type: bundleEditMetadataConstants.SAVE_METADATA_FAILED, message };
+export function saveMetadataFailed(bundleId, formKey, error) {
+  return { type: bundleEditMetadataConstants.SAVE_METADATA_FAILED, bundleId, formKey, error };
 }
 
 function getMockStructure() {
