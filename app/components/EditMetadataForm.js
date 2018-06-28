@@ -5,6 +5,7 @@ import { withStyles } from '@material-ui/core/styles';
 import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
 import { saveMetadata } from '../actions/bundleEditMetadata.actions';
+import { utilities } from '../utils/utilities';
 
 type Props = {
   classes: {},
@@ -15,7 +16,8 @@ type Props = {
   requestingSaveMetadata: boolean,
   formErrors: {},
   fetchFormInputs: () => {},
-  saveMetadata: () => {}
+  saveMetadata: () => {},
+  notifyHasErrors: () => {}
 };
 
 function mapStateToProps(state) {
@@ -81,6 +83,21 @@ class EditMetadataForm extends React.Component<Props> {
         return acc;
       }, {});
       this.props.saveMetadata(bundleId, formKey, fieldValues);
+    }
+    this.notifyOnChangedFormErrors(prevProps);
+  }
+
+  notifyOnChangedFormErrors = (prevProps) => {
+    const { formErrors, formKey } = this.props;
+    const keys = Object.keys(formErrors);
+    const origKeys = Object.keys(prevProps.formErrors);
+    if (utilities.areEqualArrays(keys, origKeys)) {
+      return;
+    }
+    const values = Object.values(formErrors);
+    const origValues = Object.values(prevProps.formErrors);
+    if (!utilities.areEqualArraysDeep(values, origValues)) {
+      this.props.notifyHasErrors(formKey, formErrors);
     }
   }
 

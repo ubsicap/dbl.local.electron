@@ -124,6 +124,7 @@ type Props = {
     fetchFormStructure: () => {},
     fetchFormInputs: () => {},
     saveMetadataSuccess: () => {},
+    notifyHasErrors: ?() => {},
     bundleId: ?string,
     formStructure: [],
     steps: [],
@@ -156,6 +157,7 @@ class _EditMetadataStepper extends React.Component<Props> {
   state = {
     activeStepIndex: 0,
     completed: {},
+    mySubStepsErrors: {}
   };
 
   componentDidMount() {
@@ -200,6 +202,24 @@ class _EditMetadataStepper extends React.Component<Props> {
     });
   };
 
+  setMyFormsHaveReceivedErrors = (formKey, newFormErrors) => {
+    const { mySubStepsErrors } = this.state;
+    let newSubStepsErrors = null;
+    if (newFormErrors && Object.keys(newFormErrors).length > 0) {
+      newSubStepsErrors = { ...mySubStepsErrors, [formKey]: newFormErrors };
+    } else {
+      const { [formKey]: oldFormErrors, ...prunedErrors } = mySubStepsErrors;
+      newSubStepsErrors = prunedErrors;
+    }
+    this.setState({ mySubStepsErrors: newSubStepsErrors });
+    if (this.props.notifyHasErrors) {
+      this.props.notifyHasErrors(formKey, newSubStepsErrors);
+    }
+  }
+
+  hasErrorsInStepsOrForms = (step) => Object.keys(this.state.mySubStepsErrors).length > 0
+    || this.hasStepFormErrors(step);
+  hasStepFormErrors = (step) => step && Object.keys(step.formErrors).length > 0;
   isLastStep = (stepIndex, steps) => stepIndex === steps.length - 1;
   getFormStructureIndex = (stepIndex) => (!this.props.shouldLoadDetails ? stepIndex : stepIndex - 1);
   getStep = (stepIndex) => (stepIndex < this.props.steps.length ? this.props.steps[stepIndex] : null);
@@ -221,6 +241,7 @@ class _EditMetadataStepper extends React.Component<Props> {
           myStructurePath={formKey}
           shouldLoadDetails={hasTemplate}
           formStructure={contains}
+          notifyHasErrors={this.setMyFormsHaveReceivedErrors}
         />);
     }
     if (template) {
@@ -233,6 +254,7 @@ class _EditMetadataStepper extends React.Component<Props> {
         inputs={myInputs}
         fetchFormInputs={this.props.fetchFormInputs}
         isActiveForm={this.state.activeStepIndex === stepIndex}
+        notifyHasErrors={this.setMyFormsHaveReceivedErrors}
       />);
     }
     return 'what??';
@@ -253,7 +275,7 @@ class _EditMetadataStepper extends React.Component<Props> {
                 <StepLabel
                   onClick={this.handleStep(index)}
                   completed={this.state.completed[index]}
-                  error={Object.keys(step.formErrors).length > 0}
+                  error={this.hasErrorsInStepsOrForms(step)}
                 >
                   {step.label}
                 </StepLabel>
