@@ -63,18 +63,52 @@ export function bundleEditMetadata(state = initialState, action) {
         const { [formKey]: formErrors = {} } = acc;
         return { ...acc, [formKey]: { ...formErrors, [name]: fieldError } };
       }, {});
+      const errorTree = getErrorTree(formFieldIssues);
       return {
         ...state,
         requestingSaveMetadata: false,
         wasMetadataSaved: false,
         couldNotSaveMetadataMessage: null, /* todo */
-        formFieldIssues
+        formFieldIssues,
+        errorTree
       };
     }
     default: {
       return state;
     }
   }
+}
+
+function getParentErrorBranches(formKey, formErrors) {
+  const branchKeys = formKey.split('/').reduce((acc, part) => {
+    if (acc.length === 0) {
+      return [part];
+    }
+    const lastKey = acc[acc.length - 1];
+    return [...acc, `${lastKey}/${part}`];
+  }, []);
+  const parentErrorBranches = branchKeys.reduce(
+    (acc, branchKey) => ({ ...acc, [branchKey]: { [formKey]: formErrors } }),
+    {}
+  );
+  return parentErrorBranches;
+}
+
+function getErrorTree(formFieldIssues) {
+  const errorTree = Object.keys(formFieldIssues).reduce(
+    (accTree, formErrorEndpoint) => {
+      const formErrors = formFieldIssues[formErrorEndpoint];
+      const parentErrorBranches = getParentErrorBranches(formErrorEndpoint, formErrors);
+      const combinedErrors = Object.keys(parentErrorBranches).reduce((accErrors, branchKey) => {
+        const origErrors = accTree[branchKey] || {};
+        const newErrors = parentErrorBranches[branchKey];
+        return { ...accErrors, [branchKey]: { ...origErrors, ...newErrors } };
+      }, {});
+      return combinedErrors;
+    },
+    {}
+  );
+  return errorTree;
 }
 
 export default bundleEditMetadata;
