@@ -35,7 +35,9 @@ export function bundleEditMetadata(state = initialState, action) {
       const formInputs = { ...state.formInputs, [formKey]: inputs };
       return {
         ...state,
-        formInputs
+        formInputs,
+        formFieldIssues: null,
+        errorTree: null,
       };
     }
     case bundleEditMetadataConstants.SAVE_METADATA_REQUEST: {
