@@ -76,7 +76,7 @@ const makeGetSteps = () => createSelector(
                 content,
                 formErrors,
                 template: true,
-                isFactory: true,
+                isFactory: false,
                 ...instance
               }];
           }, []);
@@ -95,7 +95,7 @@ const makeGetSteps = () => createSelector(
     if (shouldLoadDetails) {
       const formKey = getStepFormKey(detailsStep.id, myStructurePath);
       const formErrors = getErrorsInForm(formFieldIssues, formKey, emptyErrorTree);
-      return [{ ...detailsStep, formKey, formErrors, isFactory: true }, ...steps];
+      return [{ ...detailsStep, formKey, formErrors, isFactory: false }, ...steps];
     }
     return steps;
   }
