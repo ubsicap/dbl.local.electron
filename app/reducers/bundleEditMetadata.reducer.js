@@ -41,7 +41,7 @@ export function bundleEditMetadata(state = initialState, action) {
       };
     }
     case bundleEditMetadataConstants.SAVE_METADATA_REQUEST: {
-      const moveNext = action.moveNextStep || state.moveNext;
+      const moveNext = action.moveNextStep;
       return {
         ...state,
         requestingSaveMetadata: true,

@@ -82,12 +82,14 @@ export function closeEditMetadata() {
     }
  */
 export function saveMetadata(bundleId, formKey, fieldNameValues, moveNext, isFactory) {
-  return async dispatch => {
+  return async (dispatch, getState) => {
     if (!formKey) {
       return dispatch(saveMetadataRequest(null, null, moveNext));
     }
+    const { bundleEditMetadata } = getState();
+    const moveNextStep = !moveNext ? bundleEditMetadata.moveNext : moveNext;
     if (bundleId && Object.keys(fieldNameValues).length === 0) {
-      dispatch(saveMetadataRequest(null, null, moveNext));
+      dispatch(saveMetadataRequest(null, null, moveNextStep));
       return dispatch(saveMetadataSuccess(bundleId, formKey));
     }
     const fields = Object.keys(fieldNameValues).reduce((acc, name) => {
@@ -95,7 +97,7 @@ export function saveMetadata(bundleId, formKey, fieldNameValues, moveNext, isFac
       return [...acc, { type: 'values', name, valueList: [newFieldValue] }];
     }, []);
     const formId = bundleId;
-    dispatch(saveMetadataRequest(formId, fields, moveNext));
+    dispatch(saveMetadataRequest(formId, fields, moveNextStep));
     try {
       await bundleService.postFormFields(bundleId, formKey, { formId, fields });
       dispatch(saveMetadataSuccess(bundleId, formKey));
@@ -107,10 +109,10 @@ export function saveMetadata(bundleId, formKey, fieldNameValues, moveNext, isFac
       dispatch(saveMetadataFailed(bundleId, formKey, error));
     }
   };
+}
 
-  function saveMetadataRequest(formId, fields, moveNextStep) {
-    return { type: bundleEditMetadataConstants.SAVE_METADATA_REQUEST, formId, fields, moveNextStep };
-  }
+function saveMetadataRequest(formId, fields, moveNextStep) {
+  return { type: bundleEditMetadataConstants.SAVE_METADATA_REQUEST, formId, fields, moveNextStep };
 }
 
 export function saveMetadataSuccess(bundleId, formKey, moveNextStep) {

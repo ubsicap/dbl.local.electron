@@ -64,7 +64,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   props: Props;
 
   componentDidUpdate(prevProps) {
-    if (!this.props.moveNext
+    if (this.props.moveNext && this.props.moveNext.exit
       && this.props.wasMetadataSaved
       && !prevProps.wasMetadataSaved) {
       this.props.closeEditMetadata();
@@ -76,7 +76,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   }
 
   handleClose = () => {
-    this.props.saveMetadata();
+    this.props.saveMetadata(null, null, null, { exit: true });
   };
 
   render() {
