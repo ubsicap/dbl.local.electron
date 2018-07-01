@@ -100,6 +100,14 @@ export function bundles(state = { items: [] }, action) {
       const progress = action.status === 'COMPLETED' ? 100 : null;
       return updateTaskStatusProgress(action.id, null, action.status, progress);
     }
+    case bundleConstants.UPDATE_BUNDLE: {
+      const { bundle } = action;
+      const items = updateBundleItems(bundle, null, null, null);
+      return {
+        ...state,
+        items
+      };
+    }
     case bundleConstants.TOGGLE_MODE_PAUSE_RESUME: {
       const updatedItems = forkArray(
         state.items,
@@ -152,23 +160,27 @@ export function bundles(state = { items: [] }, action) {
   }
 
   function updateTaskStatusProgress(bundleId, task, status, progress, updateDecorators) {
-    const foundBundle = state.items.find(bundle => bundle.id === bundleId);
-    if (!foundBundle) {
+    const bundleToUpdate = state.items.find(bundle => bundle.id === bundleId);
+    if (!bundleToUpdate) {
       return state;
     }
-    const items = state.items.map(bundle => (bundle.id === bundleId
-      ? addBundleDecorators({
-        ...bundle,
-        task: (task || bundle.task),
-        status: (status || bundle.status),
-        progress: Number.isInteger(progress) ? progress : bundle.progress,
-        ...(updateDecorators ? updateDecorators(bundle) : {})
-      })
-      : bundle));
+    const items = updateBundleItems(bundleToUpdate, task, status, progress, updateDecorators);
     return {
       ...state,
       items
     };
+  }
+
+  function updateBundleItems(bundleToUpdate, task, status, progress, updateDecorators) {
+    return state.items.map(bundle => (bundle.id === bundleToUpdate.id
+      ? addBundleDecorators({
+        ...bundleToUpdate,
+        task: (task || bundleToUpdate.task),
+        status: (status || bundleToUpdate.status),
+        progress: Number.isInteger(progress) ? progress : bundleToUpdate.progress,
+        ...(updateDecorators ? updateDecorators(bundleToUpdate) : {})
+      })
+      : bundle));
   }
 }
 export default bundles;

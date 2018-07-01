@@ -9,6 +9,7 @@ import { navigationConstants } from '../constants/navigation.constants';
 
 export const bundleActions = {
   fetchAll,
+  updateBundle,
   delete: removeBundle,
   setupBundlesEventSource,
   downloadResources,
@@ -19,6 +20,14 @@ export const bundleActions = {
 };
 
 export default bundleActions;
+
+export function updateBundle(bundleId) {
+  return async dispatch => {
+    const apiBundle = await bundleService.fetchById(bundleId);
+    const bundle = await bundleService.convertApiBundleToNathanaelBundle(apiBundle);
+    dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle });
+  };
+}
 
 export function fetchAll() {
   return dispatch => {

@@ -55,6 +55,7 @@ export function bundleEditMetadata(state = initialState, action) {
         ...state,
         requestingSaveMetadata: false,
         wasMetadataSaved: true,
+        editedBundleId: action.bundleId,
         shouldSaveActiveForm: false
       };
     }

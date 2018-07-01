@@ -10,12 +10,15 @@ import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import CloseIcon from '@material-ui/icons/Close';
 import Slide from '@material-ui/core/Slide';
+import { updateBundle } from '../actions/bundle.actions';
 import { closeEditMetadata, saveMetadata } from '../actions/bundleEditMetadata.actions';
 import EditMetadataStepper from './EditMetadataStepper';
 import appBarStyles from './AppBar.css';
 
 function mapStateToProps(state) {
   const { bundleEditMetadata } = state;
+  const { editingMetadata, editedMetadata } = bundleEditMetadata;
+  const bundleId = editingMetadata || editedMetadata;
   const {
     requestingSaveMetadata = false,
     wasMetadataSaved = false,
@@ -24,6 +27,7 @@ function mapStateToProps(state) {
   } = bundleEditMetadata;
   return {
     open: Boolean(bundleEditMetadata.editingMetadata || false),
+    bundleId,
     requestingSaveMetadata,
     wasMetadataSaved,
     moveNext,
@@ -33,7 +37,8 @@ function mapStateToProps(state) {
 
 const mapDispatchToProps = {
   closeEditMetadata,
-  saveMetadata
+  saveMetadata,
+  updateBundle
 };
 
 const materialStyles = {
@@ -51,7 +56,9 @@ function Transition(props) {
 
 type Props = {
   open: boolean,
+  bundleId: ?string,
   closeEditMetadata: () => {},
+  updateBundle: () => {},
   classes: {},
   saveMetadata: () => {},
   wasMetadataSaved: boolean,
@@ -67,6 +74,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     if (this.props.moveNext && this.props.moveNext.exit
       && this.props.wasMetadataSaved
       && !prevProps.wasMetadataSaved) {
+      this.props.updateBundle(this.props.bundleId);
       this.props.closeEditMetadata();
     } else if (this.props.couldNotSaveMetadataMessage &&
       this.props.couldNotSaveMetadataMessage !== prevProps.couldNotSaveMetadataMessage) {
