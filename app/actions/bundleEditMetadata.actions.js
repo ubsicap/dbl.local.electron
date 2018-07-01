@@ -81,7 +81,7 @@ export function closeEditMetadata() {
       ]
     }
  */
-export function saveMetadata(bundleId, formKey, fieldNameValues, moveNext) {
+export function saveMetadata(bundleId, formKey, fieldNameValues, moveNext, isFactory) {
   return async dispatch => {
     if (!formKey) {
       return dispatch(saveMetadataRequest(null, null, moveNext));
@@ -99,6 +99,9 @@ export function saveMetadata(bundleId, formKey, fieldNameValues, moveNext) {
     try {
       await bundleService.postFormFields(bundleId, formKey, { formId, fields });
       dispatch(saveMetadataSuccess(bundleId, formKey));
+      if (isFactory) {
+        dispatch(fetchFormStructure(bundleId));
+      }
     } catch (errorReadable) {
       const error = await errorReadable.json();
       dispatch(saveMetadataFailed(bundleId, formKey, error));

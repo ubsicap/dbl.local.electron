@@ -76,24 +76,26 @@ const makeGetSteps = () => createSelector(
                 content,
                 formErrors,
                 template: true,
+                isFactory: true,
                 ...instance
               }];
           }, []);
         const formKey = getStepFormKey(section.id, myStructurePath);
         const formErrors = getErrorsInForm(formFieldIssues, formKey, errorTree);
         const label = formatStepLabel(section);
+        const isFactory = getIsFactory(section);
         const content = msgLoadingForm;
         return [
           ...accSteps,
           ...instanceSteps,
           {
-            ...section, formKey, label, content, formErrors
+            ...section, formKey, label, isFactory, content, formErrors
           }];
       }, []);
     if (shouldLoadDetails) {
       const formKey = getStepFormKey(detailsStep.id, myStructurePath);
       const formErrors = getErrorsInForm(formFieldIssues, formKey, emptyErrorTree);
-      return [{ ...detailsStep, formKey, formErrors }, ...steps];
+      return [{ ...detailsStep, formKey, formErrors, isFactory: true }, ...steps];
     }
     return steps;
   }
@@ -153,6 +155,10 @@ type Props = {
     moveNext: ?{}
 };
 
+function getIsFactory(section) {
+  return section.name.includes('{0}');
+}
+
 function formatStepLabel(step) {
   if (!step) {
     return '';
@@ -161,7 +167,7 @@ function formatStepLabel(step) {
     return step.label;
   }
   const section = step;
-  return (!section.name.includes('{0}') ? section.name : `Add ${section.id}`);
+  return !getIsFactory(section) ? section.name : `Add ${section.id}`;
 }
 
 function formatSectionNameAffixed(section, prefix, postfix) {
@@ -245,7 +251,7 @@ class _EditMetadataStepper extends React.Component<Props> {
   getStepContent = (stepIndex) => {
     const step = this.getStep(stepIndex);
     const { formInputs, bundleId } = this.props;
-    const { template, contains, formKey, formErrors } = step;
+    const { template, contains, formKey, formErrors, isFactory } = step;
     if (contains) {
       const hasTemplate = template === true;
       return (
@@ -262,6 +268,7 @@ class _EditMetadataStepper extends React.Component<Props> {
         key={formKey}
         bundleId={bundleId}
         formKey={formKey}
+        isFactory={isFactory}
         formErrors={formErrors}
         inputs={myInputs}
         fetchFormInputs={this.props.fetchFormInputs}
