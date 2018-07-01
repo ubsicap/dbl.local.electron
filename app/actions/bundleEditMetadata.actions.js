@@ -81,22 +81,21 @@ export function closeEditMetadata() {
       ]
     }
  */
-export function saveMetadata(bundleId, formKey, fieldNameValues) {
+export function saveMetadata(bundleId, formKey, fieldNameValues, moveNext) {
   return async dispatch => {
-    const requestOnly = { type: bundleEditMetadataConstants.SAVE_METADATA_REQUEST };
     if (!formKey) {
-      return dispatch(requestOnly);
+      return dispatch(saveMetadataRequest(null, null, moveNext));
     }
-    if (bundleId && Object.keys(fieldNameValues) === 0) {
-      dispatch(requestOnly);
-      return saveMetadataSuccess(bundleId, formKey);
+    if (bundleId && Object.keys(fieldNameValues).length === 0) {
+      dispatch(saveMetadataRequest(null, null, moveNext));
+      return dispatch(saveMetadataSuccess(bundleId, formKey));
     }
     const fields = Object.keys(fieldNameValues).reduce((acc, name) => {
       const newFieldValue = fieldNameValues[name];
       return [...acc, { type: 'values', name, valueList: [newFieldValue] }];
     }, []);
     const formId = bundleId;
-    dispatch({ ...requestOnly, formId, fields });
+    dispatch(saveMetadataRequest(formId, fields, moveNext));
     try {
       await bundleService.postFormFields(bundleId, formKey, { formId, fields });
       dispatch(saveMetadataSuccess(bundleId, formKey));
@@ -105,10 +104,14 @@ export function saveMetadata(bundleId, formKey, fieldNameValues) {
       dispatch(saveMetadataFailed(bundleId, formKey, error));
     }
   };
+
+  function saveMetadataRequest(formId, fields, moveNextStep) {
+    return { type: bundleEditMetadataConstants.SAVE_METADATA_REQUEST, formId, fields, moveNextStep };
+  }
 }
 
-export function saveMetadataSuccess(bundleId, formKey) {
-  return { type: bundleEditMetadataConstants.SAVE_METADATA_SUCCESS, bundleId, formKey };
+export function saveMetadataSuccess(bundleId, formKey, moveNextStep) {
+  return { type: bundleEditMetadataConstants.SAVE_METADATA_SUCCESS, bundleId, formKey, moveNextStep };
 }
 
 export function saveMetadataFailed(bundleId, formKey, error) {

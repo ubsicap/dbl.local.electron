@@ -16,11 +16,17 @@ import appBarStyles from './AppBar.css';
 
 function mapStateToProps(state) {
   const { bundleEditMetadata } = state;
-  const { requestingSaveMetadata = false, wasMetadataSaved = false, couldNotSaveMetadataMessage = null } = bundleEditMetadata;
+  const {
+    requestingSaveMetadata = false,
+    wasMetadataSaved = false,
+    couldNotSaveMetadataMessage = null,
+    moveNext = null
+  } = bundleEditMetadata;
   return {
     open: Boolean(bundleEditMetadata.editingMetadata || false),
     requestingSaveMetadata,
     wasMetadataSaved,
+    moveNext,
     couldNotSaveMetadataMessage
   };
 }
@@ -49,6 +55,7 @@ type Props = {
   classes: {},
   saveMetadata: () => {},
   wasMetadataSaved: boolean,
+  moveNext: ?{},
   couldNotSaveMetadataMessage: ?string,
   requestingSaveMetadata: boolean
 };
@@ -57,7 +64,9 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   props: Props;
 
   componentDidUpdate(prevProps) {
-    if (this.props.wasMetadataSaved && !prevProps.wasMetadataSaved) {
+    if (!this.props.moveNext
+      && this.props.wasMetadataSaved
+      && !prevProps.wasMetadataSaved) {
       this.props.closeEditMetadata();
     } else if (this.props.couldNotSaveMetadataMessage &&
       this.props.couldNotSaveMetadataMessage !== prevProps.couldNotSaveMetadataMessage) {

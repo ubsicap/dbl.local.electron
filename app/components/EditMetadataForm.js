@@ -80,6 +80,18 @@ class EditMetadataForm extends React.Component<Props> {
         }
         return acc;
       }, {});
+      // if none of the values have changed
+      // then it's okay to pretend there's nothing to save.
+      const originalFieldValues = fields.filter(field => field.name).reduce((acc, field) => {
+        return { ...acc, [field.name]: field.default };
+      }, {});
+      const reallyChangedFields = Object.keys(fieldValues).filter(fieldKey => fieldValues[fieldKey]
+        !== originalFieldValues[fieldKey]);
+      if (reallyChangedFields.length === 0) {
+        this.props.saveMetadata(bundleId, formKey, {});
+        return;
+      }
+
       this.props.saveMetadata(bundleId, formKey, fieldValues);
     }
   }

@@ -41,10 +41,13 @@ export function bundleEditMetadata(state = initialState, action) {
       };
     }
     case bundleEditMetadataConstants.SAVE_METADATA_REQUEST: {
+      const moveNext = action.moveNextStep || state.moveNext;
       return {
         ...state,
         requestingSaveMetadata: true,
-        shouldSaveActiveForm: true
+        shouldSaveActiveForm: true,
+        wasMetadataSaved: false,
+        moveNext
       };
     }
     case bundleEditMetadataConstants.SAVE_METADATA_SUCCESS: {

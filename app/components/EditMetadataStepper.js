@@ -10,7 +10,7 @@ import StepContent from '@material-ui/core/StepContent';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
-import { fetchFormStructure, fetchFormInputs, saveMetadataSuccess } from '../actions/bundleEditMetadata.actions';
+import { fetchFormStructure, fetchFormInputs, saveMetadataSuccess, saveMetadata } from '../actions/bundleEditMetadata.actions';
 import EditMetadataForm from './EditMetadataForm';
 
 const materialStyles = theme => ({
@@ -70,7 +70,13 @@ const makeGetSteps = () => createSelector(
             const formErrors = getErrorsInForm(formFieldIssues, formKey, errorTree);
             return [...accInstances,
               {
-                id, formKey, label, content, formErrors, template: true, ...instance
+                id,
+                formKey,
+                label,
+                content,
+                formErrors,
+                template: true,
+                ...instance
               }];
           }, []);
         const formKey = getStepFormKey(section.id, myStructurePath);
@@ -97,7 +103,11 @@ const makeMapStateToProps = () => {
   const getSteps = makeGetSteps();
   const mapStateToProps = (state, props) => {
     const { bundleEditMetadata } = state;
-    const { requestingSaveMetadata = false } = bundleEditMetadata;
+    const {
+      requestingSaveMetadata = false,
+      wasMetadataSaved = false,
+      moveNext = null,
+    } = bundleEditMetadata;
     const steps = getSteps(state, props);
     const { formInputs } = bundleEditMetadata;
     const formStructure = getFormStructure(state, props);
@@ -107,7 +117,9 @@ const makeMapStateToProps = () => {
       formStructure,
       formInputs,
       steps,
-      requestingSaveMetadata
+      requestingSaveMetadata,
+      wasMetadataSaved,
+      moveNext
     };
   };
   return mapStateToProps;
@@ -116,7 +128,8 @@ const makeMapStateToProps = () => {
 const mapDispatchToProps = {
   fetchFormStructure,
   fetchFormInputs,
-  saveMetadataSuccess
+  saveMetadataSuccess,
+  saveMetadata
 };
 
 function getStepFormKey(stepId, structurePath) {
@@ -128,13 +141,16 @@ type Props = {
     fetchFormStructure: () => {},
     fetchFormInputs: () => {},
     saveMetadataSuccess: () => {},
+    saveMetadata: () => {},
     bundleId: ?string,
     formStructure: [],
     steps: [],
     myStructurePath: string,
     formInputs: {},
     shouldLoadDetails: boolean,
-    requestingSaveMetadata: boolean
+    requestingSaveMetadata: boolean,
+    wasMetadataSaved: boolean,
+    moveNext: ?{}
 };
 
 function formatStepLabel(step) {
@@ -171,19 +187,32 @@ class _EditMetadataStepper extends React.Component<Props> {
     }
   }
 
+  componentWillUpdate(prevProps) {
+
+  }
+
   componentDidUpdate(prevProps) {
-    if (this.props.requestingSaveMetadata && !prevProps.requestingSaveMetadata) {
+    const { requestingSaveMetadata, wasMetadataSaved, moveNext } = this.props;
+    if (requestingSaveMetadata && !prevProps.requestingSaveMetadata) {
       const activeStep = this.getStep(this.state.activeStepIndex);
       if (!activeStep) {
         this.props.saveMetadataSuccess(); // nothing to save
+      }
+    } else if (wasMetadataSaved && moveNext &&
+      !requestingSaveMetadata && prevProps.requestingSaveMetadata) {
+      const step = this.getStep(moveNext.newStepIndex);
+      if (step && step.formKey === moveNext.formKey) {
+        this.setState({ activeStepIndex: moveNext.newStepIndex });
+      } else if (this.props.myStructurePath === moveNext.formKey) {
+        this.setState({ activeStepIndex: this.props.steps.length });
       }
     }
   }
 
   trySaveFormAndMoveStep = (newStepIndex) => {
-    this.setState({
-      activeStepIndex: newStepIndex,
-    });
+    const nextStep = this.getStep(newStepIndex);
+    const { formKey } = nextStep || {};
+    this.props.saveMetadata(null, null, null, { newStepIndex, formKey });
   };
 
   handleStep = stepIndex => () => {

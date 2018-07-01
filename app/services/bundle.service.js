@@ -195,12 +195,11 @@ function handleResponse(response) {
   return response.json();
 }
 
-function handleJsonResponse(response) {
+function handlePostFormResponse(response) {
   if (!response.ok) {
     return Promise.reject(response);
   }
-
-  return response.json();
+  return response.text();
 }
 
 function handleTextResponse(response) {
@@ -295,5 +294,5 @@ function postFormFields(bundleId, formKey, payload) {
     body: `response=${JSON.stringify(payload)}`
   };
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${FORM_API}/${bundleId}${formKey}`;
-  return fetch(url, requestOptions).then(handleJsonResponse);
+  return fetch(url, requestOptions).then(handlePostFormResponse);
 }
