@@ -69,32 +69,37 @@ class EditMetadataForm extends React.Component<Props> {
       && !prevProps.requestingSaveMetadata) {
       const { inputs, bundleId, formKey } = this.props;
       const { fields } = inputs;
+      const allFieldValues = fields.filter(field => field.name).reduce((acc, field) =>
+        ({ ...acc, [field.name]: this.getFieldValue(field) }), {});
+      // if none of the values have changed
+      // then it's okay to pretend there's nothing to save.
+      const originalFieldValues = fields.filter(field => field.name).reduce((acc, field) =>
+        ({ ...acc, [field.name]: field.default }), {});
+      const reallyChangedFields = Object.keys(allFieldValues).filter(fieldKey => allFieldValues[fieldKey]
+        !== originalFieldValues[fieldKey]);
+      if (reallyChangedFields.length === 0) {
+        this.props.saveMetadata(bundleId, formKey, {});
+        return;
+      }
       // get the values for all required fields and all non-empty values optional fields.
       const fieldValues = fields.filter(field => field.name).reduce((acc, field) => {
-        const updatedValue = this.state[field.name];
-        const originalValue = field.default;
-        const fieldValue = updatedValue !== undefined ? updatedValue : originalValue;
+        const fieldValue = this.getFieldValue(field);
         const isRequired = getIsRequired(field);
         if (isRequired || fieldValue.length > 0) {
           return { ...acc, [field.name]: fieldValue };
         }
         return acc;
       }, {});
-      // if none of the values have changed
-      // then it's okay to pretend there's nothing to save.
-      const originalFieldValues = fields.filter(field => field.name).reduce((acc, field) => {
-        return { ...acc, [field.name]: field.default };
-      }, {});
-      const reallyChangedFields = Object.keys(fieldValues).filter(fieldKey => fieldValues[fieldKey]
-        !== originalFieldValues[fieldKey]);
-      if (reallyChangedFields.length === 0) {
-        this.props.saveMetadata(bundleId, formKey, {});
-        return;
-      }
-
       this.props.saveMetadata(bundleId, formKey, fieldValues);
     }
   }
+
+  getFieldValue = (field) => {
+    const updatedValue = this.state[field.name];
+    const originalValue = field.default;
+    return updatedValue !== undefined ? updatedValue : originalValue;
+  }
+
 
   handleChange = name => event => {
     this.setState({

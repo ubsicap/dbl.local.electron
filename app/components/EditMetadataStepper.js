@@ -187,10 +187,6 @@ class _EditMetadataStepper extends React.Component<Props> {
     }
   }
 
-  componentWillUpdate(prevProps) {
-
-  }
-
   componentDidUpdate(prevProps) {
     const { requestingSaveMetadata, wasMetadataSaved, moveNext } = this.props;
     if (requestingSaveMetadata && !prevProps.requestingSaveMetadata) {
@@ -201,8 +197,10 @@ class _EditMetadataStepper extends React.Component<Props> {
     } else if (wasMetadataSaved && moveNext &&
       !requestingSaveMetadata && prevProps.requestingSaveMetadata) {
       const step = this.getStep(moveNext.newStepIndex);
-      if (step && step.formKey === moveNext.formKey) {
-        this.setState({ activeStepIndex: moveNext.newStepIndex });
+      if (step && step.formKey === moveNext.formKey && step.id === moveNext.id) {
+        const nextStepIndex = (moveNext.newStepIndex !==
+          this.state.activeStepIndex ? moveNext.newStepIndex : null);
+        this.setState({ activeStepIndex: nextStepIndex });
       } else if (this.props.myStructurePath === moveNext.formKey) {
         this.setState({ activeStepIndex: this.props.steps.length });
       }
@@ -211,12 +209,12 @@ class _EditMetadataStepper extends React.Component<Props> {
 
   trySaveFormAndMoveStep = (newStepIndex) => {
     const nextStep = this.getStep(newStepIndex);
-    const { formKey } = nextStep || {};
-    this.props.saveMetadata(null, null, null, { newStepIndex, formKey });
+    const { formKey, id } = nextStep || {};
+    this.props.saveMetadata(null, null, null, { newStepIndex, formKey, id });
   };
 
   handleStep = stepIndex => () => {
-    this.trySaveFormAndMoveStep(this.state.activeStepIndex !== stepIndex ? stepIndex : null);
+    this.trySaveFormAndMoveStep(stepIndex);
   };
 
   handleNext = () => {
