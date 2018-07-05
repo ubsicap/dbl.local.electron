@@ -54,11 +54,15 @@ export function fetchActiveFormInputs(bundleId, _formKey) {
     return { type: bundleEditMetadataConstants.METADATA_FORM_INPUTS_REQUEST, formKey };
   }
   function success(formKey, inputs) {
-    return { type: bundleEditMetadataConstants.METADATA_FORM_INPUTS_UPDATED, formKey, inputs };
+    return { type: bundleEditMetadataConstants.METADATA_FORM_INPUTS_LOADED, formKey, inputs };
   }
   function failure(error) {
     return { type: bundleEditMetadataConstants.METADATA_FORM_FETCH_ERROR, error };
   }
+}
+
+export function editActiveFormInput(formKey, inputName, newValue) {
+  return { type: bundleEditMetadataConstants.METADATA_FORM_INPUT_EDITED, formKey, inputName, newValue };
 }
 
 export function openEditMetadata(bundleId) {

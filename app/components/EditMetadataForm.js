@@ -4,7 +4,7 @@ import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
 import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
-import { saveMetadata, fetchActiveFormInputs } from '../actions/bundleEditMetadata.actions';
+import { saveMetadata, fetchActiveFormInputs, editActiveFormInput } from '../actions/bundleEditMetadata.actions';
 
 type Props = {
   classes: {},
@@ -15,22 +15,26 @@ type Props = {
   isActiveForm: boolean,
   requestingSaveMetadata: boolean,
   formErrors: {},
+  activeFormEdits: {},
   fetchActiveFormInputs: () => {},
+  editActiveFormInput: () => {},
   saveMetadata: () => {}
 };
 
 function mapStateToProps(state) {
   const { bundleEditMetadata } = state;
-  const { requestingSaveMetadata = false, formFieldIssues = {} } = bundleEditMetadata;
+  const { requestingSaveMetadata = false, formFieldIssues = {}, activeFormEdits = {} } = bundleEditMetadata;
   return {
     requestingSaveMetadata,
-    formFieldIssues
+    formFieldIssues,
+    activeFormEdits
   };
 }
 
 const mapDispatchToProps = {
   saveMetadata,
-  fetchActiveFormInputs
+  fetchActiveFormInputs,
+  editActiveFormInput
 };
 
 const materialStyles = theme => ({
@@ -57,10 +61,8 @@ function getIsRequired(field) {
   return field.nValues !== '?';
 }
 
-class EditMetadataForm extends React.Component<Props> {
+class EditMetadataForm extends React.PureComponent<Props> {
   props: Props;
-  state = {
-  };
 
   componentDidMount() {
     if (this.props.isActiveForm) {
@@ -81,7 +83,7 @@ class EditMetadataForm extends React.Component<Props> {
       const { fields } = inputs;
       if (!isFactory) {
         const allFieldValues = fields.filter(field => field.name).reduce((acc, field) =>
-          ({ ...acc, [field.name]: this.getFieldValue(field) }), {});
+          ({ ...acc, [field.name]: this.getValue(field) }), {});
         // if none of the values have changed
         // then it's okay to pretend there's nothing to save.
         const originalFieldValues = fields.filter(field => field.name).reduce((acc, field) =>
@@ -95,7 +97,7 @@ class EditMetadataForm extends React.Component<Props> {
       }
       // get the values for all required fields and all non-empty values optional fields.
       const fieldValues = fields.filter(field => field.name).reduce((acc, field) => {
-        const fieldValue = this.getFieldValue(field);
+        const fieldValue = this.getValue(field);
         const isRequired = getIsRequired(field);
         if (isRequired || fieldValue.length > 0) {
           return { ...acc, [field.name]: fieldValue };
@@ -106,17 +108,9 @@ class EditMetadataForm extends React.Component<Props> {
     }
   }
 
-  getFieldValue = (field) => {
-    const updatedValue = this.state[field.name];
-    const originalValue = field.default;
-    return updatedValue !== undefined ? updatedValue : originalValue;
-  }
-
-
   handleChange = name => event => {
-    this.setState({
-      [name]: event.target.value,
-    });
+    const { formKey } = this.props;
+    this.props.editActiveFormInput(formKey, name, event.target.value);
   };
 
   getErrorInField = (field) => {
@@ -126,11 +120,12 @@ class EditMetadataForm extends React.Component<Props> {
   };
 
   getValue = (field) => {
-    const { [field.name]: stateValue } = this.state;
+    const { activeFormEdits } = this.props;
+    const { [field.name]: stateValue } = activeFormEdits;
     if (stateValue === undefined || stateValue === null) {
       return field.default;
     }
-    return this.state[field.name];
+    return stateValue;
   }
 
   hasError = (field) => Boolean(Object.keys(this.getErrorInField(field)).length > 0);
