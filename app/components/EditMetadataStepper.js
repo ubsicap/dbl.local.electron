@@ -304,7 +304,7 @@ class _EditMetadataStepper extends React.Component<Props> {
                       </Button>
                       <Button
                         variant="contained"
-                        color="primary"
+                        color="default"
                         onClick={this.handleNext}
                         className={classes.button}
                       >
