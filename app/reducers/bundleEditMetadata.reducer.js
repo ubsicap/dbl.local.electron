@@ -3,7 +3,7 @@ import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.con
 const initialState = {
   editingMetadata: null,
   formStructure: [],
-  formInputs: {}
+  activeFormInputs: {}
 };
 
 export function bundleEditMetadata(state = initialState, action) {
@@ -32,10 +32,10 @@ export function bundleEditMetadata(state = initialState, action) {
     }
     case bundleEditMetadataConstants.METADATA_FORM_INPUTS_UPDATED: {
       const { formKey, inputs } = action;
-      const formInputs = { ...state.formInputs, [formKey]: inputs };
+      const activeFormInputs = { [formKey]: inputs };
       return {
         ...state,
-        formInputs,
+        activeFormInputs,
         formFieldIssues: null,
         errorTree: null,
       };

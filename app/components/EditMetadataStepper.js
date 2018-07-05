@@ -111,13 +111,13 @@ const makeMapStateToProps = () => {
       moveNext = null,
     } = bundleEditMetadata;
     const steps = getSteps(state, props);
-    const { formInputs } = bundleEditMetadata;
+    const { activeFormInputs } = bundleEditMetadata;
     const formStructure = getFormStructure(state, props);
     const bundleId = bundleEditMetadata.editingMetadata;
     return {
       bundleId,
       formStructure,
-      formInputs,
+      activeFormInputs,
       steps,
       requestingSaveMetadata,
       wasMetadataSaved,
@@ -146,7 +146,7 @@ type Props = {
     formStructure: [],
     steps: [],
     myStructurePath: string,
-    formInputs: {},
+    activeFormInputs: {},
     shouldLoadDetails: boolean,
     requestingSaveMetadata: boolean,
     wasMetadataSaved: boolean,
@@ -245,7 +245,7 @@ class _EditMetadataStepper extends React.Component<Props> {
     formatSectionNameAffixed(this.getNextSection(), prefix, postfix);
   getStepContent = (stepIndex) => {
     const step = this.getStep(stepIndex);
-    const { formInputs, bundleId } = this.props;
+    const { activeFormInputs, bundleId } = this.props;
     const { template, contains, formKey, formErrors, isFactory } = step;
     if (contains) {
       const hasTemplate = template === true;
@@ -258,7 +258,7 @@ class _EditMetadataStepper extends React.Component<Props> {
         />);
     }
     if (template) {
-      const myInputs = (formInputs[formKey] || {});
+      const myInputs = (activeFormInputs[formKey] || {});
       return (<EditMetadataForm
         key={formKey}
         bundleId={bundleId}
