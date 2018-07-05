@@ -193,7 +193,7 @@ class _EditMetadataStepper extends React.Component<Props> {
     }
   }
 
-  componentDidUpdate(prevProps) {
+  componentWillReceiveProps(prevProps) {
     const { requestingSaveMetadata, wasMetadataSaved, moveNext } = this.props;
     if (requestingSaveMetadata && !prevProps.requestingSaveMetadata) {
       const activeStep = this.getStep(this.state.activeStepIndex);
