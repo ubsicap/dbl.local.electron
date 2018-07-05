@@ -5,6 +5,7 @@ import { withStyles } from '@material-ui/core/styles';
 import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
 import { saveMetadata, fetchActiveFormInputs, editActiveFormInput } from '../actions/bundleEditMetadata.actions';
+import editMetadataService from '../services/editMetadata.service';
 
 type Props = {
   classes: {},
@@ -79,17 +80,11 @@ class EditMetadataForm extends React.PureComponent<Props> {
   componentDidUpdate(prevProps) {
     if (this.props.isActiveForm && this.props.requestingSaveMetadata
       && !prevProps.requestingSaveMetadata) {
-      const { inputs, bundleId, formKey, isFactory } = this.props;
+      const { inputs, bundleId, formKey, isFactory, activeFormEdits } = this.props;
       const { fields } = inputs;
-      const allFieldValues = fields.filter(field => field.name).reduce((acc, field) =>
-        ({ ...acc, [field.name]: this.getValue(field) }), {});
       // if none of the values have changed
       // then it's okay to pretend there's nothing to save.
-      const originalFieldValues = fields.filter(field => field.name).reduce((acc, field) =>
-        ({ ...acc, [field.name]: field.default }), {});
-      const reallyChangedFields = Object.keys(allFieldValues)
-        .filter(fieldKey => allFieldValues[fieldKey] !== originalFieldValues[fieldKey]);
-      if (reallyChangedFields.length === 0) {
+      if (!editMetadataService.getHasFormFieldsChanged(fields, activeFormEdits)) {
         this.props.saveMetadata(bundleId, formKey, {});
         return;
       }
@@ -119,11 +114,7 @@ class EditMetadataForm extends React.PureComponent<Props> {
 
   getValue = (field) => {
     const { activeFormEdits } = this.props;
-    const { [field.name]: stateValue } = activeFormEdits;
-    if (stateValue === undefined || stateValue === null) {
-      return field.default;
-    }
-    return stateValue;
+    return editMetadataService.getValue(field, activeFormEdits);
   }
 
   hasError = (field) => Boolean(Object.keys(this.getErrorInField(field)).length > 0);
