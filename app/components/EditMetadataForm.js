@@ -81,19 +81,17 @@ class EditMetadataForm extends React.PureComponent<Props> {
       && !prevProps.requestingSaveMetadata) {
       const { inputs, bundleId, formKey, isFactory } = this.props;
       const { fields } = inputs;
-      if (!isFactory) {
-        const allFieldValues = fields.filter(field => field.name).reduce((acc, field) =>
-          ({ ...acc, [field.name]: this.getValue(field) }), {});
-        // if none of the values have changed
-        // then it's okay to pretend there's nothing to save.
-        const originalFieldValues = fields.filter(field => field.name).reduce((acc, field) =>
-          ({ ...acc, [field.name]: field.default }), {});
-        const reallyChangedFields = Object.keys(allFieldValues).filter(fieldKey => allFieldValues[fieldKey]
-          !== originalFieldValues[fieldKey]);
-        if (reallyChangedFields.length === 0) {
-          this.props.saveMetadata(bundleId, formKey, {});
-          return;
-        }
+      const allFieldValues = fields.filter(field => field.name).reduce((acc, field) =>
+        ({ ...acc, [field.name]: this.getValue(field) }), {});
+      // if none of the values have changed
+      // then it's okay to pretend there's nothing to save.
+      const originalFieldValues = fields.filter(field => field.name).reduce((acc, field) =>
+        ({ ...acc, [field.name]: field.default }), {});
+      const reallyChangedFields = Object.keys(allFieldValues)
+        .filter(fieldKey => allFieldValues[fieldKey] !== originalFieldValues[fieldKey]);
+      if (reallyChangedFields.length === 0) {
+        this.props.saveMetadata(bundleId, formKey, {});
+        return;
       }
       // get the values for all required fields and all non-empty values optional fields.
       const fieldValues = fields.filter(field => field.name).reduce((acc, field) => {
