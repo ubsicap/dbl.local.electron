@@ -10,7 +10,7 @@ import StepContent from '@material-ui/core/StepContent';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
-import { fetchFormStructure, fetchFormInputs, saveMetadataSuccess, saveMetadata } from '../actions/bundleEditMetadata.actions';
+import { fetchFormStructure, saveMetadataSuccess, saveMetadata } from '../actions/bundleEditMetadata.actions';
 import EditMetadataForm from './EditMetadataForm';
 
 const materialStyles = theme => ({
@@ -129,7 +129,6 @@ const makeMapStateToProps = () => {
 
 const mapDispatchToProps = {
   fetchFormStructure,
-  fetchFormInputs,
   saveMetadataSuccess,
   saveMetadata
 };
@@ -141,7 +140,6 @@ function getStepFormKey(stepId, structurePath) {
 type Props = {
     classes: {},
     fetchFormStructure: () => {},
-    fetchFormInputs: () => {},
     saveMetadataSuccess: () => {},
     saveMetadata: () => {},
     bundleId: ?string,
@@ -268,7 +266,6 @@ class _EditMetadataStepper extends React.Component<Props> {
         isFactory={isFactory}
         formErrors={formErrors}
         inputs={myInputs}
-        fetchFormInputs={this.props.fetchFormInputs}
         isActiveForm={this.state.activeStepIndex === stepIndex}
       />);
     }

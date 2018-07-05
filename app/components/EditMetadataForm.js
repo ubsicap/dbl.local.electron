@@ -4,7 +4,7 @@ import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
 import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
-import { saveMetadata } from '../actions/bundleEditMetadata.actions';
+import { saveMetadata, fetchActiveFormInputs } from '../actions/bundleEditMetadata.actions';
 
 type Props = {
   classes: {},
@@ -15,7 +15,7 @@ type Props = {
   isActiveForm: boolean,
   requestingSaveMetadata: boolean,
   formErrors: {},
-  fetchFormInputs: () => {},
+  fetchActiveFormInputs: () => {},
   saveMetadata: () => {}
 };
 
@@ -29,7 +29,8 @@ function mapStateToProps(state) {
 }
 
 const mapDispatchToProps = {
-  saveMetadata
+  saveMetadata,
+  fetchActiveFormInputs
 };
 
 const materialStyles = theme => ({
@@ -62,7 +63,15 @@ class EditMetadataForm extends React.Component<Props> {
   };
 
   componentDidMount() {
-    this.props.fetchFormInputs(this.props.bundleId, this.props.formKey);
+    if (this.props.isActiveForm) {
+      this.props.fetchActiveFormInputs(this.props.bundleId, this.props.formKey);
+    }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.isActiveForm && !this.props.isActiveForm) {
+      this.props.fetchActiveFormInputs(this.props.bundleId, this.props.formKey);
+    }
   }
 
   componentDidUpdate(prevProps) {

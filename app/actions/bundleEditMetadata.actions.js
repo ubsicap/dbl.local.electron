@@ -8,7 +8,7 @@ export const bundleEditMetadataActions = {
   openEditMetadata,
   closeEditMetadata,
   fetchFormStructure,
-  fetchFormInputs
+  fetchActiveFormInputs
 };
 
 export default bundleEditMetadataActions;
@@ -37,7 +37,7 @@ export function fetchFormStructure(_bundleId) {
   }
 }
 
-export function fetchFormInputs(bundleId, _formKey) {
+export function fetchActiveFormInputs(bundleId, _formKey) {
   return async dispatch => {
     dispatch(request(_formKey));
     try {
