@@ -66,7 +66,8 @@ export function bundleEditMetadata(state = initialState, action) {
         requestingSaveMetadata: false,
         wasMetadataSaved: true,
         editedBundleId: action.bundleId,
-        shouldSaveActiveForm: false
+        shouldSaveActiveForm: false,
+        activeFormEdits: {},
       };
     }
     case bundleEditMetadataConstants.SAVE_METADATA_FAILED: {

@@ -10,7 +10,10 @@ import StepContent from '@material-ui/core/StepContent';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
-import { fetchFormStructure, saveMetadataSuccess, saveMetadata } from '../actions/bundleEditMetadata.actions';
+import Save from '@material-ui/icons/Save';
+import Undo from '@material-ui/icons/Undo';
+import classNames from 'classnames';
+import { fetchFormStructure, saveMetadataSuccess, saveMetadata, fetchActiveFormInputs } from '../actions/bundleEditMetadata.actions';
 import EditMetadataForm from './EditMetadataForm';
 import editMetadataService from '../services/editMetadata.service';
 
@@ -26,6 +29,15 @@ const materialStyles = theme => ({
   },
   resetContainer: {
     padding: theme.spacing.unit * 3,
+  },
+  leftIcon: {
+    marginRight: theme.spacing.unit,
+  },
+  rightIcon: {
+    marginLeft: theme.spacing.unit,
+  },
+  iconSmall: {
+    fontSize: 20,
   },
 });
 
@@ -135,7 +147,8 @@ const makeMapStateToProps = () => {
 const mapDispatchToProps = {
   fetchFormStructure,
   saveMetadataSuccess,
-  saveMetadata
+  saveMetadata,
+  fetchActiveFormInputs
 };
 
 function getStepFormKey(stepId, structurePath) {
@@ -147,6 +160,7 @@ type Props = {
     fetchFormStructure: () => {},
     saveMetadataSuccess: () => {},
     saveMetadata: () => {},
+    fetchActiveFormInputs: () => {},
     bundleId: ?string,
     formStructure: [],
     steps: [],
@@ -222,6 +236,15 @@ class _EditMetadataStepper extends React.Component<Props> {
 
   handleStep = stepIndex => () => {
     this.trySaveFormAndMoveStep(stepIndex);
+  };
+
+  handleSave = () => (this.props.saveMetadata());
+
+  handleUndo = stepIndex => () => {
+    const { bundleId } = this.props;
+    const step = this.getStep(stepIndex);
+    const { formKey } = step;
+    this.props.fetchActiveFormInputs(bundleId, formKey);
   };
 
   handleNext = () => {
@@ -303,12 +326,18 @@ class _EditMetadataStepper extends React.Component<Props> {
         <div>
           <Button
             className={classes.button}
+            onClick={this.handleUndo(stepIndex)}
           >
+            <Undo className={classNames(classes.leftIcon, classes.iconSmall)} />
             Undo
           </Button>
           <Button
+            variant="contained"
+            color="primary"
             className={classes.button}
+            onClick={this.handleSave}
           >
+            <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
             Save
           </Button>
         </div>
