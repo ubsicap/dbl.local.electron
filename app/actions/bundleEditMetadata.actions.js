@@ -13,11 +13,20 @@ export const bundleEditMetadataActions = {
 
 export default bundleEditMetadataActions;
 
+function buildEditMetadataUrl(routeUrl, bundleId) {
+  return routeUrl.replace(':bundleId', bundleId);
+}
+
+function getIsDemoEditMode(routeUrl, bundleId) {
+  const editMetadataUrl = buildEditMetadataUrl(routeUrl, bundleId);
+  return history.location.pathname === editMetadataUrl;
+}
+
 export function fetchFormStructure(_bundleId) {
   return async dispatch => {
     dispatch(request(_bundleId));
     try {
-      const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO;
+      const isDemoMode = getIsDemoEditMode(navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO, _bundleId);
       const response = isDemoMode ?
         await getMockStructure() :
         await bundleService.getFormBundleTree(_bundleId);
@@ -41,7 +50,7 @@ export function fetchActiveFormInputs(bundleId, _formKey) {
   return async dispatch => {
     dispatch(request(_formKey));
     try {
-      const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO;
+      const isDemoMode = getIsDemoEditMode(navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO, bundleId);
       const response = isDemoMode ?
         await getMockFormInputs(bundleId, _formKey) :
         await bundleService.getFormFields(bundleId, _formKey);
@@ -66,10 +75,21 @@ export function editActiveFormInput(formKey, inputName, newValue) {
 }
 
 export function openEditMetadata(bundleId) {
+  const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO;
+  const editMetadataPage = isDemoMode ?
+    navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO :
+    navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA;
+  const editMetadataPageWithBundleId = buildEditMetadataUrl(editMetadataPage, bundleId);
+  history.push(editMetadataPageWithBundleId);
   return { type: bundleEditMetadataConstants.OPEN_EDIT_METADATA, bundleId };
 }
 
 export function closeEditMetadata() {
+  const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO;
+  const bundlesPage = isDemoMode ?
+    navigationConstants.NAVIGATION_BUNDLES_DEMO :
+    navigationConstants.NAVIGATION_BUNDLES;
+  history.push(bundlesPage);
   return { type: bundleEditMetadataConstants.CLOSE_EDIT_METADATA };
 }
 

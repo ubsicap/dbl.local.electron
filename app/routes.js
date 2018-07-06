@@ -4,6 +4,7 @@ import { Switch, Route, Redirect } from 'react-router';
 import App from './containers/App';
 import BundlesPage from './containers/BundlesPage';
 import LoginPage from './containers/LoginPage';
+import EditMetadataDialog from './components/EditEntryMetadataDialog';
 import { PrivateRoute } from './components/PrivateRoute';
 import { navigationConstants } from './constants/navigation.constants';
 
@@ -13,6 +14,8 @@ export default () => (
       <Route path={navigationConstants.NAVIGATION_LOGIN} component={LoginPage} />
       <Redirect exact from="/" to={navigationConstants.NAVIGATION_BUNDLES} />
       <PrivateRoute exact path={navigationConstants.NAVIGATION_BUNDLES} component={BundlesPage} />
+      <PrivateRoute exact path={navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA} component={EditMetadataDialog} />
+      <Route exact path={navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO} component={EditMetadataDialog} />
       <Route exact path={navigationConstants.NAVIGATION_BUNDLES_DEMO} component={BundlesPage} />
     </Switch>
   </App>

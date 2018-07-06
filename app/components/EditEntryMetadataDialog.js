@@ -90,29 +90,22 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   render() {
     const { classes } = this.props;
     return (
-      <Dialog
-        fullScreen
-        open={this.props.open}
-        onClose={this.handleClose}
-        TransitionComponent={Transition}
-      >
-        <div className={appBarStyles.appContainer}>
-          <AppBar className={classes.appBar}>
-            <Toolbar>
-              <IconButton color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose} aria-label="Close">
-                <CloseIcon />
-              </IconButton>
-              <Typography variant="title" color="inherit" className={classes.flex}>
-                Edit Metadata
-              </Typography>
-              <Button color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose}>
-                save
-              </Button>
-            </Toolbar>
-          </AppBar>
-          <EditMetadataStepper myStructurePath="" shouldLoadDetails={false} />
-        </div>
-      </Dialog>
+      <div className={appBarStyles.appContainer}>
+        <AppBar className={classes.appBar}>
+          <Toolbar>
+            <IconButton color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose} aria-label="Close">
+              <CloseIcon />
+            </IconButton>
+            <Typography variant="title" color="inherit" className={classes.flex}>
+              Edit Metadata
+            </Typography>
+            <Button color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose}>
+              save
+            </Button>
+          </Toolbar>
+        </AppBar>
+        <EditMetadataStepper myStructurePath="" shouldLoadDetails={false} />
+      </div>
     );
   }
 }

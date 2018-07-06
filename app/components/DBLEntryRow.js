@@ -18,7 +18,7 @@ import Save from '@material-ui/icons/Save';
 import CallSplit from '@material-ui/icons/CallSplit';
 import Info from '@material-ui/icons/Info';
 import Delete from '@material-ui/icons/Delete';
-import Edit from '@material-ui/icons/Edit'
+import Edit from '@material-ui/icons/Edit';
 import styles from './DBLEntryRow.css';
 import ControlledHighlighter from './ControlledHighlighter';
 import { toggleSelectBundle, requestSaveBundleTo, removeResources, downloadResources } from '../actions/bundle.actions';
