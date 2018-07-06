@@ -12,6 +12,9 @@ import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import Save from '@material-ui/icons/Save';
 import Undo from '@material-ui/icons/Undo';
+import NavigateNext from '@material-ui/icons/NavigateNext';
+import NavigateBefore from '@material-ui/icons/NavigateBefore';
+import Check from '@material-ui/icons/Check';
 import classNames from 'classnames';
 import { fetchFormStructure, saveMetadataSuccess, saveMetadata, fetchActiveFormInputs } from '../actions/bundleEditMetadata.actions';
 import EditMetadataForm from './EditMetadataForm';
@@ -248,7 +251,11 @@ class _EditMetadataStepper extends React.Component<Props> {
   };
 
   handleNext = () => {
-    this.trySaveFormAndMoveStep(this.state.activeStepIndex + 1);
+    const { activeStepIndex } = this.state;
+    const { steps } = this.props;
+    const isLastStep = this.isLastStep(activeStepIndex, steps);
+    const nextOffset = isLastStep ? 0 : 1;
+    this.trySaveFormAndMoveStep(this.state.activeStepIndex + nextOffset);
   };
 
   handleBack = () => {
@@ -323,6 +330,7 @@ class _EditMetadataStepper extends React.Component<Props> {
     const hasFormChanged = this.getHasFormChanged(stepIndex);
     const step = this.getStep(stepIndex);
     const { contains } = step;
+    const isLastStep = this.isLastStep(activeStepIndex, steps);
     if (hasFormChanged && !contains) {
       return (
         <div>
@@ -352,7 +360,8 @@ class _EditMetadataStepper extends React.Component<Props> {
           onClick={this.handleBack}
           className={classes.button}
         >
-          Back{this.getBackSectionName(' (', ')')}
+          <NavigateBefore className={classNames(classes.leftIcon, classes.iconSmall)} />
+          {this.getBackSectionName('', '')}
         </Button>
         <Button
           variant="contained"
@@ -360,7 +369,11 @@ class _EditMetadataStepper extends React.Component<Props> {
           onClick={this.handleNext}
           className={classes.button}
         >
-          {this.isLastStep(activeStepIndex, steps) ? 'Finish' : `Next${this.getNextSectionName(' (', ')')}`}
+          {isLastStep ?
+            ([<Check key="OK" className={classNames(classes.leftIcon, classes.iconSmall)} />, 'OK'])
+            :
+            ([<NavigateNext key="Next" className={classNames(classes.leftIcon, classes.iconSmall)} />, this.getNextSectionName('', '')])
+          }
         </Button>
       </div>);
   }
