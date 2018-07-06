@@ -12,6 +12,7 @@ import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import { fetchFormStructure, saveMetadataSuccess, saveMetadata } from '../actions/bundleEditMetadata.actions';
 import EditMetadataForm from './EditMetadataForm';
+import editMetadataService from '../services/editMetadata.service';
 
 const materialStyles = theme => ({
   root: {
@@ -36,6 +37,8 @@ const detailsStep = {
   template: true
 };
 
+const getActiveFormInputs = (state) => state.bundleEditMetadata.activeFormInputs;
+const getActiveFormEdits = (state) => state.bundleEditMetadata.activeFormEdits;
 const getFormStructure = (state, props) =>
   props.formStructure || state.bundleEditMetadata.formStructure;
 
@@ -111,13 +114,15 @@ const makeMapStateToProps = () => {
       moveNext = null,
     } = bundleEditMetadata;
     const steps = getSteps(state, props);
-    const { activeFormInputs } = bundleEditMetadata;
     const formStructure = getFormStructure(state, props);
     const bundleId = bundleEditMetadata.editingMetadata;
+    const activeFormInputs = getActiveFormInputs(state);
+    const activeFormEdits = getActiveFormEdits(state);
     return {
       bundleId,
       formStructure,
       activeFormInputs,
+      activeFormEdits,
       steps,
       requestingSaveMetadata,
       wasMetadataSaved,
@@ -147,6 +152,7 @@ type Props = {
     steps: [],
     myStructurePath: string,
     activeFormInputs: {},
+    activeFormEdits: {},
     shouldLoadDetails: boolean,
     requestingSaveMetadata: boolean,
     wasMetadataSaved: boolean,
@@ -272,6 +278,62 @@ class _EditMetadataStepper extends React.Component<Props> {
     return 'what??';
   }
 
+  getIsActiveIndex = (stepIndex) => {
+    const { activeStepIndex } = this.state;
+    return stepIndex === activeStepIndex;
+  }
+
+  getHasFormChanged = (stepIndex) => {
+    const { activeFormInputs, activeFormEdits } = this.props;
+    const step = this.getStep(stepIndex);
+    const { formKey } = step;
+    const { [formKey]: inputs = {} } = activeFormInputs;
+    const { fields = [] } = inputs;
+    const isActiveForm = this.getIsActiveIndex(stepIndex);
+    const hasFormChanged = isActiveForm ? editMetadataService.getHasFormFieldsChanged(fields, activeFormEdits) : false;
+    return hasFormChanged;
+  }
+
+  renderStepContentActionsContainer = (stepIndex) => {
+    const { classes, steps = [] } = this.props;
+    const { activeStepIndex } = this.state;
+    const hasFormChanged = this.getHasFormChanged(stepIndex);
+    if (hasFormChanged) {
+      return (
+        <div>
+          <Button
+            className={classes.button}
+          >
+            Undo
+          </Button>
+          <Button
+            className={classes.button}
+          >
+            Save
+          </Button>
+        </div>
+      );
+    }
+    return (
+      <div>
+        <Button
+          disabled={activeStepIndex === 0}
+          onClick={this.handleBack}
+          className={classes.button}
+        >
+          Back{this.getBackSectionName(' (', ')')}
+        </Button>
+        <Button
+          variant="contained"
+          color="default"
+          onClick={this.handleNext}
+          className={classes.button}
+        >
+          {this.isLastStep(activeStepIndex, steps) ? 'Finish' : `Next${this.getNextSectionName(' (', ')')}`}
+        </Button>
+      </div>);
+  }
+
   render() {
     const { bundleId, classes, steps = [] } = this.props;
     const { activeStepIndex } = this.state;
@@ -281,8 +343,8 @@ class _EditMetadataStepper extends React.Component<Props> {
     return (
       <div className={classes.root}>
         <Stepper nonLinear activeStep={activeStepIndex} orientation="vertical">
-          {steps.map((step, index) => {
-            return (
+          {steps.map((step, index) =>
+            (
               <Step key={step.label}>
                 <StepLabel
                   onClick={this.handleStep(index)}
@@ -294,28 +356,11 @@ class _EditMetadataStepper extends React.Component<Props> {
                 <StepContent>
                   {this.getStepContent(index)}
                   <div className={classes.actionsContainer}>
-                    <div>
-                      <Button
-                        disabled={activeStepIndex === 0}
-                        onClick={this.handleBack}
-                        className={classes.button}
-                      >
-                        Back{this.getBackSectionName(' (', ')')}
-                      </Button>
-                      <Button
-                        variant="contained"
-                        color="default"
-                        onClick={this.handleNext}
-                        className={classes.button}
-                      >
-                        {this.isLastStep(activeStepIndex, steps) ? 'Finish' : `Next${this.getNextSectionName(' (', ')')}`}
-                      </Button>
-                    </div>
+                    {this.renderStepContentActionsContainer(index)}
                   </div>
                 </StepContent>
               </Step>
-            );
-          })}
+            ))}
         </Stepper>
         {activeStepIndex === steps.length && (
           <Paper square elevation={0} className={classes.resetContainer}>

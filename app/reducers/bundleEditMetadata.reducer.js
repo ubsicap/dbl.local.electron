@@ -3,7 +3,8 @@ import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.con
 const initialState = {
   editingMetadata: null,
   formStructure: [],
-  activeFormInputs: {}
+  activeFormInputs: {},
+  activeFormEdits: {}
 };
 
 export function bundleEditMetadata(state = initialState, action) {

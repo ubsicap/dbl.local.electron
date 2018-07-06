@@ -80,8 +80,8 @@ class EditMetadataForm extends React.PureComponent<Props> {
   componentDidUpdate(prevProps) {
     if (this.props.isActiveForm && this.props.requestingSaveMetadata
       && !prevProps.requestingSaveMetadata) {
-      const { inputs, bundleId, formKey, isFactory, activeFormEdits } = this.props;
-      const { fields } = inputs;
+      const { inputs = {}, bundleId, formKey, isFactory, activeFormEdits } = this.props;
+      const { fields = [] } = inputs;
       // if none of the values have changed
       // then it's okay to pretend there's nothing to save.
       if (!editMetadataService.getHasFormFieldsChanged(fields, activeFormEdits)) {
