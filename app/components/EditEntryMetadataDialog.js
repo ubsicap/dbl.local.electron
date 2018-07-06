@@ -13,10 +13,12 @@ import { updateBundle } from '../actions/bundle.actions';
 import { closeEditMetadata, saveMetadata } from '../actions/bundleEditMetadata.actions';
 import EditMetadataStepper from './EditMetadataStepper';
 import appBarStyles from './AppBar.css';
+import rowStyles from './DBLEntryRow.css';
 
 function mapStateToProps(state) {
-  const { bundleEditMetadata } = state;
+  const { bundleEditMetadata, bundles } = state;
   const { editingMetadata, editedMetadata } = bundleEditMetadata;
+  const { selectedBundle } = bundles;
   const bundleId = editingMetadata || editedMetadata;
   const {
     requestingSaveMetadata = false,
@@ -27,6 +29,7 @@ function mapStateToProps(state) {
   return {
     open: Boolean(bundleEditMetadata.editingMetadata || false),
     bundleId,
+    selectedBundle,
     requestingSaveMetadata,
     wasMetadataSaved,
     moveNext,
@@ -52,6 +55,7 @@ const materialStyles = {
 type Props = {
   open: boolean,
   bundleId: ?string,
+  selectedBundle: {},
   closeEditMetadata: () => {},
   updateBundle: () => {},
   classes: {},
@@ -83,7 +87,9 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   };
 
   render() {
-    const { classes, open } = this.props;
+    const { classes, open, selectedBundle } = this.props;
+    const { displayAs } = selectedBundle;
+    const { languageAndCountry, name, revision } = displayAs;    
     return (
       <Zoom in={open}>
         <div className={appBarStyles.appContainer}>
@@ -93,7 +99,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
                 <CloseIcon />
               </IconButton>
               <Typography variant="title" color="inherit" className={classes.flex}>
-                Edit Metadata
+                Edit <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry}</span> {name} - {revision}
               </Typography>
               <Button color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose}>
                 save
