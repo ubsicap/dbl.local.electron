@@ -87,7 +87,7 @@ export function openEditMetadata(bundleId) {
 export function closeEditMetadata() {
   return async dispatch => {
     dispatch({ type: bundleEditMetadataConstants.CLOSE_EDIT_METADATA });
-    await sleep(50);
+    await sleep(1);
     dispatch(switchBackToBundlesPage);
   };
 }
