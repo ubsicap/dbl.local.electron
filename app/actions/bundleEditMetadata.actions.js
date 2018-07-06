@@ -85,12 +85,24 @@ export function openEditMetadata(bundleId) {
 }
 
 export function closeEditMetadata() {
+  return async dispatch => {
+    dispatch({ type: bundleEditMetadataConstants.CLOSE_EDIT_METADATA });
+    await sleep(50);
+    dispatch(switchBackToBundlesPage);
+  };
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
+function switchBackToBundlesPage() {
   const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO;
   const bundlesPage = isDemoMode ?
     navigationConstants.NAVIGATION_BUNDLES_DEMO :
     navigationConstants.NAVIGATION_BUNDLES;
   history.push(bundlesPage);
-  return { type: bundleEditMetadataConstants.CLOSE_EDIT_METADATA };
 }
 
 /*

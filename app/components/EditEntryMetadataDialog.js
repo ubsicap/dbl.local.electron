@@ -3,13 +3,12 @@ import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import CloseIcon from '@material-ui/icons/Close';
-import Slide from '@material-ui/core/Slide';
+import Zoom from '@material-ui/core/Zoom';
 import { updateBundle } from '../actions/bundle.actions';
 import { closeEditMetadata, saveMetadata } from '../actions/bundleEditMetadata.actions';
 import EditMetadataStepper from './EditMetadataStepper';
@@ -50,10 +49,6 @@ const materialStyles = {
   },
 };
 
-function Transition(props) {
-  return <Slide direction="up" {...props} />;
-}
-
 type Props = {
   open: boolean,
   bundleId: ?string,
@@ -88,24 +83,26 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   };
 
   render() {
-    const { classes } = this.props;
+    const { classes, open } = this.props;
     return (
-      <div className={appBarStyles.appContainer}>
-        <AppBar className={classes.appBar}>
-          <Toolbar>
-            <IconButton color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose} aria-label="Close">
-              <CloseIcon />
-            </IconButton>
-            <Typography variant="title" color="inherit" className={classes.flex}>
-              Edit Metadata
-            </Typography>
-            <Button color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose}>
-              save
-            </Button>
-          </Toolbar>
-        </AppBar>
-        <EditMetadataStepper myStructurePath="" shouldLoadDetails={false} />
-      </div>
+      <Zoom in={open}>
+        <div className={appBarStyles.appContainer}>
+          <AppBar className={classes.appBar}>
+            <Toolbar>
+              <IconButton color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose} aria-label="Close">
+                <CloseIcon />
+              </IconButton>
+              <Typography variant="title" color="inherit" className={classes.flex}>
+                Edit Metadata
+              </Typography>
+              <Button color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose}>
+                save
+              </Button>
+            </Toolbar>
+          </AppBar>
+          <EditMetadataStepper myStructurePath="" shouldLoadDetails={false} />
+        </div>
+      </Zoom>
     );
   }
 }
