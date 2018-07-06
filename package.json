@@ -1,6 +1,6 @@
 {
   "name": "nathanael",
-  "productName": "Nathanael",
+  "productName": "nathanael",
   "version": "0.8.0",
   "description": "Electron frontend to DBL dot Local",
   "scripts": {
@@ -33,8 +33,8 @@
   },
   "browserslist": "electron 1.6",
   "build": {
-    "productName": "Nathanael",
-    "appId": "org.develar.Nathanael",
+    "productName": "nathanael",
+    "appId": "org.develar.nathanael",
     "files": [
       "dist/",
       "node_modules/",

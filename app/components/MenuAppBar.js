@@ -103,7 +103,7 @@ class MenuAppBar extends React.PureComponent {
               <MenuIcon />
             </IconButton>
             <Typography variant="title" color="inherit" className={classes.flex}>
-              Nathanael
+              nathanael
             </Typography>
             <div>
               <DebounceInput

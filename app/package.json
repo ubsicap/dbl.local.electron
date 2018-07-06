@@ -1,6 +1,6 @@
 {
   "name": "nathanael",
-  "productName": "Nathanael",
+  "productName": "nathanael",
   "version": "0.8.0",
   "description": "Electron frontend to DBL dot Local",
   "main": "./main.prod.js",
