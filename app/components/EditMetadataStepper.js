@@ -273,8 +273,8 @@ class _EditMetadataStepper extends React.Component<Props> {
   getNextSectionName = (prefix, postfix) =>
     formatSectionNameAffixed(this.getNextSection(), prefix, postfix);
   getStepContent = (stepIndex) => {
-    const step = this.getStep(stepIndex);
     const { activeFormInputs, bundleId } = this.props;
+    const step = this.getStep(stepIndex);
     const { template, contains, formKey, formErrors, isFactory } = step;
     if (contains) {
       const hasTemplate = template === true;
@@ -321,7 +321,9 @@ class _EditMetadataStepper extends React.Component<Props> {
     const { classes, steps = [] } = this.props;
     const { activeStepIndex } = this.state;
     const hasFormChanged = this.getHasFormChanged(stepIndex);
-    if (hasFormChanged) {
+    const step = this.getStep(stepIndex);
+    const { contains } = step;
+    if (hasFormChanged && !contains) {
       return (
         <div>
           <Button
