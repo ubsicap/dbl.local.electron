@@ -104,6 +104,7 @@ export function saveMetadata(bundleId, formKey, fieldNameValues, moveNext, isFac
     dispatch(saveMetadataRequest(formId, fields, moveNextStep));
     try {
       await bundleService.postFormFields(bundleId, formKey, { formId, fields });
+      dispatch(fetchActiveFormInputs(bundleId, formKey));
       dispatch(saveMetadataSuccess(bundleId, formKey));
       if (isFactory) {
         dispatch(fetchFormStructure(bundleId));
