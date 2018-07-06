@@ -94,6 +94,7 @@ export function saveMetadata(bundleId, formKey, fieldNameValues, moveNext, isFac
     const moveNextStep = !moveNext ? bundleEditMetadata.moveNext : moveNext;
     if (bundleId && Object.keys(fieldNameValues).length === 0) {
       dispatch(saveMetadataRequest(null, null, moveNextStep));
+      dispatch(fetchActiveFormInputs(bundleId, formKey));
       return dispatch(saveMetadataSuccess(bundleId, formKey));
     }
     const fields = Object.keys(fieldNameValues).reduce((acc, name) => {
