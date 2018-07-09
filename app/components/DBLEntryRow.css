@@ -38,6 +38,7 @@
   padding: 5px;
   border-radius: 10px;
   border: 1px solid darkgray;
+  vertical-align: middle;
 }
 
 .bundleRowTopLeftSideName {

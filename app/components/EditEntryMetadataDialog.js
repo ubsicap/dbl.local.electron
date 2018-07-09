@@ -89,7 +89,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   render() {
     const { classes, open, selectedBundle } = this.props;
     const { displayAs } = selectedBundle;
-    const { languageAndCountry, name, revision } = displayAs;    
+    const { languageAndCountry, name } = displayAs;    
     return (
       <Zoom in={open}>
         <div className={appBarStyles.appContainer}>
@@ -99,7 +99,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
                 <CloseIcon />
               </IconButton>
               <Typography variant="title" color="inherit" className={classes.flex}>
-                Edit <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry}</span> {name} - {revision}
+                Edit <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry}</span> {name}
               </Typography>
               <Button color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose}>
                 save
