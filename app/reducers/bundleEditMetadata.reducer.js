@@ -18,6 +18,12 @@ export function bundleEditMetadata(state = initialState, action) {
     case bundleEditMetadataConstants.CLOSE_EDIT_METADATA: {
       return initialState;
     }
+    case bundleEditMetadataConstants.METADATA_FILE_SAVED: {
+      return { ...state, metadataFile: action.metadataFile };
+    }
+    case bundleEditMetadataConstants.METADATA_FILE_RESET: {
+      return { ...state, metadataFile: null };
+    }
     case bundleEditMetadataConstants.METADATA_FORM_STRUCTURE_REQUEST: {
       return {
         ...state,

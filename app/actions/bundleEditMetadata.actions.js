@@ -1,14 +1,18 @@
 // import traverse from 'traverse';
+import path from 'path';
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
 import { bundleService } from '../services/bundle.service';
 
+const { app } = require('electron').remote;
+
 export const bundleEditMetadataActions = {
   openEditMetadata,
   closeEditMetadata,
   fetchFormStructure,
-  fetchActiveFormInputs
+  fetchActiveFormInputs,
+  exportMetadataFile
 };
 
 export default bundleEditMetadataActions;
@@ -89,6 +93,28 @@ export function closeEditMetadata() {
     dispatch({ type: bundleEditMetadataConstants.CLOSE_EDIT_METADATA });
     await sleep(1);
     dispatch(switchBackToBundlesPage);
+  };
+}
+
+export function exportMetadataFile(bundleId) {
+  return async dispatch => {
+    dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_REQUEST, bundleId });
+    const temp = app.getPath('temp');
+    const metadataXmlResource = 'metadata.xml';
+    const tmpFolder = path.join(temp, bundleId);
+    const metadataFile = path.join(tmpFolder, metadataXmlResource);
+    const downloadedItem = await bundleService.requestSaveResourceTo(
+      tmpFolder,
+      bundleId,
+      metadataXmlResource,
+      (resourceTotalBytesSaved, resourceProgress) => {
+        if (resourceProgress && resourceProgress % 100 === 0) {
+          dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_SAVED, bundleId, metadataFile });
+        }
+      }
+    );
+    dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_RESET, bundleId });
+    return downloadedItem;
   };
 }
 

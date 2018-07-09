@@ -8,16 +8,21 @@ import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import CloseIcon from '@material-ui/icons/Close';
+import OpenInNew from '@material-ui/icons/OpenInNew';
+import Save from '@material-ui/icons/Save';
+import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
 import { updateBundle } from '../actions/bundle.actions';
-import { closeEditMetadata, saveMetadata } from '../actions/bundleEditMetadata.actions';
+import { closeEditMetadata, saveMetadata, exportMetadataFile } from '../actions/bundleEditMetadata.actions';
 import EditMetadataStepper from './EditMetadataStepper';
 import appBarStyles from './AppBar.css';
 import rowStyles from './DBLEntryRow.css';
 
+const { shell } = require('electron');
+
 function mapStateToProps(state) {
   const { bundleEditMetadata, bundles } = state;
-  const { editingMetadata, editedMetadata } = bundleEditMetadata;
+  const { editingMetadata, editedMetadata, metadataFile } = bundleEditMetadata;
   const { selectedBundle } = bundles;
   const bundleId = editingMetadata || editedMetadata;
   const {
@@ -33,24 +38,32 @@ function mapStateToProps(state) {
     requestingSaveMetadata,
     wasMetadataSaved,
     moveNext,
-    couldNotSaveMetadataMessage
+    couldNotSaveMetadataMessage,
+    metadataFile
   };
 }
 
 const mapDispatchToProps = {
   closeEditMetadata,
   saveMetadata,
-  updateBundle
+  updateBundle,
+  exportMetadataFile
 };
 
-const materialStyles = {
+const materialStyles = theme => ({
   appBar: {
     position: 'fixed'
   },
   flex: {
     flex: 1,
   },
-};
+  leftIcon: {
+    marginRight: theme.spacing.unit,
+  },
+  iconSmall: {
+    fontSize: 20,
+  },
+});
 
 type Props = {
   open: boolean,
@@ -60,7 +73,9 @@ type Props = {
   updateBundle: () => {},
   classes: {},
   saveMetadata: () => {},
+  exportMetadataFile: () => {},
   wasMetadataSaved: boolean,
+  metadataFile: ?string,
   moveNext: ?{},
   couldNotSaveMetadataMessage: ?string,
   requestingSaveMetadata: boolean
@@ -80,11 +95,18 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
       // TODO: post confirm message.
       // if confirmed: this.props.closeEditMetadata();
     }
+    if (this.props.metadataFile && !prevProps.metadataFile) {
+      shell.openExternal(this.props.metadataFile);
+    }
   }
 
   handleClose = () => {
     this.props.saveMetadata(null, null, null, { exit: true });
   };
+
+  handlePreview = () => {
+    this.props.exportMetadataFile(this.props.bundleId);
+  }
 
   render() {
     const { classes, open, selectedBundle } = this.props;
@@ -99,10 +121,15 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
                 <CloseIcon />
               </IconButton>
               <Typography variant="title" color="inherit" className={classes.flex}>
-                Edit <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry}</span> {name}
+                Preview <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry}</span> {name}
               </Typography>
-              <Button color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose}>
-                save
+              <Button key="btnOpenXml" color="inherit" disable={this.props.metadataFile} onClick={this.handlePreview}>
+                <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
+                Preview
+              </Button>
+              <Button key="btnSave" color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose}>
+                <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
+                Save
               </Button>
             </Toolbar>
           </AppBar>
