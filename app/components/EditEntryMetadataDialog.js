@@ -89,7 +89,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   render() {
     const { classes, open, selectedBundle } = this.props;
     const { displayAs } = selectedBundle;
-    const { languageAndCountry, name } = displayAs;    
+    const { languageAndCountry, name } = displayAs;
     return (
       <Zoom in={open}>
         <div className={appBarStyles.appContainer}>
