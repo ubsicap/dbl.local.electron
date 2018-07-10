@@ -12,7 +12,7 @@ export const bundleEditMetadataActions = {
   closeEditMetadata,
   fetchFormStructure,
   fetchActiveFormInputs,
-  exportMetadataFile
+  openMetadataFile
 };
 
 export default bundleEditMetadataActions;
@@ -96,7 +96,15 @@ export function closeEditMetadata() {
   };
 }
 
-export function exportMetadataFile(bundleId) {
+export function openMetadataFile(bundleId) {
+  return async dispatch => {
+    dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_SHOW_REQUEST, bundleId });
+    dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_REQUEST, bundleId });
+    return dispatch(saveMetadatFileToTempBundleFolder(bundleId));
+  };
+}
+
+function saveMetadatFileToTempBundleFolder(bundleId) {
   return async dispatch => {
     dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_REQUEST, bundleId });
     const temp = app.getPath('temp');
@@ -107,16 +115,13 @@ export function exportMetadataFile(bundleId) {
       tmpFolder,
       bundleId,
       metadataXmlResource,
-      (resourceTotalBytesSaved, resourceProgress) => {
-        if (resourceProgress && resourceProgress % 100 === 0) {
-          dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_SAVED, bundleId, metadataFile });
-        }
-      }
+      () => {}
     );
-    dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_RESET, bundleId });
+    dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_SAVED, bundleId, metadataFile });
     return downloadedItem;
   };
 }
+
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -168,6 +173,7 @@ export function saveMetadata(bundleId, formKey, fieldNameValues, moveNext, isFac
       if (isFactory) {
         dispatch(fetchFormStructure(bundleId));
       }
+      dispatch(saveMetadatFileToTempBundleFolder(bundleId));
     } catch (errorReadable) {
       const error = await errorReadable.json();
       dispatch(saveMetadataFailed(bundleId, formKey, error));

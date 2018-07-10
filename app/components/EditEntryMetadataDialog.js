@@ -13,7 +13,7 @@ import Save from '@material-ui/icons/Save';
 import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
 import { updateBundle } from '../actions/bundle.actions';
-import { closeEditMetadata, saveMetadata, exportMetadataFile } from '../actions/bundleEditMetadata.actions';
+import { closeEditMetadata, saveMetadata, openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import EditMetadataStepper from './EditMetadataStepper';
 import appBarStyles from './AppBar.css';
 import rowStyles from './DBLEntryRow.css';
@@ -22,7 +22,7 @@ const { shell } = require('electron');
 
 function mapStateToProps(state) {
   const { bundleEditMetadata, bundles } = state;
-  const { editingMetadata, editedMetadata, metadataFile } = bundleEditMetadata;
+  const { editingMetadata, editedMetadata, showMetadataFile } = bundleEditMetadata;
   const { selectedBundle } = bundles;
   const bundleId = editingMetadata || editedMetadata;
   const {
@@ -39,7 +39,7 @@ function mapStateToProps(state) {
     wasMetadataSaved,
     moveNext,
     couldNotSaveMetadataMessage,
-    metadataFile
+    showMetadataFile
   };
 }
 
@@ -47,7 +47,7 @@ const mapDispatchToProps = {
   closeEditMetadata,
   saveMetadata,
   updateBundle,
-  exportMetadataFile
+  openMetadataFile
 };
 
 const materialStyles = theme => ({
@@ -73,9 +73,9 @@ type Props = {
   updateBundle: () => {},
   classes: {},
   saveMetadata: () => {},
-  exportMetadataFile: () => {},
+  openMetadataFile: () => {},
   wasMetadataSaved: boolean,
-  metadataFile: ?string,
+  showMetadataFile: ?string,
   moveNext: ?{},
   couldNotSaveMetadataMessage: ?string,
   requestingSaveMetadata: boolean
@@ -95,8 +95,8 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
       // TODO: post confirm message.
       // if confirmed: this.props.closeEditMetadata();
     }
-    if (this.props.metadataFile && !prevProps.metadataFile) {
-      shell.openExternal(this.props.metadataFile);
+    if (this.props.showMetadataFile && !prevProps.showMetadataFile) {
+      shell.openExternal(this.props.showMetadataFile);
     }
   }
 
@@ -104,8 +104,8 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     this.props.saveMetadata(null, null, null, { exit: true });
   };
 
-  handlePreview = () => {
-    this.props.exportMetadataFile(this.props.bundleId);
+  handleReview = () => {
+    this.props.openMetadataFile(this.props.bundleId);
   }
 
   render() {
@@ -123,9 +123,9 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
               <Typography variant="title" color="inherit" className={classes.flex}>
                 Preview <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry}</span> {name}
               </Typography>
-              <Button key="btnOpenXml" color="inherit" disable={this.props.metadataFile} onClick={this.handlePreview}>
+              <Button key="btnOpenXml" color="inherit" disable={this.props.showMetadataFile} onClick={this.handleReview}>
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
-                Preview
+                Review
               </Button>
               <Button key="btnSave" color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose}>
                 <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
