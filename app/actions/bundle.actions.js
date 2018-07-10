@@ -85,6 +85,7 @@ export function setupBundlesEventSource(authentication) {
       'downloader/spec_status': (e) => listenDownloaderSpecStatus(e, dispatch, getState),
       'storer/delete_resource': (e) => listenStorerDeleteResource(e, dispatch, getState),
       'storer/update_from_download': (e) => listenStorerUpdateFromDownload(e, dispatch, getState),
+      'storer/delete_bundle': (e) => listenStorerDeleteBundle(e, dispatch, getState)
     };
     Object.keys(listeners).forEach((evType) => {
       const handler = listeners[evType];
@@ -161,6 +162,12 @@ export function setupBundlesEventSource(authentication) {
       id: _id,
       resourceToRemove
     };
+  }
+
+  function listenStorerDeleteBundle(e, dispatch) {
+    const data = JSON.parse(e.data);
+    const bundleId = data.args[0];
+    dispatch(removeBundleSuccess(bundleId));
   }
 
   async function listenStorerUpdateFromDownload(e, dispatch) {
@@ -246,7 +253,7 @@ function removeBundle(id) {
     bundleService
       .delete(id)
       .then(() => {
-        dispatch(success(id));
+        dispatch(removeBundleSuccess(id));
         return true;
       })
       .catch(error => {
@@ -258,12 +265,13 @@ function removeBundle(id) {
   function request(_id) {
     return { type: bundleConstants.DELETE_REQUEST, id: _id };
   }
-  function success(_id) {
-    return { type: bundleConstants.DELETE_SUCCESS, id: _id };
-  }
   function failure(_id, error) {
     return { type: bundleConstants.DELETE_FAILURE, id: _id, error };
   }
+}
+
+function removeBundleSuccess(id) {
+  return { type: bundleConstants.DELETE_SUCCESS, id };
 }
 
 export function requestSaveBundleTo(id, selectedFolder) {

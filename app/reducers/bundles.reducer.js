@@ -40,6 +40,31 @@ export function bundles(state = { items: [] }, action) {
             ? { ...bundle, deleting: true }
             : bundle))
       };
+    case bundleConstants.DELETE_SUCCESS: {
+      const { id: bundleIdToRemove } = action;
+      const { selectedBundle: origSelectedBundle } = state;
+      const items = state.items.filter(bundle => bundle.id !== bundleIdToRemove);
+      const selectedBundle = origSelectedBundle && origSelectedBundle.id === bundleIdToRemove ? null : origSelectedBundle;
+      return {
+        ...state,
+        items,
+        selectedBundle
+      };
+    }
+    case bundleConstants.DELETE_FAILURE:
+    // remove 'deleting:true' property and add 'deleteError:[error]' property to bundle
+      return {
+        ...state,
+        items: state.items.map(bundle => {
+          if (bundle.id === action.id) {
+            // make copy of bundle without 'deleting:true' property
+            const { deleting, ...bundleCopy } = bundle;
+            // return copy of bundle with 'deleteError:[error]' property
+            return { ...bundleCopy, deleteError: action.error };
+          }
+          return bundle;
+        })
+      };
     case bundleConstants.ADD_BUNDLE: {
       const { bundle } = action;
       const { items: unsorted } = state;
@@ -127,20 +152,6 @@ export function bundles(state = { items: [] }, action) {
         selectedBundle
       };
     }
-    case bundleConstants.DELETE_FAILURE:
-      // remove 'deleting:true' property and add 'deleteError:[error]' property to bundle
-      return {
-        ...state,
-        items: state.items.map(bundle => {
-          if (bundle.id === action.id) {
-            // make copy of bundle without 'deleting:true' property
-            const { deleting, ...bundleCopy } = bundle;
-            // return copy of bundle with 'deleteError:[error]' property
-            return { ...bundleCopy, deleteError: action.error };
-          }
-          return bundle;
-        })
-      };
     case bundleConstants.SESSION_EVENTS_CONNECTED: {
       if (state.eventSource && state.eventSource.readyState !== 2) {
         state.eventSource.close();
