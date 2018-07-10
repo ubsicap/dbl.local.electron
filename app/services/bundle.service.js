@@ -1,4 +1,5 @@
 import path from 'path';
+import sort from 'fast-sort';
 import { authHeader } from '../helpers';
 import { utilities } from '../utils/utilities';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
@@ -122,7 +123,7 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
     // compare the manifest and resources to determine whether user can download more or not.
     const manifestPaths = await getManifestResourcePaths(bundleId);
     const resourcePaths = await getResourcePaths(bundleId);
-    if (utilities.areEqualArrays(manifestPaths, resourcePaths)) {
+    if (utilities.areEqualArrays(sort(manifestPaths).asc(), sort(resourcePaths).asc())) {
       status = 'COMPLETED';
     } else {
       status = 'NOT_STARTED';
@@ -299,5 +300,5 @@ function postFormFields(bundleId, formKey, payload) {
 }
 
 function startUploadBundle(bundleId) {
-  return bundleAddTasks(bundleId, '<createUploadJob/><uploadResources/><submitJobIfComplete/>');
+  return bundleAddTasks(bundleId, '<createUploadJob/><uploadResources/><submitJobIfComplete><forkAfterUpload>true</forkAfterUpload></submitJobIfComplete>');
 }
