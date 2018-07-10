@@ -15,7 +15,6 @@ import Zoom from '@material-ui/core/Zoom';
 import { updateBundle } from '../actions/bundle.actions';
 import { closeEditMetadata, saveMetadata, openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import EditMetadataStepper from './EditMetadataStepper';
-import appBarStyles from './AppBar.css';
 import rowStyles from './DBLEntryRow.css';
 
 const { shell } = require('electron');
@@ -53,6 +52,9 @@ const mapDispatchToProps = {
 const materialStyles = theme => ({
   appBar: {
     position: 'sticky'
+  },
+  toolBar: {
+    paddingLeft: '0px',
   },
   flex: {
     flex: 1,
@@ -116,7 +118,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
       <Zoom in={open}>
         <div>
           <AppBar className={classes.appBar}>
-            <Toolbar>
+            <Toolbar className={classes.toolBar}>
               <IconButton color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose} aria-label="Close">
                 <CloseIcon />
               </IconButton>
