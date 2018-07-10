@@ -370,7 +370,7 @@ class _EditMetadataStepper extends React.Component<Props> {
           {this.getBackSectionName('', '')}
         </Button>
         <Button
-          variant="contained"
+          variant="outlined"
           color="default"
           onClick={this.handleNext}
           className={classes.button}
