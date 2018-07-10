@@ -18,7 +18,8 @@ export const bundleService = {
   delete: removeBundle,
   getFormBundleTree,
   getFormFields,
-  postFormFields
+  postFormFields,
+  startUploadBundle
 };
 export default bundleService;
 
@@ -295,4 +296,8 @@ function postFormFields(bundleId, formKey, payload) {
   };
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${FORM_API}/${bundleId}${formKey}`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
+}
+
+function startUploadBundle(bundleId) {
+  return bundleAddTasks(bundleId, '<createUploadJob/><uploadResources/><submitJobIfComplete/>');
 }

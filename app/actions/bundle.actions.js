@@ -17,6 +17,7 @@ export const bundleActions = {
   removeResources,
   toggleModePauseResume,
   toggleSelectBundle,
+  uploadBundle
 };
 
 export default bundleActions;
@@ -180,6 +181,23 @@ export function setupBundlesEventSource(authentication) {
       type: bundleConstants.ADD_BUNDLE,
       bundle
     };
+  }
+}
+
+export function uploadBundle(id) {
+  return async dispatch => {
+    try {
+      dispatch(request(id));
+      await bundleService.startUploadBundle(id);
+    } catch (error) {
+      dispatch(failure(id, error));
+    }
+  };
+  function request(_id) {
+    return { type: bundleConstants.UPLOAD_BUNDLE_REQUEST, id: _id };
+  }
+  function failure(_id, error) {
+    return { type: bundleConstants.UPLOAD_BUNDLE_FAILURE, id, error };
   }
 }
 

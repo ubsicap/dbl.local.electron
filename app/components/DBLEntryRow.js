@@ -19,9 +19,10 @@ import CallSplit from '@material-ui/icons/CallSplit';
 import Info from '@material-ui/icons/Info';
 import Delete from '@material-ui/icons/Delete';
 import Edit from '@material-ui/icons/Edit';
+import CloudUpload from '@material-ui/icons/CloudUpload';
 import styles from './DBLEntryRow.css';
 import ControlledHighlighter from './ControlledHighlighter';
-import { toggleSelectBundle, requestSaveBundleTo, removeResources, downloadResources } from '../actions/bundle.actions';
+import { toggleSelectBundle, requestSaveBundleTo, removeResources, downloadResources, uploadBundle } from '../actions/bundle.actions';
 import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
 
 const { dialog, app } = require('electron').remote;
@@ -44,7 +45,8 @@ type Props = {
   downloadResources: () => {},
   requestSaveBundleTo: () => {},
   removeResources: () => {},
-  openEditMetadata: () => {}
+  openEditMetadata: () => {},
+  uploadBundle: () => {}
 };
 
 const mapDispatchToProps = {
@@ -52,7 +54,8 @@ const mapDispatchToProps = {
   downloadResources,
   requestSaveBundleTo,
   removeResources,
-  openEditMetadata
+  openEditMetadata,
+  uploadBundle
 };
 
 const getIsSearchActive = (state) => state.bundlesFilter.isSearchActive;
@@ -143,6 +146,12 @@ class DBLEntryRow extends PureComponent<Props> {
   onClickEditMetadata = (event) => {
     const { bundleId } = this.props;
     this.props.openEditMetadata(bundleId);
+    event.stopPropagation();
+  }
+
+  onClickUploadBundle = (event) => {
+    const { bundleId } = this.props;
+    this.props.uploadBundle(bundleId);
     event.stopPropagation();
   }
 
@@ -297,9 +306,17 @@ class DBLEntryRow extends PureComponent<Props> {
             <Button variant="flat" size="small" className={classes.button}
               disabled={this.hasNotYetDownloadedResources()}
               onKeyPress={this.onClickRemoveResources}
-              onClick={this.onClickRemoveResources}>
+              onClick={this.onClickRemoveResources}
+            >
               <Delete className={classNames(classes.leftIcon, classes.iconSmall)} />
               Clean
+            </Button>
+            <Button variant="flat" size="small" className={classes.button}
+              onKeyPress={this.onClickUploadBundle}
+              onClick={this.onClickUploadBundle}
+            >
+              <CloudUpload className={classNames(classes.leftIcon, classes.iconSmall)} />
+              Upload
             </Button>
           </Toolbar>
           )}
