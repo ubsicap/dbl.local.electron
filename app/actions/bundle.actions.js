@@ -23,6 +23,10 @@ export default bundleActions;
 
 export function updateBundle(bundleId) {
   return async dispatch => {
+    const isDemoMode = history.location.pathname.includes('/demo');
+    if (isDemoMode) {
+      return;
+    }
     const apiBundle = await bundleService.fetchById(bundleId);
     const bundle = await bundleService.convertApiBundleToNathanaelBundle(apiBundle);
     dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle });
