@@ -52,7 +52,7 @@ const mapDispatchToProps = {
 
 const materialStyles = theme => ({
   appBar: {
-    position: 'fixed'
+    position: 'sticky'
   },
   flex: {
     flex: 1,
@@ -114,7 +114,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     const { languageAndCountry, name } = displayAs;
     return (
       <Zoom in={open}>
-        <div className={appBarStyles.appContainer}>
+        <div>
           <AppBar className={classes.appBar}>
             <Toolbar>
               <IconButton color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose} aria-label="Close">

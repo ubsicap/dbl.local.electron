@@ -12,7 +12,7 @@ export default class BundlesPage extends PureComponent<Props> {
 
   render() {
     return (
-      <div className={classNames(styles.container, appBarStyles.appContainer)} data-tid="container">
+      <div data-tid="container">
         <MenuAppBar />
         <Bundles />
       </div>
