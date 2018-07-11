@@ -123,7 +123,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
                 <CloseIcon />
               </IconButton>
               <Typography variant="title" color="inherit" className={classes.flex}>
-                Preview <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry}</span> {name}
+                Edit <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry}</span> {name}
               </Typography>
               <Button key="btnOpenXml" color="inherit" disable={this.props.showMetadataFile} onClick={this.handleReview}>
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
