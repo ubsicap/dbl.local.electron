@@ -29,6 +29,9 @@ export function updateBundle(bundleId) {
       return;
     }
     const apiBundle = await bundleService.fetchById(bundleId);
+    if (!apiBundle.metadata) {
+      return; // hasn't downloaded metadata yet. (don't expect to be in our list)
+    }
     const bundle = await bundleService.convertApiBundleToNathanaelBundle(apiBundle);
     dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle });
   };
@@ -79,7 +82,7 @@ export function setupBundlesEventSource(authentication) {
     };
     const listeners = {
       'storer/execute_task': listenStorerExecuteTaskDownloadResources,
-      'storer/change_mode': listenStorerChangeMode,
+      'storer/change_mode': (e) => listenStorerChangeMode(e, dispatch, getState),
       'downloader/receiver': listenDownloaderReceiver,
       'downloader/status': (e) => listenDownloaderSpecStatus(e, dispatch, getState),
       'downloader/spec_status': (e) => listenDownloaderSpecStatus(e, dispatch, getState),
@@ -106,14 +109,11 @@ export function setupBundlesEventSource(authentication) {
     // console.log(e);
   }
 
-  function listenStorerChangeMode() {
+  function listenStorerChangeMode(e, dispatch) {
     // console.log(e);
-    // const data = JSON.parse(e.data);
-    // const bundleId = data.args[0];
-    // const mode = data.args[1];
-    // if (mode === 'store') {
-    //   dispatch(updateStatus(bundleId, 'COMPLETED'));
-    // }
+    const data = JSON.parse(e.data);
+    const bundleId = data.args[0];
+    dispatch(updateBundle(bundleId));
   }
 
   function listenDownloaderReceiver() {
