@@ -246,7 +246,7 @@ function formatStatus(bundle) {
   } else if (bundle.task === 'SAVETO' && bundle.status === 'IN_PROGRESS') {
     newStatusDisplayAs = `Saving to Folder ${formattedProgress}`;
   } else if (['UPLOAD', 'DOWNLOAD'].includes(bundle.task) && bundle.status === 'COMPLETED') {
-    newStatusDisplayAs = `${bundle.task}ED`;
+    newStatusDisplayAs = 'STORED';
   } else if (['SAVETO'].includes(bundle.task) && bundle.status === 'COMPLETED') {
     newStatusDisplayAs = 'Open in Folder';
   } else {
