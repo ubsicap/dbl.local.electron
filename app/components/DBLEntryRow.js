@@ -106,10 +106,15 @@ class DBLEntryRow extends PureComponent<Props> {
     this.props.toggleSelectBundle({ id, displayAs });
   }
 
+  showInfoButton = () => {
+    const { task, status } = this.props;
+    return (task === 'UPLOAD' || task === 'DOWNLOAD') && status === 'COMPLETED';
+  }
+
   showStatusAsText = () => {
     const { task, status } = this.props;
     return ((task === 'UPLOAD' || task === 'DOWNLOAD') &&
-      (status === 'COMPLETED' || status === 'DRAFT' || status === 'IN_PROGRESS')) ||
+      (status === 'DRAFT' || status === 'IN_PROGRESS')) ||
       ((task === 'REMOVE_RESOURCES') && status === 'IN_PROGRESS');
   }
 
@@ -251,6 +256,14 @@ class DBLEntryRow extends PureComponent<Props> {
                 onClick={this.openInFolder}
               />
             )}
+            {this.showInfoButton() && (
+              <FlatButton
+                labelPosition="before"
+                label={<ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
+                icon={<Info color="inherit" />}
+                onClick={this.onOpenDBLEntryLink}
+              />
+            )}
             {this.showStatusAsText() && (
               <div style={{ paddingRight: '20px', paddingTop: '6px' }}>
                 {<ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
@@ -276,7 +289,7 @@ class DBLEntryRow extends PureComponent<Props> {
         )}
         {isSelected && (
           <Toolbar style={{ minHeight: '36px' }}>
-            <Button 
+            <Button
               variant="flat" size="small" className={classes.button}
               onKeyPress={this.onClickEditMetadata}
               onClick={this.onClickEditMetadata}>
