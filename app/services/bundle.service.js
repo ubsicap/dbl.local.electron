@@ -1,5 +1,4 @@
 import path from 'path';
-import sort from 'fast-sort';
 import { authHeader } from '../helpers';
 import { utilities } from '../utils/utilities';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
@@ -108,8 +107,9 @@ function convertBundleApiListToBundles(apiBundles) {
 
 async function convertApiBundleToNathanaelBundle(apiBundle) {
   const {
-    mode, metadata, dbl, store
+    mode, metadata, dbl, store, upload
   } = apiBundle;
+  const { jobId: uploadJob } = upload || {};
   const { file_info: fileInfo } = store;
   const bundleId = apiBundle.local_id;
   let task = dbl.currentRevision === '0' ? 'UPLOAD' : 'DOWNLOAD';
@@ -124,7 +124,7 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
     // compare the manifest and resources to determine whether user can download more or not.
     const manifestPaths = await getManifestResourcePaths(bundleId);
     const resourcePaths = await getResourcePaths(bundleId);
-    if (utilities.areEqualArrays(sort(manifestPaths).asc(), sort(resourcePaths).asc())) {
+    if (utilities.areEqualCollections(manifestPaths, resourcePaths)) {
       status = 'COMPLETED';
     } else {
       status = 'NOT_STARTED';
@@ -139,10 +139,11 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
     revision: dbl.currentRevision,
     dblId: dbl.id,
     medium: dbl.medium,
-    countryIso: metadata.countries || "",
+    countryIso: metadata.countries || '',
     languageIso: metadata.language,
     task,
-    status
+    status,
+    uploadJob
   };
 }
 
@@ -301,5 +302,5 @@ function postFormFields(bundleId, formKey, payload) {
 }
 
 function startUploadBundle(bundleId) {
-  return bundleAddTasks(bundleId, '<createUploadJob/><uploadResources/><submitJobIfComplete><forkAfterUpload>true</forkAfterUpload></submitJobIfComplete>');
+  return bundleAddTasks(bundleId, '<cancelUploadJobs/><createUploadJob/><uploadResources/><submitJobIfComplete><forkAfterUpload>true</forkAfterUpload></submitJobIfComplete>');
 }

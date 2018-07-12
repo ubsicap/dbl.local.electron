@@ -1,5 +1,6 @@
 import sort from 'fast-sort';
 import { bundleConstants } from '../constants/bundle.constants';
+import { utilities } from '../utils/utilities';
 
 function sortBundles(unsorted) {
   return sort(unsorted).asc([
@@ -19,9 +20,12 @@ export function bundles(state = { items: [] }, action) {
     case bundleConstants.FETCH_SUCCESS: {
       const unsorted = action.bundles.map(bundle => addBundleDecorators(bundle));
       const items = sortBundles(unsorted);
+      const uploadJobs = items.filter(b => b.uploadJob).reduce((acc, b) =>
+        ({ ...acc, [b.id]: b.uploadJob, [b.uploadJob]: b.id }), {});
       return {
         ...state,
         items,
+        uploadJobs,
         loading: false,
       };
     }
@@ -31,6 +35,27 @@ export function bundles(state = { items: [] }, action) {
         error: action.error,
         loading: false,
       };
+    case bundleConstants.UPDATE_UPLOAD_JOBS: {
+      const { uploadJobs: originalUploadJobs = {} } = state;
+      const { bundleId: updatedBundleId, uploadJob: bundleUploadJob, removeJobOrBundle } = action;
+      const originalBundleUploadJob = originalUploadJobs[updatedBundleId];
+      if (originalBundleUploadJob === bundleUploadJob) {
+        return state; // no jobs have changed
+      }
+      const reverseLookup = bundleUploadJob ? { [bundleUploadJob]: updatedBundleId } : {};
+      const {
+        [removeJobOrBundle]: removedBundleOrJob,
+        [updatedBundleId]: removedJobId,
+        ...trimmedJobs
+      } = originalUploadJobs;
+      const uploadJobs = bundleUploadJob ?
+        { ...trimmedJobs, [updatedBundleId]: bundleUploadJob, ...reverseLookup } :
+        trimmedJobs;
+      return {
+        ...state,
+        uploadJobs
+      };
+    }
     case bundleConstants.DELETE_REQUEST:
       // add 'deleting:true' property to bundle being deleted
       return {
@@ -83,6 +108,18 @@ export function bundles(state = { items: [] }, action) {
       const status = progress === 100 ? 'COMPLETED' : 'IN_PROGRESS';
       return updateTaskStatusProgress(action.id, 'DOWNLOAD', status, progress);
     }
+    case bundleConstants.UPLOAD_RESOURCES_UPDATE_PROGRESS: {
+      const progress = Math.floor((action.resourceCountUploaded / action.resourceCountToUpload) * 100);
+      const status = progress === 100 ? 'COMPLETED' : 'IN_PROGRESS';
+      return updateTaskStatusProgress(action.bundleId, 'UPLOAD', status, progress);
+    }
+    case bundleConstants.UPLOAD_RESOURCES_UPDATE_MESSAGE: {
+      const { message } = action.message;
+      return updateTaskStatusProgress(action.bundleId, 'UPLOAD', null, null, (bundle) => ({
+        ...bundle,
+        displayAs: { ...bundle.displayAs, status: message }
+      }));
+    }
     case bundleConstants.SAVETO_REQUEST: {
       return updateTaskStatusProgress(action.id, 'SAVETO', 'IN_PROGRESS', 0);
     }
@@ -127,7 +164,7 @@ export function bundles(state = { items: [] }, action) {
     }
     case bundleConstants.UPDATE_BUNDLE: {
       const { bundle } = action;
-      const items = updateBundleItems(bundle, null, null, null);
+      const items = updateBundleItems(bundle, null, null, null, (bAction, bState) => ({ progress: bState.progress }));
       return {
         ...state,
         items
@@ -189,7 +226,7 @@ export function bundles(state = { items: [] }, action) {
         task: (task || bundleToUpdate.task),
         status: (status || bundleToUpdate.status),
         progress: Number.isInteger(progress) ? progress : bundleToUpdate.progress,
-        ...(updateDecorators ? updateDecorators(bundleToUpdate) : {})
+        ...(updateDecorators ? updateDecorators(bundleToUpdate, bundle) : {})
       })
       : bundle));
   }
@@ -212,16 +249,19 @@ function buildToggledBundle(bundle) {
 }
 
 function addBundleDecorators(bundle) {
-  return { ...bundle, ...formatDisplayAs(bundle), isDownloaded: (bundle.status) === 'COMPLETED' };
+  const isDownloaded = bundle.task === 'DOWNLOAD' && bundle.status === 'COMPLETED';
+  const isUploaded = bundle.task === 'UPLOAD' && bundle.status === 'COMPLETED';
+  return { ...bundle, ...formatDisplayAs(bundle), isDownloaded, isUploaded };
 }
 
 
 function formatDisplayAs(bundle) {
+  const revision = (!bundle.revision ? 'Update' : `Rev ${bundle.revision}`);
   return {
     displayAs: {
       languageAndCountry: formatLanguageAndCountry(bundle),
       name: bundle.name,
-      revision: `Revision ${bundle.revision || '0'}`,
+      revision: (bundle.dblId ? revision : 'New'),
       status: formatStatus(bundle)
     }
   };

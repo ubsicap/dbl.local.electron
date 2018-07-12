@@ -34,7 +34,17 @@ export function updateBundle(bundleId) {
     }
     const bundle = await bundleService.convertApiBundleToNathanaelBundle(apiBundle);
     dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle });
+    const { id, uploadJob } = bundle;
+    if (uploadJob) {
+      dispatch(updateUploadJobs(id, uploadJob));
+    } else {
+      dispatch(updateUploadJobs(id, null, id));
+    }
   };
+}
+
+function updateUploadJobs(bundleId, uploadJob, removeJobOrBundle) {
+  return { type: bundleConstants.UPDATE_UPLOAD_JOBS, bundleId, uploadJob, removeJobOrBundle };
 }
 
 export function fetchAll() {
@@ -83,6 +93,8 @@ export function setupBundlesEventSource(authentication) {
     const listeners = {
       'storer/execute_task': listenStorerExecuteTaskDownloadResources,
       'storer/change_mode': (e) => listenStorerChangeMode(e, dispatch, getState),
+      'uploader/job': (e) => listenUploaderJob(e, dispatch, getState().bundles.uploadJobs),
+      'uploader/createJob': (e) => listenUploaderCreateJob(e, dispatch),
       'downloader/receiver': listenDownloaderReceiver,
       'downloader/status': (e) => listenDownloaderSpecStatus(e, dispatch, getState),
       'downloader/spec_status': (e) => listenDownloaderSpecStatus(e, dispatch, getState),
@@ -114,6 +126,54 @@ export function setupBundlesEventSource(authentication) {
     const data = JSON.parse(e.data);
     const bundleId = data.args[0];
     dispatch(updateBundle(bundleId));
+  }
+
+  /* {'event': 'uploader/createJob', 'data': {'args': ('2f57466e-a5c4-41de-a67e-4ba5b54e7870', '3a6424b3-8b52-4f05-b69c-3e8cdcf85b0c'), 'component': 'uploader', 'type': 'createJob'}} */
+  function listenUploaderCreateJob(e, dispatch) {
+    // console.log(e);
+    const data = JSON.parse(e.data);
+    const [jobId, bundleId] = data.args;
+    dispatch(updateUploadJobs(bundleId, jobId));
+  }
+
+  /* {'event': 'uploader/job', 'data': {'args': ('updated', '343a70a5-b4d2-453a-95a5-5b53107b0c60', (7, 0, 0, 5, 4, 2)), 'component': 'uploader', 'type': 'job'}}
+   * {'event': 'uploader/job', 'data': {'args': ('state', '343a70a5-b4d2-453a-95a5-5b53107b0c60', 'submitting'), 'component': 'uploader', 'type': 'job'}}
+   * {'event': 'uploader/job', 'data': {'args': ('status', '343a70a5-b4d2-453a-95a5-5b53107b0c60', 'completed'), 'component': 'uploader', 'type': 'job'}}
+   */
+  function listenUploaderJob(e, dispatch, uploadJobs) {
+    // console.log(e);
+    const data = JSON.parse(e.data);
+    const [type, jobId, payload] = data.args;
+    const bundleId = uploadJobs[jobId];
+    if (type === 'updated') {
+      const [resourceCountToUpload, resourceCountUploaded] = [payload[0], payload[5]];
+      return dispatch(updateUploadProgress(bundleId, jobId, resourceCountUploaded, resourceCountToUpload));
+    }
+    if (type === 'state' || type === 'status') {
+      if (payload === 'completed') {
+        dispatch(updateUploadJobs(bundleId, null, jobId));
+      }
+      return dispatch(updateUploadMessage(bundleId, jobId, payload));
+    }
+  }
+
+  function updateUploadProgress(bundleId, jobId, resourceCountUploaded, resourceCountToUpload) {
+    return {
+      type: bundleConstants.UPLOAD_RESOURCES_UPDATE_PROGRESS,
+      bundleId,
+      jobId,
+      resourceCountUploaded,
+      resourceCountToUpload
+    };
+  }
+
+  function updateUploadMessage(bundleId, jobId, message) {
+    return {
+      type: bundleConstants.UPLOAD_RESOURCES_UPDATE_MESSAGE,
+      bundleId,
+      jobId,
+      message
+    };
   }
 
   function listenDownloaderReceiver() {
@@ -168,6 +228,7 @@ export function setupBundlesEventSource(authentication) {
     const data = JSON.parse(e.data);
     const bundleId = data.args[0];
     dispatch(removeBundleSuccess(bundleId));
+    dispatch(updateUploadJobs(bundleId, null, bundleId));
   }
 
   async function listenStorerUpdateFromDownload(e, dispatch) {
