@@ -114,7 +114,7 @@ export function bundles(state = { items: [] }, action) {
       return updateTaskStatusProgress(action.bundleId, 'UPLOAD', status, progress);
     }
     case bundleConstants.UPLOAD_RESOURCES_UPDATE_MESSAGE: {
-      const { message } = action.message;
+      const { message } = action;
       return updateTaskStatusProgress(action.bundleId, 'UPLOAD', null, null, (bundle) => ({
         ...bundle,
         displayAs: { ...bundle.displayAs, status: message }
