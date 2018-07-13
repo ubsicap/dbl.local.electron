@@ -29,7 +29,7 @@ export function updateBundle(bundleId) {
       return;
     }
     const apiBundle = await bundleService.fetchById(bundleId);
-    if (!apiBundle.metadata) {
+    if (!bundleService.apiBundleHasMetadata(apiBundle)) {
       return; // hasn't downloaded metadata yet. (don't expect to be in our list)
     }
     const bundle = await bundleService.convertApiBundleToNathanaelBundle(apiBundle);
@@ -235,8 +235,7 @@ export function setupBundlesEventSource(authentication) {
     const data = JSON.parse(e.data);
     const bundleId = data.args[0];
     const apiBundle = await bundleService.fetchById(bundleId);
-    const fileInfoKeys = Object.keys(apiBundle.store.file_info);
-    if (fileInfoKeys.length === 1 && fileInfoKeys[0] === 'metadata.xml') {
+    if (bundleService.apiBundleHasMetadata(apiBundle)) {
       // we just downloaded metadata.xml
       const bundle = await bundleService.convertApiBundleToNathanaelBundle(apiBundle);
       dispatch(addBundle(bundle));

@@ -9,6 +9,7 @@ export const bundleService = {
   fetchAll,
   fetchById,
   update,
+  apiBundleHasMetadata,
   convertApiBundleToNathanaelBundle,
   getManifestResourcePaths,
   downloadResources,
@@ -98,9 +99,13 @@ async function fetchAll() {
   return bundles;
 }
 
+function apiBundleHasMetadata(apiBundle) {
+  return apiBundle.metadata;
+}
+
 function convertBundleApiListToBundles(apiBundles) {
   const bundles = Promise.all(Object.values(apiBundles)
-    .filter(apiBundle => apiBundle.metadata)
+    .filter(apiBundleHasMetadata)
     .map(convertApiBundleToNathanaelBundle));
   return bundles;
 }
@@ -141,6 +146,7 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
     medium: dbl.medium,
     countryIso: metadata.countries || '',
     languageIso: metadata.language,
+    mode,
     task,
     status,
     uploadJob

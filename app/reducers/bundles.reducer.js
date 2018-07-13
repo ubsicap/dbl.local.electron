@@ -1,6 +1,5 @@
 import sort from 'fast-sort';
 import { bundleConstants } from '../constants/bundle.constants';
-import { utilities } from '../utils/utilities';
 
 function sortBundles(unsorted) {
   return sort(unsorted).asc([
@@ -111,13 +110,16 @@ export function bundles(state = { items: [] }, action) {
     case bundleConstants.UPLOAD_RESOURCES_UPDATE_PROGRESS: {
       const progress = Math.floor((action.resourceCountUploaded / action.resourceCountToUpload) * 100);
       const status = progress === 100 ? 'COMPLETED' : 'IN_PROGRESS';
-      return updateTaskStatusProgress(action.bundleId, 'UPLOAD', status, progress);
+      return updateTaskStatusProgress(action.bundleId, 'UPLOAD', status, progress, () => ({
+        isUploading: true
+      }));
     }
     case bundleConstants.UPLOAD_RESOURCES_UPDATE_MESSAGE: {
       const { message } = action;
-      return updateTaskStatusProgress(action.bundleId, 'UPLOAD', null, null, (bundle) => ({
-        ...bundle,
-        displayAs: { ...bundle.displayAs, status: message }
+      const isUploading = message !== 'completed';
+      return updateTaskStatusProgress(action.bundleId, 'UPLOAD', null, null, (bState, bDecorated) => ({
+        isUploading: bState.isUploading && isUploading,
+        displayAs: { ...bDecorated.displayAs, status: message }
       }));
     }
     case bundleConstants.SAVETO_REQUEST: {
@@ -164,11 +166,7 @@ export function bundles(state = { items: [] }, action) {
     }
     case bundleConstants.UPDATE_BUNDLE: {
       const { bundle } = action;
-      const items = updateBundleItems(bundle, null, null, null, (bAction, bState) => ({ progress: bState.progress }));
-      return {
-        ...state,
-        items
-      };
+      return updateTaskStatusProgress(bundle.id, bundle.task, bundle.status, bundle.progress);
     }
     case bundleConstants.TOGGLE_MODE_PAUSE_RESUME: {
       const updatedItems = forkArray(
@@ -208,26 +206,21 @@ export function bundles(state = { items: [] }, action) {
   }
 
   function updateTaskStatusProgress(bundleId, task, status, progress, updateDecorators) {
-    const bundleToUpdate = state.items.find(bundle => bundle.id === bundleId);
-    if (!bundleToUpdate) {
-      return state;
-    }
-    const items = updateBundleItems(bundleToUpdate, task, status, progress, updateDecorators);
+    const items = updateBundleItems(bundleId, task, status, progress, updateDecorators);
     return {
       ...state,
       items
     };
   }
 
-  function updateBundleItems(bundleToUpdate, task, status, progress, updateDecorators) {
-    return state.items.map(bundle => (bundle.id === bundleToUpdate.id
+  function updateBundleItems(bundleId, task, status, progress, updateDecorators) {
+    return state.items.map(bundle => (bundle.id === bundleId
       ? addBundleDecorators({
-        ...bundleToUpdate,
-        task: (task || bundleToUpdate.task),
-        status: (status || bundleToUpdate.status),
-        progress: Number.isInteger(progress) ? progress : bundleToUpdate.progress,
-        ...(updateDecorators ? updateDecorators(bundleToUpdate, bundle) : {})
-      })
+        ...bundle,
+        task: (task || bundle.task),
+        status: (status || bundle.status),
+        progress: Number.isInteger(progress) ? progress : bundle.progress
+      }, updateDecorators)
       : bundle));
   }
 }
@@ -248,10 +241,15 @@ function buildToggledBundle(bundle) {
   return addBundleDecorators(updatedBundle);
 }
 
-function addBundleDecorators(bundle) {
+function addBundleDecorators(bundle, addCustomDecoration) {
   const isDownloaded = bundle.task === 'DOWNLOAD' && bundle.status === 'COMPLETED';
   const isUploaded = bundle.task === 'UPLOAD' && bundle.status === 'COMPLETED';
-  return { ...bundle, ...formatDisplayAs(bundle), isDownloaded, isUploaded };
+  const coreDecorated = { ...bundle, ...formatDisplayAs(bundle), isDownloaded, isUploaded };
+  if (!addCustomDecoration) {
+    return coreDecorated;
+  }
+  const customDecoration = addCustomDecoration(bundle, coreDecorated);
+  return { ...coreDecorated, ...customDecoration };
 }
 
 
@@ -277,7 +275,7 @@ function formatStatus(bundle) {
   let newStatusDisplayAs;
   if (bundle.status === 'NOT_STARTED') {
     newStatusDisplayAs = 'Download';
-  } else if (bundle.task === 'UPLOAD' && bundle.status === 'IN_PROGRESS') {
+  } else if (bundle.isUploading || (bundle.task === 'UPLOAD' && bundle.status === 'IN_PROGRESS')) {
     newStatusDisplayAs = `Uploading ${formattedProgress}`;
   } else if (bundle.task === 'DOWNLOAD' && bundle.status === 'IN_PROGRESS') {
     newStatusDisplayAs = `Downloading ${formattedProgress}`;
