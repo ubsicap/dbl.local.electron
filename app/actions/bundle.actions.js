@@ -231,11 +231,16 @@ export function setupBundlesEventSource(authentication) {
     dispatch(updateUploadJobs(bundleId, null, bundleId));
   }
 
-  async function listenStorerUpdateFromDownload(e, dispatch) {
+  async function listenStorerUpdateFromDownload(e, dispatch, getState) {
     const data = JSON.parse(e.data);
     const bundleId = data.args[0];
     const apiBundle = await bundleService.fetchById(bundleId);
     if (bundleService.apiBundleHasMetadata(apiBundle)) {
+      const { bundles } = getState();
+      const bundleInItems = bundles.items.find(bundle => bundle.id === bundleId);
+      if (bundleInItems) {
+        return; // already exists in items.
+      }
       // we just downloaded metadata.xml
       const bundle = await bundleService.convertApiBundleToNathanaelBundle(apiBundle);
       dispatch(addBundle(bundle));
