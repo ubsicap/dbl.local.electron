@@ -169,10 +169,11 @@ export function bundles(state = { items: [] }, action) {
     case bundleConstants.UPDATE_BUNDLE: {
       const { bundle } = action;
       return updateTaskStatusProgress(bundle.id, null, null, null, (bState) => {
+        const updatedBundle = { ...bState, ...bundle };
         if (bState.isUploading) {
-          return updateBundleItem(bundle, 'UPLOAD', 'IN_PROGRESS', bState.progress);
+          return updateBundleItem(updatedBundle, 'UPLOAD', 'IN_PROGRESS', bState.progress);
         }
-        return updateBundleItem(bundle, bundle.task, bundle.status, bundle.progress);
+        return updateBundleItem(updatedBundle, bundle.task, bundle.status, bundle.progress);
       });
     }
     case bundleConstants.TOGGLE_MODE_PAUSE_RESUME: {
