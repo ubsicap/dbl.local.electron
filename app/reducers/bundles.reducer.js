@@ -107,18 +107,20 @@ export function bundles(state = { items: [] }, action) {
       const status = progress === 100 ? 'COMPLETED' : 'IN_PROGRESS';
       return updateTaskStatusProgress(action.id, 'DOWNLOAD', status, progress);
     }
+    case bundleConstants.UPLOAD_BUNDLE_REQUEST: {
+      return updateTaskStatusProgress(action.id, 'UPLOAD', 'IN_PROGRESS', null, () => ({
+        isUploading: true
+      }));
+    }
     case bundleConstants.UPLOAD_RESOURCES_UPDATE_PROGRESS: {
       const progress = Math.floor((action.resourceCountUploaded / action.resourceCountToUpload) * 100);
-      const status = progress === 100 ? 'COMPLETED' : 'IN_PROGRESS';
-      return updateTaskStatusProgress(action.bundleId, 'UPLOAD', status, progress, () => ({
+      return updateTaskStatusProgress(action.bundleId, 'UPLOAD', 'IN_PROGRESS', progress, () => ({
         isUploading: true
       }));
     }
     case bundleConstants.UPLOAD_RESOURCES_UPDATE_MESSAGE: {
       const { message } = action;
-      const isUploading = message !== 'completed';
       return updateTaskStatusProgress(action.bundleId, 'UPLOAD', null, null, (bState, bDecorated) => ({
-        isUploading: bState.isUploading && isUploading,
         displayAs: { ...bDecorated.displayAs, status: message }
       }));
     }
@@ -166,7 +168,12 @@ export function bundles(state = { items: [] }, action) {
     }
     case bundleConstants.UPDATE_BUNDLE: {
       const { bundle } = action;
-      return updateTaskStatusProgress(bundle.id, bundle.task, bundle.status, bundle.progress);
+      return updateTaskStatusProgress(bundle.id, null, null, null, (bState) => {
+        if (bState.isUploading) {
+          return updateBundleItem(bundle, 'UPLOAD', 'IN_PROGRESS', bState.progress);
+        }
+        return updateBundleItem(bundle, bundle.task, bundle.status, bundle.progress);
+      });
     }
     case bundleConstants.TOGGLE_MODE_PAUSE_RESUME: {
       const updatedItems = forkArray(
@@ -213,14 +220,18 @@ export function bundles(state = { items: [] }, action) {
     };
   }
 
+  function updateBundleItem(bundle, task, status, progress, updateDecorators) {
+    return addBundleDecorators({
+      ...bundle,
+      task: (task || bundle.task),
+      status: (status || bundle.status),
+      progress: Number.isInteger(progress) ? progress : bundle.progress
+    }, updateDecorators);
+  }
+
   function updateBundleItems(bundleId, task, status, progress, updateDecorators) {
     return state.items.map(bundle => (bundle.id === bundleId
-      ? addBundleDecorators({
-        ...bundle,
-        task: (task || bundle.task),
-        status: (status || bundle.status),
-        progress: Number.isInteger(progress) ? progress : bundle.progress
-      }, updateDecorators)
+      ? updateBundleItem(bundle, task, status, progress, updateDecorators)
       : bundle));
   }
 }
@@ -273,10 +284,12 @@ function formatLanguageAndCountry(bundle) {
 function formatStatus(bundle) {
   const formattedProgress = formatProgress(bundle);
   let newStatusDisplayAs;
-  if (bundle.status === 'NOT_STARTED') {
-    newStatusDisplayAs = 'Download';
-  } else if (bundle.isUploading || (bundle.task === 'UPLOAD' && bundle.status === 'IN_PROGRESS')) {
+  if (bundle.isUploading) {
     newStatusDisplayAs = `Uploading ${formattedProgress}`;
+  } else if (bundle.task === 'UPLOAD' && bundle.status === 'IN_PROGRESS') {
+    newStatusDisplayAs = 'Uploading';
+  } else if (bundle.status === 'NOT_STARTED') {
+    newStatusDisplayAs = 'Download'; 
   } else if (bundle.task === 'DOWNLOAD' && bundle.status === 'IN_PROGRESS') {
     newStatusDisplayAs = `Downloading ${formattedProgress}`;
   } else if (bundle.task === 'REMOVE_RESOURCES' && bundle.status === 'IN_PROGRESS') {
