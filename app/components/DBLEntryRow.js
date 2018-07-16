@@ -39,6 +39,7 @@ type Props = {
   bundlesSaveTo: {},
   progress?: ?number,
   isDownloaded: ?boolean,
+  isUploading?: ?boolean,
   isSelected: ?boolean,
   shouldShowRow: boolean,
   toggleSelectBundle: () => {},
@@ -127,6 +128,11 @@ class DBLEntryRow extends PureComponent<Props> {
     const { isDownloaded, progress } = this.props;
     return ((isDownloaded === undefined || !isDownloaded)
       || (progress && progress < 100)) === true;
+  }
+
+  isUploading = () => {
+    const { isUploading = false } = this.props;
+    return isUploading;
   }
 
   emptyMatches = [];
@@ -290,6 +296,7 @@ class DBLEntryRow extends PureComponent<Props> {
         {isSelected && (
           <Toolbar style={{ minHeight: '36px' }}>
             <Button
+              disabled={this.isUploading()}
               variant="flat" size="small" className={classes.button}
               onKeyPress={this.onClickEditMetadata}
               onClick={this.onClickEditMetadata}>
@@ -325,6 +332,7 @@ class DBLEntryRow extends PureComponent<Props> {
               Clean
             </Button>
             <Button variant="flat" size="small" className={classes.button}
+              disabled={this.isUploading()}
               onKeyPress={this.onClickUploadBundle}
               onClick={this.onClickUploadBundle}
             >
@@ -339,7 +347,8 @@ class DBLEntryRow extends PureComponent<Props> {
 }
 
 DBLEntryRow.defaultProps = {
-  progress: null
+  progress: null,
+  isUploading: null,
 };
 
 const materialStyles = theme => ({
