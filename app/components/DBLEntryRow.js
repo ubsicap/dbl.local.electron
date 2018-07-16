@@ -377,9 +377,6 @@ function pickBackgroundColor(task, status) {
   switch (status) {
     case 'DRAFT': return '#F5D2D2';
     case 'NOT_STARTED': return '#EDEDED';
-    case 'IN_PROGRESS':
-      return '#6DCBC4';
-    case 'COMPLETED': return '#A1CB6D';
     default:
       return 'white';
   }
