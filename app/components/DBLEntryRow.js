@@ -131,8 +131,8 @@ class DBLEntryRow extends PureComponent<Props> {
   }
 
   isUploading = () => {
-    const { isUploading = false } = this.props;
-    return isUploading;
+    const { isUploading = false, task, status } = this.props;
+    return isUploading || (task === 'UPLOAD' && status === 'IN_PROGRESS');
   }
 
   emptyMatches = [];

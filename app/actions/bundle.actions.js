@@ -444,7 +444,9 @@ function getMockBundles() {
       countryIso: 'us',
       revision: 3,
       task: 'UPLOAD',
-      status: 'COMPLETED'
+      status: 'COMPLETED',
+      resourceCountStored: 2,
+      resourceCountManifest: 2
     },
     {
       id: 'bundle02',
@@ -457,7 +459,9 @@ function getMockBundles() {
       task: 'UPLOAD',
       status: 'IN_PROGRESS',
       progress: 63,
-      mode: 'PAUSED'
+      mode: 'PAUSED',
+      resourceCountStored: 2,
+      resourceCountManifest: 2
     },
     {
       id: 'bundle03',
@@ -470,7 +474,9 @@ function getMockBundles() {
       task: 'DOWNLOAD',
       status: 'IN_PROGRESS',
       progress: 12,
-      mode: 'RUNNING'
+      mode: 'RUNNING',
+      resourceCountStored: 1,
+      resourceCountManifest: 2
     },
     {
       id: 'bundle04',
@@ -480,7 +486,9 @@ function getMockBundles() {
       languageIso: 'eng',
       countryIso: 'us',
       task: 'UPLOAD',
-      status: 'DRAFT'
+      status: 'DRAFT',
+      resourceCountStored: 1,
+      resourceCountManifest: 2
     },
     {
       id: 'bundle05',
@@ -490,7 +498,9 @@ function getMockBundles() {
       languageIso: 'eng',
       countryIso: 'us',
       task: 'UPLOAD',
-      status: 'DRAFT'
+      status: 'DRAFT',
+      resourceCountStored: 1,
+      resourceCountManifest: 2
     },
     {
       id: 'bundle06',
@@ -501,7 +511,9 @@ function getMockBundles() {
       languageIso: 'eng',
       countryIso: 'us',
       task: 'DOWNLOAD',
-      status: 'NOT_STARTED'
+      status: 'NOT_STARTED',
+      resourceCountStored: 0,
+      resourceCountManifest: 2
     },
     {
       id: 'bundle07',
@@ -512,7 +524,9 @@ function getMockBundles() {
       languageIso: 'eng',
       countryIso: 'us',
       task: 'DOWNLOAD',
-      status: 'NOT_STARTED'
+      status: 'NOT_STARTED',
+      resourceCountStored: 0,
+      resourceCountManifest: 2
     },
     {
       id: 'bundle08',
@@ -523,7 +537,9 @@ function getMockBundles() {
       countryIso: 'us',
       revision: 40,
       task: 'DOWNLOAD',
-      status: 'COMPLETED'
+      status: 'COMPLETED',
+      resourceCountStored: 2,
+      resourceCountManifest: 2
     },
     {
       id: 'bundle09',
@@ -536,6 +552,8 @@ function getMockBundles() {
       task: 'SAVETO',
       status: 'IN_PROGRESS',
       progress: 0,
+      resourceCountStored: 2,
+      resourceCountManifest: 2
     },
     {
       id: 'bundle10',
@@ -548,6 +566,8 @@ function getMockBundles() {
       task: 'SAVETO',
       status: 'IN_PROGRESS',
       progress: 66,
+      resourceCountStored: 2,
+      resourceCountManifest: 2
     },
     {
       id: 'bundle11',
@@ -560,6 +580,8 @@ function getMockBundles() {
       task: 'SAVETO',
       status: 'COMPLETED',
       progress: 100,
+      resourceCountStored: 2,
+      resourceCountManifest: 2
     }
   ];
   // const taskOrder = ['UPLOAD', 'DOWNLOAD', 'SAVETO'];

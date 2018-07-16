@@ -121,7 +121,7 @@ export function bundles(state = { items: [] }, action) {
     case bundleConstants.UPLOAD_RESOURCES_UPDATE_MESSAGE: {
       const { message } = action;
       return updateTaskStatusProgress(action.bundleId, 'UPLOAD', null, null, (bState, bDecorated) => ({
-        displayAs: { ...bDecorated.displayAs, status: message }
+        displayAs: { ...bDecorated.displayAs, status: `Uploading (${message})` }
       }));
     }
     case bundleConstants.SAVETO_REQUEST: {
@@ -290,7 +290,12 @@ function formatStatus(bundle) {
   } else if (bundle.task === 'UPLOAD' && bundle.status === 'IN_PROGRESS') {
     newStatusDisplayAs = 'Uploading';
   } else if (bundle.status === 'NOT_STARTED') {
-    newStatusDisplayAs = 'Download'; 
+    if (bundle.resourceCountStored > 0) {
+      const remaining = bundle.resourceCountManifest - bundle.resourceCountStored;
+      newStatusDisplayAs = `Download (...${remaining})`;
+    } else {
+      newStatusDisplayAs = 'Download';
+    }
   } else if (bundle.task === 'DOWNLOAD' && bundle.status === 'IN_PROGRESS') {
     newStatusDisplayAs = `Downloading ${formattedProgress}`;
   } else if (bundle.task === 'REMOVE_RESOURCES' && bundle.status === 'IN_PROGRESS') {
@@ -298,7 +303,13 @@ function formatStatus(bundle) {
   } else if (bundle.task === 'SAVETO' && bundle.status === 'IN_PROGRESS') {
     newStatusDisplayAs = `Saving to Folder ${formattedProgress}`;
   } else if (['UPLOAD', 'DOWNLOAD'].includes(bundle.task) && bundle.status === 'COMPLETED') {
-    newStatusDisplayAs = 'STORED';
+    if (bundle.resourceCountStored) {
+      const stored = (bundle.resourceCountStored === bundle.resourceCountManifest) ?
+        bundle.resourceCountManifest : `${bundle.resourceCountStored}/${bundle.resourceCountManifest}`;
+      newStatusDisplayAs = `Stored (${stored})`;
+    } else {
+      newStatusDisplayAs = 'Stored';
+    }
   } else if (['SAVETO'].includes(bundle.task) && bundle.status === 'COMPLETED') {
     newStatusDisplayAs = 'Open in Folder';
   } else {
