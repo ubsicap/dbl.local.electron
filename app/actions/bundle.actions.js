@@ -143,13 +143,16 @@ export function setupBundlesEventSource(authentication) {
   function listenUploaderJob(e, dispatch, uploadJobs) {
     // console.log(e);
     const data = JSON.parse(e.data);
-    const [type, jobId, payload] = data.args;
-    const bundleId = uploadJobs[jobId];
+    const [type, ...nextArgs] = data.args;
     if (type === 'updated') {
+      const [entryId, jobId, payload] = nextArgs;
+      const bundleId = uploadJobs[jobId];
       const [resourceCountToUpload, resourceCountUploaded] = [payload[0], payload[5]];
-      return dispatch(updateUploadProgress(bundleId, jobId, resourceCountUploaded, resourceCountToUpload));
+      return dispatch(updateUploadProgress(bundleId, entryId, jobId, resourceCountUploaded, resourceCountToUpload));
     }
     if (type === 'state' || type === 'status') {
+      const [jobId, payload] = nextArgs;
+      const bundleId = uploadJobs[jobId];
       if (payload === 'completed') {
         dispatch(updateUploadJobs(bundleId, null, jobId));
       }
@@ -157,10 +160,11 @@ export function setupBundlesEventSource(authentication) {
     }
   }
 
-  function updateUploadProgress(bundleId, jobId, resourceCountUploaded, resourceCountToUpload) {
+  function updateUploadProgress(bundleId, entryId, jobId, resourceCountUploaded, resourceCountToUpload) {
     return {
       type: bundleConstants.UPLOAD_RESOURCES_UPDATE_PROGRESS,
       bundleId,
+      entryId,
       jobId,
       resourceCountUploaded,
       resourceCountToUpload

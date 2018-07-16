@@ -30,6 +30,7 @@ const RESOURCE_API = 'resource';
 const RESOURCE_API_LIST = RESOURCE_API;
 const FORM_API = 'form';
 const FORM_BUNDLE_API = `${FORM_API}/bundle`;
+const MANIFEST_API = 'manifest';
 /*
 {
   "099a30a6-b707-4df8-b4dd-7149f25658b7": {
@@ -119,6 +120,8 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
   const bundleId = apiBundle.local_id;
   let task = dbl.currentRevision === '0' ? 'UPLOAD' : 'DOWNLOAD';
   let status = dbl.currentRevision === '0' ? 'DRAFT' : 'NOT_STARTED';
+  let resourceCountStored;
+  let resourceCountManifest;
   if (mode === 'download') {
     task = 'DOWNLOAD';
     status = 'IN_PROGRESS';
@@ -129,6 +132,8 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
     // compare the manifest and resources to determine whether user can download more or not.
     const manifestPaths = await getManifestResourcePaths(bundleId);
     const resourcePaths = await getResourcePaths(bundleId);
+    resourceCountManifest = (manifestPaths || []).length;
+    resourceCountStored = (resourcePaths || []).length;
     if (utilities.areEqualCollections(manifestPaths, resourcePaths)) {
       status = 'COMPLETED';
     } else {
@@ -149,7 +154,9 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
     mode,
     task,
     status,
-    uploadJob
+    uploadJob,
+    resourceCountStored,
+    resourceCountManifest
   };
 }
 
@@ -225,7 +232,7 @@ function getManifestResourcePaths(bundleId) {
     method: 'GET',
     headers: authHeader()
   };
-  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/manifest-resource`;
+  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${MANIFEST_API}/${bundleId}`;
   return fetch(url, requestOptions).then(handleResponse);
 }
 
