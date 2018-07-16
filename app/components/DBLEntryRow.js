@@ -16,7 +16,7 @@ import FileDownload from 'material-ui/svg-icons/file/file-download';
 import FolderOpen from 'material-ui/svg-icons/file/folder-open';
 import Save from '@material-ui/icons/Save';
 import CallSplit from '@material-ui/icons/CallSplit';
-import CloudCircle from '@material-ui/icons/CloudCircle';
+import Link from '@material-ui/icons/Link';
 import Delete from '@material-ui/icons/Delete';
 import Edit from '@material-ui/icons/Edit';
 import CloudUpload from '@material-ui/icons/CloudUpload';
@@ -266,7 +266,7 @@ class DBLEntryRow extends PureComponent<Props> {
               <FlatButton
                 labelPosition="before"
                 label={<ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
-                icon={<CloudCircle color="inherit" />}
+                icon={<Link color="inherit" />}
                 onClick={this.onOpenDBLEntryLink}
               />
             )}
@@ -320,7 +320,7 @@ class DBLEntryRow extends PureComponent<Props> {
               disabled={dblId === undefined}
               onKeyPress={this.onOpenDBLEntryLink}
               onClick={this.onOpenDBLEntryLink}>
-              <CloudCircle className={classNames(classes.leftIcon, classes.iconSmall)} />
+              <Link className={classNames(classes.leftIcon, classes.iconSmall)} />
               DBL
             </Button>
             <Button variant="flat" size="small" className={classes.button}
