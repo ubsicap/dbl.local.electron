@@ -12,6 +12,7 @@ import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import Save from '@material-ui/icons/Save';
 import Undo from '@material-ui/icons/Undo';
+import Delete from '@material-ui/icons/Delete';
 import NavigateNext from '@material-ui/icons/NavigateNext';
 import NavigateBefore from '@material-ui/icons/NavigateBefore';
 import Check from '@material-ui/icons/Check';
@@ -95,6 +96,7 @@ const makeGetSteps = () => createSelector(
                 formErrors,
                 template: true,
                 isFactory: false,
+                isInstance: true,
                 ...instance
               }];
           }, []);
@@ -250,6 +252,11 @@ class _EditMetadataStepper extends React.Component<Props> {
     this.props.fetchActiveFormInputs(bundleId, formKey);
   };
 
+  handleDelete = stepIndex => () => {
+    // todo
+    
+  }
+
   handleNext = () => {
     const { activeStepIndex } = this.state;
     const { steps } = this.props;
@@ -329,7 +336,7 @@ class _EditMetadataStepper extends React.Component<Props> {
     const { activeStepIndex } = this.state;
     const hasFormChanged = this.getHasFormChanged(stepIndex);
     const step = this.getStep(stepIndex);
-    const { contains } = step;
+    const { contains, isInstance = false } = step;
     // if form has errors but there are no changes, it's possible that
     // we just need to clear the errors. However, it is possible
     // that the original metadata has errors, in which case, the errors should still
@@ -369,6 +376,15 @@ class _EditMetadataStepper extends React.Component<Props> {
           <NavigateBefore className={classNames(classes.leftIcon, classes.iconSmall)} />
           {this.getBackSectionName('', '')}
         </Button>
+        {isInstance &&
+        <Button
+          onClick={this.handleDelete}
+          className={classes.button}
+        >
+          <Delete className={classNames(classes.leftIcon, classes.iconSmall)} />
+          Delete
+        </Button>
+        }
         <Button
           variant="outlined"
           color="default"
