@@ -234,7 +234,7 @@ class DBLEntryRow extends PureComponent<Props> {
         onClick={this.onClickBundleRow}
         tabIndex={0}
         role="button"
-        style={{ background: `${pickBackgroundColor(task, status)}` }}
+        style={{ background: `${pickBackgroundColor(task, status)}`, borderBottom: '1px solid lightgray' }}
       >
         <div className={styles.bundleRowTop}>
           <div className={styles.bundleRowTopLeftSideIcon}>
