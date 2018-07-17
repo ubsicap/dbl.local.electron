@@ -12,7 +12,9 @@ export const bundleEditMetadataActions = {
   closeEditMetadata,
   fetchFormStructure,
   fetchActiveFormInputs,
-  openMetadataFile
+  openMetadataFile,
+  promptConfirmDeleteInstanceForm,
+  deleteInstanceForm
 };
 
 export default bundleEditMetadataActions;
@@ -127,6 +129,60 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function getActiveFormKey(getState) {
+  const { bundleEditMetadata } = getState();
+  const { activeFormInputs } = bundleEditMetadata;
+  const [formKey] = Object.keys(activeFormInputs);
+  return formKey;
+};
+
+export function promptConfirmDeleteInstanceForm(bundleId, origFormKey) {
+  return async (dispatch, getState) => {
+    dispatch(promptConfirm(bundleId, origFormKey, true));
+    await sleep(3000); // wait a few seconds for user to click Confirm
+    const nextFormKey = getActiveFormKey(getState);
+    if (nextFormKey !== origFormKey) {
+      return; // switched form, so cancel this state change.
+    }
+    dispatch(promptConfirm(bundleId, origFormKey, false));
+  };
+
+  function promptConfirm(_bundleId, _formKey, shouldWaitForConfirm) {
+    return {
+      type: bundleEditMetadataConstants.METADATA_FORM_INSTANCE_DELETE_PROMPT_CONFIRM,
+      bundleId: _bundleId,
+      formKey: _formKey,
+      promptConfirm: shouldWaitForConfirm
+    };
+  }
+}
+
+export function deleteInstanceForm(bundleId, formKey) {
+  return async dispatch => {
+    dispatch(request());
+    try {
+      await bundleService.deleteForm(bundleId, formKey);
+      dispatch(success(bundleId, formKey));
+      dispatch(fetchFormStructure(bundleId));
+    } catch (errorReadable) {
+      const error = await errorReadable.text();
+      dispatch(failure(error));
+    }
+  };
+  function request() {
+    return { type: bundleEditMetadataConstants.METADATA_FORM_INSTANCE_DELETE_REQUEST };
+  }
+  function success(_bundleId, _formKey) {
+    return {
+      type: bundleEditMetadataConstants.METADATA_FORM_INSTANCE_DELETE_SUCCESS,
+      bundleId: _bundleId,
+      formKey: _formKey
+    };
+  }
+  function failure(error) {
+    return { type: bundleEditMetadataConstants.METADATA_FORM_INSTANCE_DELETE_FAILED, error };
+  }
+}
 
 function switchBackToBundlesPage() {
   const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO;

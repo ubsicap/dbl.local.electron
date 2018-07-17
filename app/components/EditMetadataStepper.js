@@ -13,11 +13,13 @@ import Typography from '@material-ui/core/Typography';
 import Save from '@material-ui/icons/Save';
 import Undo from '@material-ui/icons/Undo';
 import Delete from '@material-ui/icons/Delete';
+import Warning from '@material-ui/icons/Warning';
 import NavigateNext from '@material-ui/icons/NavigateNext';
 import NavigateBefore from '@material-ui/icons/NavigateBefore';
 import Check from '@material-ui/icons/Check';
 import classNames from 'classnames';
-import { fetchFormStructure, saveMetadataSuccess, saveMetadata, fetchActiveFormInputs } from '../actions/bundleEditMetadata.actions';
+import { fetchFormStructure, saveMetadataSuccess, saveMetadata, fetchActiveFormInputs,
+  promptConfirmDeleteInstanceForm, deleteInstanceForm } from '../actions/bundleEditMetadata.actions';
 import EditMetadataForm from './EditMetadataForm';
 import editMetadataService from '../services/editMetadata.service';
 
@@ -129,6 +131,7 @@ const makeMapStateToProps = () => {
       requestingSaveMetadata = false,
       wasMetadataSaved = false,
       moveNext = null,
+      activeFormConfirmingDelete = false
     } = bundleEditMetadata;
     const steps = getSteps(state, props);
     const formStructure = getFormStructure(state, props);
@@ -143,7 +146,8 @@ const makeMapStateToProps = () => {
       steps,
       requestingSaveMetadata,
       wasMetadataSaved,
-      moveNext
+      moveNext,
+      activeFormConfirmingDelete
     };
   };
   return mapStateToProps;
@@ -153,7 +157,9 @@ const mapDispatchToProps = {
   fetchFormStructure,
   saveMetadataSuccess,
   saveMetadata,
-  fetchActiveFormInputs
+  fetchActiveFormInputs,
+  promptConfirmDeleteInstanceForm,
+  deleteInstanceForm
 };
 
 function getStepFormKey(stepId, structurePath) {
@@ -166,6 +172,8 @@ type Props = {
     saveMetadataSuccess: () => {},
     saveMetadata: () => {},
     fetchActiveFormInputs: () => {},
+    promptConfirmDeleteInstanceForm: () => {},
+    deleteInstanceForm: () => {},
     bundleId: ?string,
     formStructure: [],
     steps: [],
@@ -175,7 +183,8 @@ type Props = {
     shouldLoadDetails: boolean,
     requestingSaveMetadata: boolean,
     wasMetadataSaved: boolean,
-    moveNext: ?{}
+    moveNext: ?{},
+    activeFormConfirmingDelete: ?boolean
 };
 
 function getIsFactory(section) {
@@ -252,10 +261,15 @@ class _EditMetadataStepper extends React.Component<Props> {
     this.props.fetchActiveFormInputs(bundleId, formKey);
   };
 
-  handleDelete = stepIndex => () => {
-    // todo
-    
-  }
+  handleDeleteForm = step => () => {
+    const { bundleId, activeFormConfirmingDelete = false } = this.props;
+    const { formKey } = step;
+    if (activeFormConfirmingDelete) {
+      this.props.deleteInstanceForm(bundleId, formKey);
+    } else {
+      this.props.promptConfirmDeleteInstanceForm(bundleId, formKey);
+    }
+  };
 
   handleNext = () => {
     const { activeStepIndex } = this.state;
@@ -376,15 +390,7 @@ class _EditMetadataStepper extends React.Component<Props> {
           <NavigateBefore className={classNames(classes.leftIcon, classes.iconSmall)} />
           {this.getBackSectionName('', '')}
         </Button>
-        {isInstance &&
-        <Button
-          onClick={this.handleDelete}
-          className={classes.button}
-        >
-          <Delete className={classNames(classes.leftIcon, classes.iconSmall)} />
-          Delete
-        </Button>
-        }
+        {isInstance && this.renderDeleteButton(step)}
         <Button
           variant="outlined"
           color="default"
@@ -398,6 +404,26 @@ class _EditMetadataStepper extends React.Component<Props> {
           }
         </Button>
       </div>);
+  }
+
+  renderDeleteIconAndText = () => {
+    const { classes, activeFormConfirmingDelete = false } = this.props;
+    return (activeFormConfirmingDelete ?
+      [<Warning key="btnDeleteNow" className={classNames(classes.leftIcon, classes.iconSmall)} />, 'Confirm'] :
+      [<Delete key="btnPromptConfirmDelete" className={classNames(classes.leftIcon, classes.iconSmall)} />, 'Delete']
+    );
+  }
+
+  renderDeleteButton = (step) => {
+    const { classes, activeFormConfirmingDelete = false } = this.props;
+    return (
+      <Button
+        onClick={this.handleDeleteForm(step)}
+        color={activeFormConfirmingDelete ? 'secondary' : 'default'}
+        className={classes.button}
+      >
+        {this.renderDeleteIconAndText()}
+      </Button>);
   }
 
   render() {

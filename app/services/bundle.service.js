@@ -19,6 +19,7 @@ export const bundleService = {
   delete: removeBundle,
   getFormBundleTree,
   getFormFields,
+  deleteForm,
   postFormFields,
   startUploadBundle
 };
@@ -30,6 +31,7 @@ const RESOURCE_API = 'resource';
 const RESOURCE_API_LIST = RESOURCE_API;
 const FORM_API = 'form';
 const FORM_BUNDLE_API = `${FORM_API}/bundle`;
+const FORM_BUNDLE_API_DELETE = `${FORM_API}/delete`;
 const MANIFEST_API = 'manifest';
 /*
 {
@@ -316,4 +318,13 @@ function postFormFields(bundleId, formKey, payload) {
 
 function startUploadBundle(bundleId) {
   return bundleAddTasks(bundleId, '<cancelUploadJobs/><createUploadJob/><uploadResources/><submitJobIfComplete><forkAfterUpload>true</forkAfterUpload></submitJobIfComplete>');
+}
+
+function deleteForm(bundleId, formKey) {
+  const requestOptions = {
+    method: 'POST',
+    headers: { ...authHeader() }
+  };
+  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${FORM_BUNDLE_API_DELETE}/${bundleId}${formKey}`;
+  return fetch(url, requestOptions).then(handlePostFormResponse);
 }

@@ -7,6 +7,23 @@ const initialState = {
   activeFormEdits: {}
 };
 
+const initialActiveFormState = {
+  activeFormInputs: {},
+  activeFormEdits: {},
+  formFieldIssues: null,
+  errorTree: null,
+};
+
+function changeStateForNewActiveForm(state, newState) {
+  const { editingMetadata, formStructure } = state;
+  return {
+    editingMetadata,
+    formStructure,
+    ...initialActiveFormState,
+    ...newState
+  };
+}
+
 export function bundleEditMetadata(state = initialState, action) {
   switch (action.type) {
     case bundleEditMetadataConstants.OPEN_EDIT_METADATA: {
@@ -43,13 +60,7 @@ export function bundleEditMetadata(state = initialState, action) {
     case bundleEditMetadataConstants.METADATA_FORM_INPUTS_LOADED: {
       const { formKey, inputs } = action;
       const activeFormInputs = { [formKey]: inputs };
-      return {
-        ...state,
-        activeFormInputs,
-        activeFormEdits: {},
-        formFieldIssues: null,
-        errorTree: null,
-      };
+      return changeStateForNewActiveForm(state, { activeFormInputs });
     }
     case bundleEditMetadataConstants.METADATA_FORM_INPUT_EDITED: {
       const { inputName, newValue } = action;
@@ -57,6 +68,25 @@ export function bundleEditMetadata(state = initialState, action) {
       return {
         ...state,
         activeFormEdits
+      };
+    }
+    case bundleEditMetadataConstants.METADATA_FORM_INSTANCE_DELETE_PROMPT_CONFIRM: {
+      const { promptConfirm = true } = action;
+      return {
+        ...state,
+        activeFormConfirmingDelete: promptConfirm
+      };
+    }
+    case bundleEditMetadataConstants.METADATA_FORM_INSTANCE_DELETE_REQUEST: {
+      return {
+        ...state,
+        activeFormDeleting: true
+      };
+    }
+    case bundleEditMetadataConstants.METADATA_FORM_INSTANCE_DELETE_SUCCESS: {
+      return {
+        ...state,
+        activeFormDeleting: false
       };
     }
     case bundleEditMetadataConstants.SAVE_METADATA_REQUEST: {
