@@ -231,8 +231,13 @@ export function saveMetadata(bundleId, formKey, fieldNameValues, moveNext, isFac
       }
       dispatch(saveMetadatFileToTempBundleFolder(bundleId));
     } catch (errorReadable) {
-      const error = await errorReadable.json();
-      dispatch(saveMetadataFailed(bundleId, formKey, error));
+      const errorText = await errorReadable.text();
+      try {
+        const error = JSON.parse(errorText);
+        dispatch(saveMetadataFailed(bundleId, formKey, error));
+      } catch (errorParsingJson) {
+        dispatch(saveMetadataFailed(bundleId, formKey, null, errorText));
+      }
     }
   };
 }
@@ -245,8 +250,8 @@ export function saveMetadataSuccess(bundleId, formKey, moveNextStep) {
   return { type: bundleEditMetadataConstants.SAVE_METADATA_SUCCESS, bundleId, formKey, moveNextStep };
 }
 
-export function saveMetadataFailed(bundleId, formKey, error) {
-  return { type: bundleEditMetadataConstants.SAVE_METADATA_FAILED, bundleId, formKey, error };
+export function saveMetadataFailed(bundleId, formKey, error, errorText) {
+  return { type: bundleEditMetadataConstants.SAVE_METADATA_FAILED, bundleId, formKey, error, errorText };
 }
 
 function getMockStructure() {
