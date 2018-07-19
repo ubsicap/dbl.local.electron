@@ -304,7 +304,7 @@ class _EditMetadataStepper extends React.Component<Props> {
     const { activeFormInputs, bundleId } = this.props;
     const step = this.getStep(stepIndex);
     const { template, contains, formKey, formErrors, isFactory } = step;
-    if (contains) {
+    if (contains && !isFactory) {
       const hasTemplate = template === true;
       return (
         <EditMetadataStepperComposed
