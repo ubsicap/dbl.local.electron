@@ -23,7 +23,7 @@ export const bundleActions = {
 export default bundleActions;
 
 export function updateBundle(bundleId) {
-  return async dispatch => {
+  return async (dispatch, getState) => {
     const isDemoMode = history.location.pathname.includes('/demo');
     if (isDemoMode) {
       return;
@@ -33,12 +33,18 @@ export function updateBundle(bundleId) {
       return; // hasn't downloaded metadata yet. (don't expect to be in our list)
     }
     const bundle = await bundleService.convertApiBundleToNathanaelBundle(apiBundle);
-    dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle });
-    const { id, uploadJob } = bundle;
-    if (uploadJob) {
-      dispatch(updateUploadJobs(id, uploadJob));
+    const bundleInItems = getBundleInItems(getState, bundleId);
+    if (bundleInItems) {
+      dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle });
+      const { id, uploadJob } = bundle;
+      if (uploadJob) {
+        dispatch(updateUploadJobs(id, uploadJob));
+      } else {
+        dispatch(updateUploadJobs(id, null, id));
+      }
     } else {
-      dispatch(updateUploadJobs(id, null, id));
+      dispatch(addBundle(bundle));
+      dispatch(updateSearchResultsForBundleId(bundle.id));
     }
   };
 }
@@ -240,8 +246,7 @@ export function setupBundlesEventSource(authentication) {
     const bundleId = data.args[0];
     const apiBundle = await bundleService.fetchById(bundleId);
     if (bundleService.apiBundleHasMetadata(apiBundle)) {
-      const { bundles } = getState();
-      const bundleInItems = bundles.items.find(bundle => bundle.id === bundleId);
+      const bundleInItems = getBundleInItems(getState, bundleId);
       if (bundleInItems) {
         return; // already exists in items.
       }
@@ -251,21 +256,29 @@ export function setupBundlesEventSource(authentication) {
       dispatch(updateSearchResultsForBundleId(bundle.id));
     }
   }
-
-  function addBundle(bundle) {
-    return {
-      type: bundleConstants.ADD_BUNDLE,
-      bundle
-    };
-  }
 }
+
+function addBundle(bundle) {
+  return {
+    type: bundleConstants.ADD_BUNDLE,
+    bundle
+  };
+}
+
+function getBundleInItems(getState, bundleId) {
+  const { bundles } = getState();
+  const bundleInItems = bundles.items.find(bundle => bundle.id === bundleId);
+  return bundleInItems;
+}
+
 
 export function uploadBundle(id) {
   return async dispatch => {
     try {
       dispatch(request(id));
       await bundleService.startUploadBundle(id);
-    } catch (error) {
+    } catch (errorReadable) {
+      const error = await errorReadable.text();
       dispatch(failure(id, error));
     }
   };
@@ -284,7 +297,8 @@ export function downloadResources(id) {
       dispatch(request(id, manifestResourcePaths));
       dispatch(updateSearchResultsForBundleId(id));
       await bundleService.downloadResources(id);
-    } catch (error) {
+    } catch (errorReadable) {
+      const error = await errorReadable.text();
       dispatch(failure(id, error));
     }
   };
@@ -303,7 +317,8 @@ export function removeResources(id) {
       dispatch(request(id, resourcePathsToRemove));
       dispatch(updateSearchResultsForBundleId(id));
       await bundleService.removeResources(id);
-    } catch (error) {
+    } catch (errorReadable) {
+      const error = await errorReadable.text();
       dispatch(failure(id, error));
     }
   };

@@ -21,7 +21,8 @@ export const bundleService = {
   getFormFields,
   deleteForm,
   postFormFields,
-  startUploadBundle
+  startUploadBundle,
+  createContent
 };
 export default bundleService;
 
@@ -253,7 +254,7 @@ function bundleAddTasks(bundleId, innerTasks) {
     body: `xml=<tasks> ${innerTasks} </tasks>`
   };
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/add-tasks`;
-  return fetch(url, requestOptions).then(handleTextResponse);
+  return fetch(url, requestOptions).then(handlePostFormResponse);
 }
 
 function getResourcePaths(bundleId) {
@@ -327,4 +328,8 @@ function deleteForm(bundleId, formKey) {
   };
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${FORM_BUNDLE_API_DELETE}/${bundleId}${formKey}`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
+}
+
+function createContent(bundleId, label) {
+  return bundleAddTasks(bundleId, `<createContent><class>AsyncCreator</class><label>${label}</label><data/></createContent>`);
 }

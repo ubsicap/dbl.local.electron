@@ -81,13 +81,31 @@ export function editActiveFormInput(formKey, inputName, newValue) {
 }
 
 export function openEditMetadata(bundleId) {
-  const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO;
-  const editMetadataPage = isDemoMode ?
-    navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO :
-    navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA;
-  const editMetadataPageWithBundleId = buildEditMetadataUrl(editMetadataPage, bundleId);
-  history.push(editMetadataPageWithBundleId);
-  return { type: bundleEditMetadataConstants.OPEN_EDIT_METADATA, bundleId };
+  return async dispatch => {
+    const bundleInfo = await bundleService.fetchById(bundleId);
+    if (bundleInfo.mode !== 'create') {
+      try {
+        await bundleService.createContent(bundleId, `openEditMetadata-${bundleId}`);
+      } catch (errorReadable) {
+        const error = await errorReadable.text();
+        dispatch(failure(bundleId, error));
+      }
+    } else {
+      dispatch(success(bundleId));
+    }
+  };
+  function success(_bundleId) {
+    const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO;
+    const editMetadataPage = isDemoMode ?
+      navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO :
+      navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA;
+    const editMetadataPageWithBundleId = buildEditMetadataUrl(editMetadataPage, _bundleId);
+    history.push(editMetadataPageWithBundleId);
+    return { type: bundleEditMetadataConstants.OPEN_EDIT_METADATA, _bundleId };
+  }
+  function failure(_bundleId, error) {
+    return { type: bundleEditMetadataConstants.OPEN_EDIT_METADATA_FAILED, bundleId: _bundleId, error };
+  }
 }
 
 export function closeEditMetadata() {
