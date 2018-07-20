@@ -113,8 +113,8 @@ export function bundleEditMetadata(state = initialState, action) {
       const { field_issues: fieldIssues = [] } = error;
       const formFieldIssues = fieldIssues.reduce((acc, issue) => {
         const { formKey } = action;
-        const name = issue[0];
-        const fieldError = { name, rule: issue[1], value: issue[2] };
+        const [name, rule, value] = issue;
+        const fieldError = { name, rule, value };
         const { [formKey]: formErrors = {} } = acc;
         return { ...acc, [formKey]: { ...formErrors, [name]: fieldError } };
       }, {});

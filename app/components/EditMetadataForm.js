@@ -89,7 +89,7 @@ class EditMetadataForm extends React.PureComponent<Props> {
       }
       // get the values for all required fields and all non-empty values optional fields.
       const [keyField] = fields.filter(field => field.type === 'key');
-      const instanceKey = keyField ? this.getValue(keyField) : null;
+      const instanceKeyValue = keyField ? { [keyField.name]: this.getValue(keyField) } : null;
       const fieldValues = fields.filter(field => field.name && field !== keyField).reduce((acc, field) => {
         const fieldValue = this.getValue(field);
         const isRequired = getIsRequired(field);
@@ -98,7 +98,7 @@ class EditMetadataForm extends React.PureComponent<Props> {
         }
         return acc;
       }, {});
-      this.props.saveMetadata(bundleId, formKey, fieldValues, null, isFactory, instanceKey);
+      this.props.saveMetadata(bundleId, formKey, fieldValues, null, isFactory, instanceKeyValue);
     }
   }
 

@@ -13,6 +13,7 @@ import Typography from '@material-ui/core/Typography';
 import Save from '@material-ui/icons/Save';
 import Undo from '@material-ui/icons/Undo';
 import Delete from '@material-ui/icons/Delete';
+import Tooltip from '@material-ui/core/Tooltip';
 import Warning from '@material-ui/icons/Warning';
 import NavigateNext from '@material-ui/icons/NavigateNext';
 import NavigateBefore from '@material-ui/icons/NavigateBefore';
@@ -81,9 +82,12 @@ const makeGetSteps = () => createSelector(
     const msgLoadingForm = 'loading form...';
     const steps = formStructure
       .reduce((accSteps, section) => {
-        const instanceSteps = Object.keys(section.instances || {})
+        const instances = Object.keys(section.instances || {});
+        const instanceSteps = instances
           .reduce((accInstances, instanceKey) => {
             const label = `${section.id} ${instanceKey}`;
+            const { arity } = section;
+            const instanceOf = section.id;
             const content = msgLoadingForm;
             const instance = section.instances[instanceKey];
             const id = `${section.id}/${instanceKey}`;
@@ -99,6 +103,9 @@ const makeGetSteps = () => createSelector(
                 template: true,
                 isFactory: false,
                 isInstance: true,
+                instances,
+                arity,
+                instanceOf,
                 ...instance
               }];
           }, []);
@@ -164,6 +171,10 @@ const mapDispatchToProps = {
 
 function getStepFormKey(stepId, structurePath) {
   return (stepId !== detailsStep.id ? `${structurePath}/${stepId}` : structurePath);
+}
+
+function shouldDisableDelete(step) {
+  return step.arity && !(['?', '*'].includes(step.arity)) && step.instances.length === 1;
 }
 
 type Props = {
@@ -416,14 +427,23 @@ class _EditMetadataStepper extends React.Component<Props> {
 
   renderDeleteButton = (step) => {
     const { classes, activeFormConfirmingDelete = false } = this.props;
-    return (
+    const disableDelete = shouldDisableDelete(step);
+    const deleteBtn = (
       <Button
+        disabled={disableDelete}
         onClick={this.handleDeleteForm(step)}
         color={activeFormConfirmingDelete ? 'secondary' : 'default'}
         className={classes.button}
       >
         {this.renderDeleteIconAndText()}
       </Button>);
+    if (disableDelete) {
+      return (
+        <Tooltip title={`Requires at least one ${step.instanceOf}`}>
+          <span>{deleteBtn}</span>
+        </Tooltip>);
+    }
+    return deleteBtn;
   }
 
   render() {
