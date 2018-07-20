@@ -59,7 +59,7 @@ const materialStyles = theme => ({
 });
 
 function getIsRequired(field) {
-  return field.nValues !== '?';
+  return field.nValues !== '?' || field.type === 'key';
 }
 
 class EditMetadataForm extends React.PureComponent<Props> {
@@ -88,7 +88,9 @@ class EditMetadataForm extends React.PureComponent<Props> {
         return;
       }
       // get the values for all required fields and all non-empty values optional fields.
-      const fieldValues = fields.filter(field => field.name).reduce((acc, field) => {
+      const [keyField] = fields.filter(field => field.type === 'key');
+      const instanceKey = keyField ? this.getValue(keyField) : null;
+      const fieldValues = fields.filter(field => field.name && field !== keyField).reduce((acc, field) => {
         const fieldValue = this.getValue(field);
         const isRequired = getIsRequired(field);
         if (isRequired || fieldValue.length > 0) {
@@ -96,7 +98,7 @@ class EditMetadataForm extends React.PureComponent<Props> {
         }
         return acc;
       }, {});
-      this.props.saveMetadata(bundleId, formKey, fieldValues, null, isFactory);
+      this.props.saveMetadata(bundleId, formKey, fieldValues, null, isFactory, instanceKey);
     }
   }
 
@@ -114,6 +116,17 @@ class EditMetadataForm extends React.PureComponent<Props> {
   getValue = (field) => {
     const { activeFormEdits } = this.props;
     return editMetadataService.getValue(field, activeFormEdits);
+  }
+
+  getIsDisabled = (field) => {
+    if (field.type !== 'key') {
+      return false;
+    }
+    if (field.default === undefined || field.default.length === 0) {
+      return false;
+    }
+    const { formKey } = this.props;
+    return formKey.endsWith(`/${field.default}`);
   }
 
   hasError = (field) => Boolean(Object.keys(this.getErrorInField(field)).length > 0);
@@ -140,6 +153,7 @@ class EditMetadataForm extends React.PureComponent<Props> {
             /* autoComplete={field.default} */
             helperText={this.helperOrErrorText(field)}
             required={getIsRequired(field)}
+            disabled={this.getIsDisabled(field)}
             onChange={this.handleChange(field.name)}
             SelectProps={{
               MenuProps: {

@@ -240,7 +240,7 @@ function switchBackToBundlesPage() {
       ]
     }
  */
-export function saveMetadata(bundleId, formKey, fieldNameValues, moveNext, isFactory) {
+export function saveMetadata(bundleId, formKey, fieldNameValues, moveNext, isFactory, keyField) {
   return async (dispatch, getState) => {
     if (!formKey) {
       return dispatch(saveMetadataRequest(null, null, moveNext));
@@ -259,7 +259,7 @@ export function saveMetadata(bundleId, formKey, fieldNameValues, moveNext, isFac
     const formId = bundleId;
     dispatch(saveMetadataRequest(formId, fields, moveNextStep));
     try {
-      await bundleService.postFormFields(bundleId, formKey, { formId, fields });
+      await bundleService.postFormFields(bundleId, formKey, { formId, fields }, keyField);
       dispatch(fetchActiveFormInputs(bundleId, formKey));
       dispatch(saveMetadataSuccess(bundleId, formKey));
       if (isFactory) {

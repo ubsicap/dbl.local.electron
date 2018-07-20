@@ -308,13 +308,15 @@ function getFormFields(bundleId, formKey) {
     "response_valid": false
   }
  */
-function postFormFields(bundleId, formKey, payload) {
+function postFormFields(bundleId, formKey, payload, keyField) {
   const requestOptions = {
     method: 'POST',
     headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `response=${JSON.stringify(payload)}`
   };
-  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${FORM_API}/${bundleId}${formKey}`;
+  const newKeyPath = `/${keyField}`;
+  const newInstanceKey = keyField && !formKey.endsWith(newKeyPath) ? newKeyPath : '';
+  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${FORM_API}/${bundleId}${formKey}${newInstanceKey}`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }
 
