@@ -22,7 +22,8 @@ export const bundleService = {
   deleteForm,
   postFormFields,
   startUploadBundle,
-  createContent
+  startCreateContent,
+  stopCreateContent
 };
 export default bundleService;
 
@@ -330,6 +331,20 @@ function deleteForm(bundleId, formKey) {
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }
 
-function createContent(bundleId, label) {
-  return bundleAddTasks(bundleId, `<createContent><class>AsyncCreator</class><label>${label}</label><data/></createContent>`);
+function startCreateContent(bundleId, label) {
+  const labelElement = label ? `<label>${label}</label>` : '';
+  return bundleAddTasks(bundleId, `<createContent><class>AsyncCreator</class>${labelElement}<data/></createContent>`);
+}
+
+/*
+  /bundle/<id>/creation/stop/success
+  /bundle/<id>/creation/stop/failure, where 'failure' will clear any following tasks
+*/
+function stopCreateContent(bundleId, mode = 'success') {
+  const requestOptions = {
+    method: 'POST',
+    headers: { ...authHeader() }
+  };
+  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/creation/stop/${mode}`;
+  return fetch(url, requestOptions).then(handlePostFormResponse);
 }

@@ -84,33 +84,51 @@ export function openEditMetadata(bundleId) {
   return async dispatch => {
     const bundleInfo = await bundleService.fetchById(bundleId);
     if (bundleInfo.mode !== 'create') {
+      const { dbl } = bundleInfo;
+      const { currentRevision } = dbl;
+      const isDraft = currentRevision === '0' || !currentRevision;
+      const label = isDraft ? '' : `openEditMetadata-${bundleId}`;
       try {
-        await bundleService.createContent(bundleId, `openEditMetadata-${bundleId}`);
+        await bundleService.startCreateContent(bundleId, label);
+        if (isDraft) {
+          // ideally we'd wait/listen for the 'create' mode change event.
+          dispatchSuccess(bundleId);
+        }
       } catch (errorReadable) {
         const error = await errorReadable.text();
         dispatch(failure(bundleId, error));
       }
     } else {
-      dispatch(success(bundleId));
+      dispatchSuccess(bundleId);
+    }
+
+    function dispatchSuccess(_bundleId) {
+      dispatch(success(_bundleId));
+      navigate(_bundleId);
     }
   };
+
   function success(_bundleId) {
+    return { type: bundleEditMetadataConstants.OPEN_EDIT_METADATA, bundleId: _bundleId };
+  }
+  function navigate(_bundleId) {
     const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO;
     const editMetadataPage = isDemoMode ?
       navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO :
       navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA;
     const editMetadataPageWithBundleId = buildEditMetadataUrl(editMetadataPage, _bundleId);
     history.push(editMetadataPageWithBundleId);
-    return { type: bundleEditMetadataConstants.OPEN_EDIT_METADATA, _bundleId };
   }
   function failure(_bundleId, error) {
     return { type: bundleEditMetadataConstants.OPEN_EDIT_METADATA_FAILED, bundleId: _bundleId, error };
   }
 }
 
-export function closeEditMetadata() {
+export function closeEditMetadata(bundleId) {
   return async dispatch => {
-    dispatch({ type: bundleEditMetadataConstants.CLOSE_EDIT_METADATA });
+    await bundleService.stopCreateContent(bundleId);
+    // ideally we'd wait for change mode to 'store' to complete
+    dispatch({ type: bundleEditMetadataConstants.CLOSE_EDIT_METADATA, bundleId });
     await sleep(1);
     dispatch(switchBackToBundlesPage);
   };

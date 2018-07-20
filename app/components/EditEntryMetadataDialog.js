@@ -90,7 +90,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     if (this.props.moveNext && this.props.moveNext.exit
       && this.props.wasMetadataSaved
       && !prevProps.wasMetadataSaved) {
-      this.props.closeEditMetadata();
+      this.props.closeEditMetadata(this.props.bundleId);
       this.props.updateBundle(this.props.bundleId);
     } else if (this.props.couldNotSaveMetadataMessage &&
       this.props.couldNotSaveMetadataMessage !== prevProps.couldNotSaveMetadataMessage) {
@@ -111,8 +111,8 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   }
 
   render() {
-    const { classes, open, selectedBundle } = this.props;
-    const { displayAs } = selectedBundle;
+    const { classes, open, selectedBundle = {} } = this.props;
+    const { displayAs = {} } = selectedBundle;
     const { languageAndCountry, name } = displayAs;
     return (
       <Zoom in={open}>

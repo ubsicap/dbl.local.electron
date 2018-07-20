@@ -5,7 +5,7 @@ function sortBundles(unsorted) {
   return sort(unsorted).asc([
     b => b.displayAs.languageAndCountry,
     b => b.displayAs.name,
-    b => ~b.revision,
+    b => (b.revision === '0' || !b.revision ? ~10000000 : ~b.revision) // eslint-disable-line no-bitwise
   ]);
 }
 
@@ -113,8 +113,8 @@ export function bundles(state = { items: [] }, action) {
       }));
     }
     case bundleConstants.UPLOAD_RESOURCES_UPDATE_PROGRESS: {
-      const progress = Math.floor((action.resourceCountUploaded / action.resourceCountToUpload) * 100);
-      return updateTaskStatusProgress(action.bundleId, 'UPLOAD', 'IN_PROGRESS', progress, () => ({
+      const percentage = Math.floor((action.resourceCountUploaded / action.resourceCountToUpload) * 100);
+      return updateTaskStatusProgress(action.bundleId, 'UPLOAD', 'IN_PROGRESS', percentage, () => ({
         isUploading: true
       }));
     }
@@ -286,7 +286,8 @@ function formatStatus(bundle) {
   const formattedProgress = formatProgress(bundle);
   let newStatusDisplayAs;
   if (bundle.isUploading) {
-    newStatusDisplayAs = `Uploading ${formattedProgress}`;
+    const uploadingMessage = (!bundle.resourceCountStored || bundle.resourceCountStored === 0) ? 'metadata' : formattedProgress;
+    newStatusDisplayAs = `Uploading ${uploadingMessage}`;
   } else if (bundle.task === 'UPLOAD' && bundle.status === 'IN_PROGRESS') {
     newStatusDisplayAs = 'Uploading';
   } else if (bundle.status === 'NOT_STARTED') {
