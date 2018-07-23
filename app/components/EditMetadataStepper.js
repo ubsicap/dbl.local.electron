@@ -398,8 +398,8 @@ class _EditMetadataStepper extends React.Component<Props> {
           onClick={this.handleBack}
           className={classes.button}
         >
-          <NavigateBefore className={classNames(classes.leftIcon, classes.iconSmall)} />
           {this.getBackSectionName('', '')}
+          <NavigateBefore className={classNames(classes.rightIcon, classes.iconSmall)} />
         </Button>
         {isInstance && this.renderDeleteButton(step)}
         <Button
