@@ -1,11 +1,23 @@
 import sort from 'fast-sort';
 import { bundleConstants } from '../constants/bundle.constants';
 
-function sortBundles(unsorted) {
-  return sort(unsorted).asc([
+function sortAndFilterBundlesAsEntries(unsorted) {
+  const sortedBundles = sort(unsorted).asc([
+    b => b.dblId,
+    b => (b.revision === '0' || !b.revision ? ~10000000 : ~b.revision) // eslint-disable-line no-bitwise
+  ]);
+  const reducedBundles = sortedBundles.reduce((acc, b) => {
+    if (b.dblId in acc.visitedDblIds) {
+      return acc;
+    }
+    const visitedDblIds = { ...acc.visitedDblIds, [b.dblId]: b };
+    const items = [...acc.items, b];
+    return { visitedDblIds, items };
+  }, { visitedDblIds: {}, items: [] });
+  const { items } = reducedBundles;
+  return sort(items).asc([
     b => b.displayAs.languageAndCountry,
     b => b.displayAs.name,
-    b => (b.revision === '0' || !b.revision ? ~10000000 : ~b.revision) // eslint-disable-line no-bitwise
   ]);
 }
 
@@ -18,12 +30,13 @@ export function bundles(state = { items: [] }, action) {
       };
     case bundleConstants.FETCH_SUCCESS: {
       const unsorted = action.bundles.map(bundle => addBundleDecorators(bundle));
-      const items = sortBundles(unsorted);
+      const items = sortAndFilterBundlesAsEntries(unsorted);
       const uploadJobs = items.filter(b => b.uploadJob).reduce((acc, b) =>
         ({ ...acc, [b.id]: b.uploadJob, [b.uploadJob]: b.id }), {});
       return {
         ...state,
         items,
+        unsorted,
         uploadJobs,
         loading: false,
       };
@@ -67,11 +80,14 @@ export function bundles(state = { items: [] }, action) {
     case bundleConstants.DELETE_SUCCESS: {
       const { id: bundleIdToRemove } = action;
       const { selectedBundle: origSelectedBundle } = state;
-      const items = state.items.filter(bundle => bundle.id !== bundleIdToRemove);
-      const selectedBundle = origSelectedBundle && origSelectedBundle.id === bundleIdToRemove ? null : origSelectedBundle;
+      const unsorted = state.unsorted.filter(bundle => bundle.id !== bundleIdToRemove);
+      const items = sortAndFilterBundlesAsEntries(unsorted);
+      const selectedBundle = origSelectedBundle && origSelectedBundle.id === bundleIdToRemove
+        ? null : origSelectedBundle;
       return {
         ...state,
         items,
+        unsorted,
         selectedBundle
       };
     }
@@ -91,12 +107,14 @@ export function bundles(state = { items: [] }, action) {
       };
     case bundleConstants.ADD_BUNDLE: {
       const { bundle } = action;
-      const { items: unsorted } = state;
+      const { unsorted: origUnsorted } = state;
       const decoratedBundle = addBundleDecorators(bundle);
-      const items = sortBundles([...unsorted, decoratedBundle]);
+      const unsorted = ([decoratedBundle, ...origUnsorted]);
+      const items = sortAndFilterBundlesAsEntries(unsorted);
       return {
         ...state,
-        items
+        items,
+        unsorted
       };
     }
     case bundleConstants.DOWNLOAD_RESOURCES_REQUEST: {
