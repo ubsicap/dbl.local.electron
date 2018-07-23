@@ -11,7 +11,7 @@ type Props = {
   isSearchLoading: boolean,
   eventSource: ?{},
   bundleItems: [],
-  selectedBundleId: ?string,
+  selectedDBLEntryId: ?string,
   authentication: {}
 };
 
@@ -23,7 +23,7 @@ function mapStateToProps(state) {
     isSearchLoading: bundlesFilter.isLoading || false,
     bundleItems: bundles.items,
     eventSource: bundles.eventSource,
-    selectedBundleId: bundles.selectedBundle ? bundles.selectedBundle.id : null,
+    selectedDBLEntryId: bundles.selectedDBLEntryId,
     authentication
   };
 }
@@ -54,7 +54,7 @@ class Bundles extends PureComponent<Props> {
   }
 
   render() {
-    const { bundleItems, isSearchLoading, isLoadingBundles, selectedBundleId } = this.props;
+    const { bundleItems, isSearchLoading, isLoadingBundles, selectedDBLEntryId } = this.props;
     return (
       <div>
         {(isLoadingBundles || isSearchLoading) &&
@@ -72,7 +72,7 @@ class Bundles extends PureComponent<Props> {
             key={d.id}
             bundleId={d.id}
             {...d}
-            isSelected={selectedBundleId && selectedBundleId === d.id}
+            isSelected={selectedDBLEntryId === d.dblId}
           />))}
       </div>
     );

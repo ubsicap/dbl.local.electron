@@ -21,6 +21,26 @@ function sortAndFilterBundlesAsEntries(unsorted) {
   ]);
 }
 
+function getSelectedState(state, bundleToToggle, bundleIdToRemove) {
+  const { selectedBundle: origSelectedBundle = {} } = state;
+  const { id: origSelectedBundleId } = origSelectedBundle || {};
+  if (bundleToToggle) {
+    const selectedBundle = bundleToToggle.id === origSelectedBundleId ?
+      null : bundleToToggle;
+    const { dblId: selectedDBLEntryId } = selectedBundle || {};
+    return {
+      selectedBundle,
+      selectedDBLEntryId
+    };
+  }
+  if (bundleIdToRemove && bundleIdToRemove === origSelectedBundleId) {
+    return {
+      selectedBundle: null,
+      selectedDBLEntryId: null
+    };
+  }
+}
+
 export function bundles(state = { items: [] }, action) {
   switch (action.type) {
     case bundleConstants.FETCH_REQUEST:
@@ -79,16 +99,15 @@ export function bundles(state = { items: [] }, action) {
       };
     case bundleConstants.DELETE_SUCCESS: {
       const { id: bundleIdToRemove } = action;
-      const { selectedBundle: origSelectedBundle } = state;
       const unsorted = state.unsorted.filter(bundle => bundle.id !== bundleIdToRemove);
       const items = sortAndFilterBundlesAsEntries(unsorted);
-      const selectedBundle = origSelectedBundle && origSelectedBundle.id === bundleIdToRemove
-        ? null : origSelectedBundle;
+      const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, null, bundleIdToRemove);
       return {
         ...state,
         items,
         unsorted,
-        selectedBundle
+        selectedBundle,
+        selectedDBLEntryId
       };
     }
     case bundleConstants.DELETE_FAILURE:
@@ -111,10 +130,13 @@ export function bundles(state = { items: [] }, action) {
       const decoratedBundle = addBundleDecorators(bundle);
       const unsorted = ([decoratedBundle, ...origUnsorted]);
       const items = sortAndFilterBundlesAsEntries(unsorted);
+      const selectedBundle = decoratedBundle.dblId === state.selectedDBLEntryId ?
+        decoratedBundle : state.selectedBundle;
       return {
         ...state,
         items,
-        unsorted
+        unsorted,
+        selectedBundle
       };
     }
     case bundleConstants.DOWNLOAD_RESOURCES_REQUEST: {
@@ -206,11 +228,11 @@ export function bundles(state = { items: [] }, action) {
       };
     }
     case bundleConstants.TOGGLE_SELECT: {
-      const selectedBundle = state.selectedBundle && state.selectedBundle.id === action.selectedBundle.id ?
-        {} : action.selectedBundle;
+      const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, action.selectedBundle);
       return {
         ...state,
-        selectedBundle
+        selectedBundle,
+        selectedDBLEntryId
       };
     }
     case bundleConstants.SESSION_EVENTS_CONNECTED: {

@@ -16,7 +16,7 @@ export const bundleActions = {
   requestSaveBundleTo,
   removeResources,
   toggleModePauseResume,
-  toggleSelectBundle,
+  toggleSelectEntry,
   uploadBundle
 };
 
@@ -444,8 +444,12 @@ export function toggleModePauseResume(id) {
   return { type: bundleConstants.TOGGLE_MODE_PAUSE_RESUME, id };
 }
 
-export function toggleSelectBundle(selectedBundle) {
-  return { type: bundleConstants.TOGGLE_SELECT, selectedBundle };
+export function toggleSelectEntry(selectedBundle) {
+  return {
+    type: bundleConstants.TOGGLE_SELECT,
+    selectedBundle,
+    selectedDBLEntryId: selectedBundle.dblId
+  };
 }
 
 function getMockBundles() {

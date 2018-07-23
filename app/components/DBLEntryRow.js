@@ -22,7 +22,7 @@ import Edit from '@material-ui/icons/Edit';
 import CloudUpload from '@material-ui/icons/CloudUpload';
 import styles from './DBLEntryRow.css';
 import ControlledHighlighter from './ControlledHighlighter';
-import { toggleSelectBundle, requestSaveBundleTo, removeResources, downloadResources, uploadBundle } from '../actions/bundle.actions';
+import { toggleSelectEntry, requestSaveBundleTo, removeResources, downloadResources, uploadBundle } from '../actions/bundle.actions';
 import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
 
 const { dialog, app } = require('electron').remote;
@@ -42,7 +42,7 @@ type Props = {
   isUploading?: ?boolean,
   isSelected: ?boolean,
   shouldShowRow: boolean,
-  toggleSelectBundle: () => {},
+  toggleSelectEntry: () => {},
   downloadResources: () => {},
   requestSaveBundleTo: () => {},
   removeResources: () => {},
@@ -51,7 +51,7 @@ type Props = {
 };
 
 const mapDispatchToProps = {
-  toggleSelectBundle,
+  toggleSelectEntry,
   downloadResources,
   requestSaveBundleTo,
   removeResources,
@@ -103,8 +103,8 @@ class DBLEntryRow extends PureComponent<Props> {
   }
 
   onClickBundleRow = () => {
-    const { bundleId: id, displayAs } = this.props;
-    this.props.toggleSelectBundle({ id, displayAs });
+    const { bundleId: id, dblId, displayAs } = this.props;
+    this.props.toggleSelectEntry({ id, dblId, displayAs });
   }
 
   showInfoButton = () => {
