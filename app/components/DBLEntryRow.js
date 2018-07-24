@@ -155,7 +155,12 @@ class DBLEntryRow extends PureComponent<Props> {
     return resourceCountStored === 0;
   }
 
-  isUploading = () => {
+  shouldDisableUpload = () => {
+    const { status } = this.props;
+    return status !== 'DRAFT';
+  }
+
+  shouldDisableRevise = () => {
     const { isUploading = false, task, status } = this.props;
     return isUploading || (task === 'UPLOAD' && status === 'IN_PROGRESS');
   }
@@ -360,7 +365,7 @@ class DBLEntryRow extends PureComponent<Props> {
         {isSelected && (
           <Toolbar style={{ minHeight: '36px' }}>
             <Button
-              disabled={this.isUploading()}
+              disabled={this.shouldDisableRevise()}
               variant="flat" size="small" className={classes.button}
               onKeyPress={this.onClickEditMetadata}
               onClick={this.onClickEditMetadata}>
@@ -382,7 +387,7 @@ class DBLEntryRow extends PureComponent<Props> {
             </Button>
             {this.renderbtnDeleteBundleOrCleanResources()}
             <Button variant="flat" size="small" className={classes.button}
-              disabled={this.isUploading()}
+              disabled={this.shouldDisableUpload()}
               onKeyPress={this.onClickUploadBundle}
               onClick={this.onClickUploadBundle}
             >
