@@ -87,7 +87,7 @@ export function openEditMetadata(bundleId) {
       const { dbl } = bundleInfo;
       const { currentRevision } = dbl;
       const isDraft = currentRevision === '0' || !currentRevision;
-      const label = isDraft ? '' : `openEditMetadata-${bundleId}`;
+      const label = isDraft ? '' : 'openEditMetadata';
       try {
         await bundleService.startCreateContent(bundleId, label);
         if (isDraft) {

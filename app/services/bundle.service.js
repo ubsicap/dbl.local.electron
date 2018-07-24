@@ -1,4 +1,5 @@
 import path from 'path';
+import uuidv1 from 'uuid/v1';
 import { authHeader } from '../helpers';
 import { utilities } from '../utils/utilities';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
@@ -16,7 +17,7 @@ export const bundleService = {
   removeResources,
   getResourcePaths,
   requestSaveResourceTo,
-  delete: removeBundle,
+  removeBundle,
   getFormBundleTree,
   getFormFields,
   deleteForm,
@@ -166,15 +167,16 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
   };
 }
 
-function fetchById(id) {
+async function fetchById(id) {
   const requestOptions = {
     method: 'GET',
     headers: authHeader()
   };
-  return fetch(
+  const response = await fetch(
     `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${id}`,
     requestOptions
-  ).then(handleResponse);
+  );
+  return handleResponse(response, (r) => r);
 }
 
 function create(bundle) {
@@ -200,21 +202,11 @@ function update(bundle) {
   return fetch(`/${BUNDLE_API}/${bundle.id}`, requestOptions).then(handleResponse);
 }
 
-// prefixed function name with underscore because delete is a reserved word in javascript
-function removeBundle(id) {
-  const requestOptions = {
-    method: 'DELETE',
-    headers: authHeader()
-  };
-
-  return fetch(`/${BUNDLE_API}/${id}`, requestOptions).then(handleResponse);
-}
-
-function handleResponse(response) {
+function handleResponse(response, rejectFunc) {
   if (!response.ok) {
-    return Promise.reject(response.statusText);
+    const error = rejectFunc ? rejectFunc(response) : response.statusText;
+    return Promise.reject(error);
   }
-
   return response.json();
 }
 
@@ -248,6 +240,10 @@ function downloadResources(bundleId) {
 
 function removeResources(bundleId) {
   return bundleAddTasks(bundleId, '<removeLocalResources/>');
+}
+
+function removeBundle(bundleId) {
+  return bundleAddTasks(bundleId, '<deleteBundle/>');
 }
 
 function bundleAddTasks(bundleId, innerTasks) {
@@ -336,7 +332,8 @@ function deleteForm(bundleId, formKey) {
 }
 
 function startCreateContent(bundleId, label) {
-  const labelElement = label ? `<label>${label}</label>` : '';
+  const uuid1 = uuidv1();
+  const labelElement = label ? `<label>${label}-${bundleId}-${uuid1}</label>` : '';
   return bundleAddTasks(bundleId, `<createContent><class>AsyncCreator</class>${labelElement}<data/></createContent>`);
 }
 

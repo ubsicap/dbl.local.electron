@@ -22,7 +22,8 @@ import Edit from '@material-ui/icons/Edit';
 import CloudUpload from '@material-ui/icons/CloudUpload';
 import styles from './DBLEntryRow.css';
 import ControlledHighlighter from './ControlledHighlighter';
-import { toggleSelectEntry, requestSaveBundleTo, removeResources, downloadResources, uploadBundle } from '../actions/bundle.actions';
+import { toggleSelectEntry, requestSaveBundleTo, removeResources, removeBundle,
+  downloadResources, uploadBundle } from '../actions/bundle.actions';
 import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
 
 const { dialog, app } = require('electron').remote;
@@ -36,6 +37,7 @@ type Props = {
   status: string,
   medium: string,
   displayAs: {},
+  resourceCountStored?: number,
   bundleMatches: {},
   bundlesSaveTo: {},
   progress?: ?number,
@@ -49,7 +51,8 @@ type Props = {
   requestSaveBundleTo: () => {},
   removeResources: () => {},
   openEditMetadata: () => {},
-  uploadBundle: () => {}
+  uploadBundle: () => {},
+  removeBundle: () => {}
 };
 
 const mapDispatchToProps = {
@@ -58,7 +61,8 @@ const mapDispatchToProps = {
   requestSaveBundleTo,
   removeResources,
   openEditMetadata,
-  uploadBundle
+  uploadBundle,
+  removeBundle
 };
 
 const getIsSearchActive = (state) => state.bundlesFilter.isSearchActive;
@@ -146,10 +150,9 @@ class DBLEntryRow extends PureComponent<Props> {
     return (task === 'DOWNLOAD' && status === 'NOT_STARTED');
   }
 
-  hasNotYetDownloadedResources = () => {
-    const { isDownloaded, progress } = this.props;
-    return ((isDownloaded === undefined || !isDownloaded)
-      || (progress && progress < 100)) === true;
+  hasNoStoredResources = () => {
+    const { resourceCountStored = 0 } = this.props;
+    return resourceCountStored === 0;
   }
 
   isUploading = () => {
@@ -222,6 +225,12 @@ class DBLEntryRow extends PureComponent<Props> {
     onOpenLink(event, `https://thedigitalbiblelibrary.org/entry?id=${dblId}`);
   }
 
+  onClickDeleteBundle = (event) => {
+    const { bundleId } = this.props;
+    this.props.removeBundle(bundleId);
+    event.stopPropagation();
+  }
+
   onClickRemoveResources = (event) => {
     const { bundleId } = this.props;
     this.props.removeResources(bundleId);
@@ -239,6 +248,31 @@ class DBLEntryRow extends PureComponent<Props> {
     }
     return [<CallSplit key="btnRevise" className={classNames(classes.leftIcon, classes.iconSmall)} />, 'Revise'];
   };
+
+  renderbtnDeleteBundleOrCleanResources = () => {
+    const { status, classes } = this.props;
+    if (status === 'DRAFT') {
+      return (
+        <Button variant="flat" size="small" className={classes.button}
+          onKeyPress={this.onClickDeleteBundle}
+          onClick={this.onClickDeleteBundle}
+        >
+          <Delete className={classNames(classes.leftIcon, classes.iconSmall)} />
+          Delete
+        </Button>
+      );
+    }
+    return (
+      <Button variant="flat" size="small" className={classes.button}
+        disabled={this.hasNoStoredResources()}
+        onKeyPress={this.onClickRemoveResources}
+        onClick={this.onClickRemoveResources}
+      >
+        <Delete className={classNames(classes.leftIcon, classes.iconSmall)} />
+        Clean
+      </Button>
+    );
+  }
 
   render() {
     const {
@@ -333,7 +367,7 @@ class DBLEntryRow extends PureComponent<Props> {
               {this.renderEditIcon()}
             </Button>
             <Button variant="flat" size="small" className={classes.button}
-              disabled={this.hasNotYetDownloadedResources()}
+              disabled={this.hasNoStoredResources()}
               onKeyPress={this.startSaveBundleTo}
               onClick={this.startSaveBundleTo}>
               <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
@@ -346,14 +380,7 @@ class DBLEntryRow extends PureComponent<Props> {
               <Link className={classNames(classes.leftIcon, classes.iconSmall)} />
               DBL
             </Button>
-            <Button variant="flat" size="small" className={classes.button}
-              disabled={this.hasNotYetDownloadedResources()}
-              onKeyPress={this.onClickRemoveResources}
-              onClick={this.onClickRemoveResources}
-            >
-              <Delete className={classNames(classes.leftIcon, classes.iconSmall)} />
-              Clean
-            </Button>
+            {this.renderbtnDeleteBundleOrCleanResources()}
             <Button variant="flat" size="small" className={classes.button}
               disabled={this.isUploading()}
               onKeyPress={this.onClickUploadBundle}
@@ -371,6 +398,7 @@ class DBLEntryRow extends PureComponent<Props> {
 
 DBLEntryRow.defaultProps = {
   progress: null,
+  resourceCountStored: 0,
   isUploading: null,
 };
 

@@ -10,7 +10,7 @@ import { navigationConstants } from '../constants/navigation.constants';
 export const bundleActions = {
   fetchAll,
   updateBundle,
-  delete: removeBundle,
+  removeBundle,
   setupBundlesEventSource,
   downloadResources,
   requestSaveBundleTo,
@@ -28,23 +28,31 @@ export function updateBundle(bundleId) {
     if (isDemoMode) {
       return;
     }
-    const apiBundle = await bundleService.fetchById(bundleId);
-    if (!bundleService.apiBundleHasMetadata(apiBundle)) {
-      return; // hasn't downloaded metadata yet. (don't expect to be in our list)
-    }
-    const bundle = await bundleService.convertApiBundleToNathanaelBundle(apiBundle);
-    const bundleInItems = getBundleInItems(getState, bundleId);
-    if (bundleInItems) {
-      dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle });
-      const { id, uploadJob } = bundle;
-      if (uploadJob) {
-        dispatch(updateUploadJobs(id, uploadJob));
-      } else {
-        dispatch(updateUploadJobs(id, null, id));
+    try {
+      const apiBundle = await bundleService.fetchById(bundleId);
+      if (!bundleService.apiBundleHasMetadata(apiBundle)) {
+        return; // hasn't downloaded metadata yet. (don't expect to be in our list)
       }
-    } else {
-      dispatch(addBundle(bundle));
-      dispatch(updateSearchResultsForBundleId(bundle.id));
+      const bundle = await bundleService.convertApiBundleToNathanaelBundle(apiBundle);
+      const bundleInItems = getBundleInItems(getState, bundleId);
+      if (bundleInItems) {
+        dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle });
+        const { id, uploadJob } = bundle;
+        if (uploadJob) {
+          dispatch(updateUploadJobs(id, uploadJob));
+        } else {
+          dispatch(updateUploadJobs(id, null, id));
+        }
+      } else {
+        dispatch(addBundle(bundle));
+        dispatch(updateSearchResultsForBundleId(bundle.id));
+      }
+    } catch (error) {
+      if (error.status === 404) {
+        // this has been deleted.
+        return;
+      }
+      throw error;
     }
   };
 }
@@ -330,20 +338,19 @@ export function removeResources(id) {
   }
 }
 
-function removeBundle(id) {
-  return dispatch => {
+export function removeBundle(id) {
+  return async (dispatch, getState) => {
     dispatch(request(id));
-
-    bundleService
-      .delete(id)
-      .then(() => {
-        dispatch(removeBundleSuccess(id));
-        return true;
-      })
-      .catch(error => {
-        dispatch(failure(id, error));
-        return true;
-      });
+    try {
+      const bundleInItems = getBundleInItems(getState, id);
+      if (bundleInItems.mode === 'create') {
+        // don't block operations like 'Delete'
+        await bundleService.stopCreateContent(id);
+      }
+      await bundleService.removeBundle(id);
+    } catch (error) {
+      dispatch(failure(id, error));
+    }
   };
 
   function request(_id) {
