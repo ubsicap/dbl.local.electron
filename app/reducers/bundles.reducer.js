@@ -14,11 +14,13 @@ function sortAndFilterBundlesAsEntries(unsorted) {
     const items = [...acc.items, b];
     return { visitedDblIds, items };
   }, { visitedDblIds: {}, items: [] });
-  const { items } = reducedBundles;
-  return sort(items).asc([
+  const { items: reducedUnsorted } = reducedBundles;
+  const items = sort(reducedUnsorted).asc([
     b => b.displayAs.languageAndCountry,
     b => b.displayAs.name,
   ]);
+  const byBundleIds = unsorted.reduce((acc, bundle) => ({ ...acc, [bundle.id]: bundle }), {});
+  return { items, byBundleIds };
 }
 
 function getSelectedState(state, bundleToToggle, bundleIdToRemove) {
@@ -50,13 +52,14 @@ export function bundles(state = { items: [] }, action) {
       };
     case bundleConstants.FETCH_SUCCESS: {
       const unsorted = action.bundles.map(bundle => addBundleDecorators(bundle));
-      const items = sortAndFilterBundlesAsEntries(unsorted);
+      const { items, byBundleIds } = sortAndFilterBundlesAsEntries(unsorted);
       const uploadJobs = items.filter(b => b.uploadJob).reduce((acc, b) =>
         ({ ...acc, [b.id]: b.uploadJob, [b.uploadJob]: b.id }), {});
       return {
         ...state,
         items,
         unsorted,
+        byBundleIds,
         uploadJobs,
         loading: false,
       };
@@ -100,12 +103,13 @@ export function bundles(state = { items: [] }, action) {
     case bundleConstants.DELETE_SUCCESS: {
       const { id: bundleIdToRemove } = action;
       const unsorted = state.unsorted.filter(bundle => bundle.id !== bundleIdToRemove);
-      const items = sortAndFilterBundlesAsEntries(unsorted);
+      const { items, byBundleIds } = sortAndFilterBundlesAsEntries(unsorted);
       const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, null, bundleIdToRemove);
       return {
         ...state,
         items,
         unsorted,
+        byBundleIds,
         selectedBundle,
         selectedDBLEntryId
       };
@@ -129,13 +133,14 @@ export function bundles(state = { items: [] }, action) {
       const { unsorted: origUnsorted } = state;
       const decoratedBundle = addBundleDecorators(bundle);
       const unsorted = ([decoratedBundle, ...origUnsorted]);
-      const items = sortAndFilterBundlesAsEntries(unsorted);
+      const { items, byBundleIds } = sortAndFilterBundlesAsEntries(unsorted);
       const selectedBundle = decoratedBundle.dblId === state.selectedDBLEntryId ?
         decoratedBundle : state.selectedBundle;
       return {
         ...state,
         items,
         unsorted,
+        byBundleIds,
         selectedBundle
       };
     }

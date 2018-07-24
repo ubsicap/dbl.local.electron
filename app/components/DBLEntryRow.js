@@ -32,6 +32,7 @@ type Props = {
   bundleId: string,
   dblId: string,
   task: string,
+  parent: ?string,
   status: string,
   medium: string,
   displayAs: {},
@@ -42,6 +43,7 @@ type Props = {
   isUploading?: ?boolean,
   isSelected: ?boolean,
   shouldShowRow: boolean,
+  classes: {},
   toggleSelectEntry: () => {},
   downloadResources: () => {},
   requestSaveBundleTo: () => {},
@@ -62,6 +64,9 @@ const mapDispatchToProps = {
 const getIsSearchActive = (state) => state.bundlesFilter.isSearchActive;
 const emptyBundleMatches = {};
 const getEmptryBundleMatches = () => emptyBundleMatches;
+const getBundlesById = (state) => state.bundles.byBundleIds;
+const getParentId = (state, props) => props.parent;
+const getDisplayAs = (stat, props) => props.displayAs;
 
 const getBundleMatches = (state, props) =>
   (state.bundlesFilter.searchResults && state.bundlesFilter.searchResults.bundlesMatching ?
@@ -78,14 +83,31 @@ const makeGetBundleMatches = () => createSelector(
   (isActiveSearch, bundleMatches, emptyMatches) => (isActiveSearch ? bundleMatches : emptyMatches)
 );
 
+const makeGetDisplayAsWithParentRevision = () => createSelector(
+  [getParentId, getBundlesById, getDisplayAs],
+  (parentId, bundlesById, displayAs) => {
+    if (!parentId) {
+      return displayAs;
+    }
+    const parentBundle = bundlesById[parentId];
+    if (!parentBundle) {
+      return displayAs;
+    }
+    const { revision: parentRevision } = parentBundle;
+    return { ...displayAs, revision: `> Rev ${parentRevision}` };
+  }
+);
+
 const makeMapStateToProps = () => {
   const shouldShowRow = makeShouldShowRow();
   const getMatches = makeGetBundleMatches();
+  const getDisplayAsWithParent = makeGetDisplayAsWithParentRevision();
   const mapStateToProps = (state, props) => {
     const { bundlesSaveTo } = state;
     return {
       shouldShowRow: shouldShowRow(state, props),
       bundleMatches: getMatches(state, props),
+      displayAs: getDisplayAsWithParent(state, props),
       bundlesSaveTo
     };
   };
@@ -210,6 +232,14 @@ class DBLEntryRow extends PureComponent<Props> {
     <ControlledHighlighter {...this.getHighlighterSharedProps(this.props.displayAs.status)} />
   );
 
+  renderEditIcon = () => {
+    const { status, classes } = this.props;
+    if (status === 'DRAFT') {
+      return [<Edit key="btnEdit" className={classNames(classes.leftIcon, classes.iconSmall)} />, 'Edit'];
+    }
+    return [<CallSplit key="btnRevise" className={classNames(classes.leftIcon, classes.iconSmall)} />, 'Revise'];
+  };
+
   render() {
     const {
       bundleId,
@@ -300,14 +330,7 @@ class DBLEntryRow extends PureComponent<Props> {
               variant="flat" size="small" className={classes.button}
               onKeyPress={this.onClickEditMetadata}
               onClick={this.onClickEditMetadata}>
-              <Edit className={classNames(classes.leftIcon, classes.iconSmall)} />
-              Edit
-            </Button>
-            <Button variant="flat" size="small" className={classes.button} disabled
-              onKeyPress={stopPropagation}
-              onClick={stopPropagation}>
-              <CallSplit className={classNames(classes.leftIcon, classes.iconSmall)} />
-              Revise
+              {this.renderEditIcon()}
             </Button>
             <Button variant="flat" size="small" className={classes.button}
               disabled={this.hasNotYetDownloadedResources()}

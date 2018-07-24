@@ -120,7 +120,8 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
     mode, metadata, dbl, store, upload
   } = apiBundle;
   const { jobId: uploadJob } = upload || {};
-  const { file_info: fileInfo } = store;
+  const { file_info: fileInfo, labels = {} } = store;
+  const { _parent: parent } = labels;
   const bundleId = apiBundle.local_id;
   let task = dbl.currentRevision === '0' ? 'UPLOAD' : 'DOWNLOAD';
   let status = dbl.currentRevision === '0' ? 'DRAFT' : 'NOT_STARTED';
@@ -129,9 +130,9 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
   if (mode === 'download') {
     task = 'DOWNLOAD';
     status = 'IN_PROGRESS';
-  } if (mode === 'upload') {
+  } else if (mode === 'upload' || mode === 'create') {
     task = 'UPLOAD';
-    status = 'IN_PROGRESS';
+    status = mode === 'create' ? 'DRAFT' : 'IN_PROGRESS';
   } else if (mode === 'store' && task === 'DOWNLOAD' && fileInfo && Object.keys(fileInfo).length > 1) {
     // compare the manifest and resources to determine whether user can download more or not.
     const manifestPaths = await getManifestResourcePaths(bundleId);
@@ -160,7 +161,8 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
     status,
     uploadJob,
     resourceCountStored,
-    resourceCountManifest
+    resourceCountManifest,
+    parent
   };
 }
 
