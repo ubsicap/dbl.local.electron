@@ -82,6 +82,7 @@ export function editActiveFormInput(formKey, inputName, newValue) {
 
 export function openEditMetadata(bundleId) {
   return async dispatch => {
+    dispatch(request(bundleId));
     const bundleInfo = await bundleService.fetchById(bundleId);
     if (bundleInfo.mode !== 'create') {
       const { dbl } = bundleInfo;
@@ -101,13 +102,14 @@ export function openEditMetadata(bundleId) {
     } else {
       dispatchSuccess(bundleId);
     }
-
     function dispatchSuccess(_bundleId) {
       dispatch(success(_bundleId));
       navigate(_bundleId);
     }
   };
-
+  function request(_bundleId) {
+    return { type: bundleEditMetadataConstants.OPEN_EDIT_METADATA_REQUEST, bundleId: _bundleId };
+  }
   function success(_bundleId) {
     return { type: bundleEditMetadataConstants.OPEN_EDIT_METADATA, bundleId: _bundleId };
   }

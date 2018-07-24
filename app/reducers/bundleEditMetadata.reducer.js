@@ -26,9 +26,16 @@ function changeStateForNewActiveForm(state, newState) {
 
 export function bundleEditMetadata(state = initialState, action) {
   switch (action.type) {
+    case bundleEditMetadataConstants.OPEN_EDIT_METADATA_REQUEST: {
+      return {
+        ...state,
+        requestingRevision: action.bundleId
+      };
+    }
     case bundleEditMetadataConstants.OPEN_EDIT_METADATA: {
       return {
         ...state,
+        requestingRevision: null,
         editingMetadata: action.bundleId
       };
     }

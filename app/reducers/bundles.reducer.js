@@ -23,7 +23,7 @@ function sortAndFilterBundlesAsEntries(unsorted) {
   return { items, byBundleIds };
 }
 
-function getSelectedState(state, bundleToToggle, bundleIdToRemove) {
+function getSelectedState(state, bundleToToggle, bundleIdToRemove, newItems) {
   const { selectedBundle: origSelectedBundle = {} } = state;
   const { id: origSelectedBundleId } = origSelectedBundle || {};
   if (bundleToToggle) {
@@ -36,9 +36,11 @@ function getSelectedState(state, bundleToToggle, bundleIdToRemove) {
     };
   }
   if (bundleIdToRemove && bundleIdToRemove === origSelectedBundleId) {
+    const [newBundleToSelect] = origSelectedBundleId === bundleIdToRemove ?
+      newItems.filter(b => b.dblId === origSelectedBundle.dblId) : [];
     return {
-      selectedBundle: null,
-      selectedDBLEntryId: null
+      selectedBundle: newBundleToSelect,
+      selectedDBLEntryId: newBundleToSelect.dblId
     };
   }
 }
@@ -104,7 +106,7 @@ export function bundles(state = { items: [] }, action) {
       const { id: bundleIdToRemove } = action;
       const unsorted = state.unsorted.filter(bundle => bundle.id !== bundleIdToRemove);
       const { items, byBundleIds } = sortAndFilterBundlesAsEntries(unsorted);
-      const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, null, bundleIdToRemove);
+      const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, null, bundleIdToRemove, items);
       return {
         ...state,
         items,

@@ -46,6 +46,7 @@ type Props = {
   isSelected: ?boolean,
   shouldShowRow: boolean,
   classes: {},
+  isRequestingRevision: boolean,
   toggleSelectEntry: () => {},
   downloadResources: () => {},
   requestSaveBundleTo: () => {},
@@ -70,7 +71,8 @@ const emptyBundleMatches = {};
 const getEmptryBundleMatches = () => emptyBundleMatches;
 const getBundlesById = (state) => state.bundles.byBundleIds;
 const getParentId = (state, props) => props.parent;
-const getDisplayAs = (stat, props) => props.displayAs;
+const getDisplayAs = (state, props) => props.displayAs;
+const getBundleId = (state, props) => props.bundleId;
 
 const getBundleMatches = (state, props) =>
   (state.bundlesFilter.searchResults && state.bundlesFilter.searchResults.bundlesMatching ?
@@ -102,13 +104,22 @@ const makeGetDisplayAsWithParentRevision = () => createSelector(
   }
 );
 
+const getRequestingRevision = (state) => state.bundleEditMetadata.requestingRevision;
+
+const makeGetIsRequestingRevision = () => createSelector(
+  [getRequestingRevision, getBundleId],
+  (requestingRevision, bundleId) => (requestingRevision === bundleId)
+);
+
 const makeMapStateToProps = () => {
   const shouldShowRow = makeShouldShowRow();
   const getMatches = makeGetBundleMatches();
   const getDisplayAsWithParent = makeGetDisplayAsWithParentRevision();
+  const getIsRequestingRevision = makeGetIsRequestingRevision();
   const mapStateToProps = (state, props) => {
     const { bundlesSaveTo } = state;
     return {
+      isRequestingRevision: getIsRequestingRevision(state, props),
       shouldShowRow: shouldShowRow(state, props),
       bundleMatches: getMatches(state, props),
       displayAs: getDisplayAsWithParent(state, props),
@@ -247,11 +258,16 @@ class DBLEntryRow extends PureComponent<Props> {
   );
 
   renderEditIcon = () => {
-    const { status, classes } = this.props;
+    const { status, classes, isRequestingRevision } = this.props;
     if (status === 'DRAFT') {
       return [<Edit key="btnEdit" className={classNames(classes.leftIcon, classes.iconSmall)} />, 'Edit'];
     }
-    return [<CallSplit key="btnRevise" className={classNames(classes.leftIcon, classes.iconSmall)} />, 'Revise'];
+    return [
+      <CallSplit
+        disabled={isRequestingRevision}
+        key="btnRevise"
+        className={classNames(classes.leftIcon, classes.iconSmall)}
+      />, 'Revise'];
   };
 
   renderbtnDeleteBundleOrCleanResources = () => {
