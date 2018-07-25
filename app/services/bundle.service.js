@@ -121,8 +121,8 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
     mode, metadata, dbl, store, upload
   } = apiBundle;
   const { jobId: uploadJob } = upload || {};
-  const { file_info: fileInfo, labels = {} } = store;
-  const { _parent: parent } = labels;
+  const { file_info: fileInfo } = store;
+  const { parent } = dbl;
   const bundleId = apiBundle.local_id;
   let task = dbl.currentRevision === '0' ? 'UPLOAD' : 'DOWNLOAD';
   let status = dbl.currentRevision === '0' ? 'DRAFT' : 'NOT_STARTED';

@@ -33,7 +33,6 @@ type Props = {
   bundleId: string,
   dblId: string,
   task: string,
-  parent: ?string,
   status: string,
   medium: string,
   displayAs: {},
@@ -69,9 +68,6 @@ const mapDispatchToProps = {
 const getIsSearchActive = (state) => state.bundlesFilter.isSearchActive;
 const emptyBundleMatches = {};
 const getEmptryBundleMatches = () => emptyBundleMatches;
-const getBundlesById = (state) => state.bundles.byBundleIds;
-const getParentId = (state, props) => props.parent;
-const getDisplayAs = (state, props) => props.displayAs;
 const getBundleId = (state, props) => props.bundleId;
 
 const getBundleMatches = (state, props) =>
@@ -89,21 +85,6 @@ const makeGetBundleMatches = () => createSelector(
   (isActiveSearch, bundleMatches, emptyMatches) => (isActiveSearch ? bundleMatches : emptyMatches)
 );
 
-const makeGetDisplayAsWithParentRevision = () => createSelector(
-  [getParentId, getBundlesById, getDisplayAs],
-  (parentId, bundlesById, displayAs) => {
-    if (!parentId) {
-      return displayAs;
-    }
-    const parentBundle = bundlesById[parentId];
-    if (!parentBundle) {
-      return displayAs;
-    }
-    const { revision: parentRevision } = parentBundle;
-    return { ...displayAs, revision: `> Rev ${parentRevision}` };
-  }
-);
-
 const getRequestingRevision = (state) => state.bundleEditMetadata.requestingRevision;
 
 const makeGetIsRequestingRevision = () => createSelector(
@@ -114,7 +95,6 @@ const makeGetIsRequestingRevision = () => createSelector(
 const makeMapStateToProps = () => {
   const shouldShowRow = makeShouldShowRow();
   const getMatches = makeGetBundleMatches();
-  const getDisplayAsWithParent = makeGetDisplayAsWithParentRevision();
   const getIsRequestingRevision = makeGetIsRequestingRevision();
   const mapStateToProps = (state, props) => {
     const { bundlesSaveTo } = state;
@@ -122,7 +102,6 @@ const makeMapStateToProps = () => {
       isRequestingRevision: getIsRequestingRevision(state, props),
       shouldShowRow: shouldShowRow(state, props),
       bundleMatches: getMatches(state, props),
-      displayAs: getDisplayAsWithParent(state, props),
       bundlesSaveTo
     };
   };

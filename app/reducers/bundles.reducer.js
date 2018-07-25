@@ -311,9 +311,20 @@ function addBundleDecorators(bundle, addCustomDecoration) {
   return { ...coreDecorated, ...customDecoration };
 }
 
+function formatRevisionDisplayAs(bundle) {
+  const { parent, revision } = bundle;
+  if (!revision && !parent) {
+    return 'Update';
+  }
+  if (parent) {
+    const { revision: parentRevision } = parent;
+    return `> Rev ${parentRevision}`;
+  }
+  return `Rev ${revision}`;
+}
 
 function formatDisplayAs(bundle) {
-  const revision = (!bundle.revision ? 'Update' : `Rev ${bundle.revision}`);
+  const revision = formatRevisionDisplayAs(bundle);
   return {
     displayAs: {
       languageAndCountry: formatLanguageAndCountry(bundle),
