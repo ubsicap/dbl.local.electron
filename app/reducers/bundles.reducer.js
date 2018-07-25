@@ -19,16 +19,20 @@ function sortAndFilterBundlesAsEntries(unsorted) {
     b => b.displayAs.languageAndCountry,
     b => b.displayAs.name,
   ]);
-  const byBundleIds = unsorted.reduce((acc, bundle) => ({ ...acc, [bundle.id]: bundle }), {});
-  return { items, byBundleIds };
+  const byBundleIds = items.reduce((acc, bundle) => ({ ...acc, [bundle.id]: bundle }), {});
+  const byBundleDblIds = items.reduce((acc, bundle) => ({ ...acc, [bundle.dblId]: bundle }), {});
+  return { items, byBundleIds, byBundleDblIds };
 }
 
-function getSelectedState(state, bundleToToggle, bundleIdToRemove, newItems) {
+function getSelectedState(state, bundleToToggle, bundleIdToRemove, newItemsByDblIds) {
   const { selectedBundle: origSelectedBundle = {} } = state;
   const { id: origSelectedBundleId } = origSelectedBundle || {};
   if (bundleToToggle) {
+    const newBundleToSelect = newItemsByDblIds ?
+      newItemsByDblIds[origSelectedBundle.dblId] :
+      bundleToToggle;
     const selectedBundle = bundleToToggle.id === origSelectedBundleId ?
-      null : bundleToToggle;
+      null : newBundleToSelect;
     const { dblId: selectedDBLEntryId } = selectedBundle || {};
     return {
       selectedBundle,
@@ -36,13 +40,17 @@ function getSelectedState(state, bundleToToggle, bundleIdToRemove, newItems) {
     };
   }
   if (bundleIdToRemove && bundleIdToRemove === origSelectedBundleId) {
-    const [newBundleToSelect] = origSelectedBundleId === bundleIdToRemove ?
-      newItems.filter(b => b.dblId === origSelectedBundle.dblId) : [];
+    const newBundleToSelect = origSelectedBundleId === bundleIdToRemove ?
+      newItemsByDblIds[origSelectedBundle.dblId] : [];
     return {
       selectedBundle: newBundleToSelect,
       selectedDBLEntryId: newBundleToSelect.dblId
     };
   }
+  return {
+    selectedBundle: origSelectedBundle,
+    selectedDBLEntryId: origSelectedBundle.dblId
+  };
 }
 
 export function bundles(state = { items: [] }, action) {
@@ -105,8 +113,8 @@ export function bundles(state = { items: [] }, action) {
     case bundleConstants.DELETE_SUCCESS: {
       const { id: bundleIdToRemove } = action;
       const unsorted = state.unsorted.filter(bundle => bundle.id !== bundleIdToRemove);
-      const { items, byBundleIds } = sortAndFilterBundlesAsEntries(unsorted);
-      const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, null, bundleIdToRemove, items);
+      const { items, byBundleIds, byBundleDblIds } = sortAndFilterBundlesAsEntries(unsorted);
+      const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, null, bundleIdToRemove, byBundleDblIds);
       return {
         ...state,
         items,
@@ -135,15 +143,15 @@ export function bundles(state = { items: [] }, action) {
       const { unsorted: origUnsorted } = state;
       const decoratedBundle = addBundleDecorators(bundle);
       const unsorted = ([decoratedBundle, ...origUnsorted]);
-      const { items, byBundleIds } = sortAndFilterBundlesAsEntries(unsorted);
-      const selectedBundle = decoratedBundle.dblId === state.selectedDBLEntryId ?
-        decoratedBundle : state.selectedBundle;
+      const { items, byBundleIds, byBundleDblIds } = sortAndFilterBundlesAsEntries(unsorted);
+      const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, decoratedBundle, null, byBundleDblIds);
       return {
         ...state,
         items,
         unsorted,
         byBundleIds,
-        selectedBundle
+        selectedBundle,
+        selectedDBLEntryId
       };
     }
     case bundleConstants.DOWNLOAD_RESOURCES_REQUEST: {
@@ -160,7 +168,9 @@ export function bundles(state = { items: [] }, action) {
       }));
     }
     case bundleConstants.UPLOAD_RESOURCES_UPDATE_PROGRESS: {
-      const percentage = Math.floor((action.resourceCountUploaded / action.resourceCountToUpload) * 100);
+      const percentage = action.resourceCountToUpload > 0 ?
+        Math.floor((action.resourceCountUploaded / action.resourceCountToUpload) * 100) :
+        100/* metadata only */;
       return updateTaskStatusProgress(action.bundleId, 'UPLOAD', 'IN_PROGRESS', percentage, () => ({
         isUploading: true
       }));

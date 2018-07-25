@@ -275,14 +275,16 @@ function addBundle(bundle) {
 
 function getBundleInItems(getState, bundleId) {
   const { bundles } = getState();
-  const bundleInItems = bundles.items.find(bundle => bundle.id === bundleId);
+  const { byBundleIds = {} } = bundles;
+  const bundleInItems = byBundleIds[bundleId];
   return bundleInItems;
 }
 
 
 export function uploadBundle(id) {
-  return async dispatch => {
+  return async (dispatch, getState) => {
     try {
+      unlockCreateMode(getState, id);
       dispatch(request(id));
       await bundleService.startUploadBundle(id);
     } catch (errorReadable) {
@@ -338,15 +340,19 @@ export function removeResources(id) {
   }
 }
 
+async function unlockCreateMode(getState, bundleId) {
+  const bundleInfo = await bundleService.fetchById(bundleId);
+  if (bundleInfo.mode === 'create') {
+    // unblock block tasks like 'Delete'
+    await bundleService.stopCreateContent(bundleId);
+  }
+}
+
 export function removeBundle(id) {
   return async (dispatch, getState) => {
     dispatch(request(id));
     try {
-      const bundleInItems = getBundleInItems(getState, id);
-      if (bundleInItems.mode === 'create') {
-        // don't block operations like 'Delete'
-        await bundleService.stopCreateContent(id);
-      }
+      unlockCreateMode(getState, id);
       await bundleService.removeBundle(id);
     } catch (error) {
       dispatch(failure(id, error));
