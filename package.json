@@ -63,7 +63,8 @@
       ],
       "publish": [
         "github"
-      ]
+      ],
+      "extraFiles": ["./resources/extraFiles/**"]
     },
     "linux": {
       "target": [
