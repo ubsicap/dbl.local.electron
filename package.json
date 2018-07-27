@@ -63,8 +63,7 @@
       ],
       "publish": [
         "github"
-      ],
-      "extraFiles": ["./resources/extraFiles/**"]
+      ]
     },
     "linux": {
       "target": [
@@ -76,7 +75,8 @@
     "directories": {
       "buildResources": "resources",
       "output": "release"
-    }
+    },
+    "extraFiles": ["resources/extraFiles/**"]
   },
   "repository": {
     "type": "git",

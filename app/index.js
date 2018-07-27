@@ -24,6 +24,7 @@ async function ensureDblDotLocal() {
     if (error.message === 'Failed to fetch') {
       // try to start local dbl_dot_local.exe process if it exists.
       const dblDotLocalExecPath = getDblDotLocalExecPath();
+      console.log(dblDotLocalExecPath);
       if (fs.exists(dblDotLocalExecPath)) {
         const cwd = getDblDotLocalExecCwd();
         execFile(dblDotLocalExecPath, {
@@ -38,9 +39,10 @@ async function ensureDblDotLocal() {
 }
 
 function getDblDotLocalExecCwd() {
-  const appPath = app.getAppPath();
+  // https://github.com/chentsulin/electron-react-boilerplate/issues/1047#issuecomment-319359165
+  const resourcesPath = path.resolve(app.getAppPath(), '../');
   const cwd = (process.env.NODE_ENV === 'production' ?
-    path.join(appPath, 'dbl_dot_local') :
+    path.join(resourcesPath, 'extraFiles', 'dbl_dot_local') :
     path.join(__dirname, '..', 'resources', 'extraFiles', 'dbl_dot_local'));
   return cwd;
 }
