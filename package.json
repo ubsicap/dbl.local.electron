@@ -63,7 +63,8 @@
       ],
       "publish": [
         "github"
-      ]
+      ],
+      "forceCodeSigning": true
     },
     "linux": {
       "target": [
