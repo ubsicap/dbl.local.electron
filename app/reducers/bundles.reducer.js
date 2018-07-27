@@ -1,8 +1,8 @@
 import sort from 'fast-sort';
 import { bundleConstants } from '../constants/bundle.constants';
 
-function sortAndFilterBundlesAsEntries(unsorted) {
-  const sortedBundles = sort(unsorted).asc([
+function sortAndFilterBundlesAsEntries(allBundles) {
+  const sortedBundles = sort(allBundles).asc([
     b => b.dblId,
     b => (b.revision === '0' || !b.revision ? ~10000000 : ~b.revision) // eslint-disable-line no-bitwise
   ]);
@@ -53,7 +53,7 @@ function getSelectedState(state, bundleToToggle, bundleIdToRemove, newItemsByDbl
   };
 }
 
-export function bundles(state = { items: [] }, action) {
+export function bundles(state = { items: [], allBundles: [] }, action) {
   switch (action.type) {
     case bundleConstants.FETCH_REQUEST:
       return {
@@ -61,14 +61,14 @@ export function bundles(state = { items: [] }, action) {
         loading: true
       };
     case bundleConstants.FETCH_SUCCESS: {
-      const unsorted = action.bundles.map(bundle => addBundleDecorators(bundle));
-      const { items, addedByBundleIds } = sortAndFilterBundlesAsEntries(unsorted);
+      const allBundles = action.bundles.map(bundle => addBundleDecorators(bundle));
+      const { items, addedByBundleIds } = sortAndFilterBundlesAsEntries(allBundles);
       const uploadJobs = items.filter(b => b.uploadJob).reduce((acc, b) =>
         ({ ...acc, [b.id]: b.uploadJob, [b.uploadJob]: b.id }), {});
       return {
         ...state,
         items,
-        unsorted,
+        allBundles,
         addedByBundleIds,
         uploadJobs,
         loading: false,
@@ -101,54 +101,31 @@ export function bundles(state = { items: [] }, action) {
         uploadJobs
       };
     }
-    case bundleConstants.DELETE_REQUEST:
-      // add 'deleting:true' property to bundle being deleted
-      return {
-        ...state,
-        items: state.items.map(bundle =>
-          (bundle.id === action.id
-            ? { ...bundle, deleting: true }
-            : bundle))
-      };
     case bundleConstants.DELETE_SUCCESS: {
       const { id: bundleIdToRemove } = action;
-      const unsorted = state.unsorted.filter(bundle => bundle.id !== bundleIdToRemove);
-      const { items, addedByBundleIds, byBundleDblIds } = sortAndFilterBundlesAsEntries(unsorted);
+      const allBundles = state.allBundles.filter(bundle => bundle.id !== bundleIdToRemove);
+      const { items, addedByBundleIds, byBundleDblIds } = sortAndFilterBundlesAsEntries(allBundles);
       const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, null, bundleIdToRemove, byBundleDblIds);
       return {
         ...state,
         items,
-        unsorted,
+        allBundles,
         addedByBundleIds,
         selectedBundle,
         selectedDBLEntryId
       };
     }
-    case bundleConstants.DELETE_FAILURE:
-    // remove 'deleting:true' property and add 'deleteError:[error]' property to bundle
-      return {
-        ...state,
-        items: state.items.map(bundle => {
-          if (bundle.id === action.id) {
-            // make copy of bundle without 'deleting:true' property
-            const { deleting, ...bundleCopy } = bundle;
-            // return copy of bundle with 'deleteError:[error]' property
-            return { ...bundleCopy, deleteError: action.error };
-          }
-          return bundle;
-        })
-      };
     case bundleConstants.ADD_BUNDLE: {
       const { bundle } = action;
-      const { unsorted: origUnsorted } = state;
+      const { allBundles: origUnsorted } = state;
       const decoratedBundle = addBundleDecorators(bundle);
-      const unsorted = ([decoratedBundle, ...origUnsorted]);
-      const { items, addedByBundleIds, byBundleDblIds } = sortAndFilterBundlesAsEntries(unsorted);
+      const allBundles = ([decoratedBundle, ...origUnsorted]);
+      const { items, addedByBundleIds, byBundleDblIds } = sortAndFilterBundlesAsEntries(allBundles);
       const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, decoratedBundle, null, byBundleDblIds);
       return {
         ...state,
         items,
-        unsorted,
+        allBundles,
         addedByBundleIds,
         selectedBundle,
         selectedDBLEntryId
@@ -260,10 +237,13 @@ export function bundles(state = { items: [] }, action) {
   }
 
   function updateTaskStatusProgress(bundleId, task, status, progress, updateDecorators) {
-    const items = updateBundleItems(bundleId, task, status, progress, updateDecorators);
+    const allBundles = updateBundleItems(bundleId, task, status, progress, updateDecorators);
+    const { items, addedByBundleIds } = sortAndFilterBundlesAsEntries(allBundles);
     return {
       ...state,
-      items
+      items,
+      allBundles,
+      addedByBundleIds
     };
   }
 
@@ -277,7 +257,7 @@ export function bundles(state = { items: [] }, action) {
   }
 
   function updateBundleItems(bundleId, task, status, progress, updateDecorators) {
-    return state.items.map(bundle => (bundle.id === bundleId
+    return state.allBundles.map(bundle => (bundle.id === bundleId
       ? updateBundleItem(bundle, task, status, progress, updateDecorators)
       : bundle));
   }
