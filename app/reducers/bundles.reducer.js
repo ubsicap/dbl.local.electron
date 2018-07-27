@@ -19,9 +19,9 @@ function sortAndFilterBundlesAsEntries(unsorted) {
     b => b.displayAs.languageAndCountry,
     b => b.displayAs.name,
   ]);
-  const byBundleIds = items.reduce((acc, bundle) => ({ ...acc, [bundle.id]: bundle }), {});
+  const addedByBundleIds = sortedBundles.reduce((acc, bundle) => ({ ...acc, [bundle.id]: bundle }), {});
   const byBundleDblIds = items.reduce((acc, bundle) => ({ ...acc, [bundle.dblId]: bundle }), {});
-  return { items, byBundleIds, byBundleDblIds };
+  return { items, addedByBundleIds, byBundleDblIds };
 }
 
 function getSelectedState(state, bundleToToggle, bundleIdToRemove, newItemsByDblIds) {
@@ -62,14 +62,14 @@ export function bundles(state = { items: [] }, action) {
       };
     case bundleConstants.FETCH_SUCCESS: {
       const unsorted = action.bundles.map(bundle => addBundleDecorators(bundle));
-      const { items, byBundleIds } = sortAndFilterBundlesAsEntries(unsorted);
+      const { items, addedByBundleIds } = sortAndFilterBundlesAsEntries(unsorted);
       const uploadJobs = items.filter(b => b.uploadJob).reduce((acc, b) =>
         ({ ...acc, [b.id]: b.uploadJob, [b.uploadJob]: b.id }), {});
       return {
         ...state,
         items,
         unsorted,
-        byBundleIds,
+        addedByBundleIds,
         uploadJobs,
         loading: false,
       };
@@ -113,13 +113,13 @@ export function bundles(state = { items: [] }, action) {
     case bundleConstants.DELETE_SUCCESS: {
       const { id: bundleIdToRemove } = action;
       const unsorted = state.unsorted.filter(bundle => bundle.id !== bundleIdToRemove);
-      const { items, byBundleIds, byBundleDblIds } = sortAndFilterBundlesAsEntries(unsorted);
+      const { items, addedByBundleIds, byBundleDblIds } = sortAndFilterBundlesAsEntries(unsorted);
       const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, null, bundleIdToRemove, byBundleDblIds);
       return {
         ...state,
         items,
         unsorted,
-        byBundleIds,
+        addedByBundleIds,
         selectedBundle,
         selectedDBLEntryId
       };
@@ -143,13 +143,13 @@ export function bundles(state = { items: [] }, action) {
       const { unsorted: origUnsorted } = state;
       const decoratedBundle = addBundleDecorators(bundle);
       const unsorted = ([decoratedBundle, ...origUnsorted]);
-      const { items, byBundleIds, byBundleDblIds } = sortAndFilterBundlesAsEntries(unsorted);
+      const { items, addedByBundleIds, byBundleDblIds } = sortAndFilterBundlesAsEntries(unsorted);
       const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, decoratedBundle, null, byBundleDblIds);
       return {
         ...state,
         items,
         unsorted,
-        byBundleIds,
+        addedByBundleIds,
         selectedBundle,
         selectedDBLEntryId
       };
@@ -233,17 +233,6 @@ export function bundles(state = { items: [] }, action) {
         return updateBundleItem(updatedBundle, bundle.task, bundle.status, bundle.progress);
       });
     }
-    case bundleConstants.TOGGLE_MODE_PAUSE_RESUME: {
-      const updatedItems = forkArray(
-        state.items,
-        bundle => bundle.id === action.id,
-        bundle => buildToggledBundle(bundle)
-      );
-      return {
-        ...state,
-        items: updatedItems
-      };
-    }
     case bundleConstants.TOGGLE_SELECT: {
       const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, action.selectedBundle);
       return {
@@ -294,21 +283,6 @@ export function bundles(state = { items: [] }, action) {
   }
 }
 export default bundles;
-
-function forkArray(array, condition, createItem) {
-  return array.map((item, index) => (condition(item, index) ? createItem(item) : item));
-}
-
-function buildToggledBundle(bundle) {
-  const newMode = bundle.status === 'NOT_STARTED' || bundle.mode === 'PAUSED' ? 'RUNNING' : 'PAUSED';
-  const newStatus = bundle.status === 'NOT_STARTED' ? `${bundle.task}ING` : bundle.status;
-  const updatedBundle = {
-    ...bundle,
-    status: newStatus,
-    mode: newMode,
-  };
-  return addBundleDecorators(updatedBundle);
-}
 
 function addBundleDecorators(bundle, addCustomDecoration) {
   const isDownloaded = bundle.task === 'DOWNLOAD' && bundle.status === 'COMPLETED';

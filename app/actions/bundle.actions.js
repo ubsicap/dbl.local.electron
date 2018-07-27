@@ -15,7 +15,6 @@ export const bundleActions = {
   downloadResources,
   requestSaveBundleTo,
   removeResources,
-  toggleModePauseResume,
   toggleSelectEntry,
   uploadBundle
 };
@@ -29,13 +28,13 @@ export function updateBundle(bundleId) {
       return;
     }
     try {
-      const apiBundle = await bundleService.fetchById(bundleId);
-      if (!bundleService.apiBundleHasMetadata(apiBundle)) {
+      const rawBundle = await bundleService.fetchById(bundleId);
+      if (!bundleService.apiBundleHasMetadata(rawBundle)) {
         return; // hasn't downloaded metadata yet. (don't expect to be in our list)
       }
-      const bundle = await bundleService.convertApiBundleToNathanaelBundle(apiBundle);
-      const bundleInItems = getBundleInItems(getState, bundleId);
-      if (bundleInItems) {
+      const bundle = await bundleService.convertApiBundleToNathanaelBundle(rawBundle);
+      const addedBundle = getAddedBundle(getState, bundleId);
+      if (addedBundle) {
         dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle });
         const { id, uploadJob } = bundle;
         if (uploadJob) {
@@ -44,7 +43,7 @@ export function updateBundle(bundleId) {
           dispatch(updateUploadJobs(id, null, id));
         }
       } else {
-        dispatch(addBundle(bundle));
+        dispatch(addBundle(bundle, rawBundle));
         dispatch(updateSearchResultsForBundleId(bundle.id));
       }
     } catch (error) {
@@ -252,32 +251,33 @@ export function setupBundlesEventSource(authentication) {
   async function listenStorerUpdateFromDownload(e, dispatch, getState) {
     const data = JSON.parse(e.data);
     const bundleId = data.args[0];
-    const apiBundle = await bundleService.fetchById(bundleId);
-    if (bundleService.apiBundleHasMetadata(apiBundle)) {
-      const bundleInItems = getBundleInItems(getState, bundleId);
-      if (bundleInItems) {
+    const rawBundle = await bundleService.fetchById(bundleId);
+    if (bundleService.apiBundleHasMetadata(rawBundle)) {
+      const addedBundle = getAddedBundle(getState, bundleId);
+      if (addedBundle) {
         return; // already exists in items.
       }
       // we just downloaded metadata.xml
-      const bundle = await bundleService.convertApiBundleToNathanaelBundle(apiBundle);
-      dispatch(addBundle(bundle));
+      const bundle = await bundleService.convertApiBundleToNathanaelBundle(rawBundle);
+      dispatch(addBundle(bundle, rawBundle));
       dispatch(updateSearchResultsForBundleId(bundle.id));
     }
   }
 }
 
-function addBundle(bundle) {
+function addBundle(bundle, rawBundle) {
   return {
     type: bundleConstants.ADD_BUNDLE,
-    bundle
+    bundle,
+    rawBundle
   };
 }
 
-function getBundleInItems(getState, bundleId) {
+function getAddedBundle(getState, bundleId) {
   const { bundles } = getState();
-  const { byBundleIds = {} } = bundles;
-  const bundleInItems = byBundleIds[bundleId];
-  return bundleInItems;
+  const { addedByBundleIds = {} } = bundles;
+  const addedBundles = addedByBundleIds[bundleId];
+  return addedBundles;
 }
 
 
@@ -451,10 +451,6 @@ export function requestSaveBundleTo(id, selectedFolder) {
   function failure(_id, error) {
     return { type: bundleConstants.SAVETO_FAILURE, id: _id, error };
   }
-}
-
-export function toggleModePauseResume(id) {
-  return { type: bundleConstants.TOGGLE_MODE_PAUSE_RESUME, id };
 }
 
 export function toggleSelectEntry(selectedBundle) {
