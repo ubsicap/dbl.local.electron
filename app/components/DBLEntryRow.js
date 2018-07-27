@@ -46,6 +46,7 @@ type Props = {
   shouldShowRow: boolean,
   classes: {},
   isRequestingRevision: boolean,
+  entryPageUrl: string,
   toggleSelectEntry: () => {},
   downloadResources: () => {},
   requestSaveBundleTo: () => {},
@@ -92,17 +93,26 @@ const makeGetIsRequestingRevision = () => createSelector(
   (requestingRevision, bundleId) => (requestingRevision === bundleId)
 );
 
+const getDblBaseUrl = (state) => state.dblDotLocalConfig.dblBaseUrl;
+const getPropsDblId = (state, props) => props.dblId;
+const makeGetEntryPageUrl = () => createSelector(
+  [getDblBaseUrl, getPropsDblId],
+  (dblBaseUrl, dblId) => (`${dblBaseUrl}/entry?id=${dblId}`)
+);
+
 const makeMapStateToProps = () => {
   const shouldShowRow = makeShouldShowRow();
   const getMatches = makeGetBundleMatches();
   const getIsRequestingRevision = makeGetIsRequestingRevision();
+  const getEntryPageUrl = makeGetEntryPageUrl();
   const mapStateToProps = (state, props) => {
     const { bundlesSaveTo } = state;
     return {
       isRequestingRevision: getIsRequestingRevision(state, props),
       shouldShowRow: shouldShowRow(state, props),
       bundleMatches: getMatches(state, props),
-      bundlesSaveTo
+      bundlesSaveTo,
+      entryPageUrl: getEntryPageUrl(state, props)
     };
   };
   return mapStateToProps;
@@ -216,8 +226,8 @@ class DBLEntryRow extends PureComponent<Props> {
   }
 
   onOpenDBLEntryLink = (event) => {
-    const { dblId } = this.props;
-    onOpenLink(event, `https://thedigitalbiblelibrary.org/entry?id=${dblId}`);
+    const { entryPageUrl } = this.props;
+    onOpenLink(event, entryPageUrl);
   }
 
   onClickDeleteBundle = (event) => {
