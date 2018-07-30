@@ -1,9 +1,12 @@
 import sort from 'fast-sort';
 
+const { shell } = require('electron');
+
 export const utilities = {
   areEqualArrays,
   areEqualArraysDeep,
   areEqualCollections,
+  onOpenLink
 };
 export default utilities;
 
@@ -25,4 +28,12 @@ export function areEqualArraysDeep(a1, a2) {
 
 export function areEqualCollections(c1, c2) {
   return areEqualArrays(c1, c2, (c) => sort(c).asc());
+}
+
+function onOpenLink(url) {
+  return (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    shell.openExternal(url);
+  };
 }

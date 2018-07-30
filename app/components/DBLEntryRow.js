@@ -12,6 +12,7 @@ import Print from '@material-ui/icons/Print';
 import FlatButton from 'material-ui/FlatButton';
 import Button from '@material-ui/core/Button';
 import Toolbar from '@material-ui/core/Toolbar';
+import Tooltip from '@material-ui/core/Tooltip';
 import FileDownload from 'material-ui/svg-icons/file/file-download';
 import FolderOpen from 'material-ui/svg-icons/file/folder-open';
 import Save from '@material-ui/icons/Save';
@@ -25,6 +26,7 @@ import ControlledHighlighter from './ControlledHighlighter';
 import { toggleSelectEntry, requestSaveBundleTo, removeResources, removeBundle,
   downloadResources, uploadBundle } from '../actions/bundle.actions';
 import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
+import { utilities } from '../utils/utilities';
 
 const { dialog, app } = require('electron').remote;
 const { shell } = require('electron');
@@ -226,8 +228,7 @@ class DBLEntryRow extends PureComponent<Props> {
   }
 
   onOpenDBLEntryLink = (event) => {
-    const { entryPageUrl } = this.props;
-    onOpenLink(event, entryPageUrl);
+    utilities.onOpenLink(this.props.entryPageUrl)(event);
   }
 
   onClickDeleteBundle = (event) => {
@@ -337,12 +338,14 @@ class DBLEntryRow extends PureComponent<Props> {
               />
             )}
             {this.showInfoButton() && (
-              <FlatButton
-                labelPosition="before"
-                label={<ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
-                icon={<Link color="inherit" />}
-                onClick={this.onOpenDBLEntryLink}
-              />
+              <Tooltip title={this.props.entryPageUrl} placement="left">
+                <FlatButton
+                  labelPosition="before"
+                  label={<ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
+                  icon={<Link color="inherit" />}
+                  onClick={this.onOpenDBLEntryLink}
+                />
+              </Tooltip>
             )}
             {this.showStatusAsText() && (
               <div style={{ paddingRight: '20px', paddingTop: '6px' }}>
@@ -383,13 +386,16 @@ class DBLEntryRow extends PureComponent<Props> {
               <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
               Save To
             </Button>
-            <Button variant="flat" size="small" className={classes.button}
-              disabled={dblId === undefined}
-              onKeyPress={this.onOpenDBLEntryLink}
-              onClick={this.onOpenDBLEntryLink}>
-              <Link className={classNames(classes.leftIcon, classes.iconSmall)} />
-              DBL
-            </Button>
+            <Tooltip title={this.props.entryPageUrl} placement="right">
+              <Button variant="flat" size="small" className={classes.button}
+                disabled={dblId === undefined}
+                onKeyPress={this.onOpenDBLEntryLink}
+                onClick={this.onOpenDBLEntryLink}
+              >
+                <Link className={classNames(classes.leftIcon, classes.iconSmall)} />
+                DBL
+              </Button>
+            </Tooltip>
             {this.renderbtnDeleteBundleOrCleanResources()}
             <Button variant="flat" size="small" className={classes.button}
               disabled={this.shouldDisableUpload()}
@@ -456,10 +462,3 @@ function stopPropagation(event) {
   event.stopPropagation();
   return null;
 }
-
-function onOpenLink(event, url) {
-  event.preventDefault();
-  event.stopPropagation();
-  shell.openExternal(url);
-}
-

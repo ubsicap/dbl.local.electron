@@ -2,7 +2,7 @@ import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 
 export const dblDotLocalConfigActions = {
-
+  loadHtmlBaseUrl
 };
 
 export default dblDotLocalConfigActions;
