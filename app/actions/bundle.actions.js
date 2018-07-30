@@ -44,7 +44,6 @@ export function updateBundle(bundleId) {
         }
       } else {
         dispatch(addBundle(bundle, rawBundle));
-        dispatch(updateSearchResultsForBundleId(bundle.id));
       }
     } catch (error) {
       if (error.status === 404) {
@@ -260,16 +259,32 @@ export function setupBundlesEventSource(authentication) {
       // we just downloaded metadata.xml
       const bundle = await bundleService.convertApiBundleToNathanaelBundle(rawBundle);
       dispatch(addBundle(bundle, rawBundle));
-      dispatch(updateSearchResultsForBundleId(bundle.id));
     }
   }
 }
 
 function addBundle(bundle, rawBundle) {
-  return {
-    type: bundleConstants.ADD_BUNDLE,
-    bundle,
-    rawBundle
+  return dispatch => {
+    dispatch({
+      type: bundleConstants.ADD_BUNDLE,
+      bundle,
+      rawBundle
+    });
+    dispatch(updateSearchResultsForBundleId(bundle.id));
+    dispatch(removeExcessBundles());
+  };
+}
+
+function removeExcessBundles() {
+  return (dispatch, getState) => {
+    const { bundles } = getState();
+    const { addedByBundleIds, items } = bundles;
+    const itemsByBundleIds = items.reduce((acc, bundle) => ({ ...acc, [bundle.id]: bundle }), {});
+    const bundleIdsToRemove = Object.keys(addedByBundleIds).filter(addedId =>
+      !(addedId in itemsByBundleIds) && addedByBundleIds[addedId].resourceCountStored === 0);
+    bundleIdsToRemove.forEach((idBundleToRemove) => {
+      dispatch(removeBundle(idBundleToRemove));
+    });
   };
 }
 
