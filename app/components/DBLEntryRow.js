@@ -157,9 +157,9 @@ class DBLEntryRow extends PureComponent<Props> {
     return resourceCountStored === 0;
   }
 
-  shouldDisableUpload = () => {
+  shouldShowUpload = () => {
     const { status } = this.props;
-    return status !== 'DRAFT';
+    return status === 'DRAFT';
   }
 
   shouldDisableRevise = () => {
@@ -397,14 +397,15 @@ class DBLEntryRow extends PureComponent<Props> {
               </Button>
             </Tooltip>
             {this.renderbtnDeleteBundleOrCleanResources()}
-            <Button variant="flat" size="small" className={classes.button}
-              disabled={this.shouldDisableUpload()}
-              onKeyPress={this.onClickUploadBundle}
-              onClick={this.onClickUploadBundle}
-            >
-              <CloudUpload className={classNames(classes.leftIcon, classes.iconSmall)} />
-              Upload
-            </Button>
+            {this.shouldShowUpload() &&
+              <Button variant="flat" size="small" className={classes.button}
+                onKeyPress={this.onClickUploadBundle}
+                onClick={this.onClickUploadBundle}
+              >
+                <CloudUpload className={classNames(classes.leftIcon, classes.iconSmall)} />
+                Upload
+              </Button>
+            }
           </Toolbar>
           )}
       </div>
