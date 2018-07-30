@@ -134,16 +134,19 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
   } else if (mode === 'upload' || mode === 'create') {
     task = 'UPLOAD';
     status = mode === 'create' ? 'DRAFT' : 'IN_PROGRESS';
-  } else if (mode === 'store' && task === 'DOWNLOAD' && fileInfo && Object.keys(fileInfo).length > 1) {
+  }
+  if (fileInfo && Object.keys(fileInfo).length > 1) {
     // compare the manifest and resources to determine whether user can download more or not.
     const manifestPaths = await getManifestResourcePaths(bundleId);
     const resourcePaths = await getResourcePaths(bundleId);
     resourceCountManifest = (manifestPaths || []).length;
     resourceCountStored = (resourcePaths || []).length;
-    if (utilities.areEqualCollections(manifestPaths, resourcePaths)) {
-      status = 'COMPLETED';
-    } else {
-      status = 'NOT_STARTED';
+    if (task === 'DOWNLOAD') {
+      if (utilities.areEqualCollections(manifestPaths, resourcePaths)) {
+        status = 'COMPLETED';
+      } else {
+        status = 'NOT_STARTED';
+      }
     }
     // btw. it's possible that it could be in the process of REMOVE_RESOURCES,
     // but that's typically going to be so fast
@@ -334,7 +337,14 @@ function deleteForm(bundleId, formKey) {
 function startCreateContent(bundleId, label) {
   const uuid1 = uuidv1();
   const labelElement = label ? `<label>${label}-${bundleId}-${uuid1}</label>` : '';
-  return bundleAddTasks(bundleId, `<createContent><class>AsyncCreator</class>${labelElement}<data/></createContent>`);
+  return bundleAddTasks(
+    bundleId,
+    `<createContent><class>GenericCreator</class>${labelElement}<data/>
+      <tasks>
+        <copyResources><fromBundleLabel>_parent</fromBundleLabel></copyResources>
+      </tasks>
+    </createContent>`
+  );
 }
 
 /*

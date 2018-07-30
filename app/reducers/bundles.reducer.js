@@ -306,6 +306,8 @@ function formatLanguageAndCountry(bundle) {
 
 function formatStatus(bundle) {
   const formattedProgress = formatProgress(bundle);
+  const stored = (bundle.resourceCountStored === bundle.resourceCountManifest) ?
+    bundle.resourceCountManifest : `${bundle.resourceCountStored}/${bundle.resourceCountManifest}`;
   let newStatusDisplayAs;
   if (bundle.isUploading) {
     const uploadingMessage = (!bundle.resourceCountStored || bundle.resourceCountStored === 0) ? 'metadata' : formattedProgress;
@@ -327,14 +329,18 @@ function formatStatus(bundle) {
     newStatusDisplayAs = `Saving to Folder ${formattedProgress}`;
   } else if (['UPLOAD', 'DOWNLOAD'].includes(bundle.task) && bundle.status === 'COMPLETED') {
     if (bundle.resourceCountStored) {
-      const stored = (bundle.resourceCountStored === bundle.resourceCountManifest) ?
-        bundle.resourceCountManifest : `${bundle.resourceCountStored}/${bundle.resourceCountManifest}`;
       newStatusDisplayAs = `Stored (${stored})`;
     } else {
-      newStatusDisplayAs = 'Stored';
+      newStatusDisplayAs = 'Stored (metadata)';
     }
   } else if (['SAVETO'].includes(bundle.task) && bundle.status === 'COMPLETED') {
     newStatusDisplayAs = 'Open in Folder';
+  } else if (bundle.status === 'DRAFT') {
+    if (bundle.resourceCountStored) {
+      newStatusDisplayAs = `DRAFT (${stored})`;
+    } else {
+      newStatusDisplayAs = 'DRAFT (metadata)';
+    }
   } else {
     newStatusDisplayAs = bundle.statusDisplayAs || bundle.status;
   }

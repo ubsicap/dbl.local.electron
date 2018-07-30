@@ -35,7 +35,7 @@ export function updateBundle(bundleId) {
       const bundle = await bundleService.convertApiBundleToNathanaelBundle(rawBundle);
       const addedBundle = getAddedBundle(getState, bundleId);
       if (addedBundle) {
-        dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle });
+        dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle, rawBundle });
         const { id, uploadJob } = bundle;
         if (uploadJob) {
           dispatch(updateUploadJobs(id, uploadJob));
