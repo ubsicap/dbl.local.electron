@@ -280,8 +280,24 @@ function removeExcessBundles() {
     const { bundles } = getState();
     const { addedByBundleIds, items } = bundles;
     const itemsByBundleIds = items.reduce((acc, bundle) => ({ ...acc, [bundle.id]: bundle }), {});
-    const bundleIdsToRemove = Object.keys(addedByBundleIds).filter(addedId =>
-      !(addedId in itemsByBundleIds) && addedByBundleIds[addedId].resourceCountStored === 0);
+    const itemsByParentIds = items.filter(b => b.parent).reduce((acc, bundle) =>
+      ({ ...acc, [bundle.parent.bundleId]: bundle }), {});
+    const bundleIdsToRemove = Object.keys(addedByBundleIds).filter(addedId => {
+      if (addedId in itemsByBundleIds) {
+        return false;
+      }
+      const addedBundle = addedByBundleIds[addedId];
+      if (addedBundle.resourceCountStored > 0) {
+        return false;
+      }
+      // don't delete if is parent of item in draft mode
+      const itemDisplayed = itemsByParentIds[addedId];
+      if (itemDisplayed &&
+        (itemDisplayed.mode === 'create' || itemDisplayed.status === 'DRAFT')) {
+        return false;
+      }
+      return true;
+    });
     bundleIdsToRemove.forEach((idBundleToRemove) => {
       dispatch(removeBundle(idBundleToRemove));
     });

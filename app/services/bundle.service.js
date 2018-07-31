@@ -151,6 +151,8 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
     // btw. it's possible that it could be in the process of REMOVE_RESOURCES,
     // but that's typically going to be so fast
     // we can probably just display it as ready to download.
+  } else {
+    resourceCountStored = 0;
   }
   return {
     id: bundleId,
