@@ -157,6 +157,10 @@ class DBLEntryRow extends PureComponent<Props> {
     return resourceCountStored === 0;
   }
 
+  shouldDisableCleanResources = () => (this.hasNoStoredResources() || this.shouldDisableRevise());
+
+  shouldDisableSaveTo = () => this.shouldDisableCleanResources();
+
   shouldShowUpload = () => {
     const { status } = this.props;
     return status === 'DRAFT';
@@ -275,7 +279,7 @@ class DBLEntryRow extends PureComponent<Props> {
     }
     return (
       <Button variant="flat" size="small" className={classes.button}
-        disabled={this.hasNoStoredResources()}
+        disabled={this.shouldDisableCleanResources()}
         onKeyPress={this.onClickRemoveResources}
         onClick={this.onClickRemoveResources}
       >
@@ -380,7 +384,7 @@ class DBLEntryRow extends PureComponent<Props> {
               {this.renderEditIcon()}
             </Button>
             <Button variant="flat" size="small" className={classes.button}
-              disabled={this.hasNoStoredResources()}
+              disabled={this.shouldDisableSaveTo()}
               onKeyPress={this.startSaveBundleTo}
               onClick={this.startSaveBundleTo}>
               <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
