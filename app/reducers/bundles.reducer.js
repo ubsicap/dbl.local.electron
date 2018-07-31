@@ -26,10 +26,11 @@ function sortAndFilterBundlesAsEntries(allBundles) {
 
 function getSelectedState(state, bundleToToggle, bundleIdToRemove, newItemsByDblIds) {
   const { selectedBundle: origSelectedBundle = {} } = state;
+  const { dblId: origSelectedBundleDblId = null } = origSelectedBundle || {};
   const { id: origSelectedBundleId } = origSelectedBundle || {};
   if (bundleToToggle) {
     const newBundleToSelect = newItemsByDblIds ?
-      newItemsByDblIds[origSelectedBundle.dblId || ''] :
+      newItemsByDblIds[origSelectedBundleDblId] :
       bundleToToggle;
     const selectedBundle = bundleToToggle.id === origSelectedBundleId ?
       null : newBundleToSelect;
@@ -41,7 +42,7 @@ function getSelectedState(state, bundleToToggle, bundleIdToRemove, newItemsByDbl
   }
   if (bundleIdToRemove && bundleIdToRemove === origSelectedBundleId) {
     const newBundleToSelect = origSelectedBundleId === bundleIdToRemove ?
-      newItemsByDblIds[origSelectedBundle.dblId] : [];
+      newItemsByDblIds[origSelectedBundleDblId] : [];
     return {
       selectedBundle: newBundleToSelect,
       selectedDBLEntryId: newBundleToSelect.dblId
@@ -49,7 +50,7 @@ function getSelectedState(state, bundleToToggle, bundleIdToRemove, newItemsByDbl
   }
   return {
     selectedBundle: origSelectedBundle,
-    selectedDBLEntryId: origSelectedBundle.dblId
+    selectedDBLEntryId: origSelectedBundleDblId
   };
 }
 
