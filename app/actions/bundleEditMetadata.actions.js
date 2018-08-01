@@ -4,6 +4,7 @@ import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.con
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
 import { bundleService } from '../services/bundle.service';
+import { utilities } from '../utils/utilities';
 
 const { app } = require('electron').remote;
 
@@ -131,7 +132,7 @@ export function closeEditMetadata(bundleId) {
     await bundleService.stopCreateContent(bundleId);
     // ideally we'd wait for change mode to 'store' to complete
     dispatch({ type: bundleEditMetadataConstants.CLOSE_EDIT_METADATA, bundleId });
-    await sleep(1);
+    await utilities.sleep(1);
     dispatch(switchBackToBundlesPage);
   };
 }
@@ -162,11 +163,6 @@ function saveMetadatFileToTempBundleFolder(bundleId) {
   };
 }
 
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 function getActiveFormKey(getState) {
   const { bundleEditMetadata } = getState();
   const { activeFormInputs } = bundleEditMetadata;
@@ -177,7 +173,7 @@ function getActiveFormKey(getState) {
 export function promptConfirmDeleteInstanceForm(bundleId, origFormKey) {
   return async (dispatch, getState) => {
     dispatch(promptConfirm(bundleId, origFormKey, true));
-    await sleep(3000); // wait a few seconds for user to click Confirm
+    await utilities.sleep(3000); // wait a few seconds for user to click Confirm
     const nextFormKey = getActiveFormKey(getState);
     if (nextFormKey !== origFormKey) {
       return; // switched form, so cancel this state change.

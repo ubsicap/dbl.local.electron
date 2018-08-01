@@ -6,7 +6,8 @@ export const utilities = {
   areEqualArrays,
   areEqualArraysDeep,
   areEqualCollections,
-  onOpenLink
+  onOpenLink,
+  sleep
 };
 export default utilities;
 
@@ -36,4 +37,8 @@ function onOpenLink(url) {
     event.stopPropagation();
     shell.openExternal(url);
   };
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
