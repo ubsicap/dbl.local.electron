@@ -338,7 +338,7 @@ function deleteForm(bundleId, formKey) {
 
 function startCreateContent(bundleId, label) {
   const uuid1 = uuidv1();
-  const creator = label ? 'GenericCreator' : 'AsyncCreator';
+  const creator = label ? 'NoOpCreator' : 'AsyncCreator';
   const labelElement = label ? `<label>${label}-${bundleId}-${uuid1}</label>` : '';
   const tasksCopyResources = label ?
     '<tasks><copyResources><fromBundleLabel>_parent</fromBundleLabel></copyResources></tasks>' : '';
