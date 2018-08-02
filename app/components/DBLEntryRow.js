@@ -27,6 +27,7 @@ import { toggleSelectEntry, requestSaveBundleTo, removeResources, removeBundle,
   downloadResources, uploadBundle } from '../actions/bundle.actions';
 import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
 import { utilities } from '../utils/utilities';
+import withConfirmButton from './withConfirmButton';
 
 const { dialog, app } = require('electron').remote;
 const { shell } = require('electron');
@@ -264,6 +265,17 @@ class DBLEntryRow extends PureComponent<Props> {
       />, 'Revise'];
   };
 
+
+  composeBtnDeleteBundleOrCleanResourcesWithConfirmButton = () => {
+    const wrappedButton = this.renderbtnDeleteBundleOrCleanResources();
+    return compose(withConfirmButton)(wrappedButton);
+  }
+
+  renderbtnDeleteBundleOrCleanResourcesWithConfirmButton = () => {
+    const DeleteOrCleanButtonWithConfirm = this.composeBtnDeleteBundleOrCleanResourcesWithConfirmButton();
+    return <DeleteOrCleanButtonWithConfirm />;
+  }
+
   renderbtnDeleteBundleOrCleanResources = () => {
     const { status, classes } = this.props;
     if (status === 'DRAFT') {
@@ -400,7 +412,7 @@ class DBLEntryRow extends PureComponent<Props> {
                 DBL
               </Button>
             </Tooltip>
-            {this.renderbtnDeleteBundleOrCleanResources()}
+            {this.renderbtnDeleteBundleOrCleanResourcesWithConfirmButton()}
             {this.shouldShowUpload() &&
               <Button variant="flat" size="small" className={classes.button}
                 onKeyPress={this.onClickUploadBundle}
