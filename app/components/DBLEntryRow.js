@@ -18,16 +18,15 @@ import FolderOpen from 'material-ui/svg-icons/file/folder-open';
 import Save from '@material-ui/icons/Save';
 import CallSplit from '@material-ui/icons/CallSplit';
 import Link from '@material-ui/icons/Link';
-import Delete from '@material-ui/icons/Delete';
 import Edit from '@material-ui/icons/Edit';
 import CloudUpload from '@material-ui/icons/CloudUpload';
 import styles from './DBLEntryRow.css';
 import ControlledHighlighter from './ControlledHighlighter';
-import { toggleSelectEntry, requestSaveBundleTo, removeResources, removeBundle,
+import { toggleSelectEntry, requestSaveBundleTo,
   downloadResources, uploadBundle } from '../actions/bundle.actions';
 import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
 import { utilities } from '../utils/utilities';
-import withConfirmButton from './withConfirmButton';
+import DeleteOrCleanButton from './DeleteOrCleanButton';
 
 const { dialog, app } = require('electron').remote;
 const { shell } = require('electron');
@@ -53,20 +52,16 @@ type Props = {
   toggleSelectEntry: () => {},
   downloadResources: () => {},
   requestSaveBundleTo: () => {},
-  removeResources: () => {},
   openEditMetadata: () => {},
-  uploadBundle: () => {},
-  removeBundle: () => {}
+  uploadBundle: () => {}
 };
 
 const mapDispatchToProps = {
   toggleSelectEntry,
   downloadResources,
   requestSaveBundleTo,
-  removeResources,
   openEditMetadata,
-  uploadBundle,
-  removeBundle
+  uploadBundle
 };
 
 const getIsSearchActive = (state) => state.bundlesFilter.isSearchActive;
@@ -236,18 +231,6 @@ class DBLEntryRow extends PureComponent<Props> {
     utilities.onOpenLink(this.props.entryPageUrl)(event);
   }
 
-  onClickDeleteBundle = (event) => {
-    const { bundleId } = this.props;
-    this.props.removeBundle(bundleId);
-    event.stopPropagation();
-  }
-
-  onClickRemoveResources = (event) => {
-    const { bundleId } = this.props;
-    this.props.removeResources(bundleId);
-    event.stopPropagation();
-  }
-
   renderStatus = () => (
     <ControlledHighlighter {...this.getHighlighterSharedProps(this.props.displayAs.status)} />
   );
@@ -264,42 +247,6 @@ class DBLEntryRow extends PureComponent<Props> {
         className={classNames(classes.leftIcon, classes.iconSmall)}
       />, 'Revise'];
   };
-
-
-  composeBtnDeleteBundleOrCleanResourcesWithConfirmButton = () => {
-    const wrappedButton = this.renderbtnDeleteBundleOrCleanResources();
-    return compose(withConfirmButton)(wrappedButton);
-  }
-
-  renderbtnDeleteBundleOrCleanResourcesWithConfirmButton = () => {
-    const DeleteOrCleanButtonWithConfirm = this.composeBtnDeleteBundleOrCleanResourcesWithConfirmButton();
-    return <DeleteOrCleanButtonWithConfirm />;
-  }
-
-  renderbtnDeleteBundleOrCleanResources = () => {
-    const { status, classes } = this.props;
-    if (status === 'DRAFT') {
-      return (
-        <Button variant="flat" size="small" className={classes.button}
-          onKeyPress={this.onClickDeleteBundle}
-          onClick={this.onClickDeleteBundle}
-        >
-          <Delete className={classNames(classes.leftIcon, classes.iconSmall)} />
-          Delete
-        </Button>
-      );
-    }
-    return (
-      <Button variant="flat" size="small" className={classes.button}
-        disabled={this.shouldDisableCleanResources()}
-        onKeyPress={this.onClickRemoveResources}
-        onClick={this.onClickRemoveResources}
-      >
-        <Delete className={classNames(classes.leftIcon, classes.iconSmall)} />
-        Clean
-      </Button>
-    );
-  }
 
   render() {
     const {
@@ -412,7 +359,7 @@ class DBLEntryRow extends PureComponent<Props> {
                 DBL
               </Button>
             </Tooltip>
-            {this.renderbtnDeleteBundleOrCleanResourcesWithConfirmButton()}
+            <DeleteOrCleanButton {...this.props} shouldDisableCleanResources={this.shouldDisableCleanResources()} />
             {this.shouldShowUpload() &&
               <Button variant="flat" size="small" className={classes.button}
                 onKeyPress={this.onClickUploadBundle}
