@@ -16,12 +16,6 @@ type Props = {
 };
 
 const materialStyles = theme => ({
-  root: {
-  },
-  button: {
-    marginTop: theme.spacing.unit,
-    marginRight: theme.spacing.unit,
-  },
   leftIcon: {
     marginRight: theme.spacing.unit,
   },
@@ -63,14 +57,12 @@ export default function withConfirmButton(WrappedButton) {
       const {
         classes, onClick: origOnClick,
         color: origColor,
-        className: origClassName,
         ...restProps
       } = this.props;
       return (
         <Button
           {...restProps}
           color="secondary"
-          className={classes.button}
           onClick={this.onClick}
         >
           <Warning key="btnConfirm" className={classNames(classes.leftIcon, classes.iconSmall)} />
@@ -81,9 +73,10 @@ export default function withConfirmButton(WrappedButton) {
 
     render() {
       const { isConfirming } = this.state;
+      const { onClick: origOnClick, ...restProps } = this.props;
       return (isConfirming ?
         this.renderConfirmButton() :
-        <WrappedButton {...this.props} onClick={this.onClick} />
+        <WrappedButton {...restProps} onClick={this.onClick} />
       );
     }
   };
