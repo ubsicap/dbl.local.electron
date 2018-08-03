@@ -16,16 +16,7 @@ export default class ConfirmButton extends Component<Props> {
     isConfirming: false
   };
 
-  async componentDidUpdate(prevProps, prevState) {
-    const { isConfirming } = this.state;
-    const { isConfirming: prevIsConfirming } = prevState;
-    if (isConfirming && !prevIsConfirming) {
-      await utilities.sleep(3000);
-      this.setState({ isConfirming: false });
-    }
-  }
-
-  onClick = (event) => {
+  onClick = async (event) => {
     const { isConfirming } = this.state;
     if (isConfirming) {
       const { onClick: origClick } = this.props;
@@ -36,15 +27,17 @@ export default class ConfirmButton extends Component<Props> {
     event.stopPropagation();
     event.preventDefault();
     this.setState({ isConfirming: true });
+    await utilities.sleep(3000);
+    this.setState({ isConfirming: false });
   }
 
   renderConfirmButton = () => {
     const {
-      classes,
+      classes, ...rest
     } = this.props;
     return (
       <Button
-        {...this.props}
+        {...rest}
         color="secondary"
         onClick={this.onClick}
       >
@@ -55,7 +48,7 @@ export default class ConfirmButton extends Component<Props> {
   }
 
   render() {
-    const { onClick: origOnClick, ...restProps } = this.props;
+    const { onClick: origOnClick, classes, ...restProps } = this.props;
     const { isConfirming } = this.state;
     return (isConfirming ?
       this.renderConfirmButton() :
