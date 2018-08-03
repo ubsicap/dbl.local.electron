@@ -27,6 +27,7 @@ import { toggleSelectEntry, requestSaveBundleTo,
 import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
 import { utilities } from '../utils/utilities';
 import DeleteOrCleanButton from './DeleteOrCleanButton';
+import ConfirmButton from './ConfirmButton';
 
 const { dialog, app } = require('electron').remote;
 const { shell } = require('electron');
@@ -361,13 +362,13 @@ class DBLEntryRow extends PureComponent<Props> {
             </Tooltip>
             <DeleteOrCleanButton {...this.props} shouldDisableCleanResources={this.shouldDisableCleanResources()} />
             {this.shouldShowUpload() &&
-              <Button variant="flat" size="small" className={classes.button}
+              <ConfirmButton classes={classes} variant="flat" size="small" className={classes.button}
                 onKeyPress={this.onClickUploadBundle}
                 onClick={this.onClickUploadBundle}
               >
                 <CloudUpload className={classNames(classes.leftIcon, classes.iconSmall)} />
                 Upload
-              </Button>
+              </ConfirmButton>
             }
           </Toolbar>
           )}

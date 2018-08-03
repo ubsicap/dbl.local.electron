@@ -37,7 +37,7 @@ export default class ConfirmButton extends Component<Props> {
       classes, ...rest
     } = this.props;
     return (
-      <Tooltip title={this.props.children[1]} placement="bottom">
+      <Tooltip title={this.props.children[1]} placement="right">
         <Button
           {...rest}
           color="secondary"
