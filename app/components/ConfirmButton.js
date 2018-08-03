@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import classNames from 'classnames';
 import Warning from '@material-ui/icons/Warning';
 import Button from '@material-ui/core/Button';
+import Tooltip from '@material-ui/core/Tooltip';
 import { utilities } from '../utils/utilities';
 
 type Props = {
@@ -36,14 +37,16 @@ export default class ConfirmButton extends Component<Props> {
       classes, ...rest
     } = this.props;
     return (
-      <Button
-        {...rest}
-        color="secondary"
-        onClick={this.onClick}
-      >
-        <Warning key="btnConfirm" className={classNames(classes.leftIcon, classes.iconSmall)} />
-        Confirm
-      </Button>
+      <Tooltip title={this.props.children[1]} placement="bottom">
+        <Button
+          {...rest}
+          color="secondary"
+          onClick={this.onClick}
+        >
+          <Warning key="btnConfirm" className={classNames(classes.leftIcon, classes.iconSmall)} />
+          Confirm
+        </Button>
+      </Tooltip>
     );
   }
 
