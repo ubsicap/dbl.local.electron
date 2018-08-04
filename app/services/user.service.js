@@ -6,10 +6,7 @@ export const userService = {
   login,
   logout,
   getUser,
-  register,
-  getAll,
-  getById,
-  update
+  whoami
 };
 export default userService;
 
@@ -36,6 +33,15 @@ function login(username, password) {
       const newError = { ...json, messageDisplayAs };
       return Promise.reject(newError);
     });
+}
+
+async function whoami() {
+  const requestOptions = {
+    method: 'GET',
+    headers: authHeader()
+  };
+  const response = await fetch(`${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/whoami`, requestOptions);
+  return response.json();
 }
 
 function getUser() {
@@ -80,48 +86,3 @@ function removeUser() {
   localStorage.removeItem(localStorageConstants.KEY_LOCAL_STORAGE_USER);
 }
 
-function getAll() {
-  const requestOptions = {
-    method: 'GET',
-    headers: authHeader()
-  };
-
-  return fetch('/users', requestOptions).then(handleResponse);
-}
-
-function getById(id) {
-  const requestOptions = {
-    method: 'GET',
-    headers: authHeader()
-  };
-
-  return fetch(`/users/${id}`, requestOptions).then(handleResponse);
-}
-
-function register(user) {
-  const requestOptions = {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(user)
-  };
-
-  return fetch('/users/register', requestOptions).then(handleResponse);
-}
-
-function update(user) {
-  const requestOptions = {
-    method: 'PUT',
-    headers: { ...authHeader(), 'Content-Type': 'application/json' },
-    body: JSON.stringify(user)
-  };
-
-  return fetch(`/users/${user.id}`, requestOptions).then(handleResponse);
-}
-
-function handleResponse(response) {
-  if (!response.ok) {
-    return Promise.reject(response.statusText);
-  }
-
-  return response.json();
-}
