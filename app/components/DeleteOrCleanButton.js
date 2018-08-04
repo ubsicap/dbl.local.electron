@@ -42,7 +42,7 @@ class DeleteOrCleanButton extends Component<Props> {
           onKeyPress={this.onClickDeleteBundle}
           onClick={this.onClickDeleteBundle}
         >
-          <Delete classes={classes} className={classNames(classes.leftIcon, classes.iconSmall)} />
+          <Delete className={classNames(classes.leftIcon, classes.iconSmall)} />
           Delete
         </ConfirmButton>
       );
