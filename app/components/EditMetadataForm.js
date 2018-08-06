@@ -58,10 +58,6 @@ const materialStyles = theme => ({
   },
 });
 
-function getIsRequired(field) {
-  return field.nValues !== '?' || field.type === 'key';
-}
-
 class EditMetadataForm extends React.PureComponent<Props> {
   props: Props;
 
@@ -79,25 +75,17 @@ class EditMetadataForm extends React.PureComponent<Props> {
 
   componentDidUpdate() {
     if (this.props.isActiveForm && this.props.requestingSaveMetadata) {
-      const { inputs = {}, bundleId, formKey, isFactory, activeFormEdits } = this.props;
+      const {
+        inputs = {}, bundleId, formKey, isFactory, activeFormEdits
+      } = this.props;
       const { fields = [] } = inputs;
-      // if none of the values have changed
-      // then it's okay to pretend there's nothing to save.
       if (!editMetadataService.getHasFormFieldsChanged(fields, activeFormEdits)) {
         this.props.saveMetadata(bundleId, formKey, {});
         return;
       }
-      // get the values for all required fields and all non-empty values optional fields.
-      const [keyField] = fields.filter(field => field.type === 'key');
+      const fieldValues = editMetadataService.getFormFieldValues(bundleId, formKey, fields, activeFormEdits);
+      const keyField = editMetadataService.getKeyField(fields);
       const instanceKeyValue = keyField ? { [keyField.name]: this.getValue(keyField) } : null;
-      const fieldValues = fields.filter(field => field.name && field !== keyField).reduce((acc, field) => {
-        const fieldValue = this.getValue(field);
-        const isRequired = getIsRequired(field);
-        if (isRequired || fieldValue.length > 0) {
-          return { ...acc, [field.name]: fieldValue };
-        }
-        return acc;
-      }, {});
       this.props.saveMetadata(bundleId, formKey, fieldValues, null, isFactory, instanceKeyValue);
     }
   }
@@ -155,7 +143,7 @@ class EditMetadataForm extends React.PureComponent<Props> {
             /* placeholder="Placeholder" */
             /* autoComplete={field.default} */
             helperText={this.helperOrErrorText(field)}
-            required={getIsRequired(field)}
+            required={editMetadataService.getIsRequired(field)}
             disabled={this.getIsDisabled(field)}
             onChange={this.handleChange(field.name)}
             SelectProps={{

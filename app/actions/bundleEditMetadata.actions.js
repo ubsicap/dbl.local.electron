@@ -5,6 +5,7 @@ import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
 import { bundleService } from '../services/bundle.service';
 import { utilities } from '../utils/utilities';
+import editMetadataService from '../services/editMetadata.service';
 
 const { app } = require('electron').remote;
 
@@ -33,7 +34,8 @@ export function fetchFormStructure(_bundleId) {
   return async dispatch => {
     dispatch(request(_bundleId));
     try {
-      const isDemoMode = getIsDemoEditMode(navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO, _bundleId);
+      const isDemoMode =
+        getIsDemoEditMode(navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO, _bundleId);
       const response = isDemoMode ?
         await getMockStructure() :
         await bundleService.getFormBundleTree(_bundleId);
@@ -57,7 +59,8 @@ export function fetchActiveFormInputs(bundleId, _formKey) {
   return async dispatch => {
     dispatch(request(_formKey));
     try {
-      const isDemoMode = getIsDemoEditMode(navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO, bundleId);
+      const isDemoMode =
+        getIsDemoEditMode(navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO, bundleId);
       const response = isDemoMode ?
         await getMockFormInputs(bundleId, _formKey) :
         await bundleService.getFormFields(bundleId, _formKey);
@@ -78,7 +81,9 @@ export function fetchActiveFormInputs(bundleId, _formKey) {
 }
 
 export function editActiveFormInput(formKey, inputName, newValue) {
-  return { type: bundleEditMetadataConstants.METADATA_FORM_INPUT_EDITED, formKey, inputName, newValue };
+  return {
+    type: bundleEditMetadataConstants.METADATA_FORM_INPUT_EDITED, formKey, inputName, newValue
+  };
 }
 
 export function openEditMetadata(bundleId) {
@@ -123,7 +128,9 @@ export function openEditMetadata(bundleId) {
     history.push(editMetadataPageWithBundleId);
   }
   function failure(_bundleId, error) {
-    return { type: bundleEditMetadataConstants.OPEN_EDIT_METADATA_FAILED, bundleId: _bundleId, error };
+    return {
+      type: bundleEditMetadataConstants.OPEN_EDIT_METADATA_FAILED, bundleId: _bundleId, error
+    };
   }
 }
 
@@ -168,7 +175,7 @@ function getActiveFormKey(getState) {
   const { activeFormInputs } = bundleEditMetadata;
   const [formKey] = Object.keys(activeFormInputs);
   return formKey;
-};
+}
 
 export function promptConfirmDeleteInstanceForm(bundleId, origFormKey) {
   return async (dispatch, getState) => {
@@ -219,7 +226,8 @@ export function deleteInstanceForm(bundleId, formKey) {
 }
 
 function switchBackToBundlesPage() {
-  const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO;
+  const isDemoMode =
+    history.location.pathname === navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO;
   const bundlesPage = isDemoMode ?
     navigationConstants.NAVIGATION_BUNDLES_DEMO :
     navigationConstants.NAVIGATION_BUNDLES;
@@ -227,6 +235,7 @@ function switchBackToBundlesPage() {
 }
 
 /*
+  Expected Output:
     {
       "formId": "37b60a8e-296e-4502-963d-c15b5bdc607e",
       "fields": [
@@ -238,7 +247,10 @@ function switchBackToBundlesPage() {
       ]
     }
  */
-export function saveMetadata(bundleId, formKey, fieldNameValues, moveNext, isFactory, instanceKeyValue) {
+export function saveMetadata(
+  bundleId, formKey, fieldNameValues,
+  moveNext, isFactory, instanceKeyValue, saveOverrides = true,
+) {
   return async (dispatch, getState) => {
     if (!formKey) {
       return dispatch(saveMetadataRequest(null, null, moveNext));
@@ -268,12 +280,17 @@ export function saveMetadata(bundleId, formKey, fieldNameValues, moveNext, isFac
         return;
       }
       await bundleService.postFormFields(bundleId, formKey, { formId, fields }, keyFieldValue);
-      dispatch(fetchActiveFormInputs(bundleId, formKey));
+      if (saveOverrides) {
+        dispatch(fetchActiveFormInputs(bundleId, formKey));
+      }
       dispatch(saveMetadataSuccess(bundleId, formKey));
       if (isFactory) {
         dispatch(fetchFormStructure(bundleId));
       }
       dispatch(saveMetadatFileToTempBundleFolder(bundleId));
+      if (saveOverrides) {
+        dispatch(saveAllOverrides(bundleId));
+      }
     } catch (errorReadable) {
       const errorText = await errorReadable.text();
       try {
@@ -287,15 +304,45 @@ export function saveMetadata(bundleId, formKey, fieldNameValues, moveNext, isFac
 }
 
 function saveMetadataRequest(formId, fields, moveNextStep) {
-  return { type: bundleEditMetadataConstants.SAVE_METADATA_REQUEST, formId, fields, moveNextStep };
+  return {
+    type: bundleEditMetadataConstants.SAVE_METADATA_REQUEST, formId, fields, moveNextStep
+  };
 }
 
 export function saveMetadataSuccess(bundleId, formKey, moveNextStep) {
-  return { type: bundleEditMetadataConstants.SAVE_METADATA_SUCCESS, bundleId, formKey, moveNextStep };
+  return {
+    type: bundleEditMetadataConstants.SAVE_METADATA_SUCCESS, bundleId, formKey, moveNextStep
+  };
 }
 
 export function saveMetadataFailed(bundleId, formKey, error, errorText) {
-  return { type: bundleEditMetadataConstants.SAVE_METADATA_FAILED, bundleId, formKey, error, errorText };
+  return {
+    type: bundleEditMetadataConstants.SAVE_METADATA_FAILED, bundleId, formKey, error, errorText
+  };
+}
+
+function saveAllOverrides(bundleId) {
+  return (dispatch, getState) => {
+    const { bundleEditMetadata: { metadataOverrides } } = getState();
+    Object.keys(metadataOverrides).forEach(async formKey => {
+      try {
+        const formInputs = await bundleService.getFormFields(bundleId, formKey);
+        const formOverrides = metadataOverrides[formKey];
+        const overridesAsEdits = Object.keys(formOverrides).reduce((acc, override) =>
+          ({ ...acc, [override]: formOverrides[override].default }), {});
+        if (!editMetadataService.getHasFormFieldsChanged(formInputs.fields, overridesAsEdits)) {
+          return;
+        }
+        const formWithOverrides =
+          editMetadataService.getFormInputsWithOverrides(formKey, formInputs, metadataOverrides);
+        const fieldNameValues =
+          editMetadataService.getFormFieldValues(bundleId, formKey, formWithOverrides.fields, {});
+        dispatch(saveMetadata(bundleId, formKey, fieldNameValues, null, null, null, false));
+      } catch (error) {
+        // be silent about fetch form errors
+      }
+    });
+  };
 }
 
 function getMockStructure() {

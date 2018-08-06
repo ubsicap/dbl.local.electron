@@ -1,5 +1,6 @@
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 import { userConstants } from '../constants/user.constants';
+import editMetadataService from '../services/editMetadata.service';
 
 const initialState = {
   editingMetadata: null,
@@ -50,7 +51,9 @@ export function bundleEditMetadata(state = initialState, action) {
     }
     case bundleEditMetadataConstants.METADATA_FILE_SAVED: {
       if (state.requestingShowMetadataFile) {
-        return { ...state, showMetadataFile: action.metadataFile, requestingShowMetadataFile: false };
+        return {
+          ...state, showMetadataFile: action.metadataFile, requestingShowMetadataFile: false
+        };
       }
       return state;
     }
@@ -70,7 +73,9 @@ export function bundleEditMetadata(state = initialState, action) {
     case bundleEditMetadataConstants.METADATA_FORM_INPUTS_LOADED: {
       const { formKey, inputs } = action;
       const { metadataOverrides } = state;
-      const activeFormInputs = getActiveFormInputsWithOverrides(formKey, inputs, metadataOverrides);
+      const formInputs =
+        editMetadataService.getFormInputsWithOverrides(formKey, inputs, metadataOverrides);
+      const activeFormInputs = { [formKey]: formInputs };
       return changeStateForNewActiveForm(state, { activeFormInputs });
     }
     case bundleEditMetadataConstants.METADATA_FORM_INPUT_EDITED: {
@@ -195,22 +200,6 @@ function getUserMetadataOverrides(whoami) {
       bundleCreatorName: { default: bundleCreatorName }
     }
   };
-}
-
-function getActiveFormInputsWithOverrides(formKey, inputs, metadataOverrides) {
-  const { [formKey]: formOverrides } = metadataOverrides || {};
-  if (!formOverrides) {
-    return { [formKey]: inputs };
-  }
-  const overriddenFields = inputs.fields.reduce((acc, field) => {
-    const inputOverrides = formOverrides[field.name];
-    if (!inputOverrides) {
-      return [...acc, field];
-    }
-    const overridenField = { ...field, ...inputOverrides, isOverridden: true };
-    return [...acc, overridenField];
-  }, []);
-  return { [formKey]: { ...inputs, fields: overriddenFields } };
 }
 
 export default bundleEditMetadata;

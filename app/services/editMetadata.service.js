@@ -1,6 +1,10 @@
 const editMetadataService = {
   getHasFormFieldsChanged,
-  getValue
+  getValue,
+  getFormFieldValues,
+  getKeyField,
+  getIsRequired,
+  getFormInputsWithOverrides
 };
 
 export default editMetadataService;
@@ -25,4 +29,45 @@ function getValue(field, activeFormEdits) {
     return field.default;
   }
   return stateValue;
+}
+
+function getIsRequired(field) {
+  return field.nValues !== '?' || field.type === 'key';
+}
+
+function getFormFieldValues(bundleId, formKey, fields, activeFormEdits) {
+  // get the values for all required fields and all non-empty values optional fields.
+  const keyField = getKeyField(fields);
+  const fieldValues = fields.filter(field => field.name && field !== keyField)
+    .reduce((acc, field) => {
+      const fieldValue = getValue(field, activeFormEdits);
+      const isRequired = getIsRequired(field);
+      if (isRequired || fieldValue.length > 0) {
+        return { ...acc, [field.name]: fieldValue };
+      }
+      return acc;
+    }, {});
+  return fieldValues;
+}
+
+function getKeyField(fields) {
+  const [keyField] = fields.filter(field => field.type === 'key');
+  return keyField;
+}
+
+
+function getFormInputsWithOverrides(formKey, inputs, metadataOverrides) {
+  const { [formKey]: formOverrides } = metadataOverrides || {};
+  if (!formOverrides) {
+    return inputs;
+  }
+  const overriddenFields = inputs.fields.map((field) => {
+    const inputOverrides = formOverrides[field.name];
+    if (!inputOverrides) {
+      return field;
+    }
+    const overridenField = { ...field, ...inputOverrides, isOverridden: true };
+    return overridenField;
+  });
+  return { ...inputs, fields: overriddenFields };
 }
