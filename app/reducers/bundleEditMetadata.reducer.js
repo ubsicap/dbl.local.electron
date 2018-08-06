@@ -1,4 +1,5 @@
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
+import { userConstants } from '../constants/user.constants';
 
 const initialState = {
   editingMetadata: null,
@@ -15,10 +16,11 @@ const initialActiveFormState = {
 };
 
 function changeStateForNewActiveForm(state, newState) {
-  const { editingMetadata, formStructure } = state;
+  const { editingMetadata, formStructure, metadataOverrides } = state;
   return {
     editingMetadata,
     formStructure,
+    metadataOverrides,
     ...initialActiveFormState,
     ...newState
   };
@@ -40,7 +42,8 @@ export function bundleEditMetadata(state = initialState, action) {
       };
     }
     case bundleEditMetadataConstants.CLOSE_EDIT_METADATA: {
-      return initialState;
+      const { metadataOverrides } = state;
+      return { ...initialState, metadataOverrides };
     }
     case bundleEditMetadataConstants.METADATA_FILE_SHOW_REQUEST: {
       return { ...state, requestingShowMetadataFile: true };
@@ -66,7 +69,8 @@ export function bundleEditMetadata(state = initialState, action) {
     }
     case bundleEditMetadataConstants.METADATA_FORM_INPUTS_LOADED: {
       const { formKey, inputs } = action;
-      const activeFormInputs = { [formKey]: inputs };
+      const { metadataOverrides } = state;
+      const activeFormInputs = getActiveFormInputsWithOverrides(formKey, inputs, metadataOverrides);
       return changeStateForNewActiveForm(state, { activeFormInputs });
     }
     case bundleEditMetadataConstants.METADATA_FORM_INPUT_EDITED: {
@@ -94,6 +98,14 @@ export function bundleEditMetadata(state = initialState, action) {
       return {
         ...state,
         activeFormDeleting: false
+      };
+    }
+    case userConstants.SET_METADATA_OVERRIDES: {
+      const { whoami } = action;
+      const metadataOverrides = getUserMetadataOverrides(whoami);
+      return {
+        ...state,
+        metadataOverrides
       };
     }
     case bundleEditMetadataConstants.SAVE_METADATA_REQUEST: {
@@ -171,6 +183,34 @@ function getErrorTree(formFieldIssues) {
     {}
   );
   return errorTree;
+}
+
+function getUserMetadataOverrides(whoami) {
+  const archiveStatusFormKey = '/archiveStatus';
+  const { display_name: archivistName } = whoami;
+  const bundleCreatorName = archivistName;
+  return {
+    [archiveStatusFormKey]: {
+      archivistName: { default: archivistName },
+      bundleCreatorName: { default: bundleCreatorName }
+    }
+  };
+}
+
+function getActiveFormInputsWithOverrides(formKey, inputs, metadataOverrides) {
+  const { [formKey]: formOverrides } = metadataOverrides || {};
+  if (!formOverrides) {
+    return { [formKey]: inputs };
+  }
+  const overriddenFields = inputs.fields.reduce((acc, field) => {
+    const inputOverrides = formOverrides[field.name];
+    if (!inputOverrides) {
+      return [...acc, field];
+    }
+    const overridenField = { ...field, ...inputOverrides, isOverridden: true };
+    return [...acc, overridenField];
+  }, []);
+  return { [formKey]: { ...inputs, fields: overriddenFields } };
 }
 
 export default bundleEditMetadata;

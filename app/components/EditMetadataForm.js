@@ -119,6 +119,9 @@ class EditMetadataForm extends React.PureComponent<Props> {
   }
 
   getIsDisabled = (field) => {
+    if (field.isOverridden) {
+      return true;
+    }
     if (field.type !== 'key') {
       return false;
     }

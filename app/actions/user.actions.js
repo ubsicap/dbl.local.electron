@@ -38,6 +38,7 @@ function login(username, password) {
       const user = await userService.login(username, password);
       const whoami = await userService.whoami();
       dispatch(success(user, whoami));
+      dispatch(otherWhoAmiTasks(whoami));
       history.push(navigationConstants.NAVIGATION_BUNDLES);
     } catch (error) {
       dispatch(failure(error));
@@ -57,6 +58,17 @@ function login(username, password) {
     return { type: userConstants.LOGIN_FAILURE, error };
   }
 }
+
+function otherWhoAmiTasks(_whoami) {
+  return dispatch => {
+    dispatch(setArchivistStatusOverrides(_whoami));
+  };
+
+  function setArchivistStatusOverrides(whoami) {
+    return { type: userConstants.SET_METADATA_OVERRIDES, whoami };
+  }
+}
+
 
 function logout() {
   return dispatch => {
