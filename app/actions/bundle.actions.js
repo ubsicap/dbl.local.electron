@@ -275,6 +275,10 @@ function addBundle(bundle, rawBundle) {
   };
 }
 
+function isInDraftMode(bundle) {
+  return bundle.mode === 'create' || bundle.status === 'DRAFT';
+}
+
 function removeExcessBundles() {
   return (dispatch, getState) => {
     const { bundles } = getState();
@@ -282,6 +286,7 @@ function removeExcessBundles() {
     const itemsByBundleIds = items.reduce((acc, bundle) => ({ ...acc, [bundle.id]: bundle }), {});
     const itemsByParentIds = items.filter(b => b.parent).reduce((acc, bundle) =>
       ({ ...acc, [bundle.parent.bundleId]: bundle }), {});
+    const itemsByDblId = items.reduce((acc, bundle) => ({ ...acc, [bundle.dblId]: bundle }), {});
     const bundleIdsToRemove = Object.keys(addedByBundleIds).filter(addedId => {
       if (addedId in itemsByBundleIds) {
         return false;
@@ -290,10 +295,20 @@ function removeExcessBundles() {
       if (addedBundle.resourceCountStored > 0) {
         return false;
       }
+      // don't delete if revision is greater than the one on display
+      const itemMatchingDblId = itemsByDblId[addedBundle.dblId];
+      if (itemMatchingDblId) {
+        if (isInDraftMode(itemMatchingDblId)) {
+          if (addedBundle.revision > itemMatchingDblId.parent.revision) {
+            return false;
+          }
+        } else if (addedBundle.revision > itemMatchingDblId.revision) {
+          return false;
+        }
+      }
       // don't delete if is parent of item in draft mode
       const itemDisplayed = itemsByParentIds[addedId];
-      if (itemDisplayed &&
-        (itemDisplayed.mode === 'create' || itemDisplayed.status === 'DRAFT')) {
+      if (itemDisplayed && isInDraftMode(itemDisplayed)) {
         return false;
       }
       return true;
