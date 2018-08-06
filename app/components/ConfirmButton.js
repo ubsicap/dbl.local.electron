@@ -17,6 +17,14 @@ export default class ConfirmButton extends Component<Props> {
     isConfirming: false
   };
 
+  componentDidMount() {
+    this.mounted = true;
+  }
+
+  componentWillUnmount() {
+    this.mounted = false;
+  }
+
   onClick = async (event) => {
     const { isConfirming } = this.state;
     if (isConfirming) {
@@ -29,6 +37,9 @@ export default class ConfirmButton extends Component<Props> {
     event.preventDefault();
     this.setState({ isConfirming: true });
     await utilities.sleep(3000);
+    if (!this.mounted) {
+      return;
+    }
     this.setState({ isConfirming: false });
   }
 
