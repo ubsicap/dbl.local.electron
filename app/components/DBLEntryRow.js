@@ -154,16 +154,18 @@ class DBLEntryRow extends PureComponent<Props> {
     return resourceCountStored === 0;
   }
 
-  shouldDisableCleanResources = () => (this.hasNoStoredResources() || this.shouldDisableRevise());
+  shouldDisableCleanResources = () => (this.hasNoStoredResources() || this.shouldDisableReviseOrEdit());
 
   shouldDisableSaveTo = () => this.shouldDisableCleanResources();
 
   shouldShowUpload = () => {
     const { status } = this.props;
-    return status === 'DRAFT';
+    return status === 'DRAFT' || this.shouldDisableReviseOrEdit();
   }
 
-  shouldDisableRevise = () => {
+  shouldDisableUpload = () => this.shouldDisableReviseOrEdit();
+
+  shouldDisableReviseOrEdit = () => {
     const { isUploading = false, task, status } = this.props;
     return isUploading || (task === 'UPLOAD' && status === 'IN_PROGRESS');
   }
@@ -337,7 +339,7 @@ class DBLEntryRow extends PureComponent<Props> {
         {isSelected && (
           <Toolbar style={{ minHeight: '36px' }}>
             <Button
-              disabled={this.shouldDisableRevise()}
+              disabled={this.shouldDisableReviseOrEdit()}
               variant="flat" size="small" className={classes.button}
               onKeyPress={this.onClickEditMetadata}
               onClick={this.onClickEditMetadata}>
@@ -363,6 +365,7 @@ class DBLEntryRow extends PureComponent<Props> {
             <DeleteOrCleanButton {...this.props} shouldDisableCleanResources={this.shouldDisableCleanResources()} />
             {this.shouldShowUpload() &&
               <ConfirmButton classes={classes} variant="flat" size="small" className={classes.button}
+                disabled={this.shouldDisableUpload()}
                 onKeyPress={this.onClickUploadBundle}
                 onClick={this.onClickUploadBundle}
               >
