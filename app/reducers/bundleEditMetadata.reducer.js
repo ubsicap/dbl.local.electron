@@ -107,7 +107,9 @@ export function bundleEditMetadata(state = initialState, action) {
     }
     case userConstants.SET_METADATA_OVERRIDES: {
       const { whoami } = action;
-      const metadataOverrides = getUserMetadataOverrides(whoami);
+      const appMetadataOverrides = getAppMetadataOverrides();
+      const userMetadataOverrides = getUserMetadataOverrides(whoami);
+      const metadataOverrides = { ...appMetadataOverrides, ...userMetadataOverrides };
       return {
         ...state,
         metadataOverrides
@@ -188,6 +190,15 @@ function getErrorTree(formFieldIssues) {
     {}
   );
   return errorTree;
+}
+
+const { app } = require('electron').remote;
+
+function getAppMetadataOverrides() {
+  const identificationStatusFormKey = '/identification';
+  const bundleProducerDefault = `${app.getName()}/${app.getVersion()}`;
+  const bundleProducer = { default: bundleProducerDefault };
+  return { [identificationStatusFormKey]: { bundleProducer } };
 }
 
 function getUserMetadataOverrides(whoami) {

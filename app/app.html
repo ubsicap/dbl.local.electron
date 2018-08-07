@@ -6,7 +6,7 @@
     <script>
       (function() {
         const { app } = require('electron').remote;
-        document.getElementsByTagName('title')[0].innerText = `nathanael (v${app.getVersion()})`;
+        document.getElementsByTagName('title')[0].innerText = `${app.getName()} (v${app.getVersion()})`;
         if (!process.env.HOT) {
           const link = document.createElement('link');
           link.rel = 'stylesheet';
