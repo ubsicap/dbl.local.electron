@@ -244,6 +244,7 @@ function switchBackToBundlesPage() {
           {"type": "values", "name": "abbreviation", "valueList": ["NEWABBR"]},
           {"type": "values", "name": "description", "valueList": ["New Description"]},
           {"type": "values", "name": "dateCompleted", "valueList": ["2018-06-01T12:23:34"]}
+          {"type": "xml", "name": "fullStatement", "text": "<xml>blah</xml>"}
       ]
     }
  */
