@@ -45,6 +45,7 @@ type Props = {
   progress?: ?number,
   isDownloaded: ?boolean,
   isUploading?: ?boolean,
+  isDownloading?: ?boolean,
   isSelected: ?boolean,
   shouldShowRow: boolean,
   classes: {},
@@ -65,6 +66,8 @@ const mapDispatchToProps = {
   uploadBundle
 };
 
+const getTask = (state, props) => props.task;
+const getStatus = (state, props) => props.status;
 const getIsSearchActive = (state) => state.bundlesFilter.isSearchActive;
 const emptyBundleMatches = {};
 const getEmptryBundleMatches = () => emptyBundleMatches;
@@ -74,6 +77,11 @@ const getBundleMatches = (state, props) =>
   (state.bundlesFilter.searchResults && state.bundlesFilter.searchResults.bundlesMatching ?
     (state.bundlesFilter.searchResults.bundlesMatching[props.bundleId] || emptyBundleMatches)
     : emptyBundleMatches);
+
+const makeGetIsDownloading = () => createSelector(
+  [getTask, getStatus],
+  (task, status) => (task === 'DOWNLOAD' && status === 'IN_PROGRESS')
+);
 
 const makeShouldShowRow = () => createSelector(
   [getIsSearchActive, getBundleMatches],
@@ -104,6 +112,7 @@ const makeMapStateToProps = () => {
   const getMatches = makeGetBundleMatches();
   const getIsRequestingRevision = makeGetIsRequestingRevision();
   const getEntryPageUrl = makeGetEntryPageUrl();
+  const getIsDownloading = makeGetIsDownloading();
   const mapStateToProps = (state, props) => {
     const { bundlesSaveTo } = state;
     return {
@@ -111,7 +120,8 @@ const makeMapStateToProps = () => {
       shouldShowRow: shouldShowRow(state, props),
       bundleMatches: getMatches(state, props),
       bundlesSaveTo,
-      entryPageUrl: getEntryPageUrl(state, props)
+      entryPageUrl: getEntryPageUrl(state, props),
+      isDownloading: getIsDownloading(state, props)
     };
   };
   return mapStateToProps;
@@ -163,11 +173,13 @@ class DBLEntryRow extends PureComponent<Props> {
     return status === 'DRAFT' || this.shouldDisableReviseOrEdit();
   }
 
+  shouldDisableRevise = () => (this.props.isRequestingRevision || this.props.isDownloading)
+
   shouldDisableUpload = () => this.shouldDisableReviseOrEdit();
 
   shouldDisableReviseOrEdit = () => {
     const { isUploading = false, task, status } = this.props;
-    return isUploading || (task === 'UPLOAD' && status === 'IN_PROGRESS');
+    return isUploading || (task === 'UPLOAD' && status === 'IN_PROGRESS') || this.shouldDisableRevise();
   }
 
   emptyMatches = [];
@@ -239,13 +251,12 @@ class DBLEntryRow extends PureComponent<Props> {
   );
 
   renderEditIcon = () => {
-    const { status, classes, isRequestingRevision } = this.props;
+    const { status, classes } = this.props;
     if (status === 'DRAFT') {
       return [<Edit key="btnEdit" className={classNames(classes.leftIcon, classes.iconSmall)} />, 'Edit'];
     }
     return [
       <CallSplit
-        disabled={isRequestingRevision}
         key="btnRevise"
         className={classNames(classes.leftIcon, classes.iconSmall)}
       />, 'Revise'];
@@ -384,6 +395,7 @@ DBLEntryRow.defaultProps = {
   progress: null,
   resourceCountStored: 0,
   isUploading: null,
+  isDownloading: null
 };
 
 const materialStyles = theme => ({
