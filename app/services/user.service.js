@@ -10,29 +10,38 @@ export const userService = {
 };
 export default userService;
 
-function login(username, password) {
+async function login(username, password) {
   const requestOptions = {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `username=${username}&password=${password}`
   };
 
-  return fetch(`${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/login`, requestOptions)
-    .then(response => response.json())
-    .then(json => {
-      // login successful if there's a jwt token in the response
-      if (json && json.auth_token) {
-        // store user details and jwt token in local storage
-        // to keep user logged in between page refreshes
-        const newUserObj = { ...json, username };
-        const userData = JSON.stringify(newUserObj);
-        localStorage.setItem(localStorageConstants.KEY_LOCAL_STORAGE_USER, userData);
-        return newUserObj;
-      }
-      const messageDisplayAs = `${json.message} ${json.error_code} Error (HTTP ${json.status_code})`;
-      const newError = { ...json, messageDisplayAs };
-      return Promise.reject(newError);
-    });
+  try {
+    const response = await fetch(`${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/login`, requestOptions);
+    const json = await response.json();
+    if (!response.ok) {
+      const error = { json, response };
+      throw error;
+    }
+    const newUserObj = { ...json, username };
+    const userData = JSON.stringify(newUserObj);
+    localStorage.setItem(localStorageConstants.KEY_LOCAL_STORAGE_USER, userData);
+    return newUserObj;
+  } catch (error) {
+    const { json = {}, response = {}, message = '' } = error;
+    const errorMessage = message || json.message;
+    const { statusText } = response;
+    const { error_code: errorCode = statusText } = json;
+    const { status } = response;
+    const { status_code: statusCode = status } = json;
+    if (errorCode) {
+      const messageDisplayAs = `${errorMessage} ${errorCode} Error (HTTP ${statusCode})`;
+      const newError = { ...error, messageDisplayAs };
+      throw newError;
+    }
+    throw error;
+  }
 }
 
 async function whoami() {
