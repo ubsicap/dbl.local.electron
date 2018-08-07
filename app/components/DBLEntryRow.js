@@ -169,8 +169,8 @@ class DBLEntryRow extends PureComponent<Props> {
   shouldDisableSaveTo = () => this.shouldDisableCleanResources();
 
   shouldShowUpload = () => {
-    const { status } = this.props;
-    return status === 'DRAFT' || this.shouldDisableReviseOrEdit();
+    const { isUploading = false, task, status } = this.props;
+    return status === 'DRAFT' || isUploading || (task === 'UPLOAD' && status === 'IN_PROGRESS');
   }
 
   shouldDisableRevise = () => (this.props.isRequestingRevision || this.props.isDownloading)
