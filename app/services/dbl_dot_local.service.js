@@ -6,7 +6,7 @@ export const dblDotLocalService = {
 };
 export default dblDotLocalService;
 
-const UTILS_API = 'utils';
+const UX_API = 'ux';
 
 function health(method = 'GET') {
   const requestOptions = {
@@ -22,7 +22,7 @@ async function htmlBaseUrl() {
     headers: { 'Content-Type': 'application/json' }
   };
   try {
-    const response = await fetch(`${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${UTILS_API}/html-base-url`, requestOptions);
+    const response = await fetch(`${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${UX_API}/html-base-url`, requestOptions);
     return handlResponseAsReadable(response);
   } catch (error) {
     return handlResponseAsReadable(error);
