@@ -255,7 +255,7 @@ function bundleAddTasks(bundleId, innerTasks) {
   const requestOptions = {
     method: 'POST',
     headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `xml=<tasks> ${innerTasks} </tasks>`
+    body: `xml=<tasks> ${encodeURIComponent(innerTasks)} </tasks>`
   };
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/add-tasks`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
@@ -315,7 +315,7 @@ function postFormFields(bundleId, formKey, payload, keyField) {
   const requestOptions = {
     method: 'POST',
     headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `response=${JSON.stringify(payload)}`
+    body: `response=${encodeURIComponent(JSON.stringify(payload))}`
   };
   const newKeyPath = `/${keyField}`;
   const newInstanceKey = keyField && !formKey.endsWith(newKeyPath) ? newKeyPath : '';

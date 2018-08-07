@@ -136,7 +136,7 @@ export function bundleEditMetadata(state = initialState, action) {
     }
     case bundleEditMetadataConstants.SAVE_METADATA_FAILED: {
       const { error = {} } = action;
-      const { field_issues: fieldIssues = [] } = error;
+      const { field_issues: fieldIssues = [] } = error || {};
       const formFieldIssues = fieldIssues.reduce((acc, issue) => {
         const { formKey } = action;
         const [name, rule, value] = issue;

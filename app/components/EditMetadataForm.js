@@ -120,8 +120,8 @@ class EditMetadataForm extends React.PureComponent<Props> {
     return formKey.endsWith(`/${field.default}`);
   }
 
-  hasError = (field) => Boolean(Object.keys(this.getErrorInField(field)).length > 0);
-  helperOrErrorText = (field) => this.getErrorInField(field).rule || field.help;
+  hasError = (field) => getHasError(this.getErrorInField(field));
+  helperOrErrorText = (field) => formatError(this.getErrorInField(field)) || field.help;
 
   render() {
     const { classes, inputs, formKey } = this.props;
@@ -168,6 +168,18 @@ class EditMetadataForm extends React.PureComponent<Props> {
       </form>
     );
   }
+}
+
+function getHasError(fieldError) {
+  return Boolean(Object.keys(fieldError).length > 0);
+}
+
+function formatError(fieldError) {
+  if (!getHasError(fieldError)) {
+    return null;
+  }
+  const { rule, value } = fieldError;
+  return `${rule}: '${value}'`;
 }
 
 export default compose(

@@ -14,7 +14,7 @@ async function login(username, password) {
   const requestOptions = {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `username=${username}&password=${password}`
+    body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
   };
 
   try {

@@ -264,8 +264,13 @@ export function saveMetadata(
       return dispatch(saveMetadataSuccess(bundleId, formKey));
     }
     const fields = Object.keys(fieldNameValues).reduce((acc, name) => {
-      const newFieldValue = fieldNameValues[name];
-      return [...acc, { type: 'values', name, valueList: [newFieldValue] }];
+      const fieldNameInfo = fieldNameValues[name];
+      const { value: newFieldValue, type: fieldType } = fieldNameInfo;
+      const type = fieldType === 'xml' ? fieldType : 'values';
+      const normalized = newFieldValue.replace(/(\r\n\t|\n|\r\t)/gm, '').trim();
+      const valueObj = type === 'xml' ?
+        { text: `<xml>${normalized}</xml>` } : { valueList: [normalized] };
+      return [...acc, { type, name, ...valueObj }];
     }, []);
     const formId = bundleId;
     dispatch(saveMetadataRequest(formId, fields, moveNextStep));

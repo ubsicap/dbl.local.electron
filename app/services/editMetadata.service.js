@@ -40,10 +40,11 @@ function getFormFieldValues(bundleId, formKey, fields, activeFormEdits) {
   const keyField = getKeyField(fields);
   const fieldValues = fields.filter(field => field.name && field !== keyField)
     .reduce((acc, field) => {
-      const fieldValue = getValue(field, activeFormEdits);
+      const value = getValue(field, activeFormEdits);
       const isRequired = getIsRequired(field);
-      if (isRequired || fieldValue.length > 0) {
-        return { ...acc, [field.name]: fieldValue };
+      if (isRequired || value.length > 0) {
+        const { type } = field;
+        return { ...acc, [field.name]: { type, value } };
       }
       return acc;
     }, {});
