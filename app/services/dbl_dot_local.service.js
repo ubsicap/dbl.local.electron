@@ -8,7 +8,9 @@ const { app } = require('electron').remote;
 export const dblDotLocalService = {
   health,
   htmlBaseUrl,
-  ensureDblDotLocal
+  ensureDblDotLocal,
+  getDblDotLocalConfigFilePath,
+  getDblDotLocalConfigOrigFilePath
 };
 export default dblDotLocalService;
 
@@ -78,6 +80,14 @@ function getDblDotLocalExecCwd() {
     path.join(resourcesPath, 'extraFiles', 'dbl_dot_local') :
     path.join(__dirname, '..', 'resources', 'extraFiles', 'dbl_dot_local'));
   return cwd;
+}
+
+function getDblDotLocalConfigFilePath() {
+  return path.join(getDblDotLocalExecCwd(), 'config.xml');
+}
+
+function getDblDotLocalConfigOrigFilePath() {
+  return path.join(getDblDotLocalExecCwd(), 'config.xml.orig');
 }
 
 function getDblDotLocalExecPath() {
