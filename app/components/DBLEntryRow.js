@@ -9,7 +9,6 @@ import Book from '@material-ui/icons/Book';
 import Headset from '@material-ui/icons/Headset';
 import Videocam from '@material-ui/icons/Videocam';
 import Print from '@material-ui/icons/Print';
-import FlatButton from 'material-ui/FlatButton';
 import Button from '@material-ui/core/Button';
 import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
@@ -316,12 +315,13 @@ class DBLEntryRow extends PureComponent<Props> {
           </div>
           <div className={styles.bundleRowTopRightSide}>
             {task === 'SAVETO' && (
-              <FlatButton
-                labelPosition="before"
-                label={<ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
-                icon={<FolderOpen />}
+              <Button variant="flat" size="small" className={classes.button}
+                onKeyPress={this.openInFolder}
                 onClick={this.openInFolder}
-              />
+              >
+                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
+                <FolderOpen className={classNames(classes.rightIcon, classes.iconSmall)} />
+              </Button>
             )}
             {this.showStatusAsText() && (
               <div style={{ paddingRight: '20px', paddingTop: '6px' }}>
@@ -329,12 +329,13 @@ class DBLEntryRow extends PureComponent<Props> {
               </div>
             )}
             {this.showDownloadButton() && (
-              <FlatButton
-                labelPosition="before"
-                label={<ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
-                icon={<FileDownload />}
+              <Button variant="flat" size="small" className={classes.button}
+                onKeyPress={this.onClickDownloadResources}
                 onClick={this.onClickDownloadResources}
-              />
+              >
+                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
+                <FileDownload className={classNames(classes.rightIcon, classes.iconSmall)} />
+              </Button>
             )}
           </div>
         </div>
