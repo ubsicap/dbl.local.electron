@@ -35,6 +35,8 @@ const { shell } = require('electron');
 type Props = {
   bundleId: string,
   dblId: string,
+  revision: string,
+  parent: ?{},
   task: string,
   status: string,
   medium: string,
@@ -101,10 +103,12 @@ const makeGetIsRequestingRevision = () => createSelector(
 );
 
 const getDblBaseUrl = (state) => state.dblDotLocalConfig.dblBaseUrl;
+const getPropsRevision = (state, props) => props.revision;
+const getPropsParent = (state, props) => props.parent;
 const getPropsDblId = (state, props) => props.dblId;
 const makeGetEntryPageUrl = () => createSelector(
-  [getDblBaseUrl, getPropsDblId],
-  (dblBaseUrl, dblId) => (`${dblBaseUrl}/entry?id=${dblId}`)
+  [getDblBaseUrl, getPropsDblId, getPropsRevision, getPropsParent],
+  (dblBaseUrl, dblId, revision, parent) => (`${dblBaseUrl}/entry?id=${dblId}&revision=${parseInt(revision, 10) || parent.revision}`)
 );
 
 const makeMapStateToProps = () => {
@@ -142,15 +146,10 @@ class DBLEntryRow extends PureComponent<Props> {
     this.props.toggleSelectEntry({ id, dblId, displayAs });
   }
 
-  showInfoButton = () => {
-    const { task, status } = this.props;
-    return (task === 'UPLOAD' || task === 'DOWNLOAD') && status === 'COMPLETED';
-  }
-
   showStatusAsText = () => {
     const { task, status } = this.props;
     return ((task === 'UPLOAD' || task === 'DOWNLOAD') &&
-      (status === 'DRAFT' || status === 'IN_PROGRESS')) ||
+      (status === 'DRAFT' || status === 'IN_PROGRESS' || status === 'COMPLETED')) ||
       ((task === 'REMOVE_RESOURCES') && status === 'IN_PROGRESS');
   }
 
@@ -164,7 +163,8 @@ class DBLEntryRow extends PureComponent<Props> {
     return resourceCountStored === 0;
   }
 
-  shouldDisableCleanResources = () => (this.hasNoStoredResources() || this.shouldDisableReviseOrEdit());
+  shouldDisableCleanResources = () =>
+    (this.hasNoStoredResources() || this.shouldDisableReviseOrEdit());
 
   shouldDisableSaveTo = () => this.shouldDisableCleanResources();
 
@@ -303,7 +303,16 @@ class DBLEntryRow extends PureComponent<Props> {
             <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.name)} />
           </div>
           <div className={styles.bundleRowTopMiddle}>
-            <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
+            <Tooltip title={this.props.entryPageUrl} placement="right">
+              <Button variant="flat" size="small" className={classes.button}
+                disabled={dblId === undefined}
+                onKeyPress={this.onOpenDBLEntryLink}
+                onClick={this.onOpenDBLEntryLink}
+              >
+                <Link className={classNames(classes.leftIcon, classes.iconSmall)} />
+                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
+              </Button>
+            </Tooltip>
           </div>
           <div className={styles.bundleRowTopRightSide}>
             {task === 'SAVETO' && (
@@ -313,16 +322,6 @@ class DBLEntryRow extends PureComponent<Props> {
                 icon={<FolderOpen />}
                 onClick={this.openInFolder}
               />
-            )}
-            {this.showInfoButton() && (
-              <Tooltip title={this.props.entryPageUrl} placement="left">
-                <FlatButton
-                  labelPosition="before"
-                  label={<ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
-                  icon={<Link color="inherit" />}
-                  onClick={this.onOpenDBLEntryLink}
-                />
-              </Tooltip>
             )}
             {this.showStatusAsText() && (
               <div style={{ paddingRight: '20px', paddingTop: '6px' }}>
@@ -363,16 +362,6 @@ class DBLEntryRow extends PureComponent<Props> {
               <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
               Save To
             </Button>
-            <Tooltip title={this.props.entryPageUrl} placement="right">
-              <Button variant="flat" size="small" className={classes.button}
-                disabled={dblId === undefined}
-                onKeyPress={this.onOpenDBLEntryLink}
-                onClick={this.onOpenDBLEntryLink}
-              >
-                <Link className={classNames(classes.leftIcon, classes.iconSmall)} />
-                DBL
-              </Button>
-            </Tooltip>
             <DeleteOrCleanButton {...this.props} shouldDisableCleanResources={this.shouldDisableCleanResources()} />
             {this.shouldShowUpload() &&
               <ConfirmButton classes={classes} variant="flat" size="small" className={classes.button}
