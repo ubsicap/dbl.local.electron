@@ -10,7 +10,8 @@
  *
  * @flow
  */
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, /* session */} from 'electron';
+import log from 'electron-log';
 import MenuBuilder from './menu';
 import { autoUpdaterServices } from './main-process/autoUpdater.services';
 import { navigationConstants } from './constants/navigation.constants';
@@ -87,4 +88,18 @@ app.on('ready', async () => {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
+
+  mainWindow.onerror = (err) => {
+    log.error(JSON.stringify(err));
+  };
+
+  process.on('uncaughtException', (err) => {
+    log.error(JSON.stringify(err));
+  });
+
+  /*
+  session.defaultSession.webRequest.onErrorOccurred((details) => {
+    log.error(JSON.stringify(details));
+  });
+   */
 });

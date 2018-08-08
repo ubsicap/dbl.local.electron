@@ -1,4 +1,4 @@
-// import traverse from 'traverse';
+import log from 'electron-log';
 import path from 'path';
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 import { history } from '../store/configureStore';
@@ -269,11 +269,12 @@ export function saveMetadata(
       const type = fieldType === 'xml' ? fieldType : 'values';
       const normalized = newFieldValue.replace(/(\r\n\t|\n|\r\t)/gm, '').trim();
       const valueObj = type === 'xml' ?
-        { text: `<xml>${normalized}</xml>` } : { valueList: [normalized] };
+        { text: normalized } : { valueList: [normalized] };
       return [...acc, { type, name, ...valueObj }];
     }, []);
     const formId = bundleId;
     dispatch(saveMetadataRequest(formId, fields, moveNextStep));
+    let postFormArgs = null;
     try {
       const [keyFieldName] = Object.keys(instanceKeyValue || {});
       const [keyFieldValue] = Object.values(instanceKeyValue || {});
@@ -285,7 +286,10 @@ export function saveMetadata(
         dispatch(saveMetadataFailed(bundleId, formKey, error));
         return;
       }
-      await bundleService.postFormFields(bundleId, formKey, { formId, fields }, keyFieldValue);
+      postFormArgs = {
+        bundleId, formKey, payload: { formId, fields }, keyField: keyFieldValue
+      };
+      await bundleService.postFormFields({ ...postFormArgs });
       if (saveOverrides) {
         dispatch(fetchActiveFormInputs(bundleId, formKey));
       }
@@ -303,7 +307,7 @@ export function saveMetadata(
         const error = JSON.parse(errorText);
         dispatch(saveMetadataFailed(bundleId, formKey, error));
       } catch (errorParsingJson) {
-        dispatch(saveMetadataFailed(bundleId, formKey, null, errorText));
+        dispatch(saveMetadataFailed(bundleId, formKey, null, errorText, postFormArgs));
       }
     }
   };
@@ -321,7 +325,11 @@ export function saveMetadataSuccess(bundleId, formKey, moveNextStep) {
   };
 }
 
-export function saveMetadataFailed(bundleId, formKey, error, errorText) {
+export function saveMetadataFailed(bundleId, formKey, error, errorText, postFormArgs) {
+  if (!error && errorText) {
+    log.error(`POST form args: ${JSON.stringify(postFormArgs)}`);
+    log.error(`POST form error: ${errorText}`);
+  }
   return {
     type: bundleEditMetadataConstants.SAVE_METADATA_FAILED, bundleId, formKey, error, errorText
   };

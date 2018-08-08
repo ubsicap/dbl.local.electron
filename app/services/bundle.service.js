@@ -311,7 +311,9 @@ function getFormFields(bundleId, formKey) {
     "response_valid": false
   }
  */
-function postFormFields(bundleId, formKey, payload, keyField) {
+function postFormFields({
+  bundleId, formKey, payload, keyField
+}) {
   const requestOptions = {
     method: 'POST',
     headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
