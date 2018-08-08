@@ -17,7 +17,6 @@ userService.logout().catch((error) => {
   console.log(error);
 }).then(() => renderApp()).catch();
 
-renderApp();
 async function renderApp() {
   await dblDotLocalService.ensureDblDotLocal();
   render(
