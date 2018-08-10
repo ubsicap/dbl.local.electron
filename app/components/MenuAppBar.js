@@ -23,7 +23,7 @@ function mapStateToProps(state) {
   const { isSearchActive } = bundlesFilter;
   const { searchInputRaw } = bundlesFilter;
   const { loggedIn, whoami } = authentication;
-  const { display_name: userName } = whoami;
+  const { display_name: userName = 'DEMO USER' } = whoami || {};
   return {
     loggedIn,
     userName,

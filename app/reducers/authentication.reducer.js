@@ -1,12 +1,13 @@
 import { userConstants } from '../constants';
 
 const user = JSON.parse(localStorage.getItem('user'));
-const initialState = user ? { loggedIn: true, user } : {};
+const initialState = user ? { loggedIn: true, user } : { loggedIn: false };
 
 export function authentication(state = initialState, action) {
   switch (action.type) {
     case userConstants.LOGIN_REQUEST:
       return {
+        loggedIn: false,
         loggingIn: true,
         user: action.user
       };
@@ -23,10 +24,12 @@ export function authentication(state = initialState, action) {
       };
     case userConstants.LOGOUT_SUCCESS:
       return {
+        loggedIn: false,
         loggedOut: true,
       };
     case userConstants.LOGOUT_WITH_ERROR:
       return {
+        loggedIn: false,
         loggedOut: true,
         error: action.error
       };
