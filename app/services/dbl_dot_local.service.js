@@ -49,6 +49,17 @@ function handlResponseAsReadable(response) {
 
 async function ensureDblDotLocal() {
   try {
+    const configXmlFile = dblDotLocalService.getDblDotLocalConfigFilePath();
+    const doesConfigExists = await fs.exists(configXmlFile);
+    if (!doesConfigExists) {
+      const browserWindow = getCurrentWindow();
+      importConfigXml(browserWindow);
+      const doesConfigExistsAgain = await fs.exists(configXmlFile);
+      if (!doesConfigExistsAgain) {
+        browserWindow.close();
+        return;
+      }
+    }
     return await dblDotLocalService.health();
   } catch (error) {
     if (error.message === 'Failed to fetch') {
@@ -95,6 +106,11 @@ function getApp() {
   return app;
 }
 
+function getCurrentWindow() {
+  const func = remote.getCurrentWindow || electron.getCurrentWindow;
+  return func();
+}
+
 function getDialog() {
   const dialog = remote.dialog || electron.dialog;
   return dialog;
@@ -115,7 +131,6 @@ function getConfigXmlDefaultFolder() {
   return defaultPath;
 }
 
-
 function importConfigXml(browserWindow) {
   const defaultPath = getConfigXmlDefaultFolder();
   const dialog = getDialog();
@@ -134,12 +149,13 @@ function importConfigXml(browserWindow) {
   if (!filePaths) {
     return;
   }
-  const [newSourceFile] = filePaths;
+  const [newSourceFilePath] = filePaths;
   const destination = dblDotLocalService.getDblDotLocalConfigFilePath();
-  fs.writeFileSync(destination, newSourceFile);
+  const newConfigFile = fs.readFileSync(newSourceFilePath);
+  fs.writeFileSync(destination, newConfigFile);
   dialog.showMessageBox(
     browserWindow,
-    { message: `Imported ${newSourceFile} \n\n Please restart.` }
+    { message: `Imported ${newSourceFilePath}\n\nPlease restart.` }
   );
   browserWindow.close();
 }
@@ -162,7 +178,6 @@ function exportConfigXml(browserWindow) {
     return;
   }
   const sourceFilePath = dblDotLocalService.getDblDotLocalConfigFilePath();
-  fs.readFileSync(sourceFilePath, { encoding: 'utf8' });
   const activeConfigFile = fs.readFileSync(sourceFilePath);
   fs.writeFileSync(destinationFileName, activeConfigFile);
   const { shell } = electron;
