@@ -3,14 +3,13 @@ import path from 'path';
 import { execFile } from 'child_process';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 
-const { app } = require('electron').remote;
-
 export const dblDotLocalService = {
   health,
   htmlBaseUrl,
   ensureDblDotLocal,
   getDblDotLocalConfigFilePath,
-  getDblDotLocalConfigOrigFilePath
+  importConfigXml,
+  exportConfigXml
 };
 export default dblDotLocalService;
 
@@ -75,21 +74,97 @@ function startDblDotLocalSubProcess() {
 
 function getDblDotLocalExecCwd() {
   // https://github.com/chentsulin/electron-react-boilerplate/issues/1047#issuecomment-319359165
+  const app = getApp();
+  const isMainProcess = Boolean(electron.app);
   const resourcesPath = path.resolve(app.getAppPath(), '../');
+  const anotherParentDirectory = isMainProcess ? '..' : '';
+  // console.log(resourcesPath);
   const cwd = (process.env.NODE_ENV === 'production' ?
     path.join(resourcesPath, 'extraFiles', 'dbl_dot_local') :
-    path.join(__dirname, '..', 'resources', 'extraFiles', 'dbl_dot_local'));
+    path.join(__dirname, anotherParentDirectory, '..', 'resources', 'extraFiles', 'dbl_dot_local'));
+  // console.log(cwd);
   return cwd;
+}
+
+const electron = require('electron');
+
+const { remote = {} } = electron;
+
+function getApp() {
+  const app = remote.app || electron.app;
+  return app;
+}
+
+function getDialog() {
+  const dialog = remote.dialog || electron.dialog;
+  return dialog;
 }
 
 function getDblDotLocalConfigFilePath() {
   return path.join(getDblDotLocalExecCwd(), 'config.xml');
 }
 
-function getDblDotLocalConfigOrigFilePath() {
-  return path.join(getDblDotLocalExecCwd(), 'config.xml.orig');
-}
-
 function getDblDotLocalExecPath() {
   return path.join(getDblDotLocalExecCwd(), 'dbl_dot_local.exe');
+}
+
+function getConfigXmlDefaultFolder() {
+  const app = getApp();
+  const downloadsFolder = app.getPath('downloads');
+  const defaultPath = path.join(downloadsFolder, 'config.xml');
+  return defaultPath;
+}
+
+
+function importConfigXml(browserWindow) {
+  const defaultPath = getConfigXmlDefaultFolder();
+  const dialog = getDialog();
+  const filePaths = dialog.showOpenDialog(
+    browserWindow,
+    {
+      title: 'Select config.xml for dbl_dot_local',
+      defaultPath,
+      filters: [
+        { name: 'XML files', extensions: ['xml'] },
+        { name: 'All Files', extensions: ['*'] }
+      ],
+      properties: ['openFile']
+    }
+  );
+  if (!filePaths) {
+    return;
+  }
+  const [newSourceFile] = filePaths;
+  const destination = dblDotLocalService.getDblDotLocalConfigFilePath();
+  fs.writeFileSync(destination, newSourceFile);
+  dialog.showMessageBox(
+    browserWindow,
+    { message: `Imported ${newSourceFile} \n\n Please restart.` }
+  );
+  browserWindow.close();
+}
+
+function exportConfigXml(browserWindow) {
+  const defaultPath = getConfigXmlDefaultFolder();
+  const dialog = getDialog();
+  const destinationFileName = dialog.showSaveDialog(
+    browserWindow,
+    {
+      title: 'Select folder to save config.xml',
+      defaultPath,
+      filters: [
+        { name: 'XML files', extensions: ['xml'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    }
+  );
+  if (!destinationFileName) {
+    return;
+  }
+  const sourceFilePath = dblDotLocalService.getDblDotLocalConfigFilePath();
+  fs.readFileSync(sourceFilePath, { encoding: 'utf8' });
+  const activeConfigFile = fs.readFileSync(sourceFilePath);
+  fs.writeFileSync(destinationFileName, activeConfigFile);
+  const { shell } = electron;
+  shell.showItemInFolder(destinationFileName);
 }
