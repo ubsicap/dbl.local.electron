@@ -49,20 +49,20 @@ function handlResponseAsReadable(response) {
 
 async function ensureDblDotLocal() {
   try {
-    const configXmlFile = dblDotLocalService.getDblDotLocalConfigFilePath();
-    const doesConfigExists = await fs.exists(configXmlFile);
-    if (!doesConfigExists) {
-      const browserWindow = getCurrentWindow();
-      importConfigXml(browserWindow);
-      const doesConfigExistsAgain = await fs.exists(configXmlFile);
-      if (!doesConfigExistsAgain) {
-        browserWindow.close();
-        return;
-      }
-    }
     return await dblDotLocalService.health();
   } catch (error) {
     if (error.message === 'Failed to fetch') {
+      const configXmlFile = dblDotLocalService.getDblDotLocalConfigFilePath();
+      const doesConfigExists = await fs.exists(configXmlFile);
+      if (!doesConfigExists) {
+        const browserWindow = getCurrentWindow();
+        importConfigXml(browserWindow);
+        const doesConfigExistsAgain = await fs.exists(configXmlFile);
+        if (!doesConfigExistsAgain) {
+          browserWindow.close();
+          return;
+        }
+      }
       startDblDotLocalSubProcess();
     }
   }
