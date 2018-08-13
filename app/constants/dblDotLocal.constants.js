@@ -1,15 +1,12 @@
-
-
 export const dblDotLocalConfig = {
-  getHttpDblDotLocalBaseUrl
+  getHttpDblDotLocalBaseUrl,
+  FLASK_API_DEFAULT: 'http://127.0.0.1:44151',
+  HTML_BASE_URL_REQUEST: 'DBL_DOT_LOCAL_CONFIG_HTML_BASE_URL_REQUEST',
+  HTML_BASE_URL_RESPONSE: 'DBL_DOT_LOCAL_CONFIG_HTML_BASE_URL_RESPONSE',
+  CONFIG_REQUEST_FAILURE: 'DBL_DOT_LOCAL_CONFIG_REQUEST_FAILURE'
 };
-
-function getHttpDblDotLocalBaseUrl() {
-  // console.log(`env.HTTP_DBL_DOT_LOCAL_FLASK_API: ${process.env.HTTP_DBL_DOT_LOCAL_FLASK_API}`);
-  // console.log(window.require('electron').remote.process.argv);
-  // ["C:\Users\...\Nathanael.exe", "--http-dbl-dot-local-flask-api=http://127.0.0.1:8080"]
-  return process.env.HTTP_DBL_DOT_LOCAL_FLASK_API;
-}
-
 export default dblDotLocalConfig;
 
+function getHttpDblDotLocalBaseUrl() {
+  return dblDotLocalConfig.FLASK_API_DEFAULT;
+}

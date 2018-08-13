@@ -9,19 +9,24 @@ import Book from '@material-ui/icons/Book';
 import Headset from '@material-ui/icons/Headset';
 import Videocam from '@material-ui/icons/Videocam';
 import Print from '@material-ui/icons/Print';
-import FlatButton from 'material-ui/FlatButton';
 import Button from '@material-ui/core/Button';
 import Toolbar from '@material-ui/core/Toolbar';
+import Tooltip from '@material-ui/core/Tooltip';
 import FileDownload from 'material-ui/svg-icons/file/file-download';
 import FolderOpen from 'material-ui/svg-icons/file/folder-open';
 import Save from '@material-ui/icons/Save';
 import CallSplit from '@material-ui/icons/CallSplit';
-import Info from '@material-ui/icons/Info';
-import Delete from '@material-ui/icons/Delete';
-import Edit from '@material-ui/icons/Edit'
+import Link from '@material-ui/icons/Link';
+import Edit from '@material-ui/icons/Edit';
+import CloudUpload from '@material-ui/icons/CloudUpload';
 import styles from './DBLEntryRow.css';
 import ControlledHighlighter from './ControlledHighlighter';
-import { toggleSelectBundle, requestSaveBundleTo, removeResources, downloadResources } from '../actions/bundle.actions';
+import { toggleSelectEntry, requestSaveBundleTo,
+  downloadResources, uploadBundle } from '../actions/bundle.actions';
+import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
+import { utilities } from '../utils/utilities';
+import DeleteOrCleanButton from './DeleteOrCleanButton';
+import ConfirmButton from './ConfirmButton';
 
 const { dialog, app } = require('electron').remote;
 const { shell } = require('electron');
@@ -29,37 +34,55 @@ const { shell } = require('electron');
 type Props = {
   bundleId: string,
   dblId: string,
+  revision: string,
+  parent: ?{},
   task: string,
   status: string,
   medium: string,
   displayAs: {},
+  resourceCountStored?: number,
   bundleMatches: {},
   bundlesSaveTo: {},
   progress?: ?number,
   isDownloaded: ?boolean,
+  isUploading?: ?boolean,
+  isDownloading?: ?boolean,
   isSelected: ?boolean,
   shouldShowRow: boolean,
-  toggleSelectBundle: () => {},
+  classes: {},
+  isRequestingRevision: boolean,
+  entryPageUrl: string,
+  toggleSelectEntry: () => {},
   downloadResources: () => {},
   requestSaveBundleTo: () => {},
-  removeResources: () => {}
+  openEditMetadata: () => {},
+  uploadBundle: () => {}
 };
 
 const mapDispatchToProps = {
-  toggleSelectBundle,
+  toggleSelectEntry,
   downloadResources,
   requestSaveBundleTo,
-  removeResources
+  openEditMetadata,
+  uploadBundle
 };
 
+const getTask = (state, props) => props.task;
+const getStatus = (state, props) => props.status;
 const getIsSearchActive = (state) => state.bundlesFilter.isSearchActive;
 const emptyBundleMatches = {};
 const getEmptryBundleMatches = () => emptyBundleMatches;
+const getBundleId = (state, props) => props.bundleId;
 
 const getBundleMatches = (state, props) =>
   (state.bundlesFilter.searchResults && state.bundlesFilter.searchResults.bundlesMatching ?
     (state.bundlesFilter.searchResults.bundlesMatching[props.bundleId] || emptyBundleMatches)
     : emptyBundleMatches);
+
+const makeGetIsDownloading = () => createSelector(
+  [getTask, getStatus],
+  (task, status) => (task === 'DOWNLOAD' && status === 'IN_PROGRESS')
+);
 
 const makeShouldShowRow = () => createSelector(
   [getIsSearchActive, getBundleMatches],
@@ -71,15 +94,37 @@ const makeGetBundleMatches = () => createSelector(
   (isActiveSearch, bundleMatches, emptyMatches) => (isActiveSearch ? bundleMatches : emptyMatches)
 );
 
+const getRequestingRevision = (state) => state.bundleEditMetadata.requestingRevision;
+
+const makeGetIsRequestingRevision = () => createSelector(
+  [getRequestingRevision, getBundleId],
+  (requestingRevision, bundleId) => (requestingRevision === bundleId)
+);
+
+const getDblBaseUrl = (state) => state.dblDotLocalConfig.dblBaseUrl;
+const getPropsRevision = (state, props) => props.revision;
+const getPropsParent = (state, props) => props.parent;
+const getPropsDblId = (state, props) => props.dblId;
+const makeGetEntryPageUrl = () => createSelector(
+  [getDblBaseUrl, getPropsDblId, getPropsRevision, getPropsParent],
+  (dblBaseUrl, dblId, revision, parent) => (`${dblBaseUrl}/entry?id=${dblId}&revision=${parseInt(revision, 10) || parent.revision}`)
+);
+
 const makeMapStateToProps = () => {
   const shouldShowRow = makeShouldShowRow();
   const getMatches = makeGetBundleMatches();
+  const getIsRequestingRevision = makeGetIsRequestingRevision();
+  const getEntryPageUrl = makeGetEntryPageUrl();
+  const getIsDownloading = makeGetIsDownloading();
   const mapStateToProps = (state, props) => {
     const { bundlesSaveTo } = state;
     return {
+      isRequestingRevision: getIsRequestingRevision(state, props),
       shouldShowRow: shouldShowRow(state, props),
       bundleMatches: getMatches(state, props),
-      bundlesSaveTo
+      bundlesSaveTo,
+      entryPageUrl: getEntryPageUrl(state, props),
+      isDownloading: getIsDownloading(state, props)
     };
   };
   return mapStateToProps;
@@ -96,14 +141,14 @@ class DBLEntryRow extends PureComponent<Props> {
   }
 
   onClickBundleRow = () => {
-    const { bundleId: id, displayAs } = this.props;
-    this.props.toggleSelectBundle({ id, displayAs });
+    const { bundleId: id, dblId, displayAs } = this.props;
+    this.props.toggleSelectEntry({ id, dblId, displayAs });
   }
 
   showStatusAsText = () => {
     const { task, status } = this.props;
     return ((task === 'UPLOAD' || task === 'DOWNLOAD') &&
-      (status === 'COMPLETED' || status === 'DRAFT' || status === 'IN_PROGRESS')) ||
+      (status === 'DRAFT' || status === 'IN_PROGRESS' || status === 'COMPLETED')) ||
       ((task === 'REMOVE_RESOURCES') && status === 'IN_PROGRESS');
   }
 
@@ -112,10 +157,28 @@ class DBLEntryRow extends PureComponent<Props> {
     return (task === 'DOWNLOAD' && status === 'NOT_STARTED');
   }
 
-  hasNotYetDownloadedResources = () => {
-    const { isDownloaded, progress } = this.props;
-    return ((isDownloaded === undefined || !isDownloaded)
-      || (progress && progress < 100)) === true;
+  hasNoStoredResources = () => {
+    const { resourceCountStored = 0 } = this.props;
+    return resourceCountStored === 0;
+  }
+
+  shouldDisableCleanResources = () =>
+    (this.hasNoStoredResources() || this.shouldDisableReviseOrEdit());
+
+  shouldDisableSaveTo = () => this.shouldDisableCleanResources();
+
+  shouldShowUpload = () => {
+    const { isUploading = false, task, status } = this.props;
+    return status === 'DRAFT' || isUploading || (task === 'UPLOAD' && status === 'IN_PROGRESS');
+  }
+
+  shouldDisableRevise = () => (this.props.isRequestingRevision || this.props.isDownloading)
+
+  shouldDisableUpload = () => this.shouldDisableReviseOrEdit();
+
+  shouldDisableReviseOrEdit = () => {
+    const { isUploading = false, task, status } = this.props;
+    return isUploading || (task === 'UPLOAD' && status === 'IN_PROGRESS') || this.shouldDisableRevise();
   }
 
   emptyMatches = [];
@@ -134,6 +197,18 @@ class DBLEntryRow extends PureComponent<Props> {
   onClickDownloadResources = (event) => {
     const { bundleId } = this.props;
     this.props.downloadResources(bundleId);
+    event.stopPropagation();
+  }
+
+  onClickEditMetadata = (event) => {
+    const { bundleId } = this.props;
+    this.props.openEditMetadata(bundleId);
+    event.stopPropagation();
+  }
+
+  onClickUploadBundle = (event) => {
+    const { bundleId } = this.props;
+    this.props.uploadBundle(bundleId);
     event.stopPropagation();
   }
 
@@ -167,19 +242,24 @@ class DBLEntryRow extends PureComponent<Props> {
   }
 
   onOpenDBLEntryLink = (event) => {
-    const { dblId } = this.props;
-    onOpenLink(event, `https://thedigitalbiblelibrary.org/entry?id=${dblId}`);
-  }
-
-  onClickRemoveResources = (event) => {
-    const { bundleId } = this.props;
-    this.props.removeResources(bundleId);
-    event.stopPropagation();
+    utilities.onOpenLink(this.props.entryPageUrl)(event);
   }
 
   renderStatus = () => (
     <ControlledHighlighter {...this.getHighlighterSharedProps(this.props.displayAs.status)} />
   );
+
+  renderEditIcon = () => {
+    const { status, classes } = this.props;
+    if (status === 'DRAFT') {
+      return [<Edit key="btnEdit" className={classNames(classes.leftIcon, classes.iconSmall)} />, 'Edit'];
+    }
+    return [
+      <CallSplit
+        key="btnRevise"
+        className={classNames(classes.leftIcon, classes.iconSmall)}
+      />, 'Revise'];
+  };
 
   render() {
     const {
@@ -205,7 +285,7 @@ class DBLEntryRow extends PureComponent<Props> {
         onClick={this.onClickBundleRow}
         tabIndex={0}
         role="button"
-        style={{ background: `${pickBackgroundColor(task, status)}` }}
+        style={{ background: `${pickBackgroundColor(task, status)}`, borderBottom: '1px solid lightgray' }}
       >
         <div className={styles.bundleRowTop}>
           <div className={styles.bundleRowTopLeftSideIcon}>
@@ -222,16 +302,26 @@ class DBLEntryRow extends PureComponent<Props> {
             <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.name)} />
           </div>
           <div className={styles.bundleRowTopMiddle}>
-            <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
+            <Tooltip title={this.props.entryPageUrl} placement="right">
+              <Button variant="flat" size="small" className={classes.button}
+                disabled={dblId === undefined}
+                onKeyPress={this.onOpenDBLEntryLink}
+                onClick={this.onOpenDBLEntryLink}
+              >
+                <Link className={classNames(classes.leftIcon, classes.iconSmall)} />
+                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
+              </Button>
+            </Tooltip>
           </div>
           <div className={styles.bundleRowTopRightSide}>
             {task === 'SAVETO' && (
-              <FlatButton
-                labelPosition="before"
-                label={<ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
-                icon={<FolderOpen />}
+              <Button variant="flat" size="small" className={classes.button}
+                onKeyPress={this.openInFolder}
                 onClick={this.openInFolder}
-              />
+              >
+                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
+                <FolderOpen className={classNames(classes.rightIcon, classes.iconSmall)} />
+              </Button>
             )}
             {this.showStatusAsText() && (
               <div style={{ paddingRight: '20px', paddingTop: '6px' }}>
@@ -239,12 +329,13 @@ class DBLEntryRow extends PureComponent<Props> {
               </div>
             )}
             {this.showDownloadButton() && (
-              <FlatButton
-                labelPosition="before"
-                label={<ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
-                icon={<FileDownload />}
+              <Button variant="flat" size="small" className={classes.button}
+                onKeyPress={this.onClickDownloadResources}
                 onClick={this.onClickDownloadResources}
-              />
+              >
+                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
+                <FileDownload className={classNames(classes.rightIcon, classes.iconSmall)} />
+              </Button>
             )}
           </div>
         </div>
@@ -258,39 +349,31 @@ class DBLEntryRow extends PureComponent<Props> {
         )}
         {isSelected && (
           <Toolbar style={{ minHeight: '36px' }}>
-            <Button variant="flat" size="small" className={classes.button} disabled
-              onKeyPress={stopPropagation}
-              onClick={stopPropagation}>
-              <Edit className={classNames(classes.leftIcon, classes.iconSmall)} />
-              Edit
-            </Button>
-            <Button variant="flat" size="small" className={classes.button} disabled
-              onKeyPress={stopPropagation}
-              onClick={stopPropagation}>
-              <CallSplit className={classNames(classes.leftIcon, classes.iconSmall)} />
-              Revise
+            <Button
+              disabled={this.shouldDisableReviseOrEdit()}
+              variant="flat" size="small" className={classes.button}
+              onKeyPress={this.onClickEditMetadata}
+              onClick={this.onClickEditMetadata}>
+              {this.renderEditIcon()}
             </Button>
             <Button variant="flat" size="small" className={classes.button}
-              disabled={this.hasNotYetDownloadedResources()}
+              disabled={this.shouldDisableSaveTo()}
               onKeyPress={this.startSaveBundleTo}
               onClick={this.startSaveBundleTo}>
               <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
               Save To
             </Button>
-            <Button variant="flat" size="small" className={classes.button}
-              disabled={dblId === undefined}
-              onKeyPress={this.onOpenDBLEntryLink}
-              onClick={this.onOpenDBLEntryLink}>
-              <Info className={classNames(classes.leftIcon, classes.iconSmall)} />
-              Info
-            </Button>
-            <Button variant="flat" size="small" className={classes.button}
-              disabled={this.hasNotYetDownloadedResources()}
-              onKeyPress={this.onClickRemoveResources}
-              onClick={this.onClickRemoveResources}>
-              <Delete className={classNames(classes.leftIcon, classes.iconSmall)} />
-              Clean
-            </Button>
+            <DeleteOrCleanButton {...this.props} shouldDisableCleanResources={this.shouldDisableCleanResources()} />
+            {this.shouldShowUpload() &&
+              <ConfirmButton classes={classes} variant="flat" size="small" className={classes.button}
+                disabled={this.shouldDisableUpload()}
+                onKeyPress={this.onClickUploadBundle}
+                onClick={this.onClickUploadBundle}
+              >
+                <CloudUpload className={classNames(classes.leftIcon, classes.iconSmall)} />
+                Upload
+              </ConfirmButton>
+            }
           </Toolbar>
           )}
       </div>
@@ -299,7 +382,10 @@ class DBLEntryRow extends PureComponent<Props> {
 }
 
 DBLEntryRow.defaultProps = {
-  progress: null
+  progress: null,
+  resourceCountStored: 0,
+  isUploading: null,
+  isDownloading: null
 };
 
 const materialStyles = theme => ({
@@ -337,9 +423,6 @@ function pickBackgroundColor(task, status) {
   switch (status) {
     case 'DRAFT': return '#F5D2D2';
     case 'NOT_STARTED': return '#EDEDED';
-    case 'IN_PROGRESS':
-      return '#6DCBC4';
-    case 'COMPLETED': return '#A1CB6D';
     default:
       return 'white';
   }
@@ -349,10 +432,3 @@ function stopPropagation(event) {
   event.stopPropagation();
   return null;
 }
-
-function onOpenLink(event, url) {
-  event.preventDefault();
-  event.stopPropagation();
-  shell.openExternal(url);
-}
-

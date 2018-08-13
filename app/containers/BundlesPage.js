@@ -1,19 +1,34 @@
 import React, { PureComponent } from 'react';
+import { connect } from 'react-redux';
 import Bundles from '../components/Bundles';
 import MenuAppBar from '../components/MenuAppBar';
-import styles from './BundlesPage.css';
+import { loadHtmlBaseUrl } from '../actions/dblDotLocalConfig.actions';
 
-type Props = {};
+type Props = {
+  loadHtmlBaseUrl: () => {}
+};
 
-export default class BundlesPage extends PureComponent<Props> {
+const mapDispatchToProps = {
+  loadHtmlBaseUrl,
+};
+
+class BundlesPage extends PureComponent<Props> {
   props: Props;
+  componentDidMount() {
+    this.props.loadHtmlBaseUrl();
+  }
 
   render() {
     return (
-      <div className={styles.container} style={{ paddingTop: '68px' }} data-tid="container">
+      <div data-tid="container">
         <MenuAppBar />
         <Bundles />
       </div>
     );
   }
 }
+
+export default connect(
+  null,
+  mapDispatchToProps,
+)(BundlesPage);

@@ -32,33 +32,43 @@ function formatErrorMessage(error) {
 }
 
 function login(username, password) {
-  return dispatch => {
+  return async dispatch => {
     dispatch(request({ username }));
-    userService
-      .login(username, password)
-      .then(user => {
-        dispatch(success(user));
-        history.push(navigationConstants.NAVIGATION_BUNDLES);
-        return true;
-      })
-      .catch(error => {
-        dispatch(failure(error));
-        const errorMsg = formatErrorMessage(error, dblDotLocalConfig);
-        dispatch(alertActions.error({ error, message: errorMsg }));
-        return true;
-      });
+    try {
+      const user = await userService.login(username, password);
+      const whoami = await userService.whoami();
+      dispatch(success(user, whoami));
+      dispatch(otherWhoAmiTasks(whoami));
+      history.push(navigationConstants.NAVIGATION_BUNDLES);
+    } catch (error) {
+      dispatch(failure(error));
+      const errorMsg = formatErrorMessage(error, dblDotLocalConfig);
+      dispatch(alertActions.error({ error, message: errorMsg }));
+      return true;
+    }
   };
 
   function request(user) {
     return { type: userConstants.LOGIN_REQUEST, user };
   }
-  function success(user) {
-    return { type: userConstants.LOGIN_SUCCESS, user };
+  function success(user, whoami) {
+    return { type: userConstants.LOGIN_SUCCESS, user, whoami };
   }
   function failure(error) {
     return { type: userConstants.LOGIN_FAILURE, error };
   }
 }
+
+function otherWhoAmiTasks(_whoami) {
+  return dispatch => {
+    dispatch(setArchivistStatusOverrides(_whoami));
+  };
+
+  function setArchivistStatusOverrides(whoami) {
+    return { type: userConstants.SET_METADATA_OVERRIDES, whoami };
+  }
+}
+
 
 function logout() {
   return dispatch => {

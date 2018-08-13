@@ -2,11 +2,11 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Nathanael</title>
+    <title>nathanael</title>
     <script>
       (function() {
         const { app } = require('electron').remote;
-        document.getElementsByTagName('title')[0].innerText = `Nathanael (v${app.getVersion()})`;
+        document.getElementsByTagName('title')[0].innerText = `${app.getName()} (v${app.getVersion()})`;
         if (!process.env.HOT) {
           const link = document.createElement('link');
           link.rel = 'stylesheet';

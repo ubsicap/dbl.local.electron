@@ -1,4 +1,6 @@
 import React from 'react';
+import Button from '@material-ui/core/Button';
+import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import { DebounceInput } from 'react-debounce-input';
@@ -16,11 +18,15 @@ import { updateSearchInput, clearSearch } from '../actions/bundleFilter.actions'
 
 
 function mapStateToProps(state) {
-  const { bundlesFilter } = state;
+  const { bundlesFilter, authentication } = state;
   const { isLoading: isLoadingSearch } = bundlesFilter;
   const { isSearchActive } = bundlesFilter;
   const { searchInputRaw } = bundlesFilter;
+  const { loggedIn, whoami } = authentication;
+  const { display_name: userName = 'DEMO USER' } = whoami || {};
   return {
+    loggedIn,
+    userName,
     isLoadingSearch,
     isSearchActive,
     searchInputRaw
@@ -34,13 +40,27 @@ const mapDispatchToProps = {
 
 type Props = {
     classes: {},
+    loggedIn: boolean,
+    userName: string,
     isSearchActive: boolean,
     searchInputRaw: ?string,
     updateSearchInput: () => {},
     clearSearch: () => {}
 };
 
-const styles = {
+const styles = theme => ({
+  button: {
+    margin: theme.spacing.unit,
+  },
+  leftIcon: {
+    marginRight: theme.spacing.unit,
+  },
+  rightIcon: {
+    marginLeft: theme.spacing.unit,
+  },
+  iconSmall: {
+    fontSize: 20,
+  },
   root: {
     flexGrow: 1,
   },
@@ -51,12 +71,11 @@ const styles = {
     marginLeft: -12,
     marginRight: 20,
   },
-};
+});
 
 class MenuAppBar extends React.PureComponent {
   props: Props;
   state = {
-    auth: true,
     anchorEl: null,
   };
 
@@ -69,7 +88,6 @@ class MenuAppBar extends React.PureComponent {
   }
 
   handleChange = (event, checked) => {
-    this.setState({ auth: checked });
   };
 
   handleMenu = event => {
@@ -91,61 +109,55 @@ class MenuAppBar extends React.PureComponent {
   }
 
   render() {
-    const { classes } = this.props;
-    const { auth, anchorEl } = this.state;
+    const { classes, loggedIn, userName } = this.props;
+    const { anchorEl } = this.state;
     const open = Boolean(anchorEl);
 
     return (
-      <div className={classes.root}>
-        <AppBar position="fixed">
-          <Toolbar>
-            <IconButton className={classes.menuButton} color="inherit" aria-label="Menu">
-              <MenuIcon />
-            </IconButton>
-            <Typography variant="title" color="inherit" className={classes.flex}>
-              Nathanael
-            </Typography>
+      <AppBar position="sticky">
+        <Toolbar>
+          <IconButton className={classes.menuButton} color="inherit" aria-label="Menu">
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="title" color="inherit" className={classes.flex}>
+            nathanael
+          </Typography>
+          <div>
+            <DebounceInput
+              debounceTimeout={300}
+              className="form-control"
+              value={this.searchInputValue()}
+              placeholder="Search"
+              onChange={(event) => this.onChangeSearchInput(event, event.target.value)}
+            />
+          </div>
+          {loggedIn && (
             <div>
-              <DebounceInput
-                debounceTimeout={300}
-                className="form-control"
-                value={this.searchInputValue()}
-                placeholder="Search"
-                onChange={(event) => this.onChangeSearchInput(event, event.target.value)}
-              />
+              <Button color="inherit">
+                {userName}
+                <AccountCircle className={classNames(classes.rightIcon, classes.iconSmall)} />
+              </Button>
+              <Menu
+                id="menu-appbar"
+                anchorEl={anchorEl}
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                open={open}
+                onClose={this.handleClose}
+              >
+                <MenuItem onClick={this.handleClose}>Profile</MenuItem>
+                <MenuItem onClick={this.handleClose}>My account</MenuItem>
+              </Menu>
             </div>
-            {auth && (
-              <div>
-                <IconButton
-                  aria-owns={open ? 'menu-appbar' : null}
-                  aria-haspopup="true"
-                  onClick={this.handleMenu}
-                  color="inherit"
-                >
-                  <AccountCircle />
-                </IconButton>
-                <Menu
-                  id="menu-appbar"
-                  anchorEl={anchorEl}
-                  anchorOrigin={{
-                    vertical: 'top',
-                    horizontal: 'right',
-                  }}
-                  transformOrigin={{
-                    vertical: 'top',
-                    horizontal: 'right',
-                  }}
-                  open={open}
-                  onClose={this.handleClose}
-                >
-                  <MenuItem onClick={this.handleClose}>Profile</MenuItem>
-                  <MenuItem onClick={this.handleClose}>My account</MenuItem>
-                </Menu>
-              </div>
-            )}
-          </Toolbar>
-        </AppBar>
-      </div>
+          )}
+        </Toolbar>
+      </AppBar>
     );
   }
 }

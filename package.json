@@ -1,7 +1,7 @@
 {
   "name": "nathanael",
-  "productName": "Nathanael",
-  "version": "0.8.0",
+  "productName": "nathanael",
+  "version": "0.9.0",
   "description": "Electron frontend to DBL dot Local",
   "scripts": {
     "build": "concurrently \"npm run build-main\" \"npm run build-renderer\"",
@@ -33,8 +33,8 @@
   },
   "browserslist": "electron 1.6",
   "build": {
-    "productName": "Nathanael",
-    "appId": "org.develar.Nathanael",
+    "productName": "nathanael",
+    "appId": "org.develar.nathanael",
     "files": [
       "dist/",
       "node_modules/",
@@ -63,7 +63,8 @@
       ],
       "publish": [
         "github"
-      ]
+      ],
+      "forceCodeSigning": true
     },
     "linux": {
       "target": [
@@ -75,7 +76,8 @@
     "directories": {
       "buildResources": "resources",
       "output": "release"
-    }
+    },
+    "extraFiles": ["resources/extraFiles/**"]
   },
   "repository": {
     "type": "git",
@@ -188,7 +190,7 @@
     "webpack-merge": "^4.1.1"
   },
   "dependencies": {
-    "@material-ui/core": "^1.1.0",
+    "@material-ui/core": "^1.2.3",
     "@material-ui/icons": "^1.1.0",
     "bootstrap": "4.0.0",
     "devtron": "^1.4.0",
@@ -202,12 +204,12 @@
     "jquery": "^3.3.1",
     "material-ui": "^0.20.0",
     "popper.js": "^1.14.2",
-    "react": "^16.2.0",
+    "react": "^16.3.0",
     "react-addons-shallow-compare": "^15.6.2",
     "react-debounce-input": "^3.2.0",
-    "react-dom": "^16.2.0",
+    "react-dom": "^16.3.0",
     "react-highlight-words": "^0.11.0",
-    "react-hot-loader": "^4.0.0-beta.13",
+    "react-hot-loader": "^4.3.4",
     "react-perf-devtool": "^3.0.7",
     "react-redux": "^5.0.6",
     "react-router": "^4.2.0",
@@ -219,7 +221,8 @@
     "reselect": "^3.0.1",
     "source-map-support": "^0.5.3",
     "split-string": "^5.0.4",
-    "traverse": "^0.6.6"
+    "traverse": "^0.6.6",
+    "uuid": "^3.3.2"
   },
   "devEngines": {
     "node": ">=7.x",

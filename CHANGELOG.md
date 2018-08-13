@@ -1,3 +1,31 @@
+### Version 0.9.0
+
+#### Features
+- signed nathanael installer with Windows security certificate
+- run `dbl_dot_local.exe` as sub-process of nathanael (closes on exit)
+- `File > Import config.xml` (& exit) for `dbl_dot_local.exe`
+- `File > Export config.xml`
+
+##### Bundle Rows
+- Added user's name to app bar
+- Only list latest revision (or draft), ordered by language code/country then by name
+- Added [**Rev**] button to open DBL entry page
+- Added [**Revise**] button to create `Draft`
+- Added [**Edit**] button to edit metadata
+- Added [**Delete**] button to delete `Draft`
+- Added 'Stored' n-file count to show n-files downloaded
+- Added [**Upload**] button for
+##### Edit Metadata
+- Show metadata forms in terms of collapsible/expandable tree
+- Added [**Review**] button to show latest state of metadata.xml
+- Added [**Save**]/[**Undo**] buttons when editing metadata
+- Show errors in tree when trying to save invalid metadata
+- Added [**Delete**] for factory instance forms
+- Automatically cleanup/delete bundles that are not the latest revision (and have no resources downloaded)
+
+#### Fixes
+- Better performance when loading stored status on rows
+
 ### Version 0.8.0
 
 #### Features

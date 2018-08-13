@@ -2,6 +2,8 @@
 import { app, Menu, shell, BrowserWindow, ipcMain } from 'electron';
 import { ipcRendererConstants } from './constants/ipcRenderer.constants';
 import { navigationConstants } from './constants/navigation.constants';
+import { dblDotLocalService } from './services/dbl_dot_local.service';
+
 
 export default class MenuBuilder {
   mainWindow: BrowserWindow;
@@ -148,13 +150,24 @@ export default class MenuBuilder {
           }
         },
         {
+          label: '&Import config.xml',
+          accelerator: 'Ctrl+I',
+          click: () => dblDotLocalService.importConfigXml(this.mainWindow)
+        },
+        {
+          label: '&Export config.xml',
+          accelerator: 'Ctrl+E',
+          click: () => dblDotLocalService.exportConfigXml(this.mainWindow)
+        },
+        {
           label: 'Bundles (Demo)',
           accelerator: 'Ctrl+B',
           click: () => {
             this.navigate(navigationConstants.NAVIGATION_BUNDLES_DEMO);
           }
-        }, {
-          label: '&Exit',
+        },
+        {
+          label: 'E&xit',
           accelerator: 'Ctrl+W',
           click: () => {
             this.mainWindow.close();

@@ -1,15 +1,60 @@
 import sort from 'fast-sort';
 import { bundleConstants } from '../constants/bundle.constants';
 
-function sortBundles(unsorted) {
-  return sort(unsorted).asc([
+function sortAndFilterBundlesAsEntries(allBundles) {
+  const sortedBundles = sort(allBundles).asc([
+    b => b.dblId,
+    b => (b.revision === '0' || !b.revision ? ~10000000 : ~b.revision) // eslint-disable-line no-bitwise
+  ]);
+  const reducedBundles = sortedBundles.reduce((acc, b) => {
+    if (b.dblId in acc.visitedDblIds) {
+      return acc;
+    }
+    const visitedDblIds = { ...acc.visitedDblIds, [b.dblId]: b };
+    const items = [...acc.items, b];
+    return { visitedDblIds, items };
+  }, { visitedDblIds: {}, items: [] });
+  const { items: reducedUnsorted } = reducedBundles;
+  const items = sort(reducedUnsorted).asc([
     b => b.displayAs.languageAndCountry,
     b => b.displayAs.name,
-    b => ~b.revision,
   ]);
+  const addedByBundleIds = sortedBundles.reduce((acc, bundle) => ({ ...acc, [bundle.id]: bundle }), {});
+  const byBundleDblIds = items.reduce((acc, bundle) => ({ ...acc, [bundle.dblId]: bundle }), {});
+  return { items, addedByBundleIds, byBundleDblIds };
 }
 
-export function bundles(state = { items: [] }, action) {
+function getSelectedState(state, bundleToToggle, bundleIdToRemove, newItemsByDblIds) {
+  const { selectedBundle: origSelectedBundle = {} } = state;
+  const { dblId: origSelectedBundleDblId = null } = origSelectedBundle || {};
+  const { id: origSelectedBundleId } = origSelectedBundle || {};
+  if (bundleToToggle) {
+    const newBundleToSelect = newItemsByDblIds ?
+      newItemsByDblIds[origSelectedBundleDblId] :
+      bundleToToggle;
+    const selectedBundle = bundleToToggle.id === origSelectedBundleId ?
+      null : newBundleToSelect;
+    const { dblId: selectedDBLEntryId } = selectedBundle || {};
+    return {
+      selectedBundle,
+      selectedDBLEntryId
+    };
+  }
+  if (bundleIdToRemove && bundleIdToRemove === origSelectedBundleId) {
+    const newBundleToSelect = origSelectedBundleId === bundleIdToRemove ?
+      newItemsByDblIds[origSelectedBundleDblId] : [];
+    return {
+      selectedBundle: newBundleToSelect,
+      selectedDBLEntryId: newBundleToSelect.dblId
+    };
+  }
+  return {
+    selectedBundle: origSelectedBundle,
+    selectedDBLEntryId: origSelectedBundleDblId
+  };
+}
+
+export function bundles(state = { items: [], allBundles: [] }, action) {
   switch (action.type) {
     case bundleConstants.FETCH_REQUEST:
       return {
@@ -17,11 +62,16 @@ export function bundles(state = { items: [] }, action) {
         loading: true
       };
     case bundleConstants.FETCH_SUCCESS: {
-      const unsorted = action.bundles.map(bundle => addBundleDecorators(bundle));
-      const items = sortBundles(unsorted);
+      const allBundles = action.bundles.map(bundle => addBundleDecorators(bundle));
+      const { items, addedByBundleIds } = sortAndFilterBundlesAsEntries(allBundles);
+      const uploadJobs = items.filter(b => b.uploadJob).reduce((acc, b) =>
+        ({ ...acc, [b.id]: b.uploadJob, [b.uploadJob]: b.id }), {});
       return {
         ...state,
         items,
+        allBundles,
+        addedByBundleIds,
+        uploadJobs,
         loading: false,
       };
     }
@@ -31,23 +81,55 @@ export function bundles(state = { items: [] }, action) {
         error: action.error,
         loading: false,
       };
-    case bundleConstants.DELETE_REQUEST:
-      // add 'deleting:true' property to bundle being deleted
+    case bundleConstants.UPDATE_UPLOAD_JOBS: {
+      const { uploadJobs: originalUploadJobs = {} } = state;
+      const { bundleId: updatedBundleId, uploadJob: bundleUploadJob, removeJobOrBundle } = action;
+      const originalBundleUploadJob = originalUploadJobs[updatedBundleId];
+      if (originalBundleUploadJob === bundleUploadJob) {
+        return state; // no jobs have changed
+      }
+      const reverseLookup = bundleUploadJob ? { [bundleUploadJob]: updatedBundleId } : {};
+      const {
+        [removeJobOrBundle]: removedBundleOrJob,
+        [updatedBundleId]: removedJobId,
+        ...trimmedJobs
+      } = originalUploadJobs;
+      const uploadJobs = bundleUploadJob ?
+        { ...trimmedJobs, [updatedBundleId]: bundleUploadJob, ...reverseLookup } :
+        trimmedJobs;
       return {
         ...state,
-        items: state.items.map(bundle =>
-          (bundle.id === action.id
-            ? { ...bundle, deleting: true }
-            : bundle))
+        uploadJobs
       };
+    }
+    case bundleConstants.DELETE_SUCCESS: {
+      const { id: bundleIdToRemove } = action;
+      const allBundles = state.allBundles.filter(bundle => bundle.id !== bundleIdToRemove);
+      const { items, addedByBundleIds, byBundleDblIds } = sortAndFilterBundlesAsEntries(allBundles);
+      const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, null, bundleIdToRemove, byBundleDblIds);
+      return {
+        ...state,
+        items,
+        allBundles,
+        addedByBundleIds,
+        selectedBundle,
+        selectedDBLEntryId
+      };
+    }
     case bundleConstants.ADD_BUNDLE: {
       const { bundle } = action;
-      const { items: unsorted } = state;
+      const { allBundles: origUnsorted } = state;
       const decoratedBundle = addBundleDecorators(bundle);
-      const items = sortBundles([...unsorted, decoratedBundle]);
+      const allBundles = ([decoratedBundle, ...origUnsorted]);
+      const { items, addedByBundleIds, byBundleDblIds } = sortAndFilterBundlesAsEntries(allBundles);
+      const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, decoratedBundle, null, byBundleDblIds);
       return {
         ...state,
-        items
+        items,
+        allBundles,
+        addedByBundleIds,
+        selectedBundle,
+        selectedDBLEntryId
       };
     }
     case bundleConstants.DOWNLOAD_RESOURCES_REQUEST: {
@@ -57,6 +139,25 @@ export function bundles(state = { items: [] }, action) {
       const progress = Math.floor((action.resourcesDownloaded / action.resourcesToDownload) * 100);
       const status = progress === 100 ? 'COMPLETED' : 'IN_PROGRESS';
       return updateTaskStatusProgress(action.id, 'DOWNLOAD', status, progress);
+    }
+    case bundleConstants.UPLOAD_BUNDLE_REQUEST: {
+      return updateTaskStatusProgress(action.id, 'UPLOAD', 'IN_PROGRESS', null, () => ({
+        isUploading: true
+      }));
+    }
+    case bundleConstants.UPLOAD_RESOURCES_UPDATE_PROGRESS: {
+      const percentage = action.resourceCountToUpload > 0 ?
+        Math.floor((action.resourceCountUploaded / action.resourceCountToUpload) * 100) :
+        100/* metadata only */;
+      return updateTaskStatusProgress(action.bundleId, 'UPLOAD', 'IN_PROGRESS', percentage, () => ({
+        isUploading: true
+      }));
+    }
+    case bundleConstants.UPLOAD_RESOURCES_UPDATE_MESSAGE: {
+      const { message } = action;
+      return updateTaskStatusProgress(action.bundleId, 'UPLOAD', null, null, (bState, bDecorated) => ({
+        displayAs: { ...bDecorated.displayAs, status: `Uploading (${message})` }
+      }));
     }
     case bundleConstants.SAVETO_REQUEST: {
       return updateTaskStatusProgress(action.id, 'SAVETO', 'IN_PROGRESS', 0);
@@ -100,39 +201,24 @@ export function bundles(state = { items: [] }, action) {
       const progress = action.status === 'COMPLETED' ? 100 : null;
       return updateTaskStatusProgress(action.id, null, action.status, progress);
     }
-    case bundleConstants.TOGGLE_MODE_PAUSE_RESUME: {
-      const updatedItems = forkArray(
-        state.items,
-        bundle => bundle.id === action.id,
-        bundle => buildToggledBundle(bundle)
-      );
-      return {
-        ...state,
-        items: updatedItems
-      };
+    case bundleConstants.UPDATE_BUNDLE: {
+      const { bundle } = action;
+      return updateTaskStatusProgress(bundle.id, null, null, null, (bState) => {
+        const updatedBundle = { ...bState, ...bundle };
+        if (bState.isUploading) {
+          return updateBundleItem(updatedBundle, 'UPLOAD', 'IN_PROGRESS', bState.progress);
+        }
+        return updateBundleItem(updatedBundle, bundle.task, bundle.status, bundle.progress);
+      });
     }
     case bundleConstants.TOGGLE_SELECT: {
-      const selectedBundle = state.selectedBundle && state.selectedBundle.id === action.selectedBundle.id ?
-        {} : action.selectedBundle;
+      const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, action.selectedBundle);
       return {
         ...state,
-        selectedBundle
+        selectedBundle,
+        selectedDBLEntryId
       };
     }
-    case bundleConstants.DELETE_FAILURE:
-      // remove 'deleting:true' property and add 'deleteError:[error]' property to bundle
-      return {
-        ...state,
-        items: state.items.map(bundle => {
-          if (bundle.id === action.id) {
-            // make copy of bundle without 'deleting:true' property
-            const { deleting, ...bundleCopy } = bundle;
-            // return copy of bundle with 'deleteError:[error]' property
-            return { ...bundleCopy, deleteError: action.error };
-          }
-          return bundle;
-        })
-      };
     case bundleConstants.SESSION_EVENTS_CONNECTED: {
       if (state.eventSource && state.eventSource.readyState !== 2) {
         state.eventSource.close();
@@ -152,53 +238,63 @@ export function bundles(state = { items: [] }, action) {
   }
 
   function updateTaskStatusProgress(bundleId, task, status, progress, updateDecorators) {
-    const foundBundle = state.items.find(bundle => bundle.id === bundleId);
-    if (!foundBundle) {
-      return state;
-    }
-    const items = state.items.map(bundle => (bundle.id === bundleId
-      ? addBundleDecorators({
-        ...bundle,
-        task: (task || bundle.task),
-        status: (status || bundle.status),
-        progress: Number.isInteger(progress) ? progress : bundle.progress,
-        ...(updateDecorators ? updateDecorators(bundle) : {})
-      })
-      : bundle));
+    const allBundles = updateBundleItems(bundleId, task, status, progress, updateDecorators);
+    const { items, addedByBundleIds } = sortAndFilterBundlesAsEntries(allBundles);
     return {
       ...state,
-      items
+      items,
+      allBundles,
+      addedByBundleIds
     };
+  }
+
+  function updateBundleItem(bundle, task, status, progress, updateDecorators) {
+    return addBundleDecorators({
+      ...bundle,
+      task: (task || bundle.task),
+      status: (status || bundle.status),
+      progress: Number.isInteger(progress) ? progress : bundle.progress
+    }, updateDecorators);
+  }
+
+  function updateBundleItems(bundleId, task, status, progress, updateDecorators) {
+    return state.allBundles.map(bundle => (bundle.id === bundleId
+      ? updateBundleItem(bundle, task, status, progress, updateDecorators)
+      : bundle));
   }
 }
 export default bundles;
 
-function forkArray(array, condition, createItem) {
-  return array.map((item, index) => (condition(item, index) ? createItem(item) : item));
+function addBundleDecorators(bundle, addCustomDecoration) {
+  const isDownloaded = bundle.task === 'DOWNLOAD' && bundle.status === 'COMPLETED';
+  const isUploaded = bundle.task === 'UPLOAD' && bundle.status === 'COMPLETED';
+  const coreDecorated = { ...bundle, ...formatDisplayAs(bundle), isDownloaded, isUploaded };
+  if (!addCustomDecoration) {
+    return coreDecorated;
+  }
+  const customDecoration = addCustomDecoration(bundle, coreDecorated);
+  return { ...coreDecorated, ...customDecoration };
 }
 
-function buildToggledBundle(bundle) {
-  const newMode = bundle.status === 'NOT_STARTED' || bundle.mode === 'PAUSED' ? 'RUNNING' : 'PAUSED';
-  const newStatus = bundle.status === 'NOT_STARTED' ? `${bundle.task}ING` : bundle.status;
-  const updatedBundle = {
-    ...bundle,
-    status: newStatus,
-    mode: newMode,
-  };
-  return addBundleDecorators(updatedBundle);
+function formatRevisionDisplayAs(bundle) {
+  const { parent, revision } = bundle;
+  if (!revision && !parent) {
+    return 'Update';
+  }
+  if (parent) {
+    const { revision: parentRevision } = parent;
+    return `> Rev ${parentRevision}`;
+  }
+  return `Rev ${revision}`;
 }
-
-function addBundleDecorators(bundle) {
-  return { ...bundle, ...formatDisplayAs(bundle), isDownloaded: (bundle.status) === 'COMPLETED' };
-}
-
 
 function formatDisplayAs(bundle) {
+  const revision = formatRevisionDisplayAs(bundle);
   return {
     displayAs: {
       languageAndCountry: formatLanguageAndCountry(bundle),
       name: bundle.name,
-      revision: `Revision ${bundle.revision || '0'}`,
+      revision: (bundle.dblId ? revision : 'New'),
       status: formatStatus(bundle)
     }
   };
@@ -211,11 +307,21 @@ function formatLanguageAndCountry(bundle) {
 
 function formatStatus(bundle) {
   const formattedProgress = formatProgress(bundle);
+  const stored = (bundle.resourceCountStored === bundle.resourceCountManifest) ?
+    bundle.resourceCountManifest : `${bundle.resourceCountStored}/${bundle.resourceCountManifest}`;
   let newStatusDisplayAs;
-  if (bundle.status === 'NOT_STARTED') {
-    newStatusDisplayAs = 'Download';
+  if (bundle.isUploading) {
+    const uploadingMessage = (!bundle.resourceCountStored || bundle.resourceCountStored === 0) ? 'metadata' : formattedProgress;
+    newStatusDisplayAs = `Uploading ${uploadingMessage}`;
   } else if (bundle.task === 'UPLOAD' && bundle.status === 'IN_PROGRESS') {
-    newStatusDisplayAs = `Uploading ${formattedProgress}`;
+    newStatusDisplayAs = 'Uploading';
+  } else if (bundle.status === 'NOT_STARTED') {
+    if (bundle.resourceCountStored > 0) {
+      const remaining = bundle.resourceCountManifest - bundle.resourceCountStored;
+      newStatusDisplayAs = `Download (...${remaining})`;
+    } else {
+      newStatusDisplayAs = 'Download';
+    }
   } else if (bundle.task === 'DOWNLOAD' && bundle.status === 'IN_PROGRESS') {
     newStatusDisplayAs = `Downloading ${formattedProgress}`;
   } else if (bundle.task === 'REMOVE_RESOURCES' && bundle.status === 'IN_PROGRESS') {
@@ -223,9 +329,19 @@ function formatStatus(bundle) {
   } else if (bundle.task === 'SAVETO' && bundle.status === 'IN_PROGRESS') {
     newStatusDisplayAs = `Saving to Folder ${formattedProgress}`;
   } else if (['UPLOAD', 'DOWNLOAD'].includes(bundle.task) && bundle.status === 'COMPLETED') {
-    newStatusDisplayAs = `${bundle.task}ED`;
+    if (bundle.resourceCountStored) {
+      newStatusDisplayAs = `Stored (${stored})`;
+    } else {
+      newStatusDisplayAs = 'Stored (metadata)';
+    }
   } else if (['SAVETO'].includes(bundle.task) && bundle.status === 'COMPLETED') {
     newStatusDisplayAs = 'Open in Folder';
+  } else if (bundle.status === 'DRAFT') {
+    if (bundle.resourceCountStored) {
+      newStatusDisplayAs = `DRAFT (${stored})`;
+    } else {
+      newStatusDisplayAs = 'DRAFT (metadata)';
+    }
   } else {
     newStatusDisplayAs = bundle.statusDisplayAs || bundle.status;
   }

@@ -1,25 +1,48 @@
 // @flow
 import React from 'react';
+import { connect } from 'react-redux';
+import Tooltip from '@material-ui/core/Tooltip';
 import { userActions, alertActions } from '../actions';
+import { loadHtmlBaseUrl } from '../actions/dblDotLocalConfig.actions';
+import { utilities } from '../utils/utilities';
+
+function mapStateToProps(state) {
+  const { authentication, alert, dblDotLocalConfig } = state;
+  const loggingIn = Boolean(authentication.loggingIn);
+  return {
+    loggingIn,
+    alert,
+    dblBaseUrl: dblDotLocalConfig.dblBaseUrl
+  };
+}
+
+const mapDispatchToProps = {
+  logout: userActions.logout,
+  login: userActions.login,
+  clear: alertActions.clear,
+  loadHtmlBaseUrl
+};
 
 type Props = {
-  dispatch: () => void,
+  logout: () => {},
+  login: () => {},
+  clear: () => {},
+  loadHtmlBaseUrl: () => {},
   loggingIn: boolean,
-  alert: {}
+  alert: {},
+  dblBaseUrl: ?string
 };
 
 /*
  * From https://github.com/cornflourblue/react-redux-registration-login-example/blob/master/src/LoginPage/LoginPage.jsx
  * See also Login form/page mockup at https://share.goabstract.com/a8fa671d-82d4-4c2b-9635-24bcc2656f75
  */
-export default class LoginForm extends React.Component {
+class LoginForm extends React.Component {
   props: Props;
   constructor(props) {
     super(props);
-    const { dispatch } = this.props;
     // reset login status
-    dispatch(userActions.logout());
-
+    this.props.logout();
     this.state = {
       username: '',
       password: '',
@@ -30,8 +53,19 @@ export default class LoginForm extends React.Component {
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
+  componentDidMount() {
+    this.ensureLoadHtmlBaseUrl();
+  }
+
+  ensureLoadHtmlBaseUrl = () => {
+    if (!this.props.dblBaseUrl) {
+      this.props.loadHtmlBaseUrl();
+    }
+  }
+
   handleChange(e) {
     const { name, value } = e.target;
+    this.ensureLoadHtmlBaseUrl();
     this.setState({ [name]: value });
   }
 
@@ -40,11 +74,22 @@ export default class LoginForm extends React.Component {
 
     this.setState({ submitted: true });
     const { username, password } = this.state;
-    const { dispatch } = this.props;
+    const { clear, login } = this.props;
     if (username && password) {
-      dispatch(alertActions.clear());
-      dispatch(userActions.login(username, password));
+      clear();
+      login(username, password);
     }
+  }
+
+  renderLinkToDBLOrNot = (dblTitle) => {
+    const { dblBaseUrl } = this.props;
+    if (!dblBaseUrl) {
+      return dblTitle;
+    }
+    return (
+      <Tooltip title={dblBaseUrl} placement="top">
+        <a href={dblBaseUrl} onClick={utilities.onOpenLink(dblBaseUrl)}>{dblTitle}</a>
+      </Tooltip>);
   }
 
   render() {
@@ -61,7 +106,7 @@ export default class LoginForm extends React.Component {
               <div className="row align-items-center h-100">
                 <div className="col-6 mx-auto">
                   <div className="container h-100 border-primary justify-content-center">
-                    <h6 className="text-center">Connect to the DBL</h6>
+                    <h6 className="text-center">Connect to the {this.renderLinkToDBLOrNot('DBL')}</h6>
                     <form name="form" onSubmit={this.handleSubmit}>
                       <div className={`form-group${submitted && !username ? ' has-error' : ''}`}>
                         <input placeholder="username" type="email" className="form-control" name="username" value={username} onChange={this.handleChange} />
@@ -92,6 +137,8 @@ export default class LoginForm extends React.Component {
   }
 }
 
+
+export default connect(mapStateToProps, mapDispatchToProps)(LoginForm);
 
 /*
 export default class LoginForm extends React.Component {
