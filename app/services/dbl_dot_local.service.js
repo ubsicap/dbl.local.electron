@@ -1,6 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
-import { execFile } from 'child_process';
+import childProcess from 'child_process';
+import log from 'electron-log';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 
 export const dblDotLocalService = {
@@ -74,11 +75,21 @@ function startDblDotLocalSubProcess() {
   console.log(dblDotLocalExecPath);
   if (fs.exists(dblDotLocalExecPath)) {
     const cwd = getDblDotLocalExecCwd();
-    execFile(dblDotLocalExecPath, {
+    const subProcess = childProcess.execFile(dblDotLocalExecPath, {
       cwd
     }, (err, data) => {
       console.log(err);
-      console.log(data.toString());
+      log.error(`dbl_dot_local.exe (terminated): ${err}`);
+      console.log(`dbl_dot_local.exe: ${data.toString()}`);
+    });
+    /*
+    subProcess.stdout.on('data', (data) => {
+      console.log(`stdout: ${data}`);
+    });
+    */
+    subProcess.stderr.on('data', (data) => {
+      // log.error(data);
+      console.log(`dbl_dot_local.exe: ${data}`);
     });
   }
 }
