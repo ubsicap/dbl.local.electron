@@ -75,8 +75,10 @@ function startDblDotLocalSubProcess() {
   console.log(dblDotLocalExecPath);
   if (fs.exists(dblDotLocalExecPath)) {
     const cwd = getDblDotLocalExecCwd();
-    const subProcess = childProcess.execFile(dblDotLocalExecPath, {
-      cwd
+    const detached = false;
+    const subProcess = childProcess.spawn(dblDotLocalExecPath, {
+      cwd,
+      detached
     }, (err, data) => {
       console.log(err);
       log.error(`dbl_dot_local.exe (terminated): ${err}`);
