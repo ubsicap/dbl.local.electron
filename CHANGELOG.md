@@ -1,3 +1,7 @@
+### Version 0.9.1
+#### Fixes
+- 'spawn' `dbl_dot_local.exe` so that it doesn't terminate after maxBuffer is reached.
+
 ### Version 0.9.0
 
 #### Features
