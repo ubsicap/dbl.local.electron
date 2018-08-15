@@ -22,8 +22,9 @@ const { shell } = require('electron');
 function mapStateToProps(state) {
   const { bundleEditMetadata, bundles } = state;
   const { editingMetadata, editedMetadata, showMetadataFile } = bundleEditMetadata;
-  const { selectedBundle } = bundles;
+  const { addedByBundleIds } = bundles;
   const bundleId = editingMetadata || editedMetadata;
+  const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
   const {
     requestingSaveMetadata = false,
     wasMetadataSaved = false,

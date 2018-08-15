@@ -22,8 +22,9 @@ import CloudUpload from '@material-ui/icons/CloudUpload';
 import styles from './DBLEntryRow.css';
 import ControlledHighlighter from './ControlledHighlighter';
 import { toggleSelectEntry, requestSaveBundleTo,
-  downloadResources, uploadBundle, openResourceManager } from '../actions/bundle.actions';
+  downloadResources, uploadBundle } from '../actions/bundle.actions';
 import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
+import { openResourceManager } from '../actions/bundleManageResources.actions';
 import { utilities } from '../utils/utilities';
 import DeleteOrCleanButton from './DeleteOrCleanButton';
 import ConfirmButton from './ConfirmButton';
