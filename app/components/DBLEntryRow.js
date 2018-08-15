@@ -22,7 +22,7 @@ import CloudUpload from '@material-ui/icons/CloudUpload';
 import styles from './DBLEntryRow.css';
 import ControlledHighlighter from './ControlledHighlighter';
 import { toggleSelectEntry, requestSaveBundleTo,
-  downloadResources, uploadBundle } from '../actions/bundle.actions';
+  downloadResources, uploadBundle, openResourceManager } from '../actions/bundle.actions';
 import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
 import { utilities } from '../utils/utilities';
 import DeleteOrCleanButton from './DeleteOrCleanButton';
@@ -54,6 +54,7 @@ type Props = {
   entryPageUrl: string,
   toggleSelectEntry: () => {},
   downloadResources: () => {},
+  openResourceManager: () => {},
   requestSaveBundleTo: () => {},
   openEditMetadata: () => {},
   uploadBundle: () => {}
@@ -62,6 +63,7 @@ type Props = {
 const mapDispatchToProps = {
   toggleSelectEntry,
   downloadResources,
+  openResourceManager,
   requestSaveBundleTo,
   openEditMetadata,
   uploadBundle
@@ -196,7 +198,7 @@ class DBLEntryRow extends PureComponent<Props> {
 
   onClickDownloadResources = (event) => {
     const { bundleId } = this.props;
-    this.props.downloadResources(bundleId);
+    this.props.openResourceManager(bundleId);
     event.stopPropagation();
   }
 

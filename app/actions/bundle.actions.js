@@ -6,6 +6,7 @@ import { updateSearchResultsForBundleId } from '../actions/bundleFilter.actions'
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
+import { bundleResourceManagerConstants } from '../constants/bundleResourceManagerConstants'
 
 export const bundleActions = {
   fetchAll,
@@ -13,6 +14,7 @@ export const bundleActions = {
   removeBundle,
   setupBundlesEventSource,
   downloadResources,
+  openResourceManager,
   requestSaveBundleTo,
   removeResources,
   toggleSelectEntry,
@@ -344,6 +346,10 @@ export function uploadBundle(id) {
   function failure(_id, error) {
     return { type: bundleConstants.UPLOAD_BUNDLE_FAILURE, id, error };
   }
+}
+
+export function openResourceManager(bundleId) {
+  return { type: bundleResourceManagerConstants.OPEN_RESOURCE_MANAGER, bundleId };
 }
 
 export function downloadResources(id) {
