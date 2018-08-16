@@ -12,7 +12,7 @@ import OpenInNew from '@material-ui/icons/OpenInNew';
 import FileDownload from '@material-ui/icons/CloudDownloadOutlined';
 import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
-import { closeResourceManager } from '../actions/bundleManageResources.actions';
+import { closeResourceManager, getManifestResources } from '../actions/bundleManageResources.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
 
@@ -34,7 +34,8 @@ function mapStateToProps(state) {
 
 const mapDispatchToProps = {
   closeResourceManager,
-  openMetadataFile
+  openMetadataFile,
+  getManifestResources
 };
 
 const materialStyles = theme => ({
@@ -62,11 +63,17 @@ type Props = {
   selectedBundle: {},
   showMetadataFile: ?string,
   closeResourceManager: () => {},
-  openMetadataFile: () => {}
+  openMetadataFile: () => {},
+  getManifestResources: () => {}
 };
 
 class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
   props: Props;
+
+  componentDidMount() {
+    this.props.getManifestResources();
+  }
+
 
   componentDidUpdate(prevProps) {
     if (this.props.showMetadataFile && !prevProps.showMetadataFile) {

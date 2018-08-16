@@ -15,6 +15,7 @@ export const bundleService = {
   apiBundleHasMetadata,
   convertApiBundleToNathanaelBundle,
   getManifestResourcePaths,
+  getManifestResourceDetails,
   downloadResources,
   removeResources,
   getResourcePaths,
@@ -39,6 +40,8 @@ const FORM_API = 'form';
 const FORM_BUNDLE_API = `${FORM_API}/bundle`;
 const FORM_BUNDLE_API_DELETE = `${FORM_API}/delete`;
 const MANIFEST_API = 'manifest';
+const MANIFEST_DETAILS = 'details';
+
 /*
 {
   "099a30a6-b707-4df8-b4dd-7149f25658b7": {
@@ -239,6 +242,15 @@ function getManifestResourcePaths(bundleId) {
     headers: authHeader()
   };
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${MANIFEST_API}/${bundleId}`;
+  return fetch(url, requestOptions).then(handleResponse);
+}
+
+function getManifestResourceDetails(bundleId) {
+  const requestOptions = {
+    method: 'GET',
+    headers: authHeader()
+  };
+  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${MANIFEST_API}/${bundleId}/${MANIFEST_DETAILS}`;
   return fetch(url, requestOptions).then(handleResponse);
 }
 

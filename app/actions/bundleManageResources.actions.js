@@ -1,10 +1,12 @@
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
+import { bundleService } from '../services/bundle.service';
 
 export const bundleManageResourceActions = {
   openResourceManager,
-  closeResourceManager
+  closeResourceManager,
+  getManifestResources
 };
 
 function buildBundleArgUrl(routeUrl, bundleId) {
@@ -36,5 +38,30 @@ export function closeResourceManager(_bundleId) {
   function navigate(bundleId) {
     history.push(navigationConstants.NAVIGATION_BUNDLES);
     return success(bundleId);
+  }
+}
+
+export function getManifestResources(_bundleId) {
+  return async dispatch => {
+    try {
+      dispatch(request(_bundleId));
+      const manifestResources = await bundleService.getManifestResourceDetails(_bundleId);
+      dispatch(success(_bundleId, manifestResources));
+    } catch (error) {
+      dispatch(failure(_bundleId, error));
+    }
+  };
+  function request(bundleId, manifestResources) {
+    return {
+      type: bundleResourceManagerConstants.MANIFEST_RESOURCES_REQUEST, bundleId, manifestResources
+    };
+  }
+  function success(bundleId, manifestResources) {
+    return {
+      type: bundleResourceManagerConstants.MANIFEST_RESOURCES_RESPONSE, manifestResources
+    };
+  }
+  function failure(bundleId, error) {
+    return { type: bundleResourceManagerConstants.MANIFEST_RESOURCES_FAILURE, error };
   }
 }
