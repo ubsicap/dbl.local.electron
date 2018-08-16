@@ -1,13 +1,10 @@
 import log from 'electron-log';
-import path from 'path';
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
 import { bundleService } from '../services/bundle.service';
 import { utilities } from '../utils/utilities';
 import editMetadataService from '../services/editMetadata.service';
-
-const { app } = require('electron').remote;
 
 export const bundleEditMetadataActions = {
   openEditMetadata,
@@ -155,18 +152,9 @@ export function openMetadataFile(bundleId) {
 function saveMetadatFileToTempBundleFolder(bundleId) {
   return async dispatch => {
     dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_REQUEST, bundleId });
-    const temp = app.getPath('temp');
-    const metadataXmlResource = 'metadata.xml';
-    const tmpFolder = path.join(temp, bundleId);
-    const metadataFile = path.join(tmpFolder, metadataXmlResource);
-    const downloadedItem = await bundleService.requestSaveResourceTo(
-      tmpFolder,
-      bundleId,
-      metadataXmlResource,
-      () => {}
-    );
+    const metadataFile = await bundleService.saveMetadataToTempFolder(bundleId);
     dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_SAVED, bundleId, metadataFile });
-    return downloadedItem;
+    return metadataFile;
   };
 }
 

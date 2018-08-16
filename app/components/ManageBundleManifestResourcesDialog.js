@@ -16,15 +16,19 @@ import { closeResourceManager } from '../actions/bundleManageResources.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
 
+const { shell } = require('electron');
+
 function mapStateToProps(state) {
-  const { bundleManageResources, bundles } = state;
+  const { bundleManageResources, bundles, bundleEditMetadata } = state;
   const { bundleId } = bundleManageResources;
+  const { showMetadataFile } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
   return {
     open: Boolean(bundleId),
     bundleId,
-    selectedBundle
+    selectedBundle,
+    showMetadataFile
   };
 }
 
@@ -56,12 +60,19 @@ type Props = {
   open: boolean,
   bundleId: ?string,
   selectedBundle: {},
+  showMetadataFile: ?string,
   closeResourceManager: () => {},
   openMetadataFile: () => {}
 };
 
 class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
   props: Props;
+
+  componentDidUpdate(prevProps) {
+    if (this.props.showMetadataFile && !prevProps.showMetadataFile) {
+      shell.openExternal(this.props.showMetadataFile);
+    }
+  }
 
   handleClose = () => {
     this.props.closeResourceManager(this.props.bundleId);
@@ -84,7 +95,7 @@ class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
                 <CloseIcon />
               </IconButton>
               <Typography variant="title" color="inherit" className={classes.flex}>
-                Manage resources: <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry} </span> {name}
+                Download resources: <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry} </span> {name}
               </Typography>
               <Button key="btnOpenXml" color="inherit" disable={this.props.showMetadataFile} onClick={this.handleReview}>
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />

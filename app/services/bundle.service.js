@@ -5,6 +5,8 @@ import { utilities } from '../utils/utilities';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 import download from './download-with-fetch.flow';
 
+const { app } = require('electron').remote;
+
 export const bundleService = {
   create,
   fetchAll,
@@ -17,6 +19,7 @@ export const bundleService = {
   removeResources,
   getResourcePaths,
   requestSaveResourceTo,
+  saveMetadataToTempFolder,
   removeBundle,
   getFormBundleTree,
   getFormFields,
@@ -268,6 +271,20 @@ function getResourcePaths(bundleId) {
   };
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${RESOURCE_API_LIST}`;
   return fetch(url, requestOptions).then(handleResponse);
+}
+
+async function saveMetadataToTempFolder(bundleId) {
+  const temp = app.getPath('temp');
+  const metadataXmlResource = 'metadata.xml';
+  const tmpFolder = path.join(temp, bundleId);
+  const metadataFile = path.join(tmpFolder, metadataXmlResource);
+  await bundleService.requestSaveResourceTo(
+    tmpFolder,
+    bundleId,
+    metadataXmlResource,
+    () => {}
+  );
+  return metadataFile;
 }
 
 /*
