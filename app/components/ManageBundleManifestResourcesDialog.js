@@ -9,7 +9,7 @@ import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import CloseIcon from '@material-ui/icons/Close';
 import OpenInNew from '@material-ui/icons/OpenInNew';
-import Save from '@material-ui/icons/Save';
+import FileDownload from '@material-ui/icons/CloudDownloadOutlined';
 import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
 import { closeResourceManager } from '../actions/bundleManageResources.actions';
@@ -102,8 +102,8 @@ class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
                 Review
               </Button>
               <Button key="btnSave" color="inherit" onClick={this.handleClose}>
-                <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
-                Save
+                <FileDownload className={classNames(classes.leftIcon)} />
+                Download
               </Button>
             </Toolbar>
           </AppBar>
