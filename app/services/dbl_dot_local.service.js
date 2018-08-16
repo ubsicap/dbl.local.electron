@@ -75,23 +75,21 @@ function startDblDotLocalSubProcess() {
   console.log(dblDotLocalExecPath);
   if (fs.exists(dblDotLocalExecPath)) {
     const cwd = getDblDotLocalExecCwd();
-    const detached = false;
     const subProcess = childProcess.spawn(dblDotLocalExecPath, {
       cwd,
-      detached
-    }, (err, data) => {
-      console.log(err);
-      log.error(`dbl_dot_local.exe (terminated): ${err}`);
-      console.log(`dbl_dot_local.exe: ${data.toString()}`);
+      stdio: [ 'ignore', 'ignore', 'pipe' ],
+      detached: false
     });
-    /*
-    subProcess.stdout.on('data', (data) => {
-      console.log(`stdout: ${data}`);
-    });
-    */
     subProcess.stderr.on('data', (data) => {
       // log.error(data);
       console.log(`dbl_dot_local.exe: ${data}`);
+    });
+    ['error', 'close', 'exit'].forEach(event => {
+      subProcess.on(event, (code) => {
+        const msg = `dbl_dot_local.exe (${event}): ${code}`;
+        log.error(msg);
+        console.log(msg);
+      });
     });
   }
 }
