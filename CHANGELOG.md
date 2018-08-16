@@ -1,3 +1,7 @@
+### Version 0.9.2
+#### Fixes
+- Fixed `dbl_dot_local.exe` hang after (200kb) maxBuffer is reached for unused stdin and stdout pipes.
+
 ### Version 0.9.1
 #### Fixes
 - 'spawn' `dbl_dot_local.exe` so that it doesn't terminate after maxBuffer is reached.
