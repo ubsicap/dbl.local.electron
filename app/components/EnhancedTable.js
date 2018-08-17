@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import MuiTable from 'mui-table';
 import { withStyles } from '@material-ui/core/styles';
+import sort from 'fast-sort';
 import Paper from '@material-ui/core/Paper';
 import Checkbox from '@material-ui/core/Checkbox';
 import EnhancedTableToolbar from './EnhancedTableToolbar';
@@ -12,10 +13,6 @@ function createData(name, calories, fat, carbs, protein) {
   return {
     id: counter, name, calories, fat, carbs, protein
   };
-}
-
-function getSorting(order, orderBy) {
-  return order === 'desc' ? (a, b) => b[orderBy] - a[orderBy] : (a, b) => a[orderBy] - b[orderBy];
 }
 
 const styles = theme => ({
@@ -98,7 +95,8 @@ class EnhancedTable extends React.Component {
         />
       ),
       cellProps: { style: { paddingRight: 0 } },
-      width: 72
+      width: 72,
+      onHeaderClick: false
     },
     {
       name: 'name', cellProps: { style: { paddingRight: 0 } }, header: 'Dessert (100g serving)'
@@ -117,14 +115,10 @@ class EnhancedTable extends React.Component {
     }
   ];
 
-  handleRequestSort = (event, property) => {
+  handleRequestSort = (column) => {
+    const { name: property } = column;
     const orderBy = property;
-    let order = 'desc';
-
-    if (this.state.orderBy === property && this.state.order === 'desc') {
-      order = 'asc';
-    }
-
+    const order = (this.state.orderBy === property && this.state.order === 'desc') ? 'asc' : 'desc';
     this.setState({ order, orderBy });
   };
 
@@ -179,15 +173,21 @@ class EnhancedTable extends React.Component {
   isCellHovered = (column, rowData, hoveredColumn, hoveredRowData) =>
     rowData.id && rowData.id === hoveredRowData.id;
 
+  getSortedData = () => {
+    const { data, orderBy, order } = this.state;
+    const s = sort(data).by([{ [order]: orderBy }]);
+    return s;
+  }
+
   render() {
     const { classes } = this.props;
-    const { data, selectedRowIds } = this.state;
+    const { selectedRowIds, orderBy, order } = this.state;
 
     return (
       <Paper className={classes.root}>
         <EnhancedTableToolbar numSelected={selectedRowIds.length} />
         <MuiTable
-          data={data}
+          data={this.getSortedData()}
           columns={this.columns()}
           onCellClick={this.onCellClick}
           isCellSelected={this.isCellSelected}
@@ -196,6 +196,9 @@ class EnhancedTable extends React.Component {
           width={900}
           height={500}
           fixedRowCount={1}
+          orderBy={orderBy}
+          orderDirection={order}
+          onHeaderClick={this.handleRequestSort}
           style={{ backgroundColor: 'white' }}
         />
       </Paper>

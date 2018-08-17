@@ -4125,9 +4125,9 @@ fast-levenshtein@^2.0.6, fast-levenshtein@~2.0.4:
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/fast-levenshtein/-/fast-levenshtein-2.0.6.tgz#3d8a5c66883a16a30ca8643e851f19baa7797917"
 
-fast-sort@^1.2.6:
-  version "1.2.6"
-  resolved "https://registry.yarnpkg.com/fast-sort/-/fast-sort-1.2.6.tgz#23b4a6f049dfc3307c9e1672b498d7a52447db9d"
+fast-sort@^1.5.3:
+  version "1.5.3"
+  resolved "https://registry.yarnpkg.com/fast-sort/-/fast-sort-1.5.3.tgz#981bb4f60ac7b9d02f4679c279ba1c5225dc13d1"
 
 fastparse@^1.1.1:
   version "1.1.1"
