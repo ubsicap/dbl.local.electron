@@ -120,24 +120,6 @@ const styles = theme => ({
 
 const stickyHeader = { position: 'sticky', top: 0 };
 
-const columns = [
-  {
-    name: 'name', cellProps: { style: { paddingRight: 0 } }, header: 'Dessert (100g serving)'
-  },
-  {
-    name: 'calories', cellProps: { numeric: true }, header: 'Calories'
-  },
-  {
-    name: 'fat', cellProps: { numeric: true }, header: 'Fat (g)'
-  },
-  {
-    name: 'carbs', cellProps: { numeric: true }, header: 'Carbs (g)'
-  },
-  {
-    name: 'protein', cellProps: { numeric: true }, header: 'Protein (g)'
-  }
-];
-
 class EnhancedTable extends React.Component {
   state = {
     order: 'asc',
@@ -162,6 +144,69 @@ class EnhancedTable extends React.Component {
     page: 0,
     rowsPerPage: 5,
   };
+
+  areAnyChecked = () => this.state.selectedRowIds.length > 0;
+
+  onChangeCheckBoxHeader = () => {
+    const { data } = this.state;
+    this.setState(prevState => {
+      if (prevState.selectedRowIds.length === data.length) {
+        // deselect all
+        return { selectedRowIds: [] };
+      }
+      return { selectedRowIds: data.map(d => d.id) };
+    });
+  }
+
+  headerCheckBoxProps = () => {
+    const { selectedRowIds, data } = this.state;
+    if (this.areAnyChecked() &&
+    selectedRowIds.length !== data.length) {
+      return {
+        indeterminate: true,
+        color: 'default'
+      };
+    }
+    return {};
+  }
+
+  isRowChecked = (rowData) => (
+    this.state.selectedRowIds.some(id => rowData.id === id));
+
+  columns = () => [
+    {
+      name: 'checkbox',
+      header: (
+        <Checkbox
+          checked={this.areAnyChecked()}
+          onChange={this.onChangeCheckBoxHeader}
+          {...this.headerCheckBoxProps()}
+        />
+      ),
+      cell: rowData => (
+        <Checkbox
+          checked={this.isRowChecked(rowData)}
+        />
+      ),
+      cellProps: { style: { paddingRight: 0 } },
+      width: 72
+    },
+    {
+      name: 'name', cellProps: { style: { paddingRight: 0 } }, header: 'Dessert (100g serving)'
+    },
+    {
+      name: 'calories', cellProps: { numeric: true }, header: 'Calories'
+    },
+    {
+      name: 'fat', cellProps: { numeric: true }, header: 'Fat (g)'
+    },
+    {
+      name: 'carbs', cellProps: { numeric: true }, header: 'Carbs (g)'
+    },
+    {
+      name: 'protein', cellProps: { numeric: true }, header: 'Protein (g)'
+    }
+  ];
 
   handleRequestSort = (event, property) => {
     const orderBy = property;
@@ -227,100 +272,31 @@ class EnhancedTable extends React.Component {
     });
   }
 
+  isCellSelected = (column, rowData) =>
+    this.state.selectedRowIds.some(id => rowData && rowData.id === id);
+
+  isCellHovered = (column, rowData, hoveredColumn, hoveredRowData) =>
+    rowData.id && rowData.id === hoveredRowData.id;
+
   render() {
     const { classes } = this.props;
-    const {
-      data, order, orderBy, selected, rowsPerPage, page, selectedRowIds
-    } = this.state;
-    const emptyRows = rowsPerPage - Math.min(rowsPerPage, data.length - page * rowsPerPage);
+    const { data, selectedRowIds } = this.state;
 
     return (
       <Paper className={classes.root}>
         <EnhancedTableToolbar numSelected={selectedRowIds.length} />
-        {/*
-        <div className={classes.tableWrapper}>
-          <Table className={classes.table} aria-labelledby="tableTitle">
-            <EnhancedTableHead
-              numSelected={selected.length}
-              order={order}
-              orderBy={orderBy}
-              onSelectAllClick={this.handleSelectAllClick}
-              onRequestSort={this.handleRequestSort}
-              rowCount={data.length}
-            />
-            <TableBody>
-              {data
-                .sort(getSorting(order, orderBy))
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map(n => {
-                  const isSelected = this.isSelected(n.id);
-                  return (
-                    <TableRow
-                      hover
-                      onClick={event => this.handleClick(event, n.id)}
-                      role="checkbox"
-                      aria-checked={isSelected}
-                      tabIndex={-1}
-                      key={n.id}
-                      selected={isSelected}
-                    >
-                      <TableCell padding="checkbox">
-                        <Checkbox checked={isSelected} />
-                      </TableCell>
-                      <TableCell component="th" scope="row" padding="none">
-                        {n.name}
-                      </TableCell>
-                      <TableCell numeric>{n.calories}</TableCell>
-                      <TableCell numeric>{n.fat}</TableCell>
-                      <TableCell numeric>{n.carbs}</TableCell>
-                      <TableCell numeric>{n.protein}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              {emptyRows > 0 && (
-                <TableRow style={{ height: 49 * emptyRows }}>
-                  <TableCell colSpan={6} />
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-        <TablePagination
-          component="div"
-          count={data.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          backIconButtonProps={{
-            'aria-label': 'Previous Page',
-          }}
-          nextIconButtonProps={{
-            'aria-label': 'Next Page',
-          }}
-          onChangePage={this.handleChangePage}
-          onChangeRowsPerPage={this.handleChangeRowsPerPage}
+        <MuiTable
+          data={data}
+          columns={this.columns()}
+          onCellClick={this.onCellClick}
+          isCellSelected={this.isCellSelected}
+          isCellHovered={this.isCellHovered}
+          includeHeaders
+          width={900}
+          height={500}
+          fixedRowCount={1}
+          style={{ backgroundColor: 'white' }}
         />
-        */}
-        <AutoSizer>
-          {({ width }) => (
-            <MuiTable
-              data={data}
-              columns={columns}
-              onCellClick={this.onCellClick}
-              isCellSelected={(column, rowData) =>
-                this.state.selectedRowIds.some(id => rowData && rowData.id === id)
-              }
-              cellProps={(column, rowData) =>
-                (Object.keys(rowData) ? {} : { style: { backgroundColor: 'blue', position: 'sticky', top: 0 } })
-              }
-              includeHeaders
-              width={width}
-              height={500}
-              fixedRowCount={1}
-              style={{ backgroundColor: 'white' }}
-            />
-          )
-        }
-        </AutoSizer>
       </Paper>
     );
   }
