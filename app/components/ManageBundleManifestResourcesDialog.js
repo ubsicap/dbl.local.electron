@@ -15,6 +15,7 @@ import Zoom from '@material-ui/core/Zoom';
 import { closeResourceManager, getManifestResources } from '../actions/bundleManageResources.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
+import EnhancedTable from './EnhancedTable';
 
 const { shell } = require('electron');
 
@@ -114,7 +115,7 @@ class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
               </Button>
             </Toolbar>
           </AppBar>
-          Show resources here
+          <EnhancedTable />
         </div>
       </Zoom>
     );
