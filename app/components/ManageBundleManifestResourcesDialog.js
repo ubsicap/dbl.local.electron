@@ -21,7 +21,7 @@ const { shell } = require('electron');
 
 function mapStateToProps(state) {
   const { bundleManageResources, bundles, bundleEditMetadata } = state;
-  const { bundleId } = bundleManageResources;
+  const { bundleId, manifestResources = [] } = bundleManageResources;
   const { showMetadataFile } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
@@ -29,7 +29,8 @@ function mapStateToProps(state) {
     open: Boolean(bundleId),
     bundleId,
     selectedBundle,
-    showMetadataFile
+    showMetadataFile,
+    manifestResources
   };
 }
 
@@ -63,6 +64,7 @@ type Props = {
   bundleId: ?string,
   selectedBundle: {},
   showMetadataFile: ?string,
+  manifestResources: [],
   closeResourceManager: () => {},
   openMetadataFile: () => {},
   getManifestResources: () => {}
@@ -72,7 +74,8 @@ class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
   props: Props;
 
   componentDidMount() {
-    this.props.getManifestResources();
+    const { bundleId } = this.props;
+    this.props.getManifestResources(bundleId);
   }
 
 
@@ -91,7 +94,7 @@ class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
   }
 
   render() {
-    const { classes, open, selectedBundle = {} } = this.props;
+    const { classes, open, selectedBundle = {}, manifestResources = [] } = this.props;
     const { displayAs = {} } = selectedBundle;
     const { languageAndCountry, name } = displayAs;
     return (
@@ -115,7 +118,7 @@ class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
               </Button>
             </Toolbar>
           </AppBar>
-          <EnhancedTable />
+          <EnhancedTable data={manifestResources} columnNames={['uri', 'size']} />
         </div>
       </Zoom>
     );
