@@ -234,17 +234,6 @@ class EnhancedTable extends React.Component {
       <Paper className={classes.root}>
         <EnhancedTableToolbar numSelected={selected.length} />
         <div className={classes.tableWrapper}>
-          <MuiTable
-            data={data}
-            columns={columns}
-            onCellClick={this.onCellClick}
-            isCellSelected={(column, rowData) =>
-              this.state.selectedRowIds.some(id => rowData && rowData.id === id)
-            }
-            includeHeaders
-            width={900}
-            style={{ backgroundColor: 'white' }}
-          />
           <Table className={classes.table} aria-labelledby="tableTitle">
             <EnhancedTableHead
               numSelected={selected.length}
@@ -304,6 +293,18 @@ class EnhancedTable extends React.Component {
           }}
           onChangePage={this.handleChangePage}
           onChangeRowsPerPage={this.handleChangeRowsPerPage}
+        />
+        <MuiTable
+          data={data}
+          columns={columns}
+          onCellClick={this.onCellClick}
+          isCellSelected={(column, rowData) =>
+            this.state.selectedRowIds.some(id => rowData && rowData.id === id)
+          }
+          includeHeaders
+          width={900}
+          fixedRowCount={1}
+          style={{ backgroundColor: 'white' }}
         />
       </Paper>
     );
