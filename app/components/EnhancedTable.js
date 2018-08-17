@@ -17,6 +17,7 @@ import Tooltip from '@material-ui/core/Tooltip';
 import DeleteIcon from '@material-ui/icons/Delete';
 import FilterListIcon from '@material-ui/icons/FilterList';
 import { lighten } from '@material-ui/core/styles/colorManipulator';
+import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import EnhancedTableHead from './EnhancedTableHead';
 
 let counter = 0;
@@ -115,6 +116,9 @@ const styles = theme => ({
     overflowX: 'auto',
   },
 });
+
+
+const stickyHeader = { position: 'sticky', top: 0 };
 
 const columns = [
   {
@@ -226,13 +230,14 @@ class EnhancedTable extends React.Component {
   render() {
     const { classes } = this.props;
     const {
-      data, order, orderBy, selected, rowsPerPage, page
+      data, order, orderBy, selected, rowsPerPage, page, selectedRowIds
     } = this.state;
     const emptyRows = rowsPerPage - Math.min(rowsPerPage, data.length - page * rowsPerPage);
 
     return (
       <Paper className={classes.root}>
-        <EnhancedTableToolbar numSelected={selected.length} />
+        <EnhancedTableToolbar numSelected={selectedRowIds.length} />
+        {/*
         <div className={classes.tableWrapper}>
           <Table className={classes.table} aria-labelledby="tableTitle">
             <EnhancedTableHead
@@ -294,18 +299,28 @@ class EnhancedTable extends React.Component {
           onChangePage={this.handleChangePage}
           onChangeRowsPerPage={this.handleChangeRowsPerPage}
         />
-        <MuiTable
-          data={data}
-          columns={columns}
-          onCellClick={this.onCellClick}
-          isCellSelected={(column, rowData) =>
-            this.state.selectedRowIds.some(id => rowData && rowData.id === id)
-          }
-          includeHeaders
-          width={900}
-          fixedRowCount={1}
-          style={{ backgroundColor: 'white' }}
-        />
+        */}
+        <AutoSizer>
+          {({ width }) => (
+            <MuiTable
+              data={data}
+              columns={columns}
+              onCellClick={this.onCellClick}
+              isCellSelected={(column, rowData) =>
+                this.state.selectedRowIds.some(id => rowData && rowData.id === id)
+              }
+              cellProps={(column, rowData) =>
+                (Object.keys(rowData) ? {} : { style: { backgroundColor: 'blue', position: 'sticky', top: 0 } })
+              }
+              includeHeaders
+              width={width}
+              height={500}
+              fixedRowCount={1}
+              style={{ backgroundColor: 'white' }}
+            />
+          )
+        }
+        </AutoSizer>
       </Paper>
     );
   }
