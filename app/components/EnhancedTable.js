@@ -1,6 +1,7 @@
 import React from 'react';
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
+import MuiTable from 'mui-table';
 import { withStyles } from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -115,11 +116,30 @@ const styles = theme => ({
   },
 });
 
+const columns = [
+  {
+    name: 'name', cellProps: { style: { paddingRight: 0 } }, header: 'Dessert (100g serving)'
+  },
+  {
+    name: 'calories', cellProps: { numeric: true }, header: 'Calories'
+  },
+  {
+    name: 'fat', cellProps: { numeric: true }, header: 'Fat (g)'
+  },
+  {
+    name: 'carbs', cellProps: { numeric: true }, header: 'Carbs (g)'
+  },
+  {
+    name: 'protein', cellProps: { numeric: true }, header: 'Protein (g)'
+  }
+];
+
 class EnhancedTable extends React.Component {
   state = {
     order: 'asc',
     orderBy: 'calories',
     selected: [],
+    selectedRowIds: [],
     data: [
       createData('Cupcake', 305, 3.7, 67, 4.3),
       createData('Donut', 452, 25.0, 51, 4.9),
@@ -189,6 +209,20 @@ class EnhancedTable extends React.Component {
 
   isSelected = id => this.state.selected.indexOf(id) !== -1;
 
+  onCellClick = (column, rowData) => {
+    this.setState(prevState => {
+      if (prevState.selectedRowIds.some(id => rowData.id === id)) {
+        // remove
+        return {
+          selectedRowIds: prevState.selectedRowIds.filter(id => id !== rowData.id)
+        };
+      }
+      return {
+        selectedRowIds: [...prevState.selectedRowIds, rowData.id]
+      };
+    });
+  }
+
   render() {
     const { classes } = this.props;
     const {
@@ -200,6 +234,17 @@ class EnhancedTable extends React.Component {
       <Paper className={classes.root}>
         <EnhancedTableToolbar numSelected={selected.length} />
         <div className={classes.tableWrapper}>
+          <MuiTable
+            data={data}
+            columns={columns}
+            onCellClick={this.onCellClick}
+            isCellSelected={(column, rowData) =>
+              this.state.selectedRowIds.some(id => rowData && rowData.id === id)
+            }
+            includeHeaders
+            width={900}
+            style={{ backgroundColor: 'white' }}
+          />
           <Table className={classes.table} aria-labelledby="tableTitle">
             <EnhancedTableHead
               numSelected={selected.length}
