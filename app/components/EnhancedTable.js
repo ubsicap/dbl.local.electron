@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import MuiTable from 'mui-table';
+import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import { withStyles } from '@material-ui/core/styles';
 import sort from 'fast-sort';
 import Paper from '@material-ui/core/Paper';
@@ -126,21 +127,26 @@ class EnhancedTable extends React.Component {
     return (
       <Paper className={classes.root}>
         <EnhancedTableToolbar numSelected={selectedRowIds.length} />
-        <MuiTable
-          data={this.getSortedData()}
-          columns={this.columns()}
-          onCellClick={this.onCellClick}
-          isCellSelected={this.isCellSelected}
-          isCellHovered={this.isCellHovered}
-          includeHeaders
-          width={900}
-          height={500}
-          fixedRowCount={1}
-          orderBy={orderBy}
-          orderDirection={order}
-          onHeaderClick={this.handleRequestSort}
-          style={{ backgroundColor: 'white' }}
-        />
+        <AutoSizer>
+          {({ width }) =>
+          (
+            <MuiTable
+              data={this.getSortedData()}
+              columns={this.columns()}
+              onCellClick={this.onCellClick}
+              isCellSelected={this.isCellSelected}
+              isCellHovered={this.isCellHovered}
+              includeHeaders
+              width={width}
+              height={500}
+              fixedRowCount={1}
+              orderBy={orderBy}
+              orderDirection={order}
+              onHeaderClick={this.handleRequestSort}
+              style={{ backgroundColor: 'white' }}
+            />
+            )}
+        </AutoSizer>
       </Paper>
     );
   }
