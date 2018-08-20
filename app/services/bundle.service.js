@@ -254,8 +254,12 @@ function getManifestResourceDetails(bundleId) {
   return fetch(url, requestOptions).then(handleResponse);
 }
 
-function downloadResources(bundleId) {
-  return bundleAddTasks(bundleId, '<downloadResources/>');
+/* <downloadResources>
+      <resource uri="release/English.lds"/>
+ */
+function downloadResources(bundleId, uris = []) {
+  const urisXml = uris.map(uri => `<resource uri="${uri}"/>`).join(',') || '';
+  return bundleAddTasks(bundleId, `<downloadResources>${urisXml}</downloadResources>`);
 }
 
 function removeResources(bundleId) {

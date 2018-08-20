@@ -346,22 +346,22 @@ export function uploadBundle(id) {
   }
 }
 
-export function downloadResources(id) {
+export function downloadResources(_id, _uris = []) {
   return async dispatch => {
     try {
-      const manifestResourcePaths = await bundleService.getManifestResourcePaths(id);
-      dispatch(request(id, manifestResourcePaths));
-      dispatch(updateSearchResultsForBundleId(id));
-      await bundleService.downloadResources(id);
+      const manifestResourcePaths = await bundleService.getManifestResourcePaths(_id);
+      dispatch(request(_id, manifestResourcePaths, _uris));
+      dispatch(updateSearchResultsForBundleId(_id));
+      await bundleService.downloadResources(_id, _uris);
     } catch (errorReadable) {
       const error = await errorReadable.text();
-      dispatch(failure(id, error));
+      dispatch(failure(_id, error));
     }
   };
-  function request(_id, manifestResourcePaths) {
-    return { type: bundleConstants.DOWNLOAD_RESOURCES_REQUEST, id: _id, manifestResourcePaths };
+  function request(id, manifestResourcePaths, uris) {
+    return { type: bundleConstants.DOWNLOAD_RESOURCES_REQUEST, id, manifestResourcePaths, uris };
   }
-  function failure(_id, error) {
+  function failure(id, error) {
     return { type: bundleConstants.DOWNLOAD_RESOURCES_FAILURE, id, error };
   }
 }

@@ -15,6 +15,7 @@ import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
 import path from 'path';
 import { closeResourceManager, getManifestResources } from '../actions/bundleManageResources.actions';
+import { downloadResources } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
 import EnhancedTable from './EnhancedTable';
@@ -78,7 +79,8 @@ function mapStateToProps(state) {
 const mapDispatchToProps = {
   closeResourceManager,
   openMetadataFile,
-  getManifestResources
+  getManifestResources,
+  downloadResources
 };
 
 const materialStyles = theme => ({
@@ -109,11 +111,15 @@ type Props = {
   columnNames: [],
   closeResourceManager: () => {},
   openMetadataFile: () => {},
-  getManifestResources: () => {}
+  getManifestResources: () => {},
+  downloadResources: () => {}
 };
 
 class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
   props: Props;
+  state = {
+    selectedUris: []
+  }
 
   componentDidMount() {
     const { bundleId } = this.props;
@@ -125,6 +131,13 @@ class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
     if (this.props.showMetadataFile && !prevProps.showMetadataFile) {
       shell.openExternal(this.props.showMetadataFile);
     }
+  }
+
+  handleDownload = () => {
+    const { selectedUris = [] } = this.state;
+    const { bundleId } = this.props;
+    this.props.downloadResources(bundleId, selectedUris);
+    this.handleClose();
   }
 
   handleClose = () => {
@@ -156,7 +169,7 @@ class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
                 Review
               </Button>
-              <Button key="btnSave" color="inherit" onClick={this.handleClose}>
+              <Button key="btnSave" color="inherit" onClick={this.handleDownload}>
                 <FileDownload className={classNames(classes.leftIcon)} />
                 Download
               </Button>
