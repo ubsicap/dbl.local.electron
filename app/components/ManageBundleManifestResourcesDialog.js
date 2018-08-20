@@ -24,11 +24,11 @@ function createResourceData(resourceRaw) {
   const { uri = '', checksum = '', size: sizeRaw = 0 } = resourceRaw;
   const container = path.dirname(uri);
   const name = path.basename(uri);
-  const ext = path.extname(uri);
+  /* const ext = path.extname(uri); */
   const size = (Math.round(Number(sizeRaw) / 1024)).toLocaleString();
   const id = uri;
   return {
-    id, uri, ext, container, name, size, checksum
+    id, uri, container, name, size, checksum
   };
 }
 
