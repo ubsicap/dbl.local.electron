@@ -1,3 +1,4 @@
+import traverse from 'traverse';
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
@@ -41,24 +42,37 @@ export function closeResourceManager(_bundleId) {
   }
 }
 
+function addFileInfo(acc, fileInfoNode) {
+  if (fileInfoNode.is_dir || this.isRoot || fileInfoNode.size === undefined) {
+    return acc;
+  }
+  const { path } = this;
+  const fullKey = path.join('/');
+  return { ...acc, [fullKey]: fileInfoNode };
+}
+
 export function getManifestResources(_bundleId) {
   return async dispatch => {
     try {
       dispatch(request(_bundleId));
       const manifestResources = await bundleService.getManifestResourceDetails(_bundleId);
-      dispatch(success(_bundleId, manifestResources));
+      const rawBundle = await bundleService.fetchById(_bundleId);
+      const storedFiles = traverse(rawBundle.store.file_info).reduce(addFileInfo, {});
+      dispatch(success(_bundleId, manifestResources, storedFiles));
     } catch (error) {
       dispatch(failure(_bundleId, error));
     }
   };
-  function request(bundleId, manifestResources) {
+  function request(bundleId) {
     return {
-      type: bundleResourceManagerConstants.MANIFEST_RESOURCES_REQUEST, bundleId, manifestResources
+      type: bundleResourceManagerConstants.MANIFEST_RESOURCES_REQUEST, bundleId
     };
   }
-  function success(bundleId, manifestResources) {
+  function success(bundleId, manifestResources, storedFiles) {
     return {
-      type: bundleResourceManagerConstants.MANIFEST_RESOURCES_RESPONSE, manifestResources
+      type: bundleResourceManagerConstants.MANIFEST_RESOURCES_RESPONSE,
+      manifestResources,
+      storedFiles
     };
   }
   function failure(bundleId, error) {

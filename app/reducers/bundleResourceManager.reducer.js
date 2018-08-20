@@ -17,10 +17,11 @@ export function bundleManageResources(state = initialState, action) {
       return initialState;
     }
     case bundleResourceManagerConstants.MANIFEST_RESOURCES_RESPONSE: {
-      const { manifestResources: rawManifestResources } = action;
+      const { manifestResources: rawManifestResources, storedFiles } = action;
       return {
         ...state,
-        rawManifestResources
+        rawManifestResources,
+        storedFiles
       };
     }
     default: {

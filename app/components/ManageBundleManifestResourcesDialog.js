@@ -20,15 +20,16 @@ import rowStyles from './DBLEntryRow.css';
 import EnhancedTable from './EnhancedTable';
 
 
-function createResourceData(resourceRaw) {
-  const { uri = '', checksum = '', size: sizeRaw = 0 } = resourceRaw;
+function createResourceData(manifestResourceRaw, fileStoreInfo) {
+  const { uri = '', checksum = '', size: sizeRaw = 0 } = manifestResourceRaw;
   const container = path.dirname(uri);
   const name = path.basename(uri);
   /* const ext = path.extname(uri); */
   const size = (Math.round(Number(sizeRaw) / 1024)).toLocaleString();
   const id = uri;
+  const status = fileStoreInfo ? 'stored' : '';
   return {
-    id, uri, container, name, size, checksum
+    id, uri, status, container, name, size, checksum
   };
 }
 
@@ -41,15 +42,17 @@ function getLabel(columnName) {
 }
 
 function createColumnNames() {
-  const { id, ...columns } = createResourceData({});
+  const { id, ...columns } = createResourceData({}, {});
   return Object.keys(columns).map(c => ({ name: c, type: isNumeric(c) ? 'numeric' : 'string', label: getLabel(c) }));
 }
 
 const getRawManifestResources = (state) => state.bundleManageResources.rawManifestResources || {};
+const getStoredFiles = (state) => state.bundleManageResources.storedFiles;
 
 const makeGetManifestResourcesData = () => createSelector(
-  [getRawManifestResources],
-  (rawManifestResources) => Object.values(rawManifestResources).map(createResourceData)
+  [getRawManifestResources, getStoredFiles],
+  (rawManifestResources, storedFiles) =>
+    Object.values(rawManifestResources).map(r => createResourceData(r, storedFiles[r.uri]))
 );
 
 const { shell } = require('electron');
