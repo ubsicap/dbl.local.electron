@@ -1,3 +1,4 @@
+import path from 'path';
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 
 const initialState = {
@@ -16,11 +17,10 @@ export function bundleManageResources(state = initialState, action) {
       return initialState;
     }
     case bundleResourceManagerConstants.MANIFEST_RESOURCES_RESPONSE: {
-      const { manifestResources } = action;
+      const { manifestResources: rawManifestResources } = action;
       return {
         ...state,
-        manifestResources: Object.values(manifestResources).map(v =>
-          ({ ...v, id: v.uri }))
+        rawManifestResources
       };
     }
     default: {

@@ -23,7 +23,7 @@ const styles = theme => ({
 class EnhancedTable extends React.Component {
   state = {
     order: 'asc',
-    orderBy: 'calories',
+    orderBy: this.props.columnNames[0].name,
     selectedRowIds: []
   };
 
@@ -56,8 +56,9 @@ class EnhancedTable extends React.Component {
   isRowChecked = (rowData) => (
     this.state.selectedRowIds.some(id => rowData.id === id));
 
-  columns = () => [
-    {
+  columns = () => {
+    const { columnNames } = this.props;
+    const checkboxColumn = {
       name: 'checkbox',
       header: (
         <Checkbox
@@ -74,14 +75,15 @@ class EnhancedTable extends React.Component {
       cellProps: { style: { paddingRight: 0 } },
       width: 72,
       onHeaderClick: false
-    },
-    {
-      name: 'uri', cellProps: { style: { paddingRight: 0 } }
-    },
-    {
-      name: 'size', cellProps: { numeric: true }
-    }
-  ];
+    };
+    const stringCellProps = { style: { paddingRight: 0 } };
+    const numericCellProps = { numeric: true };
+    const columns = columnNames.map(c => ({
+      name: c.name,
+      cellProps: c.type === 'numeric' ? numericCellProps : stringCellProps
+    }));
+    return [checkboxColumn, ...columns];
+  };
 
   handleRequestSort = (column) => {
     const { name: property } = column;

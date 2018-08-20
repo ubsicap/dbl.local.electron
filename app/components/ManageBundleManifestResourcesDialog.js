@@ -10,27 +10,59 @@ import Typography from '@material-ui/core/Typography';
 import CloseIcon from '@material-ui/icons/Close';
 import OpenInNew from '@material-ui/icons/OpenInNew';
 import FileDownload from '@material-ui/icons/CloudDownloadOutlined';
+import { createSelector } from 'reselect';
 import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
+import path from 'path';
 import { closeResourceManager, getManifestResources } from '../actions/bundleManageResources.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
 import EnhancedTable from './EnhancedTable';
 
+
+function createResourceData(resourceRaw) {
+  const { uri = '', checksum = '', size = 0 } = resourceRaw;
+  const container = path.dirname(uri);
+  const name = path.basename(uri);
+  const id = uri;
+  return {
+    id, uri, container, name, size, checksum
+  };
+}
+
+function isNumeric(columnName) {
+  return ['size'].includes(columnName);
+}
+
+function createColumnNames() {
+  const { id, ...columns } = createResourceData({});
+  return Object.keys(columns).map(c => ({ name: c, type: isNumeric(c) ? 'numeric' : 'string' }));
+}
+
+const getRawManifestResources = (state) => state.bundleManageResources.rawManifestResources || {};
+
+const makeGetManifestResourcesData = () => createSelector(
+  [getRawManifestResources],
+  (rawManifestResources) => Object.values(rawManifestResources).map(createResourceData)
+);
+
 const { shell } = require('electron');
 
 function mapStateToProps(state) {
   const { bundleManageResources, bundles, bundleEditMetadata } = state;
-  const { bundleId, manifestResources = [] } = bundleManageResources;
+  const { bundleId } = bundleManageResources;
   const { showMetadataFile } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
+  const columnNames = createColumnNames();
+  const getManifestResourceData = makeGetManifestResourcesData();
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
   return {
     open: Boolean(bundleId),
     bundleId,
     selectedBundle,
     showMetadataFile,
-    manifestResources
+    manifestResources: getManifestResourceData(state),
+    columnNames
   };
 }
 
@@ -65,6 +97,7 @@ type Props = {
   selectedBundle: {},
   showMetadataFile: ?string,
   manifestResources: [],
+  columnNames: [],
   closeResourceManager: () => {},
   openMetadataFile: () => {},
   getManifestResources: () => {}
@@ -94,7 +127,9 @@ class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
   }
 
   render() {
-    const { classes, open, selectedBundle = {}, manifestResources = [] } = this.props;
+    const {
+      classes, open, selectedBundle = {}, manifestResources = [], columnNames
+    } = this.props;
     const { displayAs = {} } = selectedBundle;
     const { languageAndCountry, name } = displayAs;
     return (
@@ -118,7 +153,7 @@ class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
               </Button>
             </Toolbar>
           </AppBar>
-          <EnhancedTable data={manifestResources} columnNames={['uri', 'size']} />
+          <EnhancedTable data={manifestResources} columnNames={columnNames} />
         </div>
       </Zoom>
     );
