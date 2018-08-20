@@ -21,12 +21,14 @@ import EnhancedTable from './EnhancedTable';
 
 
 function createResourceData(resourceRaw) {
-  const { uri = '', checksum = '', size = 0 } = resourceRaw;
+  const { uri = '', checksum = '', size: sizeRaw = 0 } = resourceRaw;
   const container = path.dirname(uri);
   const name = path.basename(uri);
+  const ext = path.extname(uri);
+  const size = (Math.round(Number(sizeRaw) / 1024)).toLocaleString();
   const id = uri;
   return {
-    id, uri, container, name, size, checksum
+    id, uri, ext, container, name, size, checksum
   };
 }
 
@@ -34,9 +36,13 @@ function isNumeric(columnName) {
   return ['size'].includes(columnName);
 }
 
+function getLabel(columnName) {
+  return ['size'].includes(columnName) ? 'size (kb)' : null;
+}
+
 function createColumnNames() {
   const { id, ...columns } = createResourceData({});
-  return Object.keys(columns).map(c => ({ name: c, type: isNumeric(c) ? 'numeric' : 'string' }));
+  return Object.keys(columns).map(c => ({ name: c, type: isNumeric(c) ? 'numeric' : 'string', label: getLabel(c) }));
 }
 
 const getRawManifestResources = (state) => state.bundleManageResources.rawManifestResources || {};

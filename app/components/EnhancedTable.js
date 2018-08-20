@@ -81,6 +81,7 @@ class EnhancedTable extends React.Component {
     const numericCellProps = { numeric: true };
     const columns = columnNames.map(c => ({
       name: c.name,
+      header: c.label,
       cellProps: c.type === 'numeric' ? numericCellProps : stringCellProps
     }));
     return [checkboxColumn, ...columns];
