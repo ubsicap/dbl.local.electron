@@ -44,7 +44,7 @@ function getLabel(columnName) {
 }
 
 function createColumnNames() {
-  const { id, ...columns } = createResourceData({}, {});
+  const { id, disabled, ...columns } = createResourceData({}, {});
   return Object.keys(columns).map(c => ({ name: c, type: isNumeric(c) ? 'numeric' : 'string', label: getLabel(c) }));
 }
 
@@ -153,6 +153,11 @@ class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
     this.setState({ selectedUris });
   }
 
+  shouldDisableOkButton = () => {
+    const { selectedUris } = this.state;
+    return selectedUris.length === 0;
+  }
+
   render() {
     const {
       classes, open, selectedBundle = {}, manifestResources = [], columnConfig
@@ -174,7 +179,10 @@ class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
                 Review
               </Button>
-              <Button key="btnSave" color="inherit" onClick={this.handleDownload}>
+              <Button
+                key="btnSave" color="inherit" onClick={this.handleDownload}
+                disabled={this.shouldDisableOkButton()}
+              >
                 <FileDownload className={classNames(classes.leftIcon)} />
                 Download
               </Button>

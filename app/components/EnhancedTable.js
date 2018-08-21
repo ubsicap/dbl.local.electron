@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import MuiTable from 'mui-table';
-import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import { withStyles } from '@material-ui/core/styles';
 import sort from 'fast-sort';
 import Paper from '@material-ui/core/Paper';
@@ -18,6 +17,10 @@ const styles = theme => ({
   tableWrapper: {
     overflowX: 'auto',
   },
+  stickyHeaderClass: {
+    position: 'sticky',
+    top: 100
+  }
 });
 
 type Props = {
@@ -97,7 +100,9 @@ class EnhancedTable extends Component<Props> {
     return [checkboxColumn, ...columns];
   };
 
-  handleRequestSort = (column) => {
+  /* onHeaderClick={this.handleRequestSort} */
+
+  handleRequestSort = ({ column }) => {
     const { name: property } = column;
     const orderBy = property;
     const order = (this.state.orderBy === property && this.state.order === 'desc') ? 'asc' : 'desc';
@@ -108,7 +113,7 @@ class EnhancedTable extends Component<Props> {
     this.props.onSelectedRowIds(this.state.selectedRowIds);
   }
 
-  onCellClick = (column, rowData) => {
+  onCellClick = ({ rowData }) => {
     if (rowData.disabled) {
       return;
     }
@@ -125,10 +130,10 @@ class EnhancedTable extends Component<Props> {
     }, this.reportSelectedRowIds);
   }
 
-  isCellSelected = (column, rowData) =>
+  isCellSelected = ({ rowData }) =>
     this.state.selectedRowIds.some(id => rowData && rowData.id === id);
 
-  isCellHovered = (column, rowData, hoveredColumn, hoveredRowData) =>
+  isCellHovered = ({ rowData, hoveredRowData }) =>
     !rowData.disabled && rowData.id && rowData.id === hoveredRowData.id;
 
   getSortedData = () => {
@@ -145,26 +150,21 @@ class EnhancedTable extends Component<Props> {
     return (
       <Paper className={classes.root}>
         <EnhancedTableToolbar numSelected={selectedRowIds.length} />
-        <AutoSizer>
-          {({ width }) =>
-          (
-            <MuiTable
-              data={this.getSortedData()}
-              columns={this.columns()}
-              onCellClick={this.onCellClick}
-              isCellSelected={this.isCellSelected}
-              isCellHovered={this.isCellHovered}
-              includeHeaders
-              width={width}
-              height={500}
-              fixedRowCount={1}
-              orderBy={orderBy}
-              orderDirection={order}
-              onHeaderClick={this.handleRequestSort}
-              style={{ backgroundColor: 'white' }}
-            />
-            )}
-        </AutoSizer>
+        <MuiTable
+          data={this.getSortedData()}
+          columns={this.columns()}
+          includeHeaders
+          headerCellProps={{
+            className: classes.stickyHeaderClass,
+            style: { background: '#eee' }
+          }}
+          onCellClick={this.onCellClick}
+          isCellSelected={this.isCellSelected}
+          isCellHovered={this.isCellHovered}
+          orderBy={orderBy}
+          orderDirection={order}
+          style={{ backgroundColor: 'white' }}
+        />
       </Paper>
     );
   }

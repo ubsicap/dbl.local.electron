@@ -150,10 +150,13 @@ class DBLEntryRow extends PureComponent<Props> {
   }
 
   showStatusAsText = () => {
+    const { status } = this.props;
+    return ((status === 'IN_PROGRESS'));
+  }
+
+  showStoredButton = () => {
     const { task, status } = this.props;
-    return ((task === 'UPLOAD' || task === 'DOWNLOAD') &&
-      (status === 'DRAFT' || status === 'IN_PROGRESS' || status === 'COMPLETED')) ||
-      ((task === 'REMOVE_RESOURCES') && status === 'IN_PROGRESS');
+    return ((task === 'DOWNLOAD' && status === 'COMPLETED'));
   }
 
   showDownloadButton = () => {
@@ -327,7 +330,7 @@ class DBLEntryRow extends PureComponent<Props> {
                 <FolderOpen className={classNames(classes.rightIcon, classes.iconSmall)} />
               </Button>
             )}
-            {this.showStatusAsText() && (
+            {this.showStoredButton() && (
               <Button variant="flat" size="small" className={classes.button}
                 onKeyPress={this.onClickDownloadResources}
                 onClick={this.onClickDownloadResources}
@@ -335,6 +338,11 @@ class DBLEntryRow extends PureComponent<Props> {
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
                 <Folder className={classNames(classes.rightIcon, classes.iconSmall)} />
               </Button>
+            )}
+            {this.showStatusAsText() && (
+              <div style={{ paddingRight: '20px', paddingTop: '6px' }}>
+                {<ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
+              </div>
             )}
             {this.showDownloadButton() && (
               <Button variant="flat" size="small" className={classes.button}
