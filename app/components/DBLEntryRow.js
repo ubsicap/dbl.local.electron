@@ -13,6 +13,7 @@ import Button from '@material-ui/core/Button';
 import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import FileDownload from 'material-ui/svg-icons/file/file-download';
+import Folder from 'material-ui/svg-icons/file/folder';
 import FolderOpen from 'material-ui/svg-icons/file/folder-open';
 import Save from '@material-ui/icons/Save';
 import CallSplit from '@material-ui/icons/CallSplit';
@@ -327,9 +328,13 @@ class DBLEntryRow extends PureComponent<Props> {
               </Button>
             )}
             {this.showStatusAsText() && (
-              <div style={{ paddingRight: '20px', paddingTop: '6px' }}>
-                {<ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
-              </div>
+              <Button variant="flat" size="small" className={classes.button}
+                onKeyPress={this.onClickDownloadResources}
+                onClick={this.onClickDownloadResources}
+              >
+                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
+                <Folder className={classNames(classes.rightIcon, classes.iconSmall)} />
+              </Button>
             )}
             {this.showDownloadButton() && (
               <Button variant="flat" size="small" className={classes.button}
