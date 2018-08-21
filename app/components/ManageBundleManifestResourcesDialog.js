@@ -148,6 +148,10 @@ class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
     this.props.openMetadataFile(this.props.bundleId);
   }
 
+  onSelectedUris = (selectedUris) => {
+    this.setState({ selectedUris });
+  }
+
   render() {
     const {
       classes, open, selectedBundle = {}, manifestResources = [], columnNames
@@ -175,7 +179,7 @@ class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
               </Button>
             </Toolbar>
           </AppBar>
-          <EnhancedTable data={manifestResources} columnNames={columnNames} />
+          <EnhancedTable data={manifestResources} columnNames={columnNames} onSelectedRowIds={this.onSelectedUris} />
         </div>
       </Zoom>
     );

@@ -316,12 +316,7 @@ function formatStatus(bundle) {
   } else if (bundle.task === 'UPLOAD' && bundle.status === 'IN_PROGRESS') {
     newStatusDisplayAs = 'Uploading';
   } else if (bundle.status === 'NOT_STARTED') {
-    if (bundle.resourceCountStored > 0) {
-      const remaining = bundle.resourceCountManifest - bundle.resourceCountStored;
-      newStatusDisplayAs = `Download (...${remaining})`;
-    } else {
-      newStatusDisplayAs = 'Download';
-    }
+    newStatusDisplayAs = 'Download';
   } else if (bundle.task === 'DOWNLOAD' && bundle.status === 'IN_PROGRESS') {
     newStatusDisplayAs = `Downloading ${formattedProgress}`;
   } else if (bundle.task === 'REMOVE_RESOURCES' && bundle.status === 'IN_PROGRESS') {

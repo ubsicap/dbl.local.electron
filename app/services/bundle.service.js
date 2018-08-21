@@ -147,12 +147,8 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
     const resourcePaths = await getResourcePaths(bundleId);
     resourceCountManifest = (manifestPaths || []).length;
     resourceCountStored = (resourcePaths || []).length;
-    if (task === 'DOWNLOAD') {
-      if (utilities.areEqualCollections(manifestPaths, resourcePaths)) {
-        status = 'COMPLETED';
-      } else {
-        status = 'NOT_STARTED';
-      }
+    if (task === 'DOWNLOAD' && mode === 'store') {
+      status = 'COMPLETED'; // even if only some are stored
     }
     // btw. it's possible that it could be in the process of REMOVE_RESOURCES,
     // but that's typically going to be so fast

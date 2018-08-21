@@ -1,5 +1,4 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React, { Component } from 'react';
 import MuiTable from 'mui-table';
 import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
 import { withStyles } from '@material-ui/core/styles';
@@ -21,7 +20,15 @@ const styles = theme => ({
   },
 });
 
-class EnhancedTable extends React.Component {
+type Props = {
+  classes: {},
+  data: [],
+  columnNames: [],
+  onSelectedRowIds: () => {}
+};
+
+class EnhancedTable extends Component<Props> {
+  props: Props;
   state = {
     order: 'asc',
     orderBy: this.props.columnNames[0].name,
@@ -38,7 +45,7 @@ class EnhancedTable extends React.Component {
         return { selectedRowIds: [] };
       }
       return { selectedRowIds: data.map(d => d.id) };
-    });
+    }, this.reportSelectedRowIds);
   }
 
   headerCheckBoxProps = () => {
@@ -94,6 +101,10 @@ class EnhancedTable extends React.Component {
     this.setState({ order, orderBy });
   };
 
+  reportSelectedRowIds = () => {
+    this.props.onSelectedRowIds(this.state.selectedRowIds);
+  }
+
   onCellClick = (column, rowData) => {
     this.setState(prevState => {
       if (prevState.selectedRowIds.some(id => rowData.id === id)) {
@@ -105,7 +116,7 @@ class EnhancedTable extends React.Component {
       return {
         selectedRowIds: [...prevState.selectedRowIds, rowData.id]
       };
-    });
+    }, this.reportSelectedRowIds);
   }
 
   isCellSelected = (column, rowData) =>
@@ -152,11 +163,5 @@ class EnhancedTable extends React.Component {
     );
   }
 }
-
-EnhancedTable.propTypes = {
-  classes: PropTypes.object.isRequired,
-  data: PropTypes.array.isRequired,
-  columnNames: PropTypes.array.isRequired
-};
 
 export default withStyles(styles)(EnhancedTable);
