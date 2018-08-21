@@ -22,7 +22,7 @@ import EnhancedTable from './EnhancedTable';
 
 
 function createResourceData(manifestResourceRaw, fileStoreInfo) {
-  const { uri = '', checksum = '', size: sizeRaw = 0 } = manifestResourceRaw;
+  const { uri = '', checksum = '', size: sizeRaw = 0, mimeType = '' } = manifestResourceRaw;
   const container = path.dirname(uri);
   const name = path.basename(uri);
   /* const ext = path.extname(uri); */
@@ -30,7 +30,7 @@ function createResourceData(manifestResourceRaw, fileStoreInfo) {
   const id = uri;
   const status = fileStoreInfo ? 'stored' : '';
   return {
-    id, uri, status, container, name, size, checksum
+    id, uri, status, mimeType, container, name, size, checksum
   };
 }
 
