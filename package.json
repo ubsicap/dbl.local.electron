@@ -205,7 +205,7 @@
     "history": "^4.7.2",
     "jquery": "^3.3.1",
     "material-ui": "^0.20.0",
-    "mui-table": "^1.2.2",
+    "mui-table": "^2.0.0",
     "popper.js": "^1.14.2",
     "react": "^16.3.0",
     "react-addons-shallow-compare": "^15.6.2",
