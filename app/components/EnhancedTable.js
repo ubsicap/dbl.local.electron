@@ -56,8 +56,13 @@ class EnhancedTable extends Component<Props> {
     const { data } = this.props;
     const selectableData = data.filter(d => !d.disabled);
     const { selectedRowIds } = this.state;
+    if (selectableData.length === 0) {
+      return {
+        disabled: true
+      };
+    }
     if (this.areAnyChecked() &&
-    selectedRowIds.length !== selectableData.length) {
+        selectedRowIds.length !== selectableData.length) {
       return {
         indeterminate: true,
         color: 'default'
