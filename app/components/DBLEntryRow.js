@@ -151,12 +151,12 @@ class DBLEntryRow extends PureComponent<Props> {
 
   showStatusAsText = () => {
     const { status } = this.props;
-    return (['IN_PROGRESS', 'DRAFT'].includes(status));
+    return (['IN_PROGRESS'].includes(status));
   }
 
   showStoredButton = () => {
     const { task, status } = this.props;
-    return ((task === 'DOWNLOAD' && status === 'COMPLETED'));
+    return ((task === 'DOWNLOAD' && status === 'COMPLETED') || status === 'DRAFT');
   }
 
   showDownloadButton = () => {
