@@ -174,18 +174,18 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   };
 
   handleAddByFile = () => {
-    this.handleClose();
+    this.handleCloseMenu();
     const filePaths = dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] });
     console.log(filePaths);
   };
 
   handleAddByFolder = () => {
-    this.handleClose();
+    this.handleCloseMenu();
     const filePaths = dialog.showOpenDialog({ properties: ['openFile', 'openDirectory', 'multiSelections'] });
     console.log(filePaths);
   };
 
-  handleClose = () => {
+  handleCloseMenu = () => {
     this.setState({ anchorEl: null });
   };
 
@@ -240,7 +240,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             id="simple-menu"
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
-            onClose={this.handleClose}
+            onClose={this.handleCloseMenu}
           >
             <MenuItem onClick={this.handleAddByFile}>by File</MenuItem>
             <MenuItem onClick={this.handleAddByFolder}>by Folder</MenuItem>
