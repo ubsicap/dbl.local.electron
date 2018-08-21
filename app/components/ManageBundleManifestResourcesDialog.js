@@ -175,12 +175,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   handleAddByFile = () => {
     this.handleClose();
-    dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] });
+    const filePaths = dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] });
+    console.log(filePaths);
   };
 
   handleAddByFolder = () => {
     this.handleClose();
-    dialog.showOpenDialog({ properties: ['openFile', 'openDirectory', 'multiSelections'] });
+    const filePaths = dialog.showOpenDialog({ properties: ['openFile', 'openDirectory', 'multiSelections'] });
+    console.log(filePaths);
   };
 
   handleClose = () => {
