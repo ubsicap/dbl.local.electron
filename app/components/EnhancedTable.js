@@ -23,7 +23,7 @@ const styles = theme => ({
 type Props = {
   classes: {},
   data: [],
-  columnNames: [],
+  columnConfig: [],
   onSelectedRowIds: () => {}
 };
 
@@ -31,7 +31,7 @@ class EnhancedTable extends Component<Props> {
   props: Props;
   state = {
     order: 'asc',
-    orderBy: this.props.columnNames[0].name,
+    orderBy: this.props.columnConfig[0].name,
     selectedRowIds: []
   };
 
@@ -40,19 +40,21 @@ class EnhancedTable extends Component<Props> {
   onChangeCheckBoxHeader = () => {
     const { data } = this.props;
     this.setState(prevState => {
-      if (prevState.selectedRowIds.length === data.length) {
+      const selectableData = data.filter(d => !d.disabled);
+      if (prevState.selectedRowIds.length === selectableData.length) {
         // deselect all
         return { selectedRowIds: [] };
       }
-      return { selectedRowIds: data.map(d => d.id) };
+      return { selectedRowIds: selectableData.map(d => d.id) };
     }, this.reportSelectedRowIds);
   }
 
   headerCheckBoxProps = () => {
     const { data } = this.props;
+    const selectableData = data.filter(d => !d.disabled);
     const { selectedRowIds } = this.state;
     if (this.areAnyChecked() &&
-    selectedRowIds.length !== data.length) {
+    selectedRowIds.length !== selectableData.length) {
       return {
         indeterminate: true,
         color: 'default'
@@ -65,7 +67,7 @@ class EnhancedTable extends Component<Props> {
     this.state.selectedRowIds.some(id => rowData.id === id));
 
   columns = () => {
-    const { columnNames } = this.props;
+    const { columnConfig } = this.props;
     const checkboxColumn = {
       name: 'checkbox',
       header: (
@@ -78,6 +80,7 @@ class EnhancedTable extends Component<Props> {
       cell: rowData => (
         <Checkbox
           checked={this.isRowChecked(rowData)}
+          disabled={rowData.disabled}
         />
       ),
       cellProps: { style: { paddingRight: 0 } },
@@ -86,7 +89,7 @@ class EnhancedTable extends Component<Props> {
     };
     const stringCellProps = { style: { paddingRight: 0 } };
     const numericCellProps = { numeric: true };
-    const columns = columnNames.map(c => ({
+    const columns = columnConfig.map(c => ({
       name: c.name,
       header: c.label,
       cellProps: c.type === 'numeric' ? numericCellProps : stringCellProps
@@ -106,6 +109,9 @@ class EnhancedTable extends Component<Props> {
   }
 
   onCellClick = (column, rowData) => {
+    if (rowData.disabled) {
+      return;
+    }
     this.setState(prevState => {
       if (prevState.selectedRowIds.some(id => rowData.id === id)) {
         // remove
@@ -123,7 +129,7 @@ class EnhancedTable extends Component<Props> {
     this.state.selectedRowIds.some(id => rowData && rowData.id === id);
 
   isCellHovered = (column, rowData, hoveredColumn, hoveredRowData) =>
-    rowData.id && rowData.id === hoveredRowData.id;
+    !rowData.disabled && rowData.id && rowData.id === hoveredRowData.id;
 
   getSortedData = () => {
     const { data } = this.props;

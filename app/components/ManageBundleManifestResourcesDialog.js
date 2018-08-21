@@ -29,8 +29,9 @@ function createResourceData(manifestResourceRaw, fileStoreInfo) {
   const size = (Math.round(Number(sizeRaw) / 1024)).toLocaleString();
   const id = uri;
   const status = fileStoreInfo ? 'stored' : '';
+  const disabled = status === 'stored';
   return {
-    id, uri, status, mimeType, container, name, size, checksum
+    id, uri, status, mimeType, container, name, size, checksum, disabled
   };
 }
 
@@ -63,7 +64,7 @@ function mapStateToProps(state) {
   const { bundleId } = bundleManageResources;
   const { showMetadataFile } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
-  const columnNames = createColumnNames();
+  const columnConfig = createColumnNames();
   const getManifestResourceData = makeGetManifestResourcesData();
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
   return {
@@ -72,7 +73,7 @@ function mapStateToProps(state) {
     selectedBundle,
     showMetadataFile,
     manifestResources: getManifestResourceData(state),
-    columnNames
+    columnConfig
   };
 }
 
@@ -108,7 +109,7 @@ type Props = {
   selectedBundle: {},
   showMetadataFile: ?string,
   manifestResources: [],
-  columnNames: [],
+  columnConfig: [],
   closeResourceManager: () => {},
   openMetadataFile: () => {},
   getManifestResources: () => {},
@@ -154,7 +155,7 @@ class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
 
   render() {
     const {
-      classes, open, selectedBundle = {}, manifestResources = [], columnNames
+      classes, open, selectedBundle = {}, manifestResources = [], columnConfig
     } = this.props;
     const { displayAs = {} } = selectedBundle;
     const { languageAndCountry, name } = displayAs;
@@ -179,7 +180,11 @@ class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
               </Button>
             </Toolbar>
           </AppBar>
-          <EnhancedTable data={manifestResources} columnNames={columnNames} onSelectedRowIds={this.onSelectedUris} />
+          <EnhancedTable
+            data={manifestResources}
+            columnConfig={columnConfig}
+            onSelectedRowIds={this.onSelectedUris}
+          />
         </div>
       </Zoom>
     );

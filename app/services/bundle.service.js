@@ -254,7 +254,7 @@ function getManifestResourceDetails(bundleId) {
       <resource uri="release/English.lds"/>
  */
 function downloadResources(bundleId, uris = []) {
-  const urisXml = uris.map(uri => `<resource uri="${uri}"/>`).join(',') || '';
+  const urisXml = uris.map(uri => `<resource uri="${uri}"/>`).join('') || '';
   return bundleAddTasks(bundleId, `<downloadResources>${urisXml}</downloadResources>`);
 }
 
