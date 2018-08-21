@@ -12,6 +12,9 @@ import { lighten } from '@material-ui/core/styles/colorManipulator';
 const toolbarStyles = theme => ({
   root: {
     paddingRight: theme.spacing.unit,
+    position: 'sticky',
+    top: 50,
+    backgroundColor: 'white'
   },
   highlight:
     theme.palette.type === 'light'
@@ -31,7 +34,7 @@ const toolbarStyles = theme => ({
   },
   title: {
     flex: '0 0 auto',
-  },
+  }
 });
 
 type Props = {
