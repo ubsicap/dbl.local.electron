@@ -173,6 +173,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.setState({ anchorEl: event.currentTarget });
   };
 
+  handleAddByFile = () => {
+    this.handleClose();
+    dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] });
+  };
+
+  handleAddByFolder = () => {
+    this.handleClose();
+    dialog.showOpenDialog({ properties: ['openFile', 'openDirectory', 'multiSelections'] });
+  };
+
   handleClose = () => {
     this.setState({ anchorEl: null });
   };
@@ -213,22 +223,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             columnConfig={columnConfig}
             onSelectedRowIds={this.onSelectedUris}
           />
-          <input
-            className={classes.input}
-            id="contained-button-file-by-folder"
-            type="file"
-            name="filesByFolder"
-            webkitdirectory=""
-            onChange={this.handleChange}
-          />
-          <input
-            className={classes.input}
-            id="contained-button-file"
-            multiple
-            type="file"
-            name="files"
-            onChange={this.handleChange}
-          />
           <Button
             aria-owns={anchorEl ? 'simple-menu' : null}
             aria-haspopup="true"
@@ -246,12 +240,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             open={Boolean(anchorEl)}
             onClose={this.handleClose}
           >
-            <label htmlFor="contained-button-file">
-              <MenuItem onClick={this.handleClose}>by File</MenuItem>
-            </label>
-            <label htmlFor="contained-button-file-by-folder">
-              <MenuItem onClick={this.handleClose}>by Folder</MenuItem>
-            </label>
+            <MenuItem onClick={this.handleAddByFile}>by File</MenuItem>
+            <MenuItem onClick={this.handleAddByFolder}>by Folder</MenuItem>
           </Menu>
         </div>
       </Zoom>
