@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
@@ -8,8 +8,11 @@ import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import CloseIcon from '@material-ui/icons/Close';
+import AddIcon from '@material-ui/icons/Add';
 import OpenInNew from '@material-ui/icons/OpenInNew';
 import FileDownload from '@material-ui/icons/CloudDownloadOutlined';
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
 import { createSelector } from 'reselect';
 import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
@@ -20,6 +23,7 @@ import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
 import EnhancedTable from './EnhancedTable';
 
+const { dialog } = require('electron').remote;
 
 function createResourceData(manifestResourceRaw, fileStoreInfo) {
   const { uri = '', checksum = '', size: sizeRaw = 0, mimeType = '' } = manifestResourceRaw;
@@ -100,6 +104,12 @@ const materialStyles = theme => ({
   iconSmall: {
     fontSize: 20,
   },
+  button: {
+    margin: theme.spacing.unit,
+  },
+  input: {
+    display: 'none',
+  },
 });
 
 type Props = {
@@ -116,10 +126,11 @@ type Props = {
   downloadResources: () => {}
 };
 
-class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
+class ManageBundleManifestResourcesDialog extends Component<Props> {
   props: Props;
   state = {
-    selectedUris: []
+    selectedUris: [],
+    anchorEl: null
   }
 
   componentDidMount() {
@@ -158,10 +169,19 @@ class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
     return selectedUris.length === 0;
   }
 
+  handleClick = event => {
+    this.setState({ anchorEl: event.currentTarget });
+  };
+
+  handleClose = () => {
+    this.setState({ anchorEl: null });
+  };
+
   render() {
     const {
       classes, open, selectedBundle = {}, manifestResources = [], columnConfig
     } = this.props;
+    const { anchorEl } = this.state;
     const { displayAs = {} } = selectedBundle;
     const { languageAndCountry, name } = displayAs;
     return (
@@ -193,6 +213,46 @@ class ManageBundleManifestResourcesDialog extends PureComponent<Props> {
             columnConfig={columnConfig}
             onSelectedRowIds={this.onSelectedUris}
           />
+          <input
+            className={classes.input}
+            id="contained-button-file-by-folder"
+            type="file"
+            name="filesByFolder"
+            webkitdirectory=""
+            onChange={this.handleChange}
+          />
+          <input
+            className={classes.input}
+            id="contained-button-file"
+            multiple
+            type="file"
+            name="files"
+            onChange={this.handleChange}
+          />
+          <Button
+            aria-owns={anchorEl ? 'simple-menu' : null}
+            aria-haspopup="true"
+            onClick={this.handleClick}
+            variant="fab"
+            color="primary"
+            aria-label="Add"
+            className={classes.button}
+          >
+            <AddIcon />
+          </Button>
+          <Menu
+            id="simple-menu"
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={this.handleClose}
+          >
+            <label htmlFor="contained-button-file">
+              <MenuItem onClick={this.handleClose}>by File</MenuItem>
+            </label>
+            <label htmlFor="contained-button-file-by-folder">
+              <MenuItem onClick={this.handleClose}>by Folder</MenuItem>
+            </label>
+          </Menu>
         </div>
       </Zoom>
     );
