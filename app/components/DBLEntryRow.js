@@ -151,7 +151,7 @@ class DBLEntryRow extends PureComponent<Props> {
 
   showStatusAsText = () => {
     const { status } = this.props;
-    return ((status === 'IN_PROGRESS'));
+    return (['IN_PROGRESS', 'DRAFT'].includes(status));
   }
 
   showStoredButton = () => {
