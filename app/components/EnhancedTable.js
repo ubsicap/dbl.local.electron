@@ -163,6 +163,7 @@ class EnhancedTable extends Component<Props> {
             className: classes.stickyHeaderClass,
             style: { background: '#eee' }
           }}
+          onHeaderClick={this.handleRequestSort}
           onCellClick={this.onCellClick}
           isCellSelected={this.isCellSelected}
           isCellHovered={this.isCellHovered}
