@@ -105,8 +105,6 @@ class EnhancedTable extends Component<Props> {
     return [checkboxColumn, ...columns];
   };
 
-  /* onHeaderClick={this.handleRequestSort} */
-
   handleRequestSort = ({ column }) => {
     const { name: property } = column;
     const orderBy = property;

@@ -9,6 +9,7 @@ import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import CloseIcon from '@material-ui/icons/Close';
 import AddIcon from '@material-ui/icons/Add';
+import CheckIcon from '@material-ui/icons/Check';
 import OpenInNew from '@material-ui/icons/OpenInNew';
 import FileDownload from '@material-ui/icons/CloudDownloadOutlined';
 import Menu from '@material-ui/core/Menu';
@@ -32,19 +33,18 @@ function createResourceData(manifestResourceRaw, fileStoreInfo) {
   /* const ext = path.extname(uri); */
   const size = (Math.round(Number(sizeRaw) / 1024)).toLocaleString();
   const id = uri;
-  const key = id;
   const status = fileStoreInfo ? 'stored' : '';
   const disabled = status === 'stored';
   return {
-    id, key, uri, status, mimeType, container, name, size, checksum, disabled
+    id, uri, status, mimeType, container, name, size, checksum, disabled
   };
 }
 
 function createAddedResource(filePath) {
   const fileName = path.basename(filePath);
-  const [id, uri, key, name] = [fileName, fileName, fileName, fileName];
+  const [id, uri, name] = [filePath, fileName, fileName, fileName];
   return {
-    id, key, uri, status: 'added', mimeType: '', container: '', name, size: 0, checksum: '', disabled: false
+    id, uri, status: 'added', mimeType: '', container: '', name, size: 0, checksum: '', disabled: false
   };
 }
 
@@ -74,7 +74,7 @@ const { shell } = require('electron');
 
 function mapStateToProps(state) {
   const { bundleManageResources, bundles, bundleEditMetadata } = state;
-  const { bundleId } = bundleManageResources;
+  const { bundleId, mode } = bundleManageResources;
   const { showMetadataFile } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
   const columnConfig = createColumnNames();
@@ -84,6 +84,7 @@ function mapStateToProps(state) {
     open: Boolean(bundleId),
     bundleId,
     selectedBundle,
+    mode,
     showMetadataFile,
     manifestResources: getManifestResourceData(state),
     columnConfig
@@ -119,6 +120,14 @@ const materialStyles = theme => ({
   input: {
     display: 'none',
   },
+  fab: {
+    margin: 0,
+    top: 'auto',
+    right: 20,
+    bottom: 20,
+    left: 'auto',
+    position: 'sticky',
+  }
 });
 
 type Props = {
@@ -126,6 +135,7 @@ type Props = {
   open: boolean,
   bundleId: ?string,
   selectedBundle: {},
+  mode: string,
   showMetadataFile: ?string,
   manifestResources: [],
   columnConfig: [],
@@ -204,7 +214,35 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { manifestResources } = this.props;
     const { addedFilePaths = [] } = this.state;
     const addedResources = addedFilePaths.map(createAddedResource);
-    return [...addedResources, ...manifestResources];
+    return [...manifestResources, ...addedResources];
+  }
+
+  isAddFilesMode = () => this.props.mode === 'addFiles';
+  isDownloadMode = () => this.props.mode === 'download';
+
+  modeUi = () => {
+    const { mode, classes } = this.props;
+    switch (mode) {
+      case 'download':
+        return {
+          appBar:
+          {
+            title: 'Download resources',
+            OkButtonLabel: 'Download',
+            OkButtonIcon: <FileDownload className={classNames(classes.leftIcon)} />
+          }
+        };
+      case 'addFiles':
+        return {
+          appBar: {
+            title: 'Add resources',
+            OkButtonLabel: 'Add',
+            OkButtonIcon: <CheckIcon className={classNames(classes.leftIcon)} />
+          }
+        };
+      default:
+        return { appBar: { title: '', OkButtonLabel: '', OkButtonIcon: (null) } };
+    }
   }
 
   render() {
@@ -214,6 +252,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { anchorEl } = this.state;
     const { displayAs = {} } = selectedBundle;
     const { languageAndCountry, name } = displayAs;
+    const modeUi = this.modeUi();
     return (
       <Zoom in={open}>
         <div>
@@ -223,7 +262,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                 <CloseIcon />
               </IconButton>
               <Typography variant="title" color="inherit" className={classes.flex}>
-                Download resources: <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry} </span> {name}
+                {modeUi.appBar.title}: <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry} </span> {name}
               </Typography>
               <Button key="btnOpenXml" color="inherit" disable={this.props.showMetadataFile} onClick={this.handleReview}>
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
@@ -233,8 +272,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                 key="btnSave" color="inherit" onClick={this.handleDownload}
                 disabled={this.shouldDisableOkButton()}
               >
-                <FileDownload className={classNames(classes.leftIcon)} />
-                Download
+                {modeUi.appBar.OkButtonIcon}
+                {modeUi.appBar.OkButtonLabel}
               </Button>
             </Toolbar>
           </AppBar>
@@ -243,17 +282,21 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             columnConfig={columnConfig}
             onSelectedRowIds={this.onSelectedUris}
           />
-          <Button
-            aria-owns={anchorEl ? 'simple-menu' : null}
-            aria-haspopup="true"
-            onClick={this.handleClick}
-            variant="fab"
-            color="primary"
-            aria-label="Add"
-            className={classes.button}
-          >
-            <AddIcon />
-          </Button>
+          {this.isAddFilesMode() &&
+          <div className="container">
+            <Button
+              aria-owns={anchorEl ? 'simple-menu' : null}
+              aria-haspopup="true"
+              onClick={this.handleClick}
+              variant="fab"
+              color="primary"
+              aria-label="Add"
+              className={classes.fab}
+            >
+              <AddIcon />
+            </Button>
+          </div>}
+          {this.isAddFilesMode() &&
           <Menu
             id="simple-menu"
             anchorEl={anchorEl}
@@ -262,7 +305,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           >
             <MenuItem onClick={this.handleAddByFile}>by File</MenuItem>
             <MenuItem onClick={this.handleAddByFolder}>by Folder</MenuItem>
-          </Menu>
+          </Menu>}
         </div>
       </Zoom>
     );

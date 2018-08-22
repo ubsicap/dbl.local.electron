@@ -2,15 +2,17 @@ import path from 'path';
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 
 const initialState = {
-  bundleId: null
+  bundleId: null,
+  mode: null
 };
 
 export function bundleManageResources(state = initialState, action) {
   switch (action.type) {
     case bundleResourceManagerConstants.OPEN_RESOURCE_MANAGER: {
-      const { bundleId } = action;
+      const { bundleId, mode } = action;
       return {
-        bundleId
+        bundleId,
+        mode
       };
     }
     case bundleResourceManagerConstants.CLOSE_RESOURCE_MANAGER: {

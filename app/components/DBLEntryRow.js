@@ -201,9 +201,9 @@ class DBLEntryRow extends PureComponent<Props> {
     matches: this.getMatches(textToHighlight)
   })
 
-  onClickDownloadResources = (event) => {
+  onClickManageResources = (mode) => (event) => {
     const { bundleId } = this.props;
-    this.props.openResourceManager(bundleId);
+    this.props.openResourceManager(bundleId, mode);
     event.stopPropagation();
   }
 
@@ -284,6 +284,7 @@ class DBLEntryRow extends PureComponent<Props> {
     if (!shouldShowRow) {
       return (null);
     }
+    const resourceManagerMode = status === 'DRAFT' ? 'addFiles' : 'download';
     return (
       <div
         className={styles.bundleRow}
@@ -332,8 +333,7 @@ class DBLEntryRow extends PureComponent<Props> {
             )}
             {this.showStoredButton() && (
               <Button variant="flat" size="small" className={classes.button}
-                onKeyPress={this.onClickDownloadResources}
-                onClick={this.onClickDownloadResources}
+                onClick={this.onClickManageResources(resourceManagerMode)}
               >
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
                 <Folder className={classNames(classes.rightIcon, classes.iconSmall)} />
@@ -346,8 +346,8 @@ class DBLEntryRow extends PureComponent<Props> {
             )}
             {this.showDownloadButton() && (
               <Button variant="flat" size="small" className={classes.button}
-                onKeyPress={this.onClickDownloadResources}
-                onClick={this.onClickDownloadResources}
+                onKeyPress={this.onClickManageResources('download')}
+                onClick={this.onClickManageResources('download')}
               >
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
                 <FileDownload className={classNames(classes.rightIcon, classes.iconSmall)} />

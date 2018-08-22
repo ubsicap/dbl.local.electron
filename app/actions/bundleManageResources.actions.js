@@ -14,18 +14,18 @@ function buildBundleArgUrl(routeUrl, bundleId) {
   return routeUrl.replace(':bundleId', bundleId);
 }
 
-export function openResourceManager(_bundleId) {
+export function openResourceManager(_bundleId, _mode = 'download') {
   return dispatch => {
-    dispatch(navigate(_bundleId));
+    dispatch(navigate(_bundleId, _mode));
   };
-  function success(bundleId) {
-    return { type: bundleResourceManagerConstants.OPEN_RESOURCE_MANAGER, bundleId };
+  function success(bundleId, mode) {
+    return { type: bundleResourceManagerConstants.OPEN_RESOURCE_MANAGER, bundleId, mode };
   }
-  function navigate(bundleId) {
+  function navigate(bundleId, mode) {
     const manageResourcesUrl =
       buildBundleArgUrl(navigationConstants.NAVIGATION_BUNDLE_MANAGE_RESOURCES, bundleId);
     history.push(manageResourcesUrl);
-    return success(bundleId);
+    return success(bundleId, mode);
   }
 }
 
