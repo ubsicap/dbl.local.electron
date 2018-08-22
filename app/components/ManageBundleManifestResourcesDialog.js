@@ -32,10 +32,19 @@ function createResourceData(manifestResourceRaw, fileStoreInfo) {
   /* const ext = path.extname(uri); */
   const size = (Math.round(Number(sizeRaw) / 1024)).toLocaleString();
   const id = uri;
+  const key = id;
   const status = fileStoreInfo ? 'stored' : '';
   const disabled = status === 'stored';
   return {
-    id, uri, status, mimeType, container, name, size, checksum, disabled
+    id, key, uri, status, mimeType, container, name, size, checksum, disabled
+  };
+}
+
+function createAddedResource(filePath) {
+  const fileName = path.basename(filePath);
+  const [id, uri, key, name] = [fileName, fileName, fileName, fileName];
+  return {
+    id, key, uri, status: 'added', mimeType: '', container: '', name, size: 0, checksum: '', disabled: false
   };
 }
 
@@ -130,7 +139,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   props: Props;
   state = {
     selectedUris: [],
-    anchorEl: null
+    anchorEl: null,
+    addedFilePaths: []
   }
 
   componentDidMount() {
@@ -175,8 +185,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   handleAddByFile = () => {
     this.handleCloseMenu();
-    const filePaths = dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] });
-    console.log(filePaths);
+    const addedFilePaths = dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] });
+    this.setState({ addedFilePaths });
+    console.log(addedFilePaths);
   };
 
   handleAddByFolder = () => {
@@ -189,9 +200,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.setState({ anchorEl: null });
   };
 
+  totalResources = () => {
+    const { manifestResources } = this.props;
+    const { addedFilePaths = [] } = this.state;
+    const addedResources = addedFilePaths.map(createAddedResource);
+    return [...addedResources, ...manifestResources];
+  }
+
   render() {
     const {
-      classes, open, selectedBundle = {}, manifestResources = [], columnConfig
+      classes, open, selectedBundle = {}, columnConfig
     } = this.props;
     const { anchorEl } = this.state;
     const { displayAs = {} } = selectedBundle;
@@ -221,7 +239,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             </Toolbar>
           </AppBar>
           <EnhancedTable
-            data={manifestResources}
+            data={this.totalResources()}
             columnConfig={columnConfig}
             onSelectedRowIds={this.onSelectedUris}
           />
