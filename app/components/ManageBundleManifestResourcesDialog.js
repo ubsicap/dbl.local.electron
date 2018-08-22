@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import fs from 'fs-extra';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
@@ -213,6 +214,11 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   totalResources = () => {
     const { manifestResources } = this.props;
     const { addedFilePaths = [] } = this.state;
+    /*
+    addedFilePaths.forEach(async filePath => {
+      const stats = await fs.stat(filePath);
+    });
+    */
     const addedResources = addedFilePaths.map(createAddedResource);
     return [...manifestResources, ...addedResources];
   }
