@@ -28,7 +28,7 @@ import EnhancedTable from './EnhancedTable';
 
 const { dialog } = require('electron').remote;
 
-function createResourceData(manifestResourceRaw, fileStoreInfo) {
+function createResourceData(manifestResourceRaw, fileStoreInfo, mode) {
   const { uri = '', checksum = '', size: sizeRaw = 0, mimeType = '' } = manifestResourceRaw;
   const container = path.dirname(uri);
   const name = path.basename(uri);
@@ -36,7 +36,7 @@ function createResourceData(manifestResourceRaw, fileStoreInfo) {
   const size = (Math.round(Number(sizeRaw) / 1024)).toLocaleString();
   const id = uri;
   const status = fileStoreInfo ? 'stored' : '';
-  const disabled = status === 'stored';
+  const disabled = mode === 'addFiles' ? status !== 'added' : status === 'stored';
   return {
     id, uri, status, mimeType, container, name, size, checksum, disabled
   };
@@ -59,17 +59,18 @@ function getLabel(columnName) {
 }
 
 function createColumnNames() {
-  const { id, disabled, ...columns } = createResourceData({}, {});
+  const { id, disabled, ...columns } = createResourceData({}, {}, 'ignore');
   return Object.keys(columns).map(c => ({ name: c, type: isNumeric(c) ? 'numeric' : 'string', label: getLabel(c) }));
 }
 
 const getRawManifestResources = (state) => state.bundleManageResources.rawManifestResources || {};
 const getStoredFiles = (state) => state.bundleManageResources.storedFiles;
+const getMode = (state) => state.bundleManageResources.mode;
 
 const makeGetManifestResourcesData = () => createSelector(
-  [getRawManifestResources, getStoredFiles],
-  (rawManifestResources, storedFiles) =>
-    Object.values(rawManifestResources).map(r => createResourceData(r, storedFiles[r.uri]))
+  [getRawManifestResources, getStoredFiles, getMode],
+  (rawManifestResources, storedFiles, mode) =>
+    Object.values(rawManifestResources).map(r => createResourceData(r, storedFiles[r.uri], mode))
 );
 
 const { shell } = require('electron');
@@ -152,8 +153,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   state = {
     selectedUris: [],
     anchorEl: null,
-    addedFilePaths: [],
-    totalResources: this.props.manifestResources
+    addedFilePaths: []
   }
 
   componentDidMount() {
@@ -197,7 +197,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   };
 
   updateAddedResourcesWithFileStats() {
-    const { addedFilePaths, totalResources: totalResourcesOrig } = this.state;
+    const { addedFilePaths, totalResources: totalResourcesOrig = [] } = this.state;
     addedFilePaths.forEach(async filePath => {
       const stats = await fs.stat(filePath);
       const { size } = stats;
@@ -265,9 +265,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   render() {
     const {
-      classes, open, selectedBundle = {}, columnConfig
+      classes, open, selectedBundle = {}, columnConfig, manifestResources
     } = this.props;
-    const { anchorEl, totalResources } = this.state;
+    const { anchorEl, totalResources = manifestResources } = this.state;
     const { displayAs = {} } = selectedBundle;
     const { languageAndCountry, name } = displayAs;
     const modeUi = this.modeUi();
