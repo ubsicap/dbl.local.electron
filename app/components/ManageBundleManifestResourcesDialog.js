@@ -25,6 +25,7 @@ import { downloadResources } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
 import EnhancedTable from './EnhancedTable';
+import { utilities } from '../utils/utilities';
 
 const { dialog } = require('electron').remote;
 
@@ -203,22 +204,29 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.setState({ anchorEl: event.currentTarget });
   };
 
+  getUpdatedTotalResources(filePath, update) {
+    const { totalResources } = this.state;
+    return totalResources.map(r => (r.id === filePath ? { ...r, ...update } : r));
+  }
+
   updateAddedResourcesWithFileStats() {
-    const { addedFilePaths, totalResources: totalResourcesOrig = [] } = this.state;
+    const { addedFilePaths } = this.state;
     addedFilePaths.forEach(async filePath => {
       const stats = await fs.stat(filePath);
       const { size: sizeRaw } = stats;
       const size = formatBytesByKbs(sizeRaw);
       const buf = await fs.readFile(filePath);
       const checksum = md5(buf);
-      const totalResources = totalResourcesOrig.map(r => (r.id === filePath ? { ...r, size, checksum } : r));
+      const totalResources = this.getUpdatedTotalResources(filePath, { size, checksum });
       this.setState({ totalResources });
     });
   }
 
   handleAddByFile = () => {
     this.handleCloseMenu();
-    const addedFilePaths = dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] });
+    const newAddedFilePaths = dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] });
+    const { addedFilePaths: origAddedFilePaths = []} = this.state;
+    const addedFilePaths = utilities.union(origAddedFilePaths, newAddedFilePaths);
     this.setState({ addedFilePaths }, this.updateTotalResources);
     console.log(addedFilePaths);
   };

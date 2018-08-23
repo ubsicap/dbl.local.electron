@@ -7,9 +7,16 @@ export const utilities = {
   areEqualArraysDeep,
   areEqualCollections,
   onOpenLink,
-  sleep
+  sleep,
+  union
 };
 export default utilities;
+
+export function union(arrayA, arrayB) {
+  const u = new Set(arrayA);
+  arrayB.forEach(item => u.add(item));
+  return [...u];
+}
 
 /* from https://stackoverflow.com/a/19746771 */
 export function areEqualArrays(a1, a2, funcSort) {
