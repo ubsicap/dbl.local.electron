@@ -30,6 +30,7 @@ type Props = {
   classes: {},
   data: [],
   columnConfig: [],
+  secondarySorts: [],
   onSelectedRowIds: () => {}
 };
 
@@ -144,9 +145,11 @@ class EnhancedTable extends Component<Props> {
     !rowData.disabled && rowData.id && rowData.id === hoveredRowData.id;
 
   getSortedData = () => {
-    const { data } = this.props;
+    const { data, secondarySorts } = this.props;
     const { orderBy, order } = this.state;
-    const s = sort(data).by([{ [order]: orderBy }]);
+    const secondaryOrderBys = secondarySorts.filter(s => s !== orderBy).reduce((acc, s) =>
+      ({ ...acc, asc: s }), {});
+    const s = sort(data).by([{ [order]: orderBy, ...secondaryOrderBys }]);
     return s;
   }
 

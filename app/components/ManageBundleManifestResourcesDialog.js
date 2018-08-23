@@ -58,7 +58,9 @@ function getLabel(columnName) {
   return ['size'].includes(columnName) ? 'size (kb)' : null;
 }
 
-function createColumnNames() {
+const secondarySorts = ['container', 'name'];
+
+function createColumnConfig() {
   const { id, disabled, ...columns } = createResourceData({}, {}, 'ignore');
   return Object.keys(columns).map(c => ({ name: c, type: isNumeric(c) ? 'numeric' : 'string', label: getLabel(c) }));
 }
@@ -80,7 +82,7 @@ function mapStateToProps(state) {
   const { bundleId, mode } = bundleManageResources;
   const { showMetadataFile } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
-  const columnConfig = createColumnNames();
+  const columnConfig = createColumnConfig();
   const getManifestResourceData = makeGetManifestResourcesData();
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
   return {
@@ -298,6 +300,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           <EnhancedTable
             data={totalResources}
             columnConfig={columnConfig}
+            secondarySorts={secondarySorts}
             onSelectedRowIds={this.onSelectedUris}
           />
           {this.isAddFilesMode() &&
