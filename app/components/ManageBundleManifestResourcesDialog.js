@@ -36,7 +36,7 @@ function createResourceData(manifestResourceRaw, fileStoreInfo, mode) {
   const size = (Math.round(Number(sizeRaw) / 1024)).toLocaleString();
   const id = uri;
   const status = fileStoreInfo ? 'stored' : '';
-  const disabled = mode === 'addFiles' ? status !== 'added' : status === 'stored';
+  const disabled = mode === 'addFiles' ? status !== 'add?' : status === 'stored';
   return {
     id, uri, status, mimeType, container, name, size, checksum, disabled
   };
@@ -46,7 +46,7 @@ function createAddedResource(filePath) {
   const fileName = path.basename(filePath);
   const [id, uri, name] = [filePath, fileName, fileName, fileName];
   return {
-    id, uri, status: 'added', mimeType: '', container: '', name, size: 0, checksum: '', disabled: false
+    id, uri, status: 'add?', mimeType: '', container: '', name, size: 0, checksum: '', disabled: false
   };
 }
 
