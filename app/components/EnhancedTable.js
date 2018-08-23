@@ -168,7 +168,7 @@ class EnhancedTable extends Component<Props> {
           includeHeaders
           headerCellProps={{
             className: classes.stickyHeaderClass,
-            style: { background: '#eee' }
+            style: { background: '#eee', zIndex: 1 }
           }}
           cellProps={this.bodyRowProps}
           onHeaderClick={this.handleRequestSort}

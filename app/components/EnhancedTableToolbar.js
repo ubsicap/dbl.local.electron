@@ -14,7 +14,8 @@ const toolbarStyles = theme => ({
     paddingRight: theme.spacing.unit,
     position: 'sticky',
     top: 50,
-    backgroundColor: 'white'
+    backgroundColor: 'white',
+    zIndex: 1,
   },
   highlight:
     theme.palette.type === 'light'
