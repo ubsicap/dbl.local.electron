@@ -147,10 +147,11 @@ class EnhancedTable extends Component<Props> {
   getSortedData = () => {
     const { data, secondarySorts } = this.props;
     const { orderBy, order } = this.state;
-    const secondaryOrderBys = secondarySorts.filter(s => s !== orderBy).reduce((acc, s) =>
-      ({ ...acc, asc: s }), {});
-    const s = sort(data).by([{ [order]: orderBy, ...secondaryOrderBys }]);
-    return s;
+    const secondaryOrderBys = secondarySorts.filter(s => s !== orderBy).map((s) =>
+      ({ asc: s }));
+    const orderByConfig = [{ [order]: orderBy }, ...secondaryOrderBys];
+    const sorted = sort(data).by(orderByConfig);
+    return sorted;
   }
 
   bodyRowProps = ({ rowData }) => {

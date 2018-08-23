@@ -28,17 +28,21 @@ import EnhancedTable from './EnhancedTable';
 
 const { dialog } = require('electron').remote;
 
+function formatBytesByKbs(bytes) {
+  return (Math.round(Number(bytes) / 1024)).toLocaleString();
+}
+
 function createResourceData(manifestResourceRaw, fileStoreInfo, mode) {
   const { uri = '', checksum = '', size: sizeRaw = 0, mimeType = '' } = manifestResourceRaw;
   const container = path.dirname(uri);
   const name = path.basename(uri);
   /* const ext = path.extname(uri); */
-  const size = (Math.round(Number(sizeRaw) / 1024)).toLocaleString();
+  const size = formatBytesByKbs(sizeRaw);
   const id = uri;
   const status = fileStoreInfo ? 'stored' : '';
   const disabled = mode === 'addFiles' ? status !== 'add?' : status === 'stored';
   return {
-    id, uri, status, mimeType, container, name, size, checksum, disabled
+    id, uri, status, container, name, size, checksum, mimeType, disabled
   };
 }
 
@@ -61,7 +65,7 @@ function getLabel(columnName) {
 const secondarySorts = ['container', 'name'];
 
 function createColumnConfig() {
-  const { id, disabled, ...columns } = createResourceData({}, {}, 'ignore');
+  const { id, uri, disabled, ...columns } = createResourceData({}, {}, 'ignore');
   return Object.keys(columns).map(c => ({ name: c, type: isNumeric(c) ? 'numeric' : 'string', label: getLabel(c) }));
 }
 
@@ -202,7 +206,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { addedFilePaths, totalResources: totalResourcesOrig = [] } = this.state;
     addedFilePaths.forEach(async filePath => {
       const stats = await fs.stat(filePath);
-      const { size } = stats;
+      const { size: sizeRaw } = stats;
+      const size = formatBytesByKbs(sizeRaw);
       const buf = await fs.readFile(filePath);
       const checksum = md5(buf);
       const totalResources = totalResourcesOrig.map(r => (r.id === filePath ? { ...r, size, checksum } : r));
