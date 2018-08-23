@@ -8,6 +8,12 @@ import Tooltip from '@material-ui/core/Tooltip';
 import InfoIcon from '@material-ui/icons/Info';
 import FilterListIcon from '@material-ui/icons/FilterList';
 import { lighten } from '@material-ui/core/styles/colorManipulator';
+import Button from '@material-ui/core/Button';
+import AddIcon from '@material-ui/icons/Add';
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
+
+const { dialog } = require('electron').remote;
 
 const toolbarStyles = theme => ({
   root: {
@@ -35,19 +41,40 @@ const toolbarStyles = theme => ({
   },
   title: {
     flex: '0 0 auto',
-  }
+  },
+  button: {
+    margin: theme.spacing.unit,
+  },
 });
 
 type Props = {
   classes: {},
-  numSelected: number
+  numSelected: number,
+  handleAddByFile: () => {}
 };
 
 class EnhancedTableToolbar extends Component<Props> {
   props: Props;
+  state = {
+    anchorEl: null
+  }
+
+  handleClick = event => {
+    this.setState({ anchorEl: event.currentTarget });
+  };
+
+  handleCloseMenu = () => {
+    this.setState({ anchorEl: null });
+  };
+
+  handleAddByFileInternal = () => {
+    this.handleCloseMenu();
+    this.props.handleAddByFile();
+  };
 
   render() {
     const { numSelected, classes } = this.props;
+    const { anchorEl } = this.state;
     return (
       <Toolbar
         className={classNames(classes.root, {
@@ -64,6 +91,28 @@ class EnhancedTableToolbar extends Component<Props> {
               Manifest Resources
             </Typography>
           )}
+        </div>
+        <div>
+          <Button
+            aria-owns={anchorEl ? 'simple-menu' : null}
+            aria-haspopup="true"
+            onClick={this.handleClick}
+            variant="fab"
+            color="primary"
+            aria-label="Add"
+            className={classes.button}
+          >
+            <AddIcon />
+          </Button>
+          <Menu
+            id="simple-menu"
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={this.handleCloseMenu}
+          >
+            <MenuItem onClick={this.handleAddByFileInternal}>by File</MenuItem>
+            <MenuItem onClick={this.handleAddByFolder}>by Folder</MenuItem>
+          </Menu>
         </div>
         <div className={classes.spacer} />
         <div className={classes.actions}>

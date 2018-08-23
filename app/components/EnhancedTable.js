@@ -33,6 +33,7 @@ type Props = {
   defaultOrderBy: string,
   secondarySorts: [],
   selectAll: boolean,
+  handleAddByFile: () => {},
   onSelectedRowIds: () => {}
 };
 
@@ -187,7 +188,7 @@ class EnhancedTable extends Component<Props> {
 
     return (
       <Paper className={classes.root}>
-        <EnhancedTableToolbar numSelected={selectedRowIds.length} />
+        <EnhancedTableToolbar numSelected={selectedRowIds.length} handleAddByFile={this.props.handleAddByFile} />
         <MuiTable
           data={this.getSortedData()}
           columns={this.columns()}
