@@ -42,7 +42,7 @@ function createResourceData(manifestResourceRaw, fileStoreInfo, mode) {
   const status = fileStoreInfo ? 'stored' : '';
   const disabled = mode === 'addFiles' ? status !== 'add?' : status === 'stored';
   return {
-    id, uri, status, container, name, size, checksum, mimeType, disabled
+    id, uri, status, container, name, mimeType, size, checksum, disabled
   };
 }
 
@@ -159,7 +159,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   state = {
     selectedUris: [],
     anchorEl: null,
-    addedFilePaths: []
+    addedFilePaths: [],
+    selectAll: true
   }
 
   componentDidMount() {
@@ -190,7 +191,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   onSelectedUris = (selectedUris) => {
-    this.setState({ selectedUris });
+    this.setState({ selectedUris, selectAll: false });
   }
 
   shouldDisableOkButton = () => {
@@ -274,7 +275,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const {
       classes, open, selectedBundle = {}, columnConfig, manifestResources
     } = this.props;
-    const { anchorEl, totalResources = manifestResources } = this.state;
+    const { anchorEl, selectAll, totalResources = manifestResources } = this.state;
     const { displayAs = {} } = selectedBundle;
     const { languageAndCountry, name } = displayAs;
     const modeUi = this.modeUi();
@@ -308,6 +309,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             secondarySorts={secondarySorts}
             defaultOrderBy="container"
             onSelectedRowIds={this.onSelectedUris}
+            selectAll={selectAll}
           />
           {this.isAddFilesMode() &&
           <div className="container">

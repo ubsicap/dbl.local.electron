@@ -32,34 +32,55 @@ type Props = {
   columnConfig: [],
   defaultOrderBy: string,
   secondarySorts: [],
+  selectAll: boolean,
   onSelectedRowIds: () => {}
 };
+
+function getDataRowIds(data) {
+  return data.map(d => d.id);
+}
+
+function getSelectableData(data) {
+  return data.filter(d => !d.disabled);
+}
+
+function getAllSelectableRowIds(data) {
+  const selectableData = getSelectableData(data);
+  return getDataRowIds(selectableData);
+}
 
 class EnhancedTable extends Component<Props> {
   props: Props;
   state = {
     order: 'asc',
     orderBy: this.props.defaultOrderBy || this.props.columnConfig[0].name,
-    selectedRowIds: []
+    selectedRowIds: this.props.selectAll ? getAllSelectableRowIds(this.props.data) : []
   };
+
+  componentWillReceiveProps(nextProps) {
+    // You don't have to do this check first, but it can help prevent an unneeded render
+    if (nextProps.selectAll && nextProps.selectAll !== this.state.selectAll) {
+      this.setState({ selectedRowIds: getAllSelectableRowIds(nextProps.data) });
+    }
+  }
 
   areAnyChecked = () => this.state.selectedRowIds.length > 0;
 
   onChangeCheckBoxHeader = () => {
     const { data } = this.props;
     this.setState(prevState => {
-      const selectableData = data.filter(d => !d.disabled);
+      const selectableData = getSelectableData(data);
       if (prevState.selectedRowIds.length === selectableData.length) {
         // deselect all
         return { selectedRowIds: [] };
       }
-      return { selectedRowIds: selectableData.map(d => d.id) };
+      return { selectedRowIds: getDataRowIds(selectableData) };
     }, this.reportSelectedRowIds);
   }
 
   headerCheckBoxProps = () => {
     const { data } = this.props;
-    const selectableData = data.filter(d => !d.disabled);
+    const selectableData = getSelectableData(data);
     const { selectedRowIds } = this.state;
     if (selectableData.length === 0) {
       return {
