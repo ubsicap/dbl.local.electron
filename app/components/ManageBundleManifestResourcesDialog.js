@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import fs from 'fs-extra';
+import md5 from 'md5';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
@@ -151,7 +152,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   state = {
     selectedUris: [],
     anchorEl: null,
-    addedFilePaths: []
+    addedFilePaths: [],
+    totalResources: this.props.manifestResources
   }
 
   componentDidMount() {
@@ -194,10 +196,22 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.setState({ anchorEl: event.currentTarget });
   };
 
+  updateAddedResourcesWithFileStats() {
+    const { addedFilePaths, totalResources: totalResourcesOrig } = this.state;
+    addedFilePaths.forEach(async filePath => {
+      const stats = await fs.stat(filePath);
+      const { size } = stats;
+      const buf = await fs.readFile(filePath);
+      const checksum = md5(buf);
+      const totalResources = totalResourcesOrig.map(r => (r.id === filePath ? { ...r, size, checksum } : r));
+      this.setState({ totalResources });
+    });
+  }
+
   handleAddByFile = () => {
     this.handleCloseMenu();
     const addedFilePaths = dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] });
-    this.setState({ addedFilePaths });
+    this.setState({ addedFilePaths }, this.updateTotalResources);
     console.log(addedFilePaths);
   };
 
@@ -211,16 +225,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.setState({ anchorEl: null });
   };
 
-  totalResources = () => {
+  updateTotalResources = () => {
     const { manifestResources } = this.props;
     const { addedFilePaths = [] } = this.state;
-    /*
-    addedFilePaths.forEach(async filePath => {
-      const stats = await fs.stat(filePath);
-    });
-    */
     const addedResources = addedFilePaths.map(createAddedResource);
-    return [...manifestResources, ...addedResources];
+    this.setState(
+      { totalResources: [...manifestResources, ...addedResources] },
+      this.updateAddedResourcesWithFileStats
+    );
   }
 
   isAddFilesMode = () => this.props.mode === 'addFiles';
@@ -255,7 +267,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const {
       classes, open, selectedBundle = {}, columnConfig
     } = this.props;
-    const { anchorEl } = this.state;
+    const { anchorEl, totalResources } = this.state;
     const { displayAs = {} } = selectedBundle;
     const { languageAndCountry, name } = displayAs;
     const modeUi = this.modeUi();
@@ -284,7 +296,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             </Toolbar>
           </AppBar>
           <EnhancedTable
-            data={this.totalResources()}
+            data={totalResources}
             columnConfig={columnConfig}
             onSelectedRowIds={this.onSelectedUris}
           />
