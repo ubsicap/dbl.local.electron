@@ -30,6 +30,7 @@ type Props = {
   classes: {},
   data: [],
   columnConfig: [],
+  defaultOrderBy: string,
   secondarySorts: [],
   onSelectedRowIds: () => {}
 };
@@ -38,7 +39,7 @@ class EnhancedTable extends Component<Props> {
   props: Props;
   state = {
     order: 'asc',
-    orderBy: this.props.columnConfig[0].name,
+    orderBy: this.props.defaultOrderBy || this.props.columnConfig[0].name,
     selectedRowIds: []
   };
 

@@ -306,6 +306,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             data={totalResources}
             columnConfig={columnConfig}
             secondarySorts={secondarySorts}
+            defaultOrderBy="container"
             onSelectedRowIds={this.onSelectedUris}
           />
           {this.isAddFilesMode() &&
