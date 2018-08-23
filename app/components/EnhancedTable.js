@@ -17,6 +17,9 @@ const styles = theme => ({
   tableWrapper: {
     overflowX: 'auto',
   },
+  rowDisabled: {
+    backgroundColor: 'lightgrey'
+  },
   stickyHeaderClass: {
     position: 'sticky',
     top: 100
@@ -86,10 +89,11 @@ class EnhancedTable extends Component<Props> {
         />
       ),
       cell: rowData => (
-        <Checkbox
-          checked={this.isRowChecked(rowData)}
-          disabled={rowData.disabled}
-        />
+        !rowData.disabled ?
+          <Checkbox
+            checked={this.isRowChecked(rowData)}
+          /> :
+          null
       ),
       cellProps: { style: { paddingRight: 0 } },
       width: 72,
@@ -146,6 +150,11 @@ class EnhancedTable extends Component<Props> {
     return s;
   }
 
+  bodyRowProps = ({ rowData }) => {
+    const { classes } = this.props;
+    return rowData.disabled ? { className: classes.rowDisabled } : {};
+  }
+
   render() {
     const { classes } = this.props;
     const { selectedRowIds, orderBy, order } = this.state;
@@ -161,6 +170,7 @@ class EnhancedTable extends Component<Props> {
             className: classes.stickyHeaderClass,
             style: { background: '#eee' }
           }}
+          cellProps={this.bodyRowProps}
           onHeaderClick={this.handleRequestSort}
           onCellClick={this.onCellClick}
           isCellSelected={this.isCellSelected}
