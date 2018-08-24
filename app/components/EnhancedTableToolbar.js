@@ -92,18 +92,21 @@ class EnhancedTableToolbar extends Component<Props> {
             </Typography>
           )}
         </div>
-        <div>
-          <Button
-            aria-owns={anchorEl ? 'simple-menu' : null}
-            aria-haspopup="true"
-            onClick={this.handleClick}
-            variant="fab"
-            color="primary"
-            aria-label="Add"
-            className={classes.button}
-          >
-            <AddIcon />
-          </Button>
+        <div className={classes.spacer} />
+        <div className={classes.actions}>
+          <Tooltip title="Add resource">
+            <Button
+              aria-owns={anchorEl ? 'simple-menu' : null}
+              aria-haspopup="true"
+              onClick={this.handleClick}
+              variant="fab"
+              color="primary"
+              aria-label="Add"
+              className={classes.button}
+            >
+              <AddIcon />
+            </Button>
+          </Tooltip>
           <Menu
             id="simple-menu"
             anchorEl={anchorEl}
@@ -114,7 +117,6 @@ class EnhancedTableToolbar extends Component<Props> {
             <MenuItem onClick={this.handleAddByFolder}>by Folder</MenuItem>
           </Menu>
         </div>
-        <div className={classes.spacer} />
         <div className={classes.actions}>
           {numSelected > 0 ? (
             <Tooltip title="Summary">
