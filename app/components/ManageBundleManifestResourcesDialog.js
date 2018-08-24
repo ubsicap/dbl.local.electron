@@ -10,12 +10,9 @@ import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import CloseIcon from '@material-ui/icons/Close';
-import AddIcon from '@material-ui/icons/Add';
 import CheckIcon from '@material-ui/icons/Check';
 import OpenInNew from '@material-ui/icons/OpenInNew';
 import FileDownload from '@material-ui/icons/CloudDownloadOutlined';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
 import { createSelector } from 'reselect';
 import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
@@ -159,7 +156,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   props: Props;
   state = {
     selectedUris: [],
-    anchorEl: null,
     addedFilePaths: [],
     selectAll: true
   }
@@ -200,10 +196,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return selectedUris.length === 0;
   }
 
-  handleClick = event => {
-    this.setState({ anchorEl: event.currentTarget });
-  };
-
   getUpdatedTotalResources(filePath, update) {
     const { totalResources } = this.state;
     return totalResources.map(r => (r.id === filePath ? { ...r, ...update } : r));
@@ -223,22 +215,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   handleAddByFile = () => {
-    this.handleCloseMenu();
     const newAddedFilePaths = dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] });
-    const { addedFilePaths: origAddedFilePaths = []} = this.state;
+    const { addedFilePaths: origAddedFilePaths = [] } = this.state;
     const addedFilePaths = utilities.union(origAddedFilePaths, newAddedFilePaths);
     this.setState({ addedFilePaths }, this.updateTotalResources);
     console.log(addedFilePaths);
   };
 
   handleAddByFolder = () => {
-    this.handleCloseMenu();
     const filePaths = dialog.showOpenDialog({ properties: ['openFile', 'openDirectory', 'multiSelections'] });
     console.log(filePaths);
-  };
-
-  handleCloseMenu = () => {
-    this.setState({ anchorEl: null });
   };
 
   updateTotalResources = () => {
@@ -283,7 +269,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const {
       classes, open, selectedBundle = {}, columnConfig, manifestResources
     } = this.props;
-    const { anchorEl, selectAll, totalResources = manifestResources } = this.state;
+    const { selectAll, totalResources = manifestResources } = this.state;
     const { displayAs = {} } = selectedBundle;
     const { languageAndCountry, name } = displayAs;
     const modeUi = this.modeUi();
@@ -318,31 +304,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             defaultOrderBy="container"
             onSelectedRowIds={this.onSelectedUris}
             selectAll={selectAll}
+            handleAddByFile={this.handleAddByFile}
           />
-          {this.isAddFilesMode() &&
-          <div className="container">
-            <Button
-              aria-owns={anchorEl ? 'simple-menu' : null}
-              aria-haspopup="true"
-              onClick={this.handleClick}
-              variant="fab"
-              color="primary"
-              aria-label="Add"
-              className={classes.fab}
-            >
-              <AddIcon />
-            </Button>
-          </div>}
-          {this.isAddFilesMode() &&
-          <Menu
-            id="simple-menu"
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={this.handleCloseMenu}
-          >
-            <MenuItem onClick={this.handleAddByFile}>by File</MenuItem>
-            <MenuItem onClick={this.handleAddByFolder}>by Folder</MenuItem>
-          </Menu>}
         </div>
       </Zoom>
     );
