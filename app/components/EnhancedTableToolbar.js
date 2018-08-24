@@ -12,14 +12,15 @@ import Button from '@material-ui/core/Button';
 import AddIcon from '@material-ui/icons/Add';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
+import IntegrationReactSelect from '../components/IntegrationReactSelect';
 
 const toolbarStyles = theme => ({
   root: {
     paddingRight: theme.spacing.unit,
     position: 'sticky',
-    top: 50,
+    top: 60,
     backgroundColor: 'white',
-    zIndex: 1,
+    zIndex: 2,
   },
   highlight:
     theme.palette.type === 'light'
@@ -35,7 +36,7 @@ const toolbarStyles = theme => ({
     flex: '1 1 100%',
   },
   actions: {
-    color: theme.palette.text.secondary,
+    color: theme.palette.text.secondary
   },
   title: {
     flex: '0 0 auto',
@@ -91,6 +92,9 @@ class EnhancedTableToolbar extends Component<Props> {
           )}
         </div>
         <div className={classes.spacer} />
+        <div style={{ width: 700 }}>
+          {numSelected > 0 ? (<IntegrationReactSelect isMulti={false} />) : null}
+        </div>
         <div className={classes.actions}>
           {handleAddByFile ? (
             <div>
