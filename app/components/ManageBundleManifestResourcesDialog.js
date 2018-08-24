@@ -201,9 +201,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return totalResources.map(r => (r.id === filePath ? { ...r, ...update } : r));
   }
 
-  updateAddedResourcesWithFileStats() {
-    const { addedFilePaths } = this.state;
-    addedFilePaths.forEach(async filePath => {
+  updateAddedResourcesWithFileStats = (newlyAddedFilePaths) => () => {
+    newlyAddedFilePaths.forEach(async filePath => {
       const stats = await fs.stat(filePath);
       const { size: sizeRaw } = stats;
       const size = formatBytesByKbs(sizeRaw);
@@ -218,7 +217,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const newAddedFilePaths = dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] });
     const { addedFilePaths: origAddedFilePaths = [] } = this.state;
     const addedFilePaths = utilities.union(origAddedFilePaths, newAddedFilePaths);
-    this.setState({ addedFilePaths }, this.updateTotalResources);
+    this.setState({ addedFilePaths }, this.updateTotalResources(newAddedFilePaths));
     console.log(addedFilePaths);
   };
 
@@ -227,13 +226,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     console.log(filePaths);
   };
 
-  updateTotalResources = () => {
+  updateTotalResources = (newAddedFilePaths) => () => {
     const { manifestResources } = this.props;
-    const { addedFilePaths = [] } = this.state;
-    const addedResources = addedFilePaths.map(createAddedResource);
+    const { totalResources = manifestResources } = this.state;
+    const otherResources = totalResources.filter(r => !newAddedFilePaths.includes(r.id));
+    const newlyAddedResources = newAddedFilePaths.map(createAddedResource);
     this.setState(
-      { totalResources: [...manifestResources, ...addedResources] },
-      this.updateAddedResourcesWithFileStats
+      { totalResources: [...otherResources, ...newlyAddedResources] },
+      this.updateAddedResourcesWithFileStats(newAddedFilePaths)
     );
   }
 

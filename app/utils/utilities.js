@@ -8,14 +8,21 @@ export const utilities = {
   areEqualCollections,
   onOpenLink,
   sleep,
-  union
+  union,
+  difference
 };
 export default utilities;
 
-export function union(arrayA, arrayB) {
+export function union(arrayA, arrayB = []) {
   const u = new Set(arrayA);
   arrayB.forEach(item => u.add(item));
   return [...u];
+}
+
+export function difference(arrayA, arrayB = []) {
+  const diff = new Set(arrayA);
+  arrayB.forEach(item => diff.delete(item));
+  return diff;
 }
 
 /* from https://stackoverflow.com/a/19746771 */
