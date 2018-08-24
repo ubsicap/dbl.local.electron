@@ -12,7 +12,7 @@ import Button from '@material-ui/core/Button';
 import AddIcon from '@material-ui/icons/Add';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
-import IntegrationReactSelect from '../components/IntegrationReactSelect';
+import IntegrationAutosuggest from '../components/IntegrationAutosuggest';
 
 const toolbarStyles = theme => ({
   root: {
@@ -95,14 +95,7 @@ class EnhancedTableToolbar extends Component<Props> {
         </div>
         <div className={classes.spacer} />
         <div style={{ width: 700 }}>
-          {numSelected > 0 ? (
-            <IntegrationReactSelect
-              isMulti={false}
-              suggestions={this.props.containerSuggestions}
-              placeholder="Edit container"
-              onChange={this.props.onChangedContainerSuggestion}
-            />
-            ) : null
+          {numSelected > 0 ? (<IntegrationAutosuggest />) : null
           }
         </div>
         <div className={classes.actions}>
