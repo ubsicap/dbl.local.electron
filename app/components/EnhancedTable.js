@@ -33,7 +33,9 @@ type Props = {
   defaultOrderBy: string,
   secondarySorts: [],
   selectAll: boolean,
+  containerSuggestions: [],
   handleAddByFile: ?() => {},
+  onChangedContainerSuggestion: ?() => {},
   onSelectedRowIds: () => {}
 };
 
@@ -188,7 +190,12 @@ class EnhancedTable extends Component<Props> {
 
     return (
       <Paper className={classes.root}>
-        <EnhancedTableToolbar numSelected={selectedRowIds.length} handleAddByFile={this.props.handleAddByFile} />
+        <EnhancedTableToolbar
+          numSelected={selectedRowIds.length}
+          handleAddByFile={this.props.handleAddByFile}
+          containerSuggestions={this.props.containerSuggestions}
+          onChangedContainerSuggestion={this.props.onChangedContainerSuggestion}
+        />
         <MuiTable
           data={this.getSortedData()}
           columns={this.columns()}

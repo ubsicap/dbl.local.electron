@@ -49,7 +49,9 @@ const toolbarStyles = theme => ({
 type Props = {
   classes: {},
   numSelected: number,
-  handleAddByFile: ?() => {}
+  containerSuggestions: ?[],
+  handleAddByFile: ?() => {},
+  onChangedContainerSuggestion: ?() => {}
 };
 
 class EnhancedTableToolbar extends Component<Props> {
@@ -96,8 +98,9 @@ class EnhancedTableToolbar extends Component<Props> {
           {numSelected > 0 ? (
             <IntegrationReactSelect
               isMulti={false}
-              suggestions={['release', 'release/audio']}
+              suggestions={this.props.containerSuggestions}
               placeholder="Edit container"
+              onChange={this.props.onChangedContainerSuggestion}
             />
             ) : null
           }

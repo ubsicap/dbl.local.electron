@@ -17,7 +17,8 @@ type Props = {
   theme: {},
   isMulti: boolean,
   placeholder: string,
-  suggestions: []
+  suggestions: [],
+  onChange: () => {}
 };
 
 function mapSuggestions(suggestions) {
@@ -191,11 +192,16 @@ class IntegrationReactSelect extends React.Component<Prop> {
     return mapSuggestions(suggestions);
   }
 
-  handleChange = name => value => {
+  handleChange = name => (value, action) => {
     this.setState({
       [name]: value,
-    });
+    }, this.props.onChange(value, action));
   };
+
+  handleInputChange = (value, action) => {
+    console.log(action);
+    console.log(value);
+  }
 
   render() {
     const { classes, theme, isMulti, placeholder, suggestions: rawSuggestions } = this.props;
@@ -235,6 +241,7 @@ class IntegrationReactSelect extends React.Component<Prop> {
               components={components}
               value={this.state.single}
               onChange={this.handleChange('single')}
+              onInputChange={this.handleInputChange}
               placeholder={placeholder}
             />
           )}

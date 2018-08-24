@@ -267,9 +267,28 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
   }
 
+  getHandleAddByFile = () => {
+    const { mode } = this.props;
+    return mode === 'addFiles' ? this.handleAddByFile : null;
+  }
+
+  getContainerSuggestions = () => {
+    const { mode, manifestResources } = this.props;
+    if (mode !== 'addFiles') {
+      return null;
+    }
+    const { totalResources = manifestResources } = this.state;
+    return utilities.union(totalResources.map(r => r.container), ['']);
+  }
+
+  onChangedContainerSuggestion = (value, action) => {
+    console.log(action);
+    console.log(value);
+  }
+
   render() {
     const {
-      classes, open, selectedBundle = {}, columnConfig, manifestResources, mode
+      classes, open, selectedBundle = {}, columnConfig, manifestResources
     } = this.props;
     const { selectAll, totalResources = manifestResources } = this.state;
     const { displayAs = {} } = selectedBundle;
@@ -306,7 +325,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             defaultOrderBy="container"
             onSelectedRowIds={this.onSelectedUris}
             selectAll={selectAll}
-            handleAddByFile={mode === 'addFiles' ? this.handleAddByFile : null}
+            handleAddByFile={this.getHandleAddByFile()}
+            containerSuggestions={this.getContainerSuggestions()}
+            onChangedContainerSuggestion={this.onChangedContainerSuggestion}
           />
         </div>
       </Zoom>
