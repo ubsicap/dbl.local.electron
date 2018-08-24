@@ -93,7 +93,14 @@ class EnhancedTableToolbar extends Component<Props> {
         </div>
         <div className={classes.spacer} />
         <div style={{ width: 700 }}>
-          {numSelected > 0 ? (<IntegrationReactSelect isMulti={false} />) : null}
+          {numSelected > 0 ? (
+            <IntegrationReactSelect
+              isMulti={false}
+              suggestions={['release', 'release/audio']}
+              placeholder="Edit container"
+            />
+            ) : null
+          }
         </div>
         <div className={classes.actions}>
           {handleAddByFile ? (

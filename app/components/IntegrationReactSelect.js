@@ -15,48 +15,17 @@ import { emphasize } from '@material-ui/core/styles/colorManipulator';
 type Props = {
   classes: {},
   theme: {},
-  isMulti: boolean
+  isMulti: boolean,
+  placeholder: string,
+  suggestions: []
 };
 
-const suggestions = [
-  { label: 'Afghanistan' },
-  { label: 'Aland Islands' },
-  { label: 'Albania' },
-  { label: 'Algeria' },
-  { label: 'American Samoa' },
-  { label: 'Andorra' },
-  { label: 'Angola' },
-  { label: 'Anguilla' },
-  { label: 'Antarctica' },
-  { label: 'Antigua and Barbuda' },
-  { label: 'Argentina' },
-  { label: 'Armenia' },
-  { label: 'Aruba' },
-  { label: 'Australia' },
-  { label: 'Austria' },
-  { label: 'Azerbaijan' },
-  { label: 'Bahamas' },
-  { label: 'Bahrain' },
-  { label: 'Bangladesh' },
-  { label: 'Barbados' },
-  { label: 'Belarus' },
-  { label: 'Belgium' },
-  { label: 'Belize' },
-  { label: 'Benin' },
-  { label: 'Bermuda' },
-  { label: 'Bhutan' },
-  { label: 'Bolivia, Plurinational State of' },
-  { label: 'Bonaire, Sint Eustatius and Saba' },
-  { label: 'Bosnia and Herzegovina' },
-  { label: 'Botswana' },
-  { label: 'Bouvet Island' },
-  { label: 'Brazil' },
-  { label: 'British Indian Ocean Territory' },
-  { label: 'Brunei Darussalam' },
-].map(suggestion => ({
-  value: suggestion.label,
-  label: suggestion.label,
-}));
+function mapSuggestions(suggestions) {
+  return suggestions.map(suggestion => ({
+    value: suggestion,
+    label: suggestion,
+  }));
+}
 
 const styles = theme => ({
   root: {
@@ -217,6 +186,11 @@ class IntegrationReactSelect extends React.Component<Prop> {
     multi: null,
   };
 
+  mappedSuggestions = () => {
+    const { suggestions } = this.props;
+    return mapSuggestions(suggestions);
+  }
+
   handleChange = name => value => {
     this.setState({
       [name]: value,
@@ -224,8 +198,8 @@ class IntegrationReactSelect extends React.Component<Prop> {
   };
 
   render() {
-    const { classes, theme, isMulti } = this.props;
-
+    const { classes, theme, isMulti, placeholder, suggestions: rawSuggestions } = this.props;
+    const suggestions = this.mappedSuggestions(rawSuggestions);
     const selectStyles = {
       input: base => ({
         ...base,
@@ -261,7 +235,7 @@ class IntegrationReactSelect extends React.Component<Prop> {
               components={components}
               value={this.state.single}
               onChange={this.handleChange('single')}
-              placeholder="Container"
+              placeholder={placeholder}
             />
           )}
         </NoSsr>
