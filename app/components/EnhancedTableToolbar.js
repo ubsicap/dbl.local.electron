@@ -13,8 +13,6 @@ import AddIcon from '@material-ui/icons/Add';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 
-const { dialog } = require('electron').remote;
-
 const toolbarStyles = theme => ({
   root: {
     paddingRight: theme.spacing.unit,
@@ -50,7 +48,7 @@ const toolbarStyles = theme => ({
 type Props = {
   classes: {},
   numSelected: number,
-  handleAddByFile: () => {}
+  handleAddByFile: ?() => {}
 };
 
 class EnhancedTableToolbar extends Component<Props> {
@@ -73,7 +71,7 @@ class EnhancedTableToolbar extends Component<Props> {
   };
 
   render() {
-    const { numSelected, classes } = this.props;
+    const { numSelected, classes, handleAddByFile } = this.props;
     const { anchorEl } = this.state;
     return (
       <Toolbar
@@ -94,28 +92,33 @@ class EnhancedTableToolbar extends Component<Props> {
         </div>
         <div className={classes.spacer} />
         <div className={classes.actions}>
-          <Tooltip title="Add resource">
-            <Button
-              aria-owns={anchorEl ? 'simple-menu' : null}
-              aria-haspopup="true"
-              onClick={this.handleClick}
-              variant="fab"
-              color="primary"
-              aria-label="Add"
-              className={classes.button}
-            >
-              <AddIcon />
-            </Button>
-          </Tooltip>
-          <Menu
-            id="simple-menu"
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={this.handleCloseMenu}
-          >
-            <MenuItem onClick={this.handleAddByFileInternal}>by File</MenuItem>
-            <MenuItem onClick={this.handleAddByFolder}>by Folder</MenuItem>
-          </Menu>
+          {handleAddByFile ? (
+            <div>
+              <Tooltip title="Add resource">
+                <Button
+                  aria-owns={anchorEl ? 'simple-menu' : null}
+                  aria-haspopup="true"
+                  onClick={this.handleClick}
+                  variant="fab"
+                  color="primary"
+                  aria-label="Add"
+                  className={classes.button}
+                >
+                  <AddIcon />
+                </Button>
+              </Tooltip>
+              <Menu
+                id="simple-menu"
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={this.handleCloseMenu}
+              >
+                <MenuItem onClick={this.handleAddByFileInternal}>by File</MenuItem>
+                <MenuItem onClick={this.handleAddByFolder}>by Folder</MenuItem>
+              </Menu>
+            </div>
+          ) : null
+        }
         </div>
         <div className={classes.actions}>
           {numSelected > 0 ? (

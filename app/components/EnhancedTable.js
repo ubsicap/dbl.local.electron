@@ -33,7 +33,7 @@ type Props = {
   defaultOrderBy: string,
   secondarySorts: [],
   selectAll: boolean,
-  handleAddByFile: () => {},
+  handleAddByFile: ?() => {},
   onSelectedRowIds: () => {}
 };
 

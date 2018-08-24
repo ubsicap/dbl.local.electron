@@ -245,6 +245,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     switch (mode) {
       case 'download':
         return {
+          mode,
           appBar:
           {
             title: 'Download resources',
@@ -254,6 +255,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         };
       case 'addFiles':
         return {
+          mode,
           appBar: {
             title: 'Add resources',
             OkButtonLabel: 'Add',
@@ -267,7 +269,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   render() {
     const {
-      classes, open, selectedBundle = {}, columnConfig, manifestResources
+      classes, open, selectedBundle = {}, columnConfig, manifestResources, mode
     } = this.props;
     const { selectAll, totalResources = manifestResources } = this.state;
     const { displayAs = {} } = selectedBundle;
@@ -304,7 +306,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             defaultOrderBy="container"
             onSelectedRowIds={this.onSelectedUris}
             selectAll={selectAll}
-            handleAddByFile={this.handleAddByFile}
+            handleAddByFile={mode === 'addFiles' ? this.handleAddByFile : null}
           />
         </div>
       </Zoom>
