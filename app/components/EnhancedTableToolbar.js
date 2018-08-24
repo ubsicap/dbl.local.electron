@@ -100,7 +100,7 @@ class EnhancedTableToolbar extends Component<Props> {
                   aria-haspopup="true"
                   onClick={this.handleClick}
                   variant="fab"
-                  color="primary"
+                  color="secondary"
                   aria-label="Add"
                   className={classes.button}
                 >
