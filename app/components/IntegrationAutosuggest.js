@@ -1,48 +1,15 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Autosuggest from 'react-autosuggest';
 import TextField from '@material-ui/core/TextField';
 import Paper from '@material-ui/core/Paper';
 import MenuItem from '@material-ui/core/MenuItem';
-import Popper from '@material-ui/core/Popper';
+/* import Popper from '@material-ui/core/Popper'; */
 import { withStyles } from '@material-ui/core/styles';
 
-const suggestions = [
-  { label: 'Afghanistan' },
-  { label: 'Aland Islands' },
-  { label: 'Albania' },
-  { label: 'Algeria' },
-  { label: 'American Samoa' },
-  { label: 'Andorra' },
-  { label: 'Angola' },
-  { label: 'Anguilla' },
-  { label: 'Antarctica' },
-  { label: 'Antigua and Barbuda' },
-  { label: 'Argentina' },
-  { label: 'Armenia' },
-  { label: 'Aruba' },
-  { label: 'Australia' },
-  { label: 'Austria' },
-  { label: 'Azerbaijan' },
-  { label: 'Bahamas' },
-  { label: 'Bahrain' },
-  { label: 'Bangladesh' },
-  { label: 'Barbados' },
-  { label: 'Belarus' },
-  { label: 'Belgium' },
-  { label: 'Belize' },
-  { label: 'Benin' },
-  { label: 'Bermuda' },
-  { label: 'Bhutan' },
-  { label: 'Bolivia, Plurinational State of' },
-  { label: 'Bonaire, Sint Eustatius and Saba' },
-  { label: 'Bosnia and Herzegovina' },
-  { label: 'Botswana' },
-  { label: 'Bouvet Island' },
-  { label: 'Brazil' },
-  { label: 'British Indian Ocean Territory' },
-  { label: 'Brunei Darussalam' },
-];
+type Props = {
+  classes: {},
+  getSuggestions: () => {}
+};
 
 function renderInputComponent(inputProps) {
   const {
@@ -100,7 +67,7 @@ function renderSuggestion(suggestion, { query, isHighlighted }) {
   );
 }
 */
-
+/*
 function getSuggestions(value) {
   const inputValue = value.trim().toLowerCase();
   const inputLength = inputValue.length;
@@ -119,6 +86,7 @@ function getSuggestions(value) {
       return keep;
     });
 }
+*/
 
 function getSuggestionValue(suggestion) {
   return suggestion.label;
@@ -151,17 +119,18 @@ const styles = theme => ({
   },
 });
 
-class IntegrationAutosuggest extends React.Component {
+class IntegrationAutosuggest extends React.Component<Prop> {
+  props: Props
   state = {
     single: '',
     popper: '',
-    suggestions: [],
+    suggestions: []
   };
   popperNode = null;
 
   handleSuggestionsFetchRequested = ({ value }) => {
     this.setState({
-      suggestions: getSuggestions(value),
+      suggestions: this.props.getSuggestions(value),
     });
   };
 
@@ -248,9 +217,5 @@ class IntegrationAutosuggest extends React.Component {
     );
   }
 }
-
-IntegrationAutosuggest.propTypes = {
-  classes: PropTypes.object.isRequired,
-};
 
 export default withStyles(styles)(IntegrationAutosuggest);

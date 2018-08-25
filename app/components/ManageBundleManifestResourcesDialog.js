@@ -152,6 +152,10 @@ type Props = {
   downloadResources: () => {}
 };
 
+function mapSuggestions(suggestions) {
+  return suggestions.map(suggestion => ({ label: suggestion }));
+}
+
 class ManageBundleManifestResourcesDialog extends Component<Props> {
   props: Props;
   state = {
@@ -272,18 +276,29 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return mode === 'addFiles' ? this.handleAddByFile : null;
   }
 
-  getContainerSuggestions = () => {
+  getAllSuggestions = () => {
     const { mode, manifestResources } = this.props;
     if (mode !== 'addFiles') {
       return null;
     }
     const { totalResources = manifestResources } = this.state;
-    return utilities.union(totalResources.map(r => r.container), ['']);
+    return mapSuggestions(utilities.union(totalResources.map(r => r.container), ['']));
   }
 
-  onChangedContainerSuggestion = (value, action) => {
-    console.log(action);
-    console.log(value);
+  getSuggestions = (value) => {
+    const inputValue = value.trim().toLowerCase();
+    const inputLength = inputValue.length;
+    let count = 0;
+    return inputLength === 0
+      ? []
+      : this.getAllSuggestions().filter(suggestion => {
+        const keep =
+          count < 5 && suggestion.label.toLowerCase().slice(0, inputLength) === inputValue;
+        if (keep) {
+          count += 1;
+        }
+        return keep;
+      });
   }
 
   render() {
@@ -326,8 +341,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             onSelectedRowIds={this.onSelectedUris}
             selectAll={selectAll}
             handleAddByFile={this.getHandleAddByFile()}
-            containerSuggestions={this.getContainerSuggestions()}
-            onChangedContainerSuggestion={this.onChangedContainerSuggestion}
+            getSuggestions={this.getSuggestions}
           />
         </div>
       </Zoom>

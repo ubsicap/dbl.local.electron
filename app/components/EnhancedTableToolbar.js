@@ -49,9 +49,8 @@ const toolbarStyles = theme => ({
 type Props = {
   classes: {},
   numSelected: number,
-  containerSuggestions: ?[],
   handleAddByFile: ?() => {},
-  onChangedContainerSuggestion: ?() => {}
+  getSuggestions: ?() => {}
 };
 
 class EnhancedTableToolbar extends Component<Props> {
@@ -95,8 +94,10 @@ class EnhancedTableToolbar extends Component<Props> {
         </div>
         <div className={classes.spacer} />
         <div style={{ width: 700 }}>
-          {numSelected > 0 ? (<IntegrationAutosuggest />) : null
-          }
+          {numSelected > 0 ? (
+            <IntegrationAutosuggest
+              getSuggestions={this.props.getSuggestions}
+            />) : null}
         </div>
         <div className={classes.actions}>
           {handleAddByFile ? (
