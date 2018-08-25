@@ -286,6 +286,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   getSuggestions = (value) => {
+    console.log(value);
     const inputValue = value.trim().toLowerCase();
     const inputLength = inputValue.length;
     let count = 0;
