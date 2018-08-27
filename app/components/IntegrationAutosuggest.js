@@ -124,9 +124,9 @@ class IntegrationAutosuggest extends React.Component<Prop> {
   };
   popperNode = null;
 
-  handleSuggestionsFetchRequested = ({ value }) => {
+  handleSuggestionsFetchRequested = ({ value, reason }) => {
     this.setState({
-      suggestions: this.props.getSuggestions(value),
+      suggestions: this.props.getSuggestions(value, reason),
     });
   };
 
@@ -137,7 +137,7 @@ class IntegrationAutosuggest extends React.Component<Prop> {
   };
 
   handleChange = name => (event, { newValue, method }) => {
-    console.log(`newValue: ${newValue}, method: ${method}`);
+    console.log({ newValue, method });
     this.setState({
       [name]: newValue,
     });

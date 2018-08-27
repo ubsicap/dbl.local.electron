@@ -288,8 +288,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return mapSuggestions(utilities.union(totalResources.map(r => r.container), ['']));
   }
 
-  getSuggestions = (value) => {
-    console.log(value);
+  getSuggestions = (value, reason) => {
+    console.log({ value, reason });
     const inputValue = value ? value.trim().toLowerCase() : null;
     if (!inputValue) {
       return this.getAllSuggestions();
