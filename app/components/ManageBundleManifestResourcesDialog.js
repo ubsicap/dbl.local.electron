@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import fs from 'fs-extra';
-import md5 from 'md5';
+import md5File from 'md5-file/promise';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
@@ -210,8 +210,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       const stats = await fs.stat(filePath);
       const { size: sizeRaw } = stats;
       const size = formatBytesByKbs(sizeRaw);
-      const buf = await fs.readFile(filePath);
-      const checksum = md5(buf);
+      const checksum = await md5File(filePath);
       const totalResources = this.getUpdatedTotalResources(filePath, { size, checksum });
       this.setState({ totalResources });
     });
