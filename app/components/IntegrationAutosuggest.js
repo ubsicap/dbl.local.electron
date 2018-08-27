@@ -124,7 +124,7 @@ class IntegrationAutosuggest extends React.Component<Prop> {
   state = {
     single: '',
     popper: '',
-    suggestions: []
+    suggestions: this.props.getSuggestions()
   };
   popperNode = null;
 
@@ -147,8 +147,11 @@ class IntegrationAutosuggest extends React.Component<Prop> {
     });
   };
 
+  shouldRenderSuggestions = () => true;
+
   render() {
     const { classes } = this.props;
+    const { shouldRenderSuggestions } = this;
 
     const autosuggestProps = {
       renderInputComponent,
@@ -156,7 +159,8 @@ class IntegrationAutosuggest extends React.Component<Prop> {
       onSuggestionsFetchRequested: this.handleSuggestionsFetchRequested,
       onSuggestionsClearRequested: this.handleSuggestionsClearRequested,
       getSuggestionValue,
-      renderSuggestion
+      renderSuggestion,
+      shouldRenderSuggestions
     };
 
     return (
@@ -165,7 +169,7 @@ class IntegrationAutosuggest extends React.Component<Prop> {
           {...autosuggestProps}
           inputProps={{
             classes,
-            placeholder: 'Search a country (start with a)',
+            placeholder: 'Edit container',
             value: this.state.single,
             onChange: this.handleChange('single'),
           }}

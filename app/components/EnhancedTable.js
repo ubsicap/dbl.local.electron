@@ -22,7 +22,7 @@ const styles = theme => ({
   },
   stickyHeaderClass: {
     position: 'sticky',
-    top: 130
+    top: 118
   }
 });
 

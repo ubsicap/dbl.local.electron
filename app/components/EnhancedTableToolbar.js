@@ -94,7 +94,7 @@ class EnhancedTableToolbar extends Component<Props> {
         </div>
         <div className={classes.spacer} />
         <div style={{ width: 700 }}>
-          {numSelected > 0 ? (
+          {handleAddByFile && numSelected > 0 ? (
             <IntegrationAutosuggest
               getSuggestions={this.props.getSuggestions}
             />) : null}
