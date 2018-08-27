@@ -17,6 +17,7 @@ import { createSelector } from 'reselect';
 import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
 import path from 'path';
+import { findChunks } from 'highlight-words-core';
 import { closeResourceManager, getManifestResources } from '../actions/bundleManageResources.actions';
 import { downloadResources } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
@@ -289,22 +290,19 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   getSuggestions = (value) => {
     console.log(value);
-    if (!value) {
+    const inputValue = value ? value.trim().toLowerCase() : null;
+    if (!inputValue) {
       return this.getAllSuggestions();
     }
-    const inputValue = value.trim().toLowerCase();
-    const inputLength = inputValue.length;
-    let count = 0;
-    return inputLength === 0
-      ? []
-      : this.getAllSuggestions().filter(suggestion => {
-        const keep =
-          count < 5 && suggestion.label.toLowerCase().slice(0, inputLength) === inputValue;
-        if (keep) {
-          count += 1;
-        }
-        return keep;
-      });
+    return this.getAllSuggestions().filter(suggestion => {
+      const findChunkOptions = {
+        autoEscape: true,
+        searchWords: [inputValue],
+        textToHighlight: suggestion.label
+      };
+      const chunksForSuggestion = findChunks(findChunkOptions);
+      return chunksForSuggestion.length > 0;
+    });
   }
 
   render() {

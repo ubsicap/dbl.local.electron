@@ -3,6 +3,7 @@ import Autosuggest from 'react-autosuggest';
 import TextField from '@material-ui/core/TextField';
 import Paper from '@material-ui/core/Paper';
 import MenuItem from '@material-ui/core/MenuItem';
+import Highlighter from 'react-highlight-words';
 /* import Popper from '@material-ui/core/Popper'; */
 import { withStyles } from '@material-ui/core/styles';
 
@@ -30,16 +31,6 @@ function renderInputComponent(inputProps) {
       }}
       {...other}
     />
-  );
-}
-
-function renderSuggestion(suggestion, { query, isHighlighted }) {
-  return (
-    <MenuItem selected={isHighlighted} component="div">
-      <div>
-        {suggestion.label}
-      </div>
-    </MenuItem>
   );
 }
 
@@ -117,6 +108,11 @@ const styles = theme => ({
   divider: {
     height: theme.spacing.unit * 2,
   },
+  highlighter: {
+    backgroundColor: 'inherit',
+    fontWeight: 'bold',
+    padding: 0
+  }
 });
 
 class IntegrationAutosuggest extends React.Component<Prop> {
@@ -149,9 +145,26 @@ class IntegrationAutosuggest extends React.Component<Prop> {
 
   shouldRenderSuggestions = () => true;
 
+  renderSuggestion = (suggestion, { query, isHighlighted }) => {
+    const searchWords = [query.trim()];
+    const { classes } = this.props;
+    return (
+      <MenuItem selected={isHighlighted} component="div">
+        <div>
+          <Highlighter
+            textToHighlight={suggestion.label}
+            searchWords={searchWords}
+            highlightClassName={classes.highlighter}
+            autoEscape
+          />
+        </div>
+      </MenuItem>
+    );
+  }
+
   render() {
     const { classes } = this.props;
-    const { shouldRenderSuggestions } = this;
+    const { shouldRenderSuggestions, renderSuggestion } = this;
 
     const autosuggestProps = {
       renderInputComponent,
