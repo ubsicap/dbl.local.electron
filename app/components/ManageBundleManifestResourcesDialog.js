@@ -27,15 +27,26 @@ import EnhancedTable from './EnhancedTable';
 import { utilities } from '../utils/utilities';
 
 const { dialog } = require('electron').remote;
+
 const NEED_CONTAINER = '/?';
 
 function formatBytesByKbs(bytes) {
   return (Math.round(Number(bytes) / 1024)).toLocaleString();
 }
 
+function formatContainer(containerInput) {
+  const trimmed = containerInput.trim();
+  if (trimmed === '' || trimmed === '/') {
+    return '/';
+  }
+  const prefix = containerInput[0] !== '/' ? '/' : '';
+  const postfix = containerInput.slice(-1) !== '/' ? '/' : '';
+  return `${prefix}${containerInput}${postfix}`;
+}
+
 function createResourceData(manifestResourceRaw, fileStoreInfo, mode) {
   const { uri = '', checksum = '', size: sizeRaw = 0, mimeType = '' } = manifestResourceRaw;
-  const container = `/${path.dirname(uri)}/`;
+  const container = formatContainer(path.dirname(uri));
   const name = path.basename(uri);
   /* const ext = path.extname(uri); */
   const size = formatBytesByKbs(sizeRaw);
@@ -164,7 +175,7 @@ function mapSuggestions(suggestions) {
 class ManageBundleManifestResourcesDialog extends Component<Props> {
   props: Props;
   state = {
-    selectedUris: [],
+    selectedIds: [],
     addedFilePaths: [],
     selectAll: true
   }
@@ -182,9 +193,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   handleDownload = () => {
-    const { selectedUris = [] } = this.state;
+    const { selectedIds = [] } = this.state;
     const { bundleId } = this.props;
-    this.props.downloadResources(bundleId, selectedUris);
+    this.props.downloadResources(bundleId, selectedIds);
     this.handleClose();
   }
 
@@ -196,13 +207,13 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.props.openMetadataFile(this.props.bundleId);
   }
 
-  onSelectedUris = (selectedUris) => {
-    this.setState({ selectedUris, selectAll: false });
+  onSelectedIds = (selectedIds) => {
+    this.setState({ selectedIds, selectAll: false });
   }
 
   shouldDisableOkButton = () => {
-    const { selectedUris } = this.state;
-    return selectedUris.length === 0 || this.hasAnyUnassignedContainers();
+    const { selectedIds = [] } = this.state;
+    return selectedIds.length === 0 || this.hasAnySelectedUnassignedContainers();
   }
 
   getUpdatedTotalResources(filePath, update) {
@@ -221,6 +232,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     });
   }
 
+  updateSelectedResourcesContainers = (newContainer) => {
+    const { totalResources: origTotalResources, selectedIds } = this.state;
+    const totalResources = selectedIds.reduce((acc, filePath) => {
+      const container = formatContainer(newContainer);
+      const updatedTotalResources = this.getUpdatedTotalResources(filePath, { container });
+      return updatedTotalResources;
+    }, origTotalResources);
+    this.setState({ totalResources });
+  }
+
   handleAddByFile = () => {
     const newAddedFilePaths = dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] });
     console.log(newAddedFilePaths);
@@ -229,7 +250,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
     const { addedFilePaths: origAddedFilePaths = [] } = this.state;
     const addedFilePaths = utilities.union(origAddedFilePaths, newAddedFilePaths);
-    this.setState({ addedFilePaths }, this.updateTotalResources(newAddedFilePaths));
+    const { selectedIds: origSelectedIds } = this.state;
+    const selectedIds = utilities.union(origSelectedIds, addedFilePaths);
+    this.setState({ addedFilePaths, selectedIds }, this.updateTotalResources(newAddedFilePaths));
   };
 
   handleAddByFolder = () => {
@@ -295,7 +318,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   getSuggestions = (value, reason) => {
-    console.log({ value, reason });
+    // console.log({ value, reason });
     const inputValue = value ? value.trim().toLowerCase() : null;
     if (!inputValue) {
       return this.getAllSuggestions();
@@ -311,9 +334,22 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     });
   }
 
-  hasAnyUnassignedContainers = () => {
-    const { totalResources } = this.state;
-    return totalResources.filter(r => r.container === NEED_CONTAINER).length > 0;
+  hasAnySelectedUnassignedContainers = () => {
+    const { manifestResources } = this.props;
+    const { totalResources = manifestResources, selectedIds } = this.state;
+    const resourcesWithUnassignedContainers =
+      totalResources
+        .filter(r => (r.container === NEED_CONTAINER));
+    return resourcesWithUnassignedContainers
+      .some(r => selectedIds.some(selected => selected === r.id));
+  }
+
+  handleAutosuggestInputChanged = (newValue, method) => {
+    // console.log({ newValue, method });
+    if (newValue === undefined) {
+      return;
+    }
+    this.updateSelectedResourcesContainers(newValue.trim());
   }
 
   render() {
@@ -353,10 +389,11 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             columnConfig={columnConfig}
             secondarySorts={secondarySorts}
             defaultOrderBy="container"
-            onSelectedRowIds={this.onSelectedUris}
+            onSelectedRowIds={this.onSelectedIds}
             selectAll={selectAll}
             handleAddByFile={this.getHandleAddByFile()}
             getSuggestions={this.getSuggestions}
+            onAutosuggestInputChanged={this.handleAutosuggestInputChanged}
           />
         </div>
       </Zoom>

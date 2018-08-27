@@ -50,7 +50,8 @@ type Props = {
   classes: {},
   numSelected: number,
   handleAddByFile: ?() => {},
-  getSuggestions: ?() => {}
+  getSuggestions: ?() => {},
+  onAutosuggestInputChanged: ?() => {}
 };
 
 class EnhancedTableToolbar extends Component<Props> {
@@ -97,6 +98,7 @@ class EnhancedTableToolbar extends Component<Props> {
           {handleAddByFile && numSelected > 0 ? (
             <IntegrationAutosuggest
               getSuggestions={this.props.getSuggestions}
+              onInputChanged={this.props.onAutosuggestInputChanged}
             />) : null}
         </div>
         <div className={classes.actions}>

@@ -35,7 +35,8 @@ type Props = {
   selectAll: boolean,
   handleAddByFile: ?() => {},
   getSuggestions: ?() => {},
-  onSelectedRowIds: () => {}
+  onSelectedRowIds: () => {},
+  onAutosuggestInputChanged: ?() => {}
 };
 
 function getDataRowIds(data) {
@@ -193,6 +194,7 @@ class EnhancedTable extends Component<Props> {
           numSelected={selectedRowIds.length}
           handleAddByFile={this.props.handleAddByFile}
           getSuggestions={this.props.getSuggestions}
+          onAutosuggestInputChanged={this.props.onAutosuggestInputChanged}
         />
         <MuiTable
           data={this.getSortedData()}

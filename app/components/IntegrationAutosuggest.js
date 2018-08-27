@@ -9,7 +9,8 @@ import { withStyles } from '@material-ui/core/styles';
 
 type Props = {
   classes: {},
-  getSuggestions: () => {}
+  getSuggestions: () => {},
+  onInputChanged: () => {}
 };
 
 function renderInputComponent(inputProps) {
@@ -137,10 +138,10 @@ class IntegrationAutosuggest extends React.Component<Prop> {
   };
 
   handleChange = name => (event, { newValue, method }) => {
-    console.log({ newValue, method });
+    // console.log({ newValue, method });
     this.setState({
       [name]: newValue,
-    });
+    }, this.props.onInputChanged(newValue, method));
   };
 
   shouldRenderSuggestions = () => true;
