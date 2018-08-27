@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import fs from 'fs-extra';
+import sort from 'fast-sort';
 import md5File from 'md5-file/promise';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
@@ -26,6 +27,7 @@ import EnhancedTable from './EnhancedTable';
 import { utilities } from '../utils/utilities';
 
 const { dialog } = require('electron').remote;
+const NEED_CONTAINER = '/?';
 
 function formatBytesByKbs(bytes) {
   return (Math.round(Number(bytes) / 1024)).toLocaleString();
@@ -33,7 +35,7 @@ function formatBytesByKbs(bytes) {
 
 function createResourceData(manifestResourceRaw, fileStoreInfo, mode) {
   const { uri = '', checksum = '', size: sizeRaw = 0, mimeType = '' } = manifestResourceRaw;
-  const container = path.dirname(uri);
+  const container = `/${path.dirname(uri)}/`;
   const name = path.basename(uri);
   /* const ext = path.extname(uri); */
   const size = formatBytesByKbs(sizeRaw);
@@ -49,7 +51,7 @@ function createAddedResource(filePath) {
   const fileName = path.basename(filePath);
   const [id, uri, name] = [filePath, fileName, fileName, fileName];
   return {
-    id, uri, status: 'add?', mimeType: '', container: '', name, size: 0, checksum: '', disabled: false
+    id, uri, status: 'add?', mimeType: '', container: NEED_CONTAINER, name, size: 0, checksum: '', disabled: false
   };
 }
 
@@ -65,7 +67,8 @@ const secondarySorts = ['container', 'name'];
 
 function createColumnConfig() {
   const { id, uri, disabled, ...columns } = createResourceData({}, {}, 'ignore');
-  return Object.keys(columns).map(c => ({ name: c, type: isNumeric(c) ? 'numeric' : 'string', label: getLabel(c) }));
+  return Object.keys(columns)
+    .map(c => ({ name: c, type: isNumeric(c) ? 'numeric' : 'string', label: getLabel(c) }));
 }
 
 const getRawManifestResources = (state) => state.bundleManageResources.rawManifestResources || {};
@@ -75,7 +78,8 @@ const getMode = (state) => state.bundleManageResources.mode;
 const makeGetManifestResourcesData = () => createSelector(
   [getRawManifestResources, getStoredFiles, getMode],
   (rawManifestResources, storedFiles, mode) =>
-    Object.values(rawManifestResources).map(r => createResourceData(r, storedFiles[r.uri], mode))
+    Object.values(rawManifestResources)
+      .map(r => createResourceData(r, storedFiles[r.uri], mode))
 );
 
 const { shell } = require('electron');
@@ -198,7 +202,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   shouldDisableOkButton = () => {
     const { selectedUris } = this.state;
-    return selectedUris.length === 0;
+    return selectedUris.length === 0 || this.hasAnyUnassignedContainers();
   }
 
   getUpdatedTotalResources(filePath, update) {
@@ -285,7 +289,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       return null;
     }
     const { totalResources = manifestResources } = this.state;
-    return mapSuggestions(utilities.union(totalResources.map(r => r.container), ['']));
+    return mapSuggestions(sort(utilities.union(totalResources
+      .filter(r => r.container !== NEED_CONTAINER)
+      .map(r => r.container), ['/'])).asc());
   }
 
   getSuggestions = (value, reason) => {
@@ -303,6 +309,11 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       const chunksForSuggestion = findChunks(findChunkOptions);
       return chunksForSuggestion.length > 0;
     });
+  }
+
+  hasAnyUnassignedContainers = () => {
+    const { totalResources } = this.state;
+    return totalResources.filter(r => r.container === NEED_CONTAINER).length > 0;
   }
 
   render() {
