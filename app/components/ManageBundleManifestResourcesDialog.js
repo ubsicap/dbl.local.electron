@@ -30,6 +30,10 @@ const { dialog } = require('electron').remote;
 
 const NEED_CONTAINER = '/?';
 
+function createUpdatedTotalResources(origTotalResources, filePath, update) {
+  return origTotalResources.map(r => (r.id === filePath ? { ...r, ...update } : r));
+}
+
 function formatBytesByKbs(bytes) {
   return (Math.round(Number(bytes) / 1024)).toLocaleString();
 }
@@ -218,7 +222,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   getUpdatedTotalResources(filePath, update) {
     const { totalResources } = this.state;
-    return totalResources.map(r => (r.id === filePath ? { ...r, ...update } : r));
+    return createUpdatedTotalResources(totalResources, filePath, update);
   }
 
   updateAddedResourcesWithFileStats = (newlyAddedFilePaths) => () => {
@@ -236,9 +240,17 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { totalResources: origTotalResources, selectedIds } = this.state;
     const totalResources = selectedIds.reduce((acc, filePath) => {
       const container = formatContainer(newContainer);
-      const updatedTotalResources = this.getUpdatedTotalResources(filePath, { container });
+      const updatedTotalResources = createUpdatedTotalResources(
+        acc,
+        filePath, { container }
+      );
       return updatedTotalResources;
     }, origTotalResources);
+    return totalResources;
+  }
+
+  updateSelectedResourcesContainersSetState = (newContainer) => {
+    const totalResources = this.updateSelectedResourcesContainers(newContainer);
     this.setState({ totalResources });
   }
 
@@ -306,24 +318,24 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return mode === 'addFiles' ? this.handleAddByFile : null;
   }
 
-  getAllSuggestions = () => {
-    const { mode, manifestResources } = this.props;
+  getAllSuggestions = (totalResources) => {
+    const { mode } = this.props;
     if (mode !== 'addFiles') {
       return null;
     }
-    const { totalResources = manifestResources } = this.state;
     return mapSuggestions(sort(utilities.union(totalResources
       .filter(r => r.container !== NEED_CONTAINER)
       .map(r => r.container), ['/'])).asc());
   }
 
   getSuggestions = (value, reason) => {
-    // console.log({ value, reason });
-    const inputValue = value ? value.trim().toLowerCase() : null;
+    console.log({ getSuggestions: true, value, reason });
+    const inputValue = value ? value.trim() : null;
+    const updatedResources = this.updateSelectedResourcesContainers(value || '');
     if (!inputValue) {
-      return this.getAllSuggestions();
+      return this.getAllSuggestions(updatedResources);
     }
-    return this.getAllSuggestions().filter(suggestion => {
+    return this.getAllSuggestions(updatedResources).filter(suggestion => {
       const findChunkOptions = {
         autoEscape: true,
         searchWords: [inputValue],
@@ -345,11 +357,11 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   handleAutosuggestInputChanged = (newValue, method) => {
-    // console.log({ newValue, method });
+    console.log({ handleAutosuggestInputChanged: true, newValue, method });
     if (newValue === undefined) {
       return;
     }
-    this.updateSelectedResourcesContainers(newValue.trim());
+    this.updateSelectedResourcesContainersSetState(newValue.trim());
   }
 
   render() {
