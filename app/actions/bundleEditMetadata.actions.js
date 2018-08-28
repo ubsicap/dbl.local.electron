@@ -87,23 +87,23 @@ export function openEditMetadata(bundleId) {
   return async dispatch => {
     dispatch(request(bundleId));
     const bundleInfo = await bundleService.fetchById(bundleId);
-    if (bundleInfo.mode !== 'create') {
-      const { dbl } = bundleInfo;
-      const { currentRevision } = dbl;
-      const isDraft = currentRevision === '0' || !currentRevision;
-      const label = isDraft ? '' : 'openEditMetadata';
-      try {
-        await bundleService.startCreateContent(bundleId, label);
-        if (isDraft) {
-          // ideally we'd wait/listen for the 'create' mode change event.
-          dispatchSuccess(bundleId);
-        }
-      } catch (errorReadable) {
-        const error = await errorReadable.text();
-        dispatch(failure(bundleId, error));
-      }
-    } else {
+    if (bundleInfo.mode === 'create') {
       dispatchSuccess(bundleId);
+      return;
+    }
+    const { dbl } = bundleInfo;
+    const { currentRevision } = dbl;
+    const isDraft = currentRevision === '0' || !currentRevision;
+    const label = isDraft ? '' : 'openEditMetadata';
+    try {
+      await bundleService.startCreateContent(bundleId, label);
+      if (isDraft) {
+        // ideally we'd wait/listen for the 'create' mode change event.
+        dispatchSuccess(bundleId);
+      }
+    } catch (errorReadable) {
+      const error = await errorReadable.text();
+      dispatch(failure(bundleId, error));
     }
     function dispatchSuccess(_bundleId) {
       dispatch(success(_bundleId));
@@ -133,7 +133,7 @@ export function openEditMetadata(bundleId) {
 
 export function closeEditMetadata(bundleId) {
   return async dispatch => {
-    await bundleService.stopCreateContent(bundleId);
+    bundleService.unlockCreateMode(bundleId);
     // ideally we'd wait for change mode to 'store' to complete
     dispatch({ type: bundleEditMetadataConstants.CLOSE_EDIT_METADATA, bundleId });
     await utilities.sleep(1);

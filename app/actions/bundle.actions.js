@@ -328,9 +328,9 @@ function getAddedBundle(getState, bundleId) {
 
 
 export function uploadBundle(id) {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     try {
-      unlockCreateMode(getState, id);
+      bundleService.unlockCreateMode(id);
       dispatch(request(id));
       await bundleService.startUploadBundle(id);
     } catch (errorReadable) {
@@ -386,19 +386,11 @@ export function removeResources(id) {
   }
 }
 
-async function unlockCreateMode(getState, bundleId) {
-  const bundleInfo = await bundleService.fetchById(bundleId);
-  if (bundleInfo.mode === 'create') {
-    // unblock block tasks like 'Delete'
-    await bundleService.stopCreateContent(bundleId);
-  }
-}
-
 export function removeBundle(id) {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     dispatch(request(id));
     try {
-      unlockCreateMode(getState, id);
+      bundleService.unlockCreateMode(id);
       await bundleService.removeBundle(id);
     } catch (error) {
       dispatch(failure(id, error));

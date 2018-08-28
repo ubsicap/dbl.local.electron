@@ -7,7 +7,8 @@ import { bundleService } from '../services/bundle.service';
 export const bundleManageResourceActions = {
   openResourceManager,
   closeResourceManager,
-  getManifestResources
+  getManifestResources,
+  addManifestResources
 };
 
 function buildBundleArgUrl(routeUrl, bundleId) {
@@ -65,17 +66,58 @@ export function getManifestResources(_bundleId) {
   };
   function request(bundleId) {
     return {
-      type: bundleResourceManagerConstants.MANIFEST_RESOURCES_REQUEST, bundleId
+      type: bundleResourceManagerConstants.GET_MANIFEST_RESOURCES_REQUEST, bundleId
     };
   }
   function success(bundleId, manifestResources, storedFiles) {
     return {
-      type: bundleResourceManagerConstants.MANIFEST_RESOURCES_RESPONSE,
+      type: bundleResourceManagerConstants.GET_MANIFEST_RESOURCES_RESPONSE,
       manifestResources,
       storedFiles
     };
   }
   function failure(bundleId, error) {
-    return { type: bundleResourceManagerConstants.MANIFEST_RESOURCES_FAILURE, error };
+    return { type: bundleResourceManagerConstants.GET_MANIFEST_RESOURCES_FAILURE, error };
+  }
+}
+
+export function addManifestResources(_bundleId, _fileToContainerPaths) {
+  return async dispatch => {
+    dispatch(request(_bundleId, _fileToContainerPaths));
+    const isInCreateMode = await bundleService.bundleIsInCreateMode(_bundleId);
+    if (!isInCreateMode) {
+      await bundleService.startCreateContent(_bundleId);
+    }
+    Object.entries(_fileToContainerPaths).forEach(async ([filePath, containerPath]) => {
+      try {
+        await bundleService.postResource(_bundleId, filePath, containerPath);
+        dispatch(success(_bundleId, filePath, containerPath));
+      } catch (errorReadable) {
+        const error = await errorReadable.text();
+        dispatch(failure(_bundleId, error));
+      } finally {
+        bundleService.unlockCreateMode(_bundleId);
+      }
+    });
+  };
+  function request(bundleId, fileToContainerPaths) {
+    return {
+      type: bundleResourceManagerConstants.UPDATE_MANIFEST_RESOURCES_REQUEST,
+      bundleId,
+      fileToContainerPaths
+    };
+  }
+  function success(bundleId, filePath, containerPath) {
+    return {
+      type: bundleResourceManagerConstants.UPDATE_MANIFEST_RESOURCE_RESPONSE,
+      filePath,
+      containerPath
+    };
+  }
+  function failure(bundleId, error) {
+    return {
+      type: bundleResourceManagerConstants.UPDATE_MANIFEST_RESOURCE_FAILURE,
+      error
+    };
   }
 }

@@ -138,7 +138,7 @@ class IntegrationAutosuggest extends React.Component<Prop> {
   };
 
   handleSelected = (event, { suggestionValue: newValue, method }) => {
-    console.log('handleSelected');
+    // console.log('handleSelected');
     this.handleChange('single')(event, { newValue, method });
   }
 

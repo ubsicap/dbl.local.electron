@@ -1,4 +1,6 @@
+import fs from 'fs-extra';
 import path from 'path';
+// import FormData from 'form-data'
 import uuidv1 from 'uuid/v1';
 import { authHeader } from '../helpers';
 import { utilities } from '../utils/utilities';
@@ -28,7 +30,10 @@ export const bundleService = {
   postFormFields,
   startUploadBundle,
   startCreateContent,
-  stopCreateContent
+  stopCreateContent,
+  bundleIsInCreateMode,
+  unlockCreateMode,
+  postResource
 };
 export default bundleService;
 
@@ -381,6 +386,18 @@ function startCreateContent(bundleId, label) {
   );
 }
 
+async function bundleIsInCreateMode(bundleId) {
+  const rawBundleInfo = await bundleService.fetchById(bundleId);
+  return rawBundleInfo.mode === 'create';
+}
+
+async function unlockCreateMode(bundleId) {
+  if (await bundleService.bundleIsInCreateMode(bundleId)) {
+    // unblock block tasks like 'Delete'
+    await bundleService.stopCreateContent(bundleId);
+  }
+}
+
 /*
   /bundle/<id>/creation/stop/success
   /bundle/<id>/creation/stop/failure, where 'failure' will clear any following tasks
@@ -391,5 +408,18 @@ function stopCreateContent(bundleId, mode = 'success') {
     headers: { ...authHeader() }
   };
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/creation/stop/${mode}`;
+  return fetch(url, requestOptions).then(handlePostFormResponse);
+}
+
+function postResource(bundleId, filePath, bundlePath) {
+  // const form = new FormData(fs.createReadStream(filePath));
+  // form.append('content', 1);
+  const content = fs.readFileSync(filePath);
+  const requestOptions = {
+    method: 'POST',
+    headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `content=${encodeURIComponent(content)}`
+  };
+  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/resource/${bundlePath}`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }

@@ -18,7 +18,7 @@ export function bundleManageResources(state = initialState, action) {
     case bundleResourceManagerConstants.CLOSE_RESOURCE_MANAGER: {
       return initialState;
     }
-    case bundleResourceManagerConstants.MANIFEST_RESOURCES_RESPONSE: {
+    case bundleResourceManagerConstants.GET_MANIFEST_RESOURCES_RESPONSE: {
       const { manifestResources: rawManifestResources, storedFiles } = action;
       return {
         ...state,

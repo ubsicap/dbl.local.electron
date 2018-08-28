@@ -19,7 +19,7 @@ import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
 import path from 'path';
 import { findChunks } from 'highlight-words-core';
-import { closeResourceManager, getManifestResources } from '../actions/bundleManageResources.actions';
+import { closeResourceManager, getManifestResources, addManifestResources } from '../actions/bundleManageResources.actions';
 import { downloadResources } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
@@ -46,6 +46,11 @@ function formatContainer(containerInput) {
   const prefix = containerInput[0] !== '/' ? '/' : '';
   const postfix = containerInput.slice(-1) !== '/' ? '/' : '';
   return `${prefix}${containerInput}${postfix}`;
+}
+
+function formatUriForApi(resource) {
+  const { container, name } = resource;
+  return `${container.substr(1)}${name}`;
 }
 
 function createResourceData(manifestResourceRaw, fileStoreInfo, mode) {
@@ -122,7 +127,8 @@ const mapDispatchToProps = {
   closeResourceManager,
   openMetadataFile,
   getManifestResources,
-  downloadResources
+  downloadResources,
+  addManifestResources
 };
 
 const materialStyles = theme => ({
@@ -169,7 +175,8 @@ type Props = {
   closeResourceManager: () => {},
   openMetadataFile: () => {},
   getManifestResources: () => {},
-  downloadResources: () => {}
+  downloadResources: () => {},
+  addManifestResources: () => {}
 };
 
 function mapSuggestions(suggestions) {
@@ -196,11 +203,28 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
   }
 
+  handleClickOk = () => {
+    if (this.isDownloadMode()) {
+      this.handleDownload();
+    }
+    if (this.isAddFilesMode()) {
+      this.handleAddFiles();
+    }
+    this.handleClose();
+  }
+
   handleDownload = () => {
     const { selectedIds = [] } = this.state;
     const { bundleId } = this.props;
     this.props.downloadResources(bundleId, selectedIds);
-    this.handleClose();
+  }
+
+  handleAddFiles = () => {
+    const { bundleId } = this.props;
+    const selectedResources = this.getSelectedResources();
+    const filesToContainers = selectedResources.reduce((acc, selectedResource) =>
+      ({ ...acc, [selectedResource.id]: formatUriForApi(selectedResource) }), {});
+    this.props.addManifestResources(bundleId, filesToContainers);
   }
 
   handleClose = () => {
@@ -346,18 +370,26 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     });
   }
 
+  getSelectedResources = () => {
+    const { manifestResources } = this.props;
+    const { totalResources = manifestResources, selectedIds } = this.state;
+    const selectedIdSet = new Set(selectedIds);
+    return totalResources.filter(r => selectedIdSet.has(r.id));
+  }
+
   hasAnySelectedUnassignedContainers = () => {
     const { manifestResources } = this.props;
     const { totalResources = manifestResources, selectedIds } = this.state;
+    const selectedIdSet = new Set(selectedIds);
     const resourcesWithUnassignedContainers =
       totalResources
         .filter(r => (r.container === NEED_CONTAINER));
     return resourcesWithUnassignedContainers
-      .some(r => selectedIds.some(selected => selected === r.id));
+      .some(r => selectedIdSet.has(r.id));
   }
 
   handleAutosuggestInputChanged = (newValue, method) => {
-    console.log({ handleAutosuggestInputChanged: true, newValue, method });
+    // console.log({ handleAutosuggestInputChanged: true, newValue, method });
     if (newValue === undefined) {
       return;
     }
@@ -388,7 +420,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                 Review
               </Button>
               <Button
-                key="btnSave" color="inherit" onClick={this.handleDownload}
+                key="btnOk" color="inherit" onClick={this.handleClickOk}
                 disabled={this.shouldDisableOkButton()}
               >
                 {modeUi.appBar.OkButtonIcon}
