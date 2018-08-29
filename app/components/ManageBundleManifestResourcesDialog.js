@@ -207,11 +207,11 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   handleClickOk = () => {
     if (this.isDownloadMode()) {
       this.handleDownload();
-    }
-    if (this.isAddFilesMode()) {
+      this.handleClose();
+    } else if (this.isAddFilesMode()) {
       this.handleAddFiles();
+      // this.handleClose(); // seems to hang with too many requests
     }
-    this.handleClose();
   }
 
   handleDownload = () => {

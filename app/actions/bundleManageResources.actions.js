@@ -91,7 +91,9 @@ export function getManifestResources(_bundleId) {
 export function addManifestResources(_bundleId, _fileToContainerPaths) {
   return async dispatch => {
     dispatch(request(_bundleId, _fileToContainerPaths));
-    Object.entries(_fileToContainerPaths).forEach(async ([filePath, containerPath]) => {
+    /* eslint-disable no-restricted-syntax */
+    /* eslint-disable no-await-in-loop */
+    for (const [filePath, containerPath] of Object.entries(_fileToContainerPaths)) {
       try {
         await bundleService.postResource(_bundleId, filePath, containerPath);
         dispatch(success(_bundleId, filePath, containerPath));
@@ -99,7 +101,19 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
         const error = await errorReadable.text();
         dispatch(failure(_bundleId, error));
       }
-    });
+    }
+    /*
+    await Promise.all(Object.entries(_fileToContainerPaths)
+      .map(async ([filePath, containerPath]) => {
+        try {
+          await bundleService.postResource(_bundleId, filePath, containerPath);
+          dispatch(success(_bundleId, filePath, containerPath));
+        } catch (errorReadable) {
+          const error = await errorReadable.text();
+          dispatch(failure(_bundleId, error));
+        }
+      }));
+      */
   };
   function request(bundleId, fileToContainerPaths) {
     return {

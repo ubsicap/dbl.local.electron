@@ -40,7 +40,7 @@ class Bundles extends PureComponent<Props> {
     console.log('Bundles did mount');
     const { authentication } = this.props;
     if (authentication.user) {
-      this.props.setupBundlesEventSource(authentication);
+      // this.props.setupBundlesEventSource(authentication);
     }
   }
 
