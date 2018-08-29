@@ -104,9 +104,9 @@ const makeGetManifestResourcesData = () => createSelector(
 
 const { shell } = require('electron');
 
-function mapStateToProps(state) {
-  const { bundleManageResources, bundles, bundleEditMetadata } = state;
-  const { bundleId, mode } = bundleManageResources;
+function mapStateToProps(state, props) {
+  const { bundles, bundleEditMetadata } = state;
+  const { bundleId, mode } = props.match.params;
   const { showMetadataFile } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
   const columnConfig = createColumnConfig();
@@ -165,6 +165,7 @@ const materialStyles = theme => ({
 
 type Props = {
   classes: {},
+  match: {},
   open: boolean,
   bundleId: ?string,
   selectedBundle: {},

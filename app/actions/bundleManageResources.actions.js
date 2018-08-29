@@ -3,6 +3,7 @@ import { bundleResourceManagerConstants } from '../constants/bundleResourceManag
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
 import { bundleService } from '../services/bundle.service';
+import { utilities } from '../utils/utilities';
 
 export const bundleManageResourceActions = {
   openResourceManager,
@@ -11,12 +12,17 @@ export const bundleManageResourceActions = {
   addManifestResources
 };
 
-function buildBundleArgUrl(routeUrl, bundleId) {
-  return routeUrl.replace(':bundleId', bundleId);
+function buildBundleArgUrl(routeUrl, bundleId, mode) {
+  const altUrl = routeUrl.replace(':bundleId', bundleId);
+  return altUrl.replace(':mode', mode);
 }
 
 export function openResourceManager(_bundleId, _mode = 'download') {
-  return dispatch => {
+  return async dispatch => {
+    const isInCreateMode = await bundleService.bundleIsInCreateMode(_bundleId);
+    if (!isInCreateMode) {
+      await bundleService.startCreateContent(_bundleId);
+    }
     dispatch(navigate(_bundleId, _mode));
   };
   function success(bundleId, mode) {
@@ -24,7 +30,7 @@ export function openResourceManager(_bundleId, _mode = 'download') {
   }
   function navigate(bundleId, mode) {
     const manageResourcesUrl =
-      buildBundleArgUrl(navigationConstants.NAVIGATION_BUNDLE_MANAGE_RESOURCES, bundleId);
+      buildBundleArgUrl(navigationConstants.NAVIGATION_BUNDLE_MANAGE_RESOURCES, bundleId, mode);
     history.push(manageResourcesUrl);
     return success(bundleId, mode);
   }
@@ -38,6 +44,7 @@ export function closeResourceManager(_bundleId) {
     return { type: bundleResourceManagerConstants.CLOSE_RESOURCE_MANAGER, bundleId };
   }
   function navigate(bundleId) {
+    bundleService.unlockCreateMode(bundleId);
     history.push(navigationConstants.NAVIGATION_BUNDLES);
     return success(bundleId);
   }
@@ -84,10 +91,6 @@ export function getManifestResources(_bundleId) {
 export function addManifestResources(_bundleId, _fileToContainerPaths) {
   return async dispatch => {
     dispatch(request(_bundleId, _fileToContainerPaths));
-    const isInCreateMode = await bundleService.bundleIsInCreateMode(_bundleId);
-    if (!isInCreateMode) {
-      await bundleService.startCreateContent(_bundleId);
-    }
     Object.entries(_fileToContainerPaths).forEach(async ([filePath, containerPath]) => {
       try {
         await bundleService.postResource(_bundleId, filePath, containerPath);
@@ -95,8 +98,6 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
       } catch (errorReadable) {
         const error = await errorReadable.text();
         dispatch(failure(_bundleId, error));
-      } finally {
-        bundleService.unlockCreateMode(_bundleId);
       }
     });
   };
