@@ -412,9 +412,10 @@ function stopCreateContent(bundleId, mode = 'success') {
 }
 
 function postResource(bundleId, filePath, bundlePath) {
-  // const form = new FormData(fs.createReadStream(filePath));
-  // form.append('content', 1);
-  const content = fs.readFileSync(filePath);
+  // const form = new FormData();
+  // form.append('content', fs.createReadStream(filePath));
+  // const contentStream = fs.createReadStream(filePath);
+  const content = fs.readFileSync(filePath, 'utf8');
   const requestOptions = {
     method: 'POST',
     headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
