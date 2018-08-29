@@ -33,7 +33,8 @@ export const bundleService = {
   stopCreateContent,
   bundleIsInCreateMode,
   unlockCreateMode,
-  postResource
+  postResource,
+  updateManifestResource
 };
 export default bundleService;
 
@@ -422,5 +423,14 @@ function postResource(bundleId, filePath, bundlePath) {
     body: `content=${encodeURIComponent(content)}`
   };
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/resource/${bundlePath}`;
+  return fetch(url, requestOptions).then(handlePostFormResponse);
+}
+
+function updateManifestResource(bundleId, bundlePath) {
+  const requestOptions = {
+    method: 'POST',
+    headers: { ...authHeader() },
+  };
+  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${MANIFEST_API}/${bundleId}/update/${bundlePath}`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }
