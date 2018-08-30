@@ -98,6 +98,7 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
         await bundleService.postResource(_bundleId, filePath, containerPath);
         await bundleService.updateManifestResource(_bundleId, containerPath);
         dispatch(success(_bundleId, filePath, containerPath));
+        await utilities.sleep(500);
       } catch (errorReadable) {
         const error = await errorReadable.text();
         dispatch(failure(_bundleId, error));
