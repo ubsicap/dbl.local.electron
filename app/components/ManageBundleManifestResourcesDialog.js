@@ -40,7 +40,7 @@ function formatBytesByKbs(bytes) {
 
 function formatContainer(containerInput) {
   const trimmed = containerInput.trim();
-  if (trimmed === '' || trimmed === '/') {
+  if (trimmed === '' || trimmed === '/' || trimmed === '.') {
     return '/';
   }
   const prefix = containerInput[0] !== '/' ? '/' : '';
