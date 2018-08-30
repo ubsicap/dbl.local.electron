@@ -86,7 +86,7 @@ const makeGetSteps = () => createSelector(
         const instanceSteps = instances
           .reduce((accInstances, instanceKey) => {
             const label = `${section.id} ${instanceKey}`;
-            const { arity } = section;
+            const { arity, present } = section;
             const instanceOf = section.id;
             const content = msgLoadingForm;
             const instance = section.instances[instanceKey];
@@ -105,6 +105,7 @@ const makeGetSteps = () => createSelector(
                 isInstance: true,
                 instances,
                 arity,
+                present,
                 instanceOf,
                 ...instance
               }];
@@ -174,7 +175,7 @@ function getStepFormKey(stepId, structurePath) {
 }
 
 function shouldDisableDelete(step) {
-  return step.arity && !(['?', '*'].includes(step.arity)) && step.instances.length === 1;
+  return step.instances && step.arity && !(['?', '*'].includes(step.arity)) && step.instances.length === 1;
 }
 
 type Props = {
@@ -361,7 +362,7 @@ class _EditMetadataStepper extends React.Component<Props> {
     const { activeStepIndex } = this.state;
     const hasFormChanged = this.getHasFormChanged(stepIndex);
     const step = this.getStep(stepIndex);
-    const { contains, isInstance = false } = step;
+    const { contains, isInstance = false, present } = step;
     // if form has errors but there are no changes, it's possible that
     // we just need to clear the errors. However, it is possible
     // that the original metadata has errors, in which case, the errors should still
@@ -401,7 +402,7 @@ class _EditMetadataStepper extends React.Component<Props> {
           {this.getBackSectionName('', '')}
           <NavigateBefore className={classNames(classes.rightIcon, classes.iconSmall)} />
         </Button>
-        {isInstance && this.renderDeleteButton(step)}
+        {(isInstance /* || (present !== undefined && present ) */) && this.renderDeleteButton(step)}
         <Button
           variant="outlined"
           color="default"
