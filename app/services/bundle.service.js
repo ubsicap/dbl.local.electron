@@ -420,7 +420,7 @@ function postResource(bundleId, filePath, bundlePath) {
   const requestOptions = {
     method: 'POST',
     headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `content=${encodeURIComponent(content)}`
+    body: `content=${content}`
   };
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/resource/${bundlePath}`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
