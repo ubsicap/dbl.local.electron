@@ -7142,9 +7142,9 @@ ms@2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.0.0.tgz#5608aeadfc00be6c2901df5f9861788de0d597c8"
 
-mui-table@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/mui-table/-/mui-table-2.1.0.tgz#d148b68dba4709fad0fbb20548427935581cf543"
+mui-table@^2.1.4:
+  version "2.1.4"
+  resolved "https://registry.yarnpkg.com/mui-table/-/mui-table-2.1.4.tgz#d9a8a20f662d69c56021396c81d3cf8f9db598ff"
   dependencies:
     classnames "^2.2.6"
     lodash.merge "^4.6.1"
