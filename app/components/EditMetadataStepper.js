@@ -18,6 +18,7 @@ import Warning from '@material-ui/icons/Warning';
 import NavigateNext from '@material-ui/icons/NavigateNext';
 import NavigateBefore from '@material-ui/icons/NavigateBefore';
 import Check from '@material-ui/icons/Check';
+import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import classNames from 'classnames';
 import { fetchFormStructure, saveMetadataSuccess, saveMetadata, fetchActiveFormInputs,
   promptConfirmDeleteInstanceForm, deleteInstanceForm } from '../actions/bundleEditMetadata.actions';
@@ -283,6 +284,11 @@ class _EditMetadataStepper extends React.Component<Props> {
     }
   };
 
+  handleAddDefault = step => () => {
+    const { bundleId, activeFormConfirmingDelete = false } = this.props;
+    const { formKey } = step;
+  };
+
   handleNext = () => {
     const { activeStepIndex } = this.state;
     const { steps } = this.props;
@@ -346,14 +352,21 @@ class _EditMetadataStepper extends React.Component<Props> {
     return stepIndex === activeStepIndex;
   }
 
-  getHasFormChanged = (stepIndex) => {
-    const { activeFormInputs, activeFormEdits } = this.props;
-    const step = this.getStep(stepIndex);
+  getActiveFormFields = () => {
+    const { activeFormInputs } = this.props;
+    const step = this.getStep(this.state.activeStepIndex);
     const { formKey } = step;
     const { [formKey]: inputs = {} } = activeFormInputs;
     const { fields = [] } = inputs;
+    return fields;
+  }
+
+  getHasFormChanged = (stepIndex) => {
+    const { activeFormEdits } = this.props;
     const isActiveForm = this.getIsActiveIndex(stepIndex);
-    const hasFormChanged = isActiveForm ? editMetadataService.getHasFormFieldsChanged(fields, activeFormEdits) : false;
+    const fields = isActiveForm ? this.getActiveFormFields() : [];
+    const hasFormChanged = isActiveForm ?
+      editMetadataService.getHasFormFieldsChanged(fields, activeFormEdits) : false;
     return hasFormChanged;
   }
 
@@ -361,6 +374,8 @@ class _EditMetadataStepper extends React.Component<Props> {
     const { classes, steps = [] } = this.props;
     const { activeStepIndex } = this.state;
     const hasFormChanged = this.getHasFormChanged(stepIndex);
+    const hasFieldContent = activeStepIndex === stepIndex ?
+      this.getActiveFormFields().some(f => f.default) : false;
     const step = this.getStep(stepIndex);
     const { contains, isInstance = false, present } = step;
     // if form has errors but there are no changes, it's possible that
@@ -403,6 +418,7 @@ class _EditMetadataStepper extends React.Component<Props> {
           <NavigateBefore className={classNames(classes.rightIcon, classes.iconSmall)} />
         </Button>
         {(isInstance /* || (present !== undefined && present ) */) && this.renderDeleteButton(step)}
+        {!hasFormChanged && hasFieldContent && (present !== undefined && !present) && this.renderAddButton(step)}
         <Button
           variant="outlined"
           color="default"
@@ -410,7 +426,7 @@ class _EditMetadataStepper extends React.Component<Props> {
           className={classes.button}
         >
           {isLastStep ?
-            ([<Check key="OK" className={classNames(classes.leftIcon, classes.iconSmall)} />, 'OK'])
+            ([<ExpandLessIcon key="Hide" className={classNames(classes.leftIcon, classes.iconSmall)} />, 'Hide'])
             :
             ([<NavigateNext key="Next" className={classNames(classes.leftIcon, classes.iconSmall)} />, this.getNextSectionName('', '')])
           }
@@ -445,6 +461,21 @@ class _EditMetadataStepper extends React.Component<Props> {
         </Tooltip>);
     }
     return deleteBtn;
+  }
+
+  renderAddButton = (step) => {
+    const { classes } = this.props;
+    const addBtn = (
+      <Button
+        onClick={this.handleAddDefault(step)}
+        variant="contained"
+        color="primary"
+        className={classes.button}
+      >
+        <Check className={classNames(classes.leftIcon, classes.iconSmall)} />
+        Add
+      </Button>);
+    return addBtn;
   }
 
   render() {
