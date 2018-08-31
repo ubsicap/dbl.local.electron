@@ -20,7 +20,8 @@ import NavigateBefore from '@material-ui/icons/NavigateBefore';
 import Check from '@material-ui/icons/Check';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import classNames from 'classnames';
-import { fetchFormStructure, saveMetadataSuccess, saveMetadata, fetchActiveFormInputs,
+import { fetchFormStructure, saveMetadataSuccess,
+  saveMetadata, saveFieldValuesForActiveForm, fetchActiveFormInputs,
   promptConfirmDeleteInstanceForm, deleteInstanceForm } from '../actions/bundleEditMetadata.actions';
 import EditMetadataForm from './EditMetadataForm';
 import editMetadataService from '../services/editMetadata.service';
@@ -166,6 +167,7 @@ const mapDispatchToProps = {
   fetchFormStructure,
   saveMetadataSuccess,
   saveMetadata,
+  saveFieldValuesForActiveForm,
   fetchActiveFormInputs,
   promptConfirmDeleteInstanceForm,
   deleteInstanceForm
@@ -184,6 +186,7 @@ type Props = {
     fetchFormStructure: () => {},
     saveMetadataSuccess: () => {},
     saveMetadata: () => {},
+    saveFieldValuesForActiveForm: () => {},
     fetchActiveFormInputs: () => {},
     promptConfirmDeleteInstanceForm: () => {},
     deleteInstanceForm: () => {},
@@ -258,14 +261,16 @@ class _EditMetadataStepper extends React.Component<Props> {
   trySaveFormAndMoveStep = (newStepIndex) => {
     const nextStep = this.getStep(newStepIndex);
     const { formKey, id } = nextStep || {};
-    this.props.saveMetadata(null, null, null, { newStepIndex, formKey, id });
+    this.props.saveFieldValuesForActiveForm({ moveNext: { newStepIndex, formKey, id } });
   };
 
   handleStep = stepIndex => () => {
     this.trySaveFormAndMoveStep(stepIndex);
   };
 
-  handleSave = () => (this.props.saveMetadata());
+  handleSave = () => this.props.saveFieldValuesForActiveForm();
+
+  handleForceSave = () => this.props.saveFieldValuesForActiveForm({ forceSave: true });
 
   handleUndo = stepIndex => () => {
     const { bundleId } = this.props;
@@ -282,11 +287,6 @@ class _EditMetadataStepper extends React.Component<Props> {
     } else {
       this.props.promptConfirmDeleteInstanceForm(bundleId, formKey);
     }
-  };
-
-  handleAddDefault = step => () => {
-    const { bundleId, activeFormConfirmingDelete = false } = this.props;
-    const { formKey } = step;
   };
 
   handleNext = () => {
@@ -467,7 +467,7 @@ class _EditMetadataStepper extends React.Component<Props> {
     const { classes } = this.props;
     const addBtn = (
       <Button
-        onClick={this.handleSave}
+        onClick={this.handleForceSave}
         variant="contained"
         color="primary"
         className={classes.button}

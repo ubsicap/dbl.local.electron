@@ -13,7 +13,10 @@ export const bundleEditMetadataActions = {
   fetchActiveFormInputs,
   openMetadataFile,
   promptConfirmDeleteInstanceForm,
-  deleteInstanceForm
+  deleteInstanceForm,
+  saveMetadata,
+  saveFieldValuesForActiveForm,
+  reloadFieldValues
 };
 
 export default bundleEditMetadataActions;
@@ -222,6 +225,20 @@ function switchBackToBundlesPage() {
   history.push(bundlesPage);
 }
 
+export function reloadFieldValues(bundleId, formKey) {
+  return (dispatch, getState) => {
+    const { bundleEditMetadata } = getState();
+    const { moveNext: moveNextStep } = bundleEditMetadata;
+    dispatch(saveMetadataRequest({ moveNextStep }));
+    dispatch(fetchActiveFormInputs(bundleId, formKey));
+    return dispatch(saveMetadataSuccess(bundleId, formKey));
+  };
+}
+
+export function saveFieldValuesForActiveForm({ moveNext, forceSave } = {}) {
+  return saveMetadataRequest({ moveNextStep: moveNext, forceSave });
+}
+
 /*
   Expected Output:
     {
@@ -236,21 +253,15 @@ function switchBackToBundlesPage() {
       ]
     }
  */
-export function saveMetadata(
+export function saveMetadata({
   bundleId, formKey, fieldNameValues,
-  moveNext, isFactory, instanceKeyValue, saveOverrides = true,
-) {
+  moveNext, isFactory, instanceKeyValue,
+  saveOverrides = true, forceSave = false
+} = {}) {
   return async (dispatch, getState) => {
-    if (!formKey) {
-      return dispatch(saveMetadataRequest(null, null, moveNext));
-    }
     const { bundleEditMetadata } = getState();
     const moveNextStep = !moveNext ? bundleEditMetadata.moveNext : moveNext;
-    if (bundleId && Object.keys(fieldNameValues).length === 0) {
-      dispatch(saveMetadataRequest(null, null, moveNextStep));
-      dispatch(fetchActiveFormInputs(bundleId, formKey));
-      return dispatch(saveMetadataSuccess(bundleId, formKey));
-    }
+    const forceSaveState = !moveNext ? bundleEditMetadata.forceSave : forceSave;
     const fields = Object.keys(fieldNameValues).reduce((acc, name) => {
       const fieldNameInfo = fieldNameValues[name];
       const { value: newFieldValue, type: fieldType } = fieldNameInfo;
@@ -260,8 +271,9 @@ export function saveMetadata(
         { text: normalized } : { valueList: [normalized] };
       return [...acc, { type, name, ...valueObj }];
     }, []);
-    const formId = bundleId;
-    dispatch(saveMetadataRequest(formId, fields, moveNextStep));
+    dispatch(saveMetadataRequest({
+      bundleId, fields, moveNextStep, forceSaveState
+    }));
     let postFormArgs = null;
     try {
       const [keyFieldName] = Object.keys(instanceKeyValue || {});
@@ -275,14 +287,14 @@ export function saveMetadata(
         return;
       }
       postFormArgs = {
-        bundleId, formKey, payload: { formId, fields }, keyField: keyFieldValue
+        bundleId, formKey, payload: { formId: bundleId, fields }, keyField: keyFieldValue
       };
       await bundleService.postFormFields({ ...postFormArgs });
       if (saveOverrides) {
         dispatch(fetchActiveFormInputs(bundleId, formKey));
       }
       dispatch(saveMetadataSuccess(bundleId, formKey));
-      if (isFactory) {
+      if (isFactory || forceSaveState /* reload 'present' status */) {
         dispatch(fetchFormStructure(bundleId));
       }
       dispatch(saveMetadatFileToTempBundleFolder(bundleId));
@@ -301,9 +313,15 @@ export function saveMetadata(
   };
 }
 
-function saveMetadataRequest(formId, fields, moveNextStep) {
+function saveMetadataRequest({
+  bundleId, fields, moveNextStep, forceSave
+}) {
   return {
-    type: bundleEditMetadataConstants.SAVE_METADATA_REQUEST, formId, fields, moveNextStep
+    type: bundleEditMetadataConstants.SAVE_METADATA_REQUEST,
+    bundleId,
+    fields,
+    moveNextStep,
+    forceSave
   };
 }
 
@@ -339,7 +357,9 @@ function saveAllOverrides(bundleId) {
           editMetadataService.getFormInputsWithOverrides(formKey, formInputs, metadataOverrides);
         const fieldNameValues =
           editMetadataService.getFormFieldValues(bundleId, formKey, formWithOverrides.fields, {});
-        dispatch(saveMetadata(bundleId, formKey, fieldNameValues, null, null, null, false));
+        dispatch(saveMetadata({
+          bundleId, formKey, fieldNameValues, saveOverrides: false
+        }));
       } catch (error) {
         // be silent about fetch form errors
       }

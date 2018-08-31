@@ -116,13 +116,14 @@ export function bundleEditMetadata(state = initialState, action) {
       };
     }
     case bundleEditMetadataConstants.SAVE_METADATA_REQUEST: {
-      const moveNext = action.moveNextStep;
+      const { moveNextStep: moveNext, forceSave } = action;
       return {
         ...state,
         requestingSaveMetadata: true,
         shouldSaveActiveForm: true,
         wasMetadataSaved: false,
-        moveNext
+        moveNext,
+        forceSave
       };
     }
     case bundleEditMetadataConstants.SAVE_METADATA_SUCCESS: {

@@ -4,7 +4,10 @@ import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
 import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
-import { saveMetadata, fetchActiveFormInputs, editActiveFormInput } from '../actions/bundleEditMetadata.actions';
+import {
+  saveMetadata, fetchActiveFormInputs, editActiveFormInput,
+  reloadFieldValues
+} from '../actions/bundleEditMetadata.actions';
 import editMetadataService from '../services/editMetadata.service';
 
 type Props = {
@@ -17,25 +20,32 @@ type Props = {
   requestingSaveMetadata: boolean,
   formErrors: {},
   activeFormEdits: {},
+  forceSave: boolean,
   fetchActiveFormInputs: () => {},
   editActiveFormInput: () => {},
-  saveMetadata: () => {}
+  saveMetadata: () => {},
+  reloadFieldValues: () => {}
 };
 
 function mapStateToProps(state) {
   const { bundleEditMetadata } = state;
-  const { requestingSaveMetadata = false, formFieldIssues = {}, activeFormEdits = {} } = bundleEditMetadata;
+  const {
+    requestingSaveMetadata = false, formFieldIssues = {}, activeFormEdits = {},
+    forceSave = false
+  } = bundleEditMetadata;
   return {
     requestingSaveMetadata,
     formFieldIssues,
-    activeFormEdits
+    activeFormEdits,
+    forceSave
   };
 }
 
 const mapDispatchToProps = {
   saveMetadata,
   fetchActiveFormInputs,
-  editActiveFormInput
+  editActiveFormInput,
+  reloadFieldValues
 };
 
 const materialStyles = theme => ({
@@ -76,17 +86,20 @@ class EditMetadataForm extends React.PureComponent<Props> {
   componentDidUpdate() {
     if (this.props.isActiveForm && this.props.requestingSaveMetadata) {
       const {
-        inputs = {}, bundleId, formKey, isFactory, activeFormEdits
+        inputs = {}, bundleId, formKey, isFactory, activeFormEdits, forceSave
       } = this.props;
       const { fields = [] } = inputs;
-      if (!editMetadataService.getHasFormFieldsChanged(fields, activeFormEdits)) {
-        this.props.saveMetadata(bundleId, formKey, {});
+      if (!forceSave && !editMetadataService.getHasFormFieldsChanged(fields, activeFormEdits)) {
+        this.props.reloadFieldValues(bundleId, formKey);
         return;
       }
-      const fieldValues = editMetadataService.getFormFieldValues(bundleId, formKey, fields, activeFormEdits);
+      const fieldNameValues = editMetadataService
+        .getFormFieldValues(bundleId, formKey, fields, activeFormEdits);
       const keyField = editMetadataService.getKeyField(fields);
       const instanceKeyValue = keyField ? { [keyField.name]: this.getValue(keyField) } : null;
-      this.props.saveMetadata(bundleId, formKey, fieldValues, null, isFactory, instanceKeyValue);
+      this.props.saveMetadata({
+        bundleId, formKey, fieldNameValues, isFactory, instanceKeyValue
+      });
     }
   }
 

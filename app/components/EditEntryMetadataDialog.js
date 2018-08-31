@@ -13,7 +13,7 @@ import Save from '@material-ui/icons/Save';
 import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
 import { updateBundle } from '../actions/bundle.actions';
-import { closeEditMetadata, saveMetadata, openMetadataFile } from '../actions/bundleEditMetadata.actions';
+import { closeEditMetadata, saveFieldValuesForActiveForm, openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import EditMetadataStepper from './EditMetadataStepper';
 import rowStyles from './DBLEntryRow.css';
 
@@ -45,7 +45,7 @@ function mapStateToProps(state) {
 
 const mapDispatchToProps = {
   closeEditMetadata,
-  saveMetadata,
+  saveFieldValuesForActiveForm,
   updateBundle,
   openMetadataFile
 };
@@ -75,7 +75,7 @@ type Props = {
   closeEditMetadata: () => {},
   updateBundle: () => {},
   classes: {},
-  saveMetadata: () => {},
+  saveFieldValuesForActiveForm: () => {},
   openMetadataFile: () => {},
   wasMetadataSaved: boolean,
   showMetadataFile: ?string,
@@ -104,7 +104,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   }
 
   handleClose = () => {
-    this.props.saveMetadata(null, null, null, { exit: true });
+    this.props.saveFieldValuesForActiveForm({ moveNext: { exit: true } });
   };
 
   handleReview = () => {
