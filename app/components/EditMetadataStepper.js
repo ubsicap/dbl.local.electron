@@ -463,11 +463,11 @@ class _EditMetadataStepper extends React.Component<Props> {
     return deleteBtn;
   }
 
-  renderAddButton = (step) => {
+  renderAddButton = () => {
     const { classes } = this.props;
     const addBtn = (
       <Button
-        onClick={this.handleAddDefault(step)}
+        onClick={this.handleSave}
         variant="contained"
         color="primary"
         className={classes.button}
