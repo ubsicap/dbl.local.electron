@@ -130,7 +130,7 @@ export function checkPublicationsHealth(_bundleId) {
 }
 
 export function addManifestResources(_bundleId, _fileToContainerPaths) {
-  return async dispatch => {
+  return async (dispatch, getState) => {
     dispatch(request(_bundleId, _fileToContainerPaths));
     /* eslint-disable no-restricted-syntax */
     /* eslint-disable no-await-in-loop */
@@ -140,6 +140,9 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
         await bundleService.updateManifestResource(_bundleId, containerPath);
         dispatch(success(_bundleId, filePath, containerPath));
         await utilities.sleep(500);
+        const { bundleManageResources } = getState();
+        const { publicationsHealth } = bundleManageResources;
+        const { publications } = publicationsHealth;
       } catch (errorReadable) {
         const error = await errorReadable.text();
         dispatch(failure(_bundleId, error));
