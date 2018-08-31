@@ -19,14 +19,17 @@ import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
 import path from 'path';
 import { findChunks } from 'highlight-words-core';
-import { closeResourceManager, getManifestResources, addManifestResources } from '../actions/bundleManageResources.actions';
+import { closeResourceManager,
+  getManifestResources, addManifestResources,
+} from '../actions/bundleManageResources.actions';
 import { downloadResources } from '../actions/bundle.actions';
-import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
+import { openMetadataFile, checkPublicationsHealth } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
 import EnhancedTable from './EnhancedTable';
 import { utilities } from '../utils/utilities';
 
 const { dialog } = require('electron').remote;
+const { shell } = require('electron');
 
 const NEED_CONTAINER = '/?';
 
@@ -102,7 +105,22 @@ const makeGetManifestResourcesData = () => createSelector(
       .map(r => createResourceData(r, storedFiles[r.uri], mode))
 );
 
-const { shell } = require('electron');
+type Props = {
+  classes: {},
+  open: boolean,
+  bundleId: ?string,
+  selectedBundle: {},
+  mode: string,
+  showMetadataFile: ?string,
+  manifestResources: [],
+  columnConfig: [],
+  closeResourceManager: () => {},
+  openMetadataFile: () => {},
+  getManifestResources: () => {},
+  downloadResources: () => {},
+  addManifestResources: () => {},
+  checkPublicationsHealth: () => {}
+};
 
 function mapStateToProps(state, props) {
   const { bundles, bundleEditMetadata } = state;
@@ -128,7 +146,8 @@ const mapDispatchToProps = {
   openMetadataFile,
   getManifestResources,
   downloadResources,
-  addManifestResources
+  addManifestResources,
+  checkPublicationsHealth
 };
 
 const materialStyles = theme => ({
@@ -163,23 +182,6 @@ const materialStyles = theme => ({
   }
 });
 
-type Props = {
-  classes: {},
-  match: {},
-  open: boolean,
-  bundleId: ?string,
-  selectedBundle: {},
-  mode: string,
-  showMetadataFile: ?string,
-  manifestResources: [],
-  columnConfig: [],
-  closeResourceManager: () => {},
-  openMetadataFile: () => {},
-  getManifestResources: () => {},
-  downloadResources: () => {},
-  addManifestResources: () => {}
-};
-
 function mapSuggestions(suggestions) {
   return suggestions.map(suggestion => ({ label: suggestion }));
 }
@@ -195,6 +197,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   componentDidMount() {
     const { bundleId } = this.props;
     this.props.getManifestResources(bundleId);
+    if (this.isAddFilesMode()) {
+      this.props.checkPublicationsHealth();
+    }
   }
 
 
