@@ -156,6 +156,7 @@ function saveMetadatFileToTempBundleFolder(bundleId) {
   return async dispatch => {
     dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_REQUEST, bundleId });
     const metadataFile = await bundleService.saveMetadataToTempFolder(bundleId);
+    await utilities.sleep(1000); // give time for OS to release the file.
     dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_SAVED, bundleId, metadataFile });
     return metadataFile;
   };
