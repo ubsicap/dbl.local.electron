@@ -19,6 +19,7 @@ import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
 import path from 'path';
 import { findChunks } from 'highlight-words-core';
+import { history } from '../store/configureStore';
 import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth
 } from '../actions/bundleManageResources.actions';
@@ -253,6 +254,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.props.openMetadataFile(this.props.bundleId);
   }
 
+  handleGoFixError = () => {
+    history.push(this.props.publicationsHealthMessageLink);
+  }
+
   onSelectedIds = (selectedIds) => {
     this.setState({ selectedIds, selectAll: false });
   }
@@ -464,7 +469,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                 key="btnGoEdit"
                 color="secondary"
                 variant="contained"
-                onClick={this.handleGoEdit}
+                onClick={this.handleGoFixError}
               >Go Fix
               </Button>
             </Toolbar>
