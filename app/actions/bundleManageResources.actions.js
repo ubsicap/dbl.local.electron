@@ -9,7 +9,8 @@ export const bundleManageResourceActions = {
   openResourceManager,
   closeResourceManager,
   getManifestResources,
-  addManifestResources
+  addManifestResources,
+  checkPublicationsHealth
 };
 
 function buildBundleArgUrl(routeUrl, bundleId, mode) {
@@ -86,6 +87,46 @@ export function getManifestResources(_bundleId) {
   function failure(bundleId, error) {
     return { type: bundleResourceManagerConstants.GET_MANIFEST_RESOURCES_FAILURE, error };
   }
+}
+
+export function checkPublicationsHealth(_bundleId) {
+  return async dispatch => {
+    const sections = await bundleService.getFormBundleTree(_bundleId);
+    const publicationsStructure = sections.find(section => section.id === 'publications');
+    const { contains: publicationsContains } = publicationsStructure;
+    const publicationStructure = publicationsContains.find(section => section.id === 'publication');
+    const { instances: publicationInstances } = publicationStructure;
+    const publicationInstanceIds = Object.keys(publicationInstances);
+    const editMetadataPageWithBundleId = buildBundleArgUrl(
+      navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA,
+      _bundleId
+    );
+    if (publicationInstanceIds.length === 0) {
+      return dispatch({
+        type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR,
+        error: 'NO_PUBLICATION_INSTANCE',
+        publications: [],
+        errorMessage: 'To add a resource, first add a publication to Publications',
+        navigation: editMetadataPageWithBundleId
+      });
+    }
+    const pubsMissingCanonSpecs = publicationInstanceIds.filter(pubId =>
+      !(publicationInstances[pubId].contains.find(section => section.id === 'canonSpec').present));
+    if (pubsMissingCanonSpecs.length > 0) {
+      return dispatch({
+        type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR,
+        error: 'MISSING_CANON_SPECS',
+        publications: pubsMissingCanonSpecs,
+        errorMessage: `To add a resource, first add canonSpec to the following publications: ${pubsMissingCanonSpecs}`,
+        navigation: editMetadataPageWithBundleId
+      });
+    }
+    // now get the publication structure for each publication
+    dispatch({
+      type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_SUCCESS,
+      publications: publicationInstanceIds
+    });
+  };
 }
 
 export function addManifestResources(_bundleId, _fileToContainerPaths) {

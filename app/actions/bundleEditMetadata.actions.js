@@ -16,8 +16,7 @@ export const bundleEditMetadataActions = {
   deleteInstanceForm,
   saveMetadata,
   saveFieldValuesForActiveForm,
-  reloadFieldValues,
-  checkPublicationsHealth
+  reloadFieldValues
 };
 
 export default bundleEditMetadataActions;
@@ -366,27 +365,6 @@ function saveAllOverrides(bundleId) {
         // be silent about fetch form errors
       }
     });
-  };
-}
-
-export function checkPublicationsHealth(_bundleId) {
-  return async dispatch => {
-    const sections = await bundleService.getFormBundleTree(_bundleId);
-    const publicationsStructure = sections.find(section => section.id === 'publications');
-    const { contains: publicationsContains } = publicationsStructure;
-    const publicationStructure = publicationsContains.find(section => section.id === 'publication');
-    const { instances: publicationInstances } = publicationStructure;
-    const publicationInstanceIds = Object.keys(publicationInstances);
-    if (publicationInstanceIds.length === 0) {
-      return dispatch({
-        type: 'GET_PUBLICATIONS_HEALTH_ERROR',
-        error: 'NO_PUBLICATION_INSTANCE',
-        errorMessage: 'To add a resource, first Edit Metadata and add a publication to Publications'
-      });
-    }
-    publicationInstanceIds.some(pubId =>
-      (publicationInstances[pubId].contains.find(section => section.id === 'canonSpec').present));
-    dispatch({ type: 'GET_PUBLICATIONS_HEALTH_SUCCESS' });
   };
 }
 

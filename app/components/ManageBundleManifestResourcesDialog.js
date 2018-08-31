@@ -20,10 +20,10 @@ import Zoom from '@material-ui/core/Zoom';
 import path from 'path';
 import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
-  getManifestResources, addManifestResources,
+  getManifestResources, addManifestResources, checkPublicationsHealth
 } from '../actions/bundleManageResources.actions';
 import { downloadResources } from '../actions/bundle.actions';
-import { openMetadataFile, checkPublicationsHealth } from '../actions/bundleEditMetadata.actions';
+import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
 import EnhancedTable from './EnhancedTable';
 import { utilities } from '../utils/utilities';
@@ -32,6 +32,26 @@ const { dialog } = require('electron').remote;
 const { shell } = require('electron');
 
 const NEED_CONTAINER = '/?';
+
+type Props = {
+  classes: {},
+  open: boolean,
+  bundleId: ?string,
+  selectedBundle: {},
+  mode: string,
+  showMetadataFile: ?string,
+  manifestResources: [],
+  columnConfig: [],
+  isOkToAddFiles: boolean,
+  publicationsHealthMessage: ?string,
+  publicationsHealthMessageLink: ?string,
+  closeResourceManager: () => {},
+  openMetadataFile: () => {},
+  getManifestResources: () => {},
+  downloadResources: () => {},
+  addManifestResources: () => {},
+  checkPublicationsHealth: () => {}
+};
 
 function createUpdatedTotalResources(origTotalResources, filePath, update) {
   return origTotalResources.map(r => (r.id === filePath ? { ...r, ...update } : r));
@@ -105,25 +125,11 @@ const makeGetManifestResourcesData = () => createSelector(
       .map(r => createResourceData(r, storedFiles[r.uri], mode))
 );
 
-type Props = {
-  classes: {},
-  open: boolean,
-  bundleId: ?string,
-  selectedBundle: {},
-  mode: string,
-  showMetadataFile: ?string,
-  manifestResources: [],
-  columnConfig: [],
-  closeResourceManager: () => {},
-  openMetadataFile: () => {},
-  getManifestResources: () => {},
-  downloadResources: () => {},
-  addManifestResources: () => {},
-  checkPublicationsHealth: () => {}
-};
-
 function mapStateToProps(state, props) {
-  const { bundles, bundleEditMetadata } = state;
+  const { bundles, bundleEditMetadata, bundleManageResources } = state;
+  const { publicationsHealth } = bundleManageResources;
+  const { errorMessage: publicationsHealthMessage,
+    navigation: publicationsHealthMessageLink } = publicationsHealth || {};
   const { bundleId, mode } = props.match.params;
   const { showMetadataFile } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
@@ -137,7 +143,10 @@ function mapStateToProps(state, props) {
     mode,
     showMetadataFile,
     manifestResources: getManifestResourceData(state),
-    columnConfig
+    columnConfig,
+    isOkToAddFiles: !publicationsHealthMessage,
+    publicationsHealthMessage,
+    publicationsHealthMessageLink
   };
 }
 
@@ -153,6 +162,9 @@ const mapDispatchToProps = {
 const materialStyles = theme => ({
   appBar: {
     position: 'sticky'
+  },
+  errorBar: {
+    color: theme.palette.secondary.light,
   },
   toolBar: {
     paddingLeft: '0px',
@@ -198,7 +210,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { bundleId } = this.props;
     this.props.getManifestResources(bundleId);
     if (this.isAddFilesMode()) {
-      this.props.checkPublicationsHealth();
+      this.props.checkPublicationsHealth(bundleId);
     }
   }
 
@@ -245,9 +257,15 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.setState({ selectedIds, selectAll: false });
   }
 
-  shouldDisableOkButton = () => {
+  shouldDisableDownload = () => {
     const { selectedIds = [] } = this.state;
-    return selectedIds.length === 0 || this.hasAnySelectedUnassignedContainers();
+    return selectedIds.length === 0;
+  }
+
+  shouldDisableAddFiles = () => {
+    const { selectedIds = [] } = this.state;
+    const { isOkToAddFiles = false } = this.props;
+    return selectedIds.length === 0 || !isOkToAddFiles || this.hasAnySelectedUnassignedContainers();
   }
 
   getUpdatedTotalResources(filePath, update) {
@@ -326,7 +344,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           {
             title: 'Download resources',
             OkButtonLabel: 'Download',
-            OkButtonIcon: <FileDownload className={classNames(classes.leftIcon)} />
+            OkButtonIcon: <FileDownload className={classNames(classes.leftIcon)} />,
+            OkButtonDisable: this.shouldDisableDownload
           }
         };
       case 'addFiles':
@@ -335,7 +354,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           appBar: {
             title: 'Add resources',
             OkButtonLabel: 'Add',
-            OkButtonIcon: <CheckIcon className={classNames(classes.leftIcon)} />
+            OkButtonIcon: <CheckIcon className={classNames(classes.leftIcon)} />,
+            OkButtonDisable: this.shouldDisableAddFiles
           }
         };
       default:
@@ -343,10 +363,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
   }
 
-  getHandleAddByFile = () => {
-    const { mode } = this.props;
-    return mode === 'addFiles' ? this.handleAddByFile : null;
-  }
+  getHandleAddByFile = () => (
+    (this.isAddFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFile : null
+  )
 
   getAllSuggestions = (totalResources) => {
     const { mode } = this.props;
@@ -404,7 +423,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   render() {
     const {
-      classes, open, selectedBundle = {}, columnConfig, manifestResources
+      classes, open, selectedBundle = {}, columnConfig, manifestResources,
+      publicationsHealthMessage = ''
     } = this.props;
     const { selectAll, totalResources = manifestResources } = this.state;
     const { displayAs = {} } = selectedBundle;
@@ -427,13 +447,28 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               </Button>
               <Button
                 key="btnOk" color="inherit" onClick={this.handleClickOk}
-                disabled={this.shouldDisableOkButton()}
+                disabled={modeUi.appBar.OkButtonDisable()}
               >
                 {modeUi.appBar.OkButtonIcon}
                 {modeUi.appBar.OkButtonLabel}
               </Button>
             </Toolbar>
           </AppBar>
+          {this.isAddFilesMode() && publicationsHealthMessage &&
+            <Toolbar className={classes.errorBar}>
+              <Typography variant="subheading" color="inherit">
+                {publicationsHealthMessage}
+              </Typography>
+              <div style={{ paddingLeft: '10px' }} />
+              <Button
+                key="btnGoEdit"
+                color="secondary"
+                variant="contained"
+                onClick={this.handleGoEdit}
+              >Go Fix
+              </Button>
+            </Toolbar>
+          }
           <EnhancedTable
             data={totalResources}
             columnConfig={columnConfig}
