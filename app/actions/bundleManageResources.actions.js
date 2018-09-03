@@ -143,6 +143,15 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
         const { bundleManageResources } = getState();
         const { publicationsHealth } = bundleManageResources;
         const { publications } = publicationsHealth;
+        for (const pubId of publications) {
+          const wizardTestResults = await bundleService.testPublicationWizards();
+          const bestWizard = wizardTestResults.reduce(
+            (acc, r) => (r.hits.length > acc.hits.length ? r : acc),
+            { hits: [], misses: [] }
+          );
+          const { wizard, uri } = bestWizard;
+          await bundleService.runPublicationWizard(_bundleId, pubId, wizard, uri);
+        }
       } catch (errorReadable) {
         const error = await errorReadable.text();
         dispatch(failure(_bundleId, error));

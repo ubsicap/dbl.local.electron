@@ -34,7 +34,10 @@ export const bundleService = {
   bundleIsInCreateMode,
   unlockCreateMode,
   postResource,
-  updateManifestResource
+  updateManifestResource,
+  getPublicationWizards,
+  testPublicationWizards,
+  runPublicationWizard
 };
 export default bundleService;
 
@@ -47,6 +50,7 @@ const FORM_BUNDLE_API = `${FORM_API}/bundle`;
 const FORM_BUNDLE_API_DELETE = `${FORM_API}/delete`;
 const MANIFEST_API = 'manifest';
 const MANIFEST_DETAILS = 'details';
+const PUBLICATION_API = 'publication';
 
 /*
 {
@@ -432,5 +436,38 @@ function updateManifestResource(bundleId, bundlePath) {
     headers: { ...authHeader() },
   };
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${MANIFEST_API}/${bundleId}/update/${bundlePath}`;
+  return fetch(url, requestOptions).then(handlePostFormResponse);
+}
+
+async function getPublicationWizards() {
+  const requestOptions = {
+    method: 'GET',
+    headers: authHeader()
+  };
+  const response = await fetch(
+    `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${PUBLICATION_API}/wizard`,
+    requestOptions
+  );
+  return handleResponse(response, (r) => r);
+}
+
+async function testPublicationWizards(bundleId, pubId) {
+  const requestOptions = {
+    method: 'GET',
+    headers: authHeader()
+  };
+  const response = await fetch(
+    `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${PUBLICATION_API}/wizard/${bundleId}/${pubId}`,
+    requestOptions
+  );
+  return handleResponse(response, (r) => r);
+}
+
+function runPublicationWizard(bundleId, pubId, wizardId, containerUri) {
+  const requestOptions = {
+    method: 'POST',
+    headers: { ...authHeader() },
+  };
+  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${PUBLICATION_API}/wizard/${bundleId}/${pubId}/${wizardId}/${containerUri}`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }
