@@ -145,11 +145,9 @@ const makeMapStateToProps = () => {
     } = bundleEditMetadata;
     const steps = getSteps(state, props);
     const formStructure = getFormStructure(state, props);
-    const bundleId = bundleEditMetadata.editingMetadata;
     const activeFormInputs = getActiveFormInputs(state);
     const activeFormEdits = getActiveFormEdits(state);
     return {
-      bundleId,
       formStructure,
       activeFormInputs,
       activeFormEdits,
@@ -190,7 +188,7 @@ type Props = {
     fetchActiveFormInputs: () => {},
     promptConfirmDeleteInstanceForm: () => {},
     deleteInstanceForm: () => {},
-    bundleId: ?string,
+    bundleId: string,
     formStructure: [],
     steps: [],
     myStructurePath: string,
@@ -326,6 +324,7 @@ class _EditMetadataStepper extends React.Component<Props> {
       const hasTemplate = template === true;
       return (
         <EditMetadataStepperComposed
+          bundleId={bundleId}
           key={formKey}
           myStructurePath={formKey}
           shouldLoadDetails={hasTemplate}

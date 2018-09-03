@@ -19,11 +19,11 @@ import rowStyles from './DBLEntryRow.css';
 
 const { shell } = require('electron');
 
-function mapStateToProps(state) {
+function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundles } = state;
-  const { editingMetadata, editedMetadata, showMetadataFile } = bundleEditMetadata;
+  const { showMetadataFile } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
-  const bundleId = editingMetadata || editedMetadata;
+  const { bundleId } = props.match.params;
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
   const {
     requestingSaveMetadata = false,
@@ -32,7 +32,7 @@ function mapStateToProps(state) {
     moveNext = null
   } = bundleEditMetadata;
   return {
-    open: Boolean(bundleEditMetadata.editingMetadata || false),
+    open: Boolean(bundleId || false),
     bundleId,
     selectedBundle,
     requestingSaveMetadata,
@@ -70,7 +70,7 @@ const materialStyles = theme => ({
 
 type Props = {
   open: boolean,
-  bundleId: ?string,
+  bundleId: string,
   selectedBundle: {},
   closeEditMetadata: () => {},
   updateBundle: () => {},
@@ -112,7 +112,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   }
 
   render() {
-    const { classes, open, selectedBundle = {} } = this.props;
+    const { classes, open, selectedBundle = {}, bundleId } = this.props;
     const { displayAs = {} } = selectedBundle;
     const { languageAndCountry, name } = displayAs;
     return (
@@ -136,7 +136,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
               </Button>
             </Toolbar>
           </AppBar>
-          <EditMetadataStepper myStructurePath="" shouldLoadDetails={false} />
+          <EditMetadataStepper bundleId={bundleId} myStructurePath="" shouldLoadDetails={false} />
         </div>
       </Zoom>
     );
