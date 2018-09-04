@@ -120,7 +120,7 @@ export function checkPublicationsHealth(_bundleId) {
         type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR,
         error: 'MISSING_CANON_SPECS',
         publications: pubsMissingCanonSpecs,
-        errorMessage: `To add a resource, first add canonSpec to the following publications: ${pubsMissingCanonSpecs}`,
+        errorMessage: `To add a resource, first add Canon Specification to the following publications: ${pubsMissingCanonSpecs}`,
         navigation: editMetadataPageWithBundleId
       });
     }
