@@ -23,7 +23,7 @@ function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundles } = state;
   const { showMetadataFile } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
-  const { bundleId } = props.match.params;
+  const { bundleId, section: showSection = 'identification' } = props.match.params;
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
   const {
     requestingSaveMetadata = false,
@@ -39,7 +39,8 @@ function mapStateToProps(state, props) {
     wasMetadataSaved,
     moveNext,
     couldNotSaveMetadataMessage,
-    showMetadataFile
+    showMetadataFile,
+    showSection
   };
 }
 
@@ -71,6 +72,7 @@ const materialStyles = theme => ({
 type Props = {
   open: boolean,
   bundleId: string,
+  showSection: ?string,
   selectedBundle: {},
   closeEditMetadata: () => {},
   updateBundle: () => {},
@@ -112,7 +114,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   }
 
   render() {
-    const { classes, open, selectedBundle = {}, bundleId } = this.props;
+    const { classes, open, selectedBundle = {}, bundleId, showSection } = this.props;
     const { displayAs = {} } = selectedBundle;
     const { languageAndCountry, name } = displayAs;
     return (
@@ -136,7 +138,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
               </Button>
             </Toolbar>
           </AppBar>
-          <EditMetadataStepper bundleId={bundleId} myStructurePath="" shouldLoadDetails={false} />
+          <EditMetadataStepper bundleId={bundleId} showSection={showSection} myStructurePath="" shouldLoadDetails={false} />
         </div>
       </Zoom>
     );

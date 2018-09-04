@@ -13,9 +13,12 @@ export const bundleManageResourceActions = {
   checkPublicationsHealth
 };
 
-function buildBundleArgUrl(routeUrl, bundleId, mode) {
-  const altUrl = routeUrl.replace(':bundleId', bundleId);
-  return altUrl.replace(':mode', mode);
+function buildBundleArgUrl(routeUrl, args) {
+  const url = Object.entries(args).reduce(
+    (acc, [key, value]) => (acc.replace(`:${key}`, value)),
+    routeUrl
+  );
+  return url;
 }
 
 export function openResourceManager(_bundleId, _mode = 'download') {
@@ -31,7 +34,7 @@ export function openResourceManager(_bundleId, _mode = 'download') {
   }
   function navigate(bundleId, mode) {
     const manageResourcesUrl =
-      buildBundleArgUrl(navigationConstants.NAVIGATION_BUNDLE_MANAGE_RESOURCES, bundleId, mode);
+      buildBundleArgUrl(navigationConstants.NAVIGATION_BUNDLE_MANAGE_RESOURCES, { bundleId, mode });
     history.push(manageResourcesUrl);
     return success(bundleId, mode);
   }
@@ -98,8 +101,8 @@ export function checkPublicationsHealth(_bundleId) {
     const { instances: publicationInstances } = publicationStructure;
     const publicationInstanceIds = Object.keys(publicationInstances);
     const editMetadataPageWithBundleId = buildBundleArgUrl(
-      navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA,
-      _bundleId
+      navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_SECTION,
+      { bundleId: _bundleId, section: 'publications' }
     );
     if (publicationInstanceIds.length === 0) {
       return dispatch({

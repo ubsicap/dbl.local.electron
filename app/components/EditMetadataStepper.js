@@ -21,7 +21,7 @@ import Check from '@material-ui/icons/Check';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import classNames from 'classnames';
 import { fetchFormStructure, saveMetadataSuccess,
-  saveMetadata, saveFieldValuesForActiveForm, fetchActiveFormInputs,
+  saveFieldValuesForActiveForm, fetchActiveFormInputs,
   promptConfirmDeleteInstanceForm, deleteInstanceForm } from '../actions/bundleEditMetadata.actions';
 import EditMetadataForm from './EditMetadataForm';
 import editMetadataService from '../services/editMetadata.service';
@@ -164,7 +164,6 @@ const makeMapStateToProps = () => {
 const mapDispatchToProps = {
   fetchFormStructure,
   saveMetadataSuccess,
-  saveMetadata,
   saveFieldValuesForActiveForm,
   fetchActiveFormInputs,
   promptConfirmDeleteInstanceForm,
@@ -181,9 +180,9 @@ function shouldDisableDelete(step) {
 
 type Props = {
     classes: {},
+    showSection: ?string,
     fetchFormStructure: () => {},
     saveMetadataSuccess: () => {},
-    saveMetadata: () => {},
     saveFieldValuesForActiveForm: () => {},
     fetchActiveFormInputs: () => {},
     promptConfirmDeleteInstanceForm: () => {},
@@ -200,6 +199,12 @@ type Props = {
     moveNext: ?{},
     activeFormConfirmingDelete: ?boolean
 };
+
+
+function initializeActiveStepIndex(props) {
+  const { showSection, steps } = props;
+  return showSection ? steps.findIndex((s) => s.id === showSection) : 0;
+}
 
 function getIsFactory(section) {
   return section.name.includes('{0}');
@@ -237,7 +242,14 @@ class _EditMetadataStepper extends React.Component<Props> {
   }
 
   componentWillReceiveProps(nextProps) {
-    const { requestingSaveMetadata, wasMetadataSaved, moveNext } = nextProps;
+    const { requestingSaveMetadata, wasMetadataSaved, moveNext, steps } = nextProps;
+    const { steps: currentSteps } = this.props;
+    if (currentSteps.length === 0 && steps.length !== currentSteps.length) {
+      const showIndex = initializeActiveStepIndex(nextProps);
+      if (this.state.activeStepIndex !== showIndex) {
+        this.setState({ activeStepIndex: showIndex });
+      }
+    }
     if (requestingSaveMetadata && !this.props.requestingSaveMetadata) {
       const activeStep = this.getStep(this.state.activeStepIndex);
       if (!activeStep) {
@@ -468,7 +480,7 @@ class _EditMetadataStepper extends React.Component<Props> {
       <Button
         onClick={this.handleForceSave}
         variant="contained"
-        color="primary"
+        color="secondary"
         className={classes.button}
       >
         <Check className={classNames(classes.leftIcon, classes.iconSmall)} />
