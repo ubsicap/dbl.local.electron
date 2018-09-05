@@ -16,7 +16,8 @@ export const bundleEditMetadataActions = {
   deleteInstanceForm,
   saveMetadata,
   saveFieldValuesForActiveForm,
-  reloadFieldValues
+  reloadFieldValues,
+  setArchivistStatusOverrides
 };
 
 export default bundleEditMetadataActions;
@@ -25,21 +26,20 @@ function buildEditMetadataUrl(routeUrl, bundleId) {
   return routeUrl.replace(':bundleId', bundleId);
 }
 
-function getIsDemoEditMode(routeUrl, bundleId) {
-  const editMetadataUrl = buildEditMetadataUrl(routeUrl, bundleId);
-  return history.location.pathname === editMetadataUrl;
+async function getFormStructure(_bundleId) {
+  const isDemoMode = getIsDemoMode();
+  const response = isDemoMode ?
+    await getMockStructure() :
+    await bundleService.getFormBundleTree(_bundleId);
+  return response;
 }
 
 export function fetchFormStructure(_bundleId) {
   return async dispatch => {
     dispatch(request(_bundleId));
     try {
-      const isDemoMode =
-        getIsDemoEditMode(navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO, _bundleId);
-      const response = isDemoMode ?
-        await getMockStructure() :
-        await bundleService.getFormBundleTree(_bundleId);
-      dispatch(success(response));
+      const formStructure = await getFormStructure(_bundleId);
+      dispatch(success(formStructure));
     } catch (error) {
       dispatch(failure(error));
     }
@@ -59,8 +59,7 @@ export function fetchActiveFormInputs(bundleId, _formKey) {
   return async dispatch => {
     dispatch(request(_formKey));
     try {
-      const isDemoMode =
-        getIsDemoEditMode(navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO, bundleId);
+      const isDemoMode = getIsDemoMode();
       const response = isDemoMode ?
         await getMockFormInputs(bundleId, _formKey) :
         await bundleService.getFormFields(bundleId, _formKey);
@@ -86,10 +85,51 @@ export function editActiveFormInput(formKey, inputName, newValue) {
   };
 }
 
+export function setArchivistStatusOverrides(_bundleId) {
+  return async (dispatch, getState) => {
+    const { authentication } = getState();
+    const { whoami } = authentication;
+    const formStructure = await getFormStructure(_bundleId);
+    const appMetadataOverrides = getAppMetadataOverrides(formStructure);
+    const userMetadataOverrides = getUserMetadataOverrides(whoami);
+    const metadataOverrides = { ...appMetadataOverrides, ...userMetadataOverrides };
+    dispatch(myAction(_bundleId, metadataOverrides));
+  };
+
+  function myAction(bundleId, metadataOverrides) {
+    return { type: bundleEditMetadataConstants.SET_METADATA_OVERRIDES, metadataOverrides };
+  }
+}
+
+const { app } = require('electron').remote;
+
+function getAppMetadataOverrides(formStructure) {
+  const { id: identificationStatusFormKey } = formStructure.find(section => section.id.endsWith('dentification'));
+  const bundleProducerDefault = `${app.getName()}/${app.getVersion()}`;
+  const bundleProducer = { default: [bundleProducerDefault] };
+  return { [`/${identificationStatusFormKey}`]: { bundleProducer } };
+}
+
+function getUserMetadataOverrides(whoami) {
+  const archiveStatusFormKey = '/archiveStatus';
+  const { display_name: archivistName } = whoami;
+  const bundleCreatorName = archivistName;
+  return {
+    [archiveStatusFormKey]: {
+      archivistName: { default: [archivistName] },
+      bundleCreatorName: { default: [bundleCreatorName] }
+    }
+  };
+}
+
+function getIsDemoMode() {
+  return history.location.pathname.includes('/demo');
+}
+
 export function openEditMetadata(bundleId) {
   return async dispatch => {
     dispatch(request(bundleId));
-    const isDemoMode = history.location.pathname.includes('/demo');
+    const isDemoMode = getIsDemoMode();
     if (isDemoMode) {
       dispatchSuccess(bundleId);
       return;
@@ -141,7 +181,7 @@ export function openEditMetadata(bundleId) {
 
 export function closeEditMetadata(bundleId) {
   return async dispatch => {
-    const isDemoMode = history.location.pathname.includes('/demo');
+    const isDemoMode = getIsDemoMode();
     if (!isDemoMode) {
       bundleService.unlockCreateMode(bundleId);
     }

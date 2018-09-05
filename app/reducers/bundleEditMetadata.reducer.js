@@ -43,8 +43,7 @@ export function bundleEditMetadata(state = initialState, action) {
       };
     }
     case bundleEditMetadataConstants.CLOSE_EDIT_METADATA: {
-      const { metadataOverrides } = state;
-      return { ...initialState, metadataOverrides };
+      return initialState;
     }
     case bundleEditMetadataConstants.METADATA_FILE_SHOW_REQUEST: {
       return { ...state, requestingShowMetadataFile: true };
@@ -105,11 +104,8 @@ export function bundleEditMetadata(state = initialState, action) {
         activeFormDeleting: false
       };
     }
-    case userConstants.SET_METADATA_OVERRIDES: {
-      const { whoami } = action;
-      const appMetadataOverrides = getAppMetadataOverrides();
-      const userMetadataOverrides = getUserMetadataOverrides(whoami);
-      const metadataOverrides = { ...appMetadataOverrides, ...userMetadataOverrides };
+    case bundleEditMetadataConstants.SET_METADATA_OVERRIDES: {
+      const { metadataOverrides } = action;
       return {
         ...state,
         metadataOverrides
@@ -191,27 +187,6 @@ function getErrorTree(formFieldIssues) {
     {}
   );
   return errorTree;
-}
-
-const { app } = require('electron').remote;
-
-function getAppMetadataOverrides() {
-  const identificationStatusFormKey = '/identification';
-  const bundleProducerDefault = `${app.getName()}/${app.getVersion()}`;
-  const bundleProducer = { default: [bundleProducerDefault] };
-  return { [identificationStatusFormKey]: { bundleProducer } };
-}
-
-function getUserMetadataOverrides(whoami) {
-  const archiveStatusFormKey = '/archiveStatus';
-  const { display_name: archivistName } = whoami;
-  const bundleCreatorName = archivistName;
-  return {
-    [archiveStatusFormKey]: {
-      archivistName: { default: [archivistName] },
-      bundleCreatorName: { default: [bundleCreatorName] }
-    }
-  };
 }
 
 export default bundleEditMetadata;

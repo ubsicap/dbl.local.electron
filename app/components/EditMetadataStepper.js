@@ -20,7 +20,7 @@ import NavigateBefore from '@material-ui/icons/NavigateBefore';
 import Check from '@material-ui/icons/Check';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import classNames from 'classnames';
-import { fetchFormStructure, saveMetadataSuccess,
+import { fetchFormStructure, saveMetadataSuccess, setArchivistStatusOverrides,
   saveFieldValuesForActiveForm, fetchActiveFormInputs,
   promptConfirmDeleteInstanceForm, deleteInstanceForm } from '../actions/bundleEditMetadata.actions';
 import EditMetadataForm from './EditMetadataForm';
@@ -163,6 +163,7 @@ const makeMapStateToProps = () => {
 
 const mapDispatchToProps = {
   fetchFormStructure,
+  setArchivistStatusOverrides,
   saveMetadataSuccess,
   saveFieldValuesForActiveForm,
   fetchActiveFormInputs,
@@ -186,6 +187,7 @@ type Props = {
     fetchActiveFormInputs: () => {},
     promptConfirmDeleteInstanceForm: () => {},
     deleteInstanceForm: () => {},
+    setArchivistStatusOverrides: () => {},
     bundleId: string,
     formStructure: [],
     steps: [],
@@ -236,6 +238,7 @@ class _EditMetadataStepper extends React.Component<Props> {
 
   componentDidMount() {
     if (this.props.formStructure.length === 0 && this.props.myStructurePath.length === 0) {
+      this.props.setArchivistStatusOverrides(this.props.bundleId);
       this.props.fetchFormStructure(this.props.bundleId);
     }
   }
