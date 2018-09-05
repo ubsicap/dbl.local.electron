@@ -17,7 +17,7 @@ function getHasFormFieldsChanged(fields, activeFormEdits) {
   const allFieldValues = editableFields.reduce((acc, field) =>
     ({ ...acc, [field.name]: getValue(field, activeFormEdits) }), {});
   const originalFieldValues = editableFields.reduce((acc, field) =>
-    ({ ...acc, [field.name]: field.default }), {});
+    ({ ...acc, [field.name]: `${field.default}` }), {});
   const reallyChangedFields = Object.keys(allFieldValues)
     .filter(fieldKey => allFieldValues[fieldKey] !== originalFieldValues[fieldKey]);
   return reallyChangedFields.length !== 0;
@@ -26,7 +26,7 @@ function getHasFormFieldsChanged(fields, activeFormEdits) {
 function getValue(field, activeFormEdits) {
   const { [field.name]: stateValue } = activeFormEdits;
   if (stateValue === undefined || stateValue === null) {
-    return field.default;
+    return `${field.default}`;
   }
   return stateValue;
 }

@@ -180,7 +180,6 @@ function shouldDisableDelete(step) {
 
 type Props = {
     classes: {},
-    showSection: ?string,
     fetchFormStructure: () => {},
     saveMetadataSuccess: () => {},
     saveFieldValuesForActiveForm: () => {},
@@ -386,7 +385,7 @@ class _EditMetadataStepper extends React.Component<Props> {
     const { activeStepIndex } = this.state;
     const hasFormChanged = this.getHasFormChanged(stepIndex);
     const hasFieldContent = activeStepIndex === stepIndex ?
-      this.getActiveFormFields().some(f => f.default) : false;
+      this.getActiveFormFields().some(f => f.default && f.default.length) : false;
     const step = this.getStep(stepIndex);
     const { contains, isInstance = false, present } = step;
     // if form has errors but there are no changes, it's possible that
