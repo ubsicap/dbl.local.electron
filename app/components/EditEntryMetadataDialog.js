@@ -23,7 +23,7 @@ function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundles } = state;
   const { showMetadataFile } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
-  const { bundleId, section: showSection = 'identification' } = props.match.params;
+  const { bundleId, section: showSection } = props.match.params;
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
   const {
     requestingSaveMetadata = false,

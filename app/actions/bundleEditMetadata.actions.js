@@ -273,11 +273,11 @@ export function saveMetadata({
     const forceSaveState = !moveNext ? bundleEditMetadata.forceSave : forceSave;
     const fields = Object.keys(fieldNameValues).reduce((acc, name) => {
       const fieldNameInfo = fieldNameValues[name];
-      const { value: newFieldValue, type: fieldType } = fieldNameInfo;
+      const { values: newFieldValues, type: fieldType } = fieldNameInfo;
       const type = fieldType === 'xml' ? fieldType : 'values';
-      const normalized = newFieldValue.replace(/(\r\n\t|\n|\r\t)/gm, '').trim();
+      const normalizedValues = newFieldValues.map(fieldValue => fieldValue.replace(/(\r\n\t|\n|\r\t)/gm, '').trim());
       const valueObj = type === 'xml' ?
-        { text: normalized } : { valueList: [normalized] };
+        { text: `${normalizedValues}` } : { valueList: normalizedValues };
       return [...acc, { type, name, ...valueObj }];
     }, []);
     dispatch(saveMetadataRequest({

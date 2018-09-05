@@ -198,7 +198,7 @@ const { app } = require('electron').remote;
 function getAppMetadataOverrides() {
   const identificationStatusFormKey = '/identification';
   const bundleProducerDefault = `${app.getName()}/${app.getVersion()}`;
-  const bundleProducer = { default: bundleProducerDefault };
+  const bundleProducer = { default: [bundleProducerDefault] };
   return { [identificationStatusFormKey]: { bundleProducer } };
 }
 
@@ -208,8 +208,8 @@ function getUserMetadataOverrides(whoami) {
   const bundleCreatorName = archivistName;
   return {
     [archiveStatusFormKey]: {
-      archivistName: { default: archivistName },
-      bundleCreatorName: { default: bundleCreatorName }
+      archivistName: { default: [archivistName] },
+      bundleCreatorName: { default: [bundleCreatorName] }
     }
   };
 }

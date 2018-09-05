@@ -116,7 +116,8 @@ class EditMetadataForm extends React.PureComponent<Props> {
 
   getValue = (field) => {
     const { activeFormEdits } = this.props;
-    return editMetadataService.getValue(field, activeFormEdits);
+    const fieldValues = editMetadataService.getFieldValues(field, activeFormEdits);
+    return `${fieldValues}`;
   }
 
   getIsDisabled = (field) => {

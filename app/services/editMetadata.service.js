@@ -1,6 +1,6 @@
 const editMetadataService = {
   getHasFormFieldsChanged,
-  getValue,
+  getFieldValues,
   getFormFieldValues,
   getKeyField,
   getIsRequired,
@@ -15,7 +15,7 @@ function getHasFormFieldsChanged(fields, activeFormEdits) {
   }
   const editableFields = fields.filter(field => field.name);
   const allFieldValues = editableFields.reduce((acc, field) =>
-    ({ ...acc, [field.name]: getValue(field, activeFormEdits) }), {});
+    ({ ...acc, [field.name]: `${getFieldValues(field, activeFormEdits)}` }), {});
   const originalFieldValues = editableFields.reduce((acc, field) =>
     ({ ...acc, [field.name]: `${field.default}` }), {});
   const reallyChangedFields = Object.keys(allFieldValues)
@@ -23,16 +23,16 @@ function getHasFormFieldsChanged(fields, activeFormEdits) {
   return reallyChangedFields.length !== 0;
 }
 
-function getValue(field, activeFormEdits) {
+function getFieldValues(field, activeFormEdits) {
   const { [field.name]: stateValue } = activeFormEdits;
   if (stateValue === undefined || stateValue === null) {
-    return `${field.default}`;
+    return field.default;
   }
-  return stateValue;
+  return Array.isArray(stateValue) ? stateValue : [stateValue];
 }
 
 function getIsRequired(field) {
-  return field.nValues !== '?' || field.type === 'key';
+  return !['?', '*'].includes(field.nValues) || field.type === 'key';
 }
 
 function getFormFieldValues(bundleId, formKey, fields, activeFormEdits) {
@@ -40,11 +40,11 @@ function getFormFieldValues(bundleId, formKey, fields, activeFormEdits) {
   const keyField = getKeyField(fields);
   const fieldValues = fields.filter(field => field.name && field !== keyField)
     .reduce((acc, field) => {
-      const value = getValue(field, activeFormEdits);
+      const values = getFieldValues(field, activeFormEdits);
       const isRequired = getIsRequired(field);
-      if (isRequired || value.length > 0) {
+      if (isRequired || (values.length > 0 && `${values}`)) {
         const { type } = field;
-        return { ...acc, [field.name]: { type, value } };
+        return { ...acc, [field.name]: { type, values } };
       }
       return acc;
     }, {});
