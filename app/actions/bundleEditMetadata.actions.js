@@ -89,6 +89,11 @@ export function editActiveFormInput(formKey, inputName, newValue) {
 export function openEditMetadata(bundleId) {
   return async dispatch => {
     dispatch(request(bundleId));
+    const isDemoMode = history.location.pathname.includes('/demo');
+    if (isDemoMode) {
+      dispatchSuccess(bundleId);
+      return;
+    }
     const bundleInfo = await bundleService.fetchById(bundleId);
     if (bundleInfo.mode === 'create') {
       dispatchSuccess(bundleId);
@@ -136,7 +141,10 @@ export function openEditMetadata(bundleId) {
 
 export function closeEditMetadata(bundleId) {
   return async dispatch => {
-    bundleService.unlockCreateMode(bundleId);
+    const isDemoMode = history.location.pathname.includes('/demo');
+    if (!isDemoMode) {
+      bundleService.unlockCreateMode(bundleId);
+    }
     // ideally we'd wait for change mode to 'store' to complete
     dispatch({ type: bundleEditMetadataConstants.CLOSE_EDIT_METADATA, bundleId });
     await utilities.sleep(1);
@@ -673,7 +681,7 @@ function getMockStructure() {
 
 function getMockFormInputs() {
   const mockFormInputs = {
-    id: 'bfaa79fd-2c60-41e0-9599-3b77bbf7042e',
+    id: 'e9257364-21f5-4678-a6ce-fc07ef9b11e3',
     category: 'information',
     fields: [
       {
@@ -687,8 +695,10 @@ function getMockFormInputs() {
         type: 'string',
         label: 'Name',
         help: "The entry's name, in English",
-        default: 'DBL Unit Test Gospels',
-        regex: '\\S.*\\S'
+        regex: '\\S.*\\S',
+        default: [
+          'TEST Audio Bundles'
+        ]
       },
       {
         name: 'nameLocal',
@@ -696,17 +706,21 @@ function getMockFormInputs() {
         type: 'string',
         label: 'Local Name',
         help: "The entry's localized name",
-        default: '',
-        regex: '\\S.*\\S'
+        regex: '\\S.*\\S',
+        default: [
+          'TEST Audio Bible - Local'
+        ]
       },
       {
         name: 'abbreviation',
-        nValues: '1',
+        nValues: '?',
         type: 'string',
         label: 'Abbreviation',
-        help: "The entry's abbreviation, in English (no exotic characters)",
-        default: 'DBLUTG',
-        regex: '[\\-A-Za-z0-9]{2,12}'
+        help: "The entry's abbreviation, in English (no exotic characters). This is not required for non-text media, but is strongly recommended.",
+        regex: '[\\-A-Za-z0-9]{2,12}',
+        default: [
+          'DBLTD'
+        ]
       },
       {
         name: 'abbreviationLocal',
@@ -714,8 +728,10 @@ function getMockFormInputs() {
         type: 'string',
         label: 'Local Abbreviation',
         help: "The entry's localized abbreviation",
-        default: '',
-        regex: '\\S.{0,10}\\S'
+        regex: '\\S.{0,10}\\S',
+        default: [
+          ''
+        ]
       },
       {
         name: 'description',
@@ -723,8 +739,10 @@ function getMockFormInputs() {
         type: 'string',
         label: 'Description',
         help: "The entry's description, in English",
-        default: 'English: DBL Unit Test Version with Gospels Only',
-        regex: '\\S.*\\S'
+        regex: '\\S.*\\S',
+        default: [
+          'TEST Audio Bible - Description'
+        ]
       },
       {
         name: 'descriptionLocal',
@@ -732,8 +750,10 @@ function getMockFormInputs() {
         type: 'string',
         label: 'Local Description',
         help: "The entry's localized description",
-        default: '',
-        regex: '\\S.*\\S'
+        regex: '\\S.*\\S',
+        default: [
+          ''
+        ]
       },
       {
         name: 'scope',
@@ -741,7 +761,9 @@ function getMockFormInputs() {
         type: 'string',
         label: 'Scope',
         help: "The entry's scope (across all publications)",
-        default: 'Portions',
+        default: [
+          'New Testament'
+        ],
         options: [
           'Bible',
           'Bible with Deuterocanon',
@@ -761,8 +783,21 @@ function getMockFormInputs() {
         type: 'string',
         label: 'Completion Date',
         help: 'The date on which this entry was completed',
-        default: '2017-12-01',
-        regex: '[12]\\d{3}(-[01]\\d(-[0-3]\\d(T[012]\\d:[0-5]\\d:[0-5]\\d)?)?)?'
+        regex: '[12]\\d{3}(-[01]\\d(-[0-3]\\d(T[012]\\d:[0-5]\\d:[0-5]\\d)?)?)?',
+        default: [
+          ''
+        ]
+      },
+      {
+        name: 'bundleProducer',
+        nValues: '1',
+        type: 'string',
+        label: 'Bundle Producer',
+        help: 'The client and client version that produced this bundle',
+        regex: '\\S.*\\S',
+        default: [
+          'nathanael/0.9.0'
+        ]
       }
     ]
   };
