@@ -206,6 +206,7 @@
     "history": "^4.7.2",
     "jquery": "^3.3.1",
     "material-ui": "^0.20.0",
+    "material-ui-superselectfield": "^1.9.8",
     "md5-file": "^4.0.0",
     "mui-table": "^2.1.4",
     "popper.js": "^1.14.2",

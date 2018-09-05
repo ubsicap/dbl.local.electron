@@ -4,7 +4,8 @@ const editMetadataService = {
   getFormFieldValues,
   getKeyField,
   getIsRequired,
-  getFormInputsWithOverrides
+  getFormInputsWithOverrides,
+  getIsMulti
 };
 
 export default editMetadataService;
@@ -33,6 +34,10 @@ function getFieldValues(field, activeFormEdits) {
 
 function getIsRequired(field) {
   return !['?', '*'].includes(field.nValues) || field.type === 'key';
+}
+
+function getIsMulti(field) {
+  return ['+', '*'].includes(field.nValues);
 }
 
 function getFormFieldValues(bundleId, formKey, fields, activeFormEdits) {

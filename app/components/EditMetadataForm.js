@@ -4,6 +4,7 @@ import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
 import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
+import SuperSelectField from 'material-ui-superselectfield/es';
 import {
   saveMetadata, fetchActiveFormInputs, editActiveFormInput,
   reloadFieldValues
@@ -137,47 +138,55 @@ class EditMetadataForm extends React.PureComponent<Props> {
   hasError = (field) => getHasError(this.getErrorInField(field));
   helperOrErrorText = (field) => formatError(this.getErrorInField(field)) || field.help;
 
+  renderTextOrSelectField = (formKey, field, classes) => {
+    if (editMetadataService.getIsMulti(field)) {
+      return (null);
+    }
+    return (
+      <TextField
+        key={`${formKey}/${field.name}`}
+        id={`${formKey}/${field.name}`}
+        label={field.label}
+        className={field.type === 'xml' ? classes.xmlField : classes.textField}
+        select={Boolean(field.options) || (field.type === 'boolean')}
+        multiline
+        error={this.hasError(field)}
+        /* fullWidth={field.type === 'xml'} */
+        /* defaultValue={field.default} */
+        value={this.getValue(field)}
+        /* placeholder="Placeholder" */
+        /* autoComplete={field.default} */
+        helperText={this.helperOrErrorText(field)}
+        required={editMetadataService.getIsRequired(field)}
+        disabled={this.getIsDisabled(field)}
+        onChange={this.handleChange(field.name)}
+        SelectProps={{
+          MenuProps: {
+            className: classes.menu,
+          },
+        }}
+        margin="normal"
+      >
+        { (field.options && field.options.map(option => (
+          <MenuItem key={`${formKey}/${field.name}/${option}`} value={option}>
+            {option}
+          </MenuItem>
+        ))) ||
+        (field.type === 'boolean' &&
+          [<MenuItem key={`${formKey}/${field.name}/${true}`} value="true">true</MenuItem>,
+            <MenuItem key={`${formKey}/${field.name}/${false}`} value="false">false</MenuItem>]
+        )
+        }
+      </TextField>);
+  }
+
   render() {
     const { classes, inputs, formKey } = this.props;
     const { fields = [] } = inputs;
     return (
       <form className={classes.container} noValidate>
-        {fields.filter(field => field.name).map(field => (
-          <TextField
-            key={`${formKey}/${field.name}`}
-            id={`${formKey}/${field.name}`}
-            label={field.label}
-            className={field.type === 'xml' ? classes.xmlField : classes.textField}
-            select={Boolean(field.options) || (field.type === 'boolean')}
-            multiline
-            error={this.hasError(field)}
-            /* fullWidth={field.type === 'xml'} */
-            /* defaultValue={field.default} */
-            value={this.getValue(field)}
-            /* placeholder="Placeholder" */
-            /* autoComplete={field.default} */
-            helperText={this.helperOrErrorText(field)}
-            required={editMetadataService.getIsRequired(field)}
-            disabled={this.getIsDisabled(field)}
-            onChange={this.handleChange(field.name)}
-            SelectProps={{
-              MenuProps: {
-                className: classes.menu,
-              },
-            }}
-            margin="normal"
-          >
-            { (field.options && field.options.map(option => (
-              <MenuItem key={`${formKey}/${field.name}/${option}`} value={option}>
-                {option}
-              </MenuItem>
-            ))) ||
-            (field.type === 'boolean' &&
-              [<MenuItem key={`${formKey}/${field.name}/${true}`} value="true">true</MenuItem>,
-                <MenuItem key={`${formKey}/${field.name}/${false}`} value="false">false</MenuItem>]
-            )
-            }
-          </TextField>))
+        {fields.filter(field => field.name).map(field =>
+          this.renderTextOrSelectField(formKey, field, classes))
         }
       </form>
     );
