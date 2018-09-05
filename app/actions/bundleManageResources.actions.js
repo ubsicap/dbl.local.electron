@@ -147,7 +147,7 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
         const { publicationsHealth } = bundleManageResources;
         const { publications } = publicationsHealth;
         for (const pubId of publications) {
-          const wizardTestResults = await bundleService.testPublicationWizards();
+          const wizardTestResults = await bundleService.testPublicationWizards(_bundleId, pubId);
           const bestWizard = wizardTestResults.reduce(
             (acc, r) => (r.hits.length > acc.hits.length ? r : acc),
             { hits: [], misses: [] }
