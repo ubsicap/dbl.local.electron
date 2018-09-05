@@ -50,6 +50,7 @@ type Props = {
   classes: {},
   numSelected: number,
   handleAddByFile: ?() => {},
+  handleAddByFolder: ?() => {},
   getSuggestions: ?() => {},
   onAutosuggestInputChanged: ?() => {}
 };
@@ -72,6 +73,11 @@ class EnhancedTableToolbar extends Component<Props> {
     this.handleCloseMenu();
     this.props.handleAddByFile();
   };
+
+  handleAddByFolderInternal = () => {
+    this.handleCloseMenu();
+    this.props.handleAddByFolder();
+  }
 
   render() {
     const { numSelected, classes, handleAddByFile } = this.props;
@@ -124,7 +130,7 @@ class EnhancedTableToolbar extends Component<Props> {
                 onClose={this.handleCloseMenu}
               >
                 <MenuItem onClick={this.handleAddByFileInternal}>by File</MenuItem>
-                <MenuItem onClick={this.handleAddByFolder}>by Folder</MenuItem>
+                <MenuItem onClick={this.handleAddByFolderInternal}>by Folder</MenuItem>
               </Menu>
             </div>
           ) : null

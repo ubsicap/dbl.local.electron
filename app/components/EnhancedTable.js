@@ -34,6 +34,7 @@ type Props = {
   secondarySorts: [],
   selectAll: boolean,
   handleAddByFile: ?() => {},
+  handleAddByFolder: ?() => {},
   getSuggestions: ?() => {},
   onSelectedRowIds: () => {},
   onAutosuggestInputChanged: ?() => {}
@@ -193,6 +194,7 @@ class EnhancedTable extends Component<Props> {
         <EnhancedTableToolbar
           numSelected={selectedRowIds.length}
           handleAddByFile={this.props.handleAddByFile}
+          handleAddByFolder={this.props.handleAddByFolder}
           getSuggestions={this.props.getSuggestions}
           onAutosuggestInputChanged={this.props.onAutosuggestInputChanged}
         />

@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import fs from 'fs-extra';
 import sort from 'fast-sort';
 import md5File from 'md5-file/promise';
+import recursiveReadDir from 'recursive-readdir';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
@@ -320,9 +321,17 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.setState({ addedFilePaths, selectedIds }, this.updateTotalResources(newAddedFilePaths));
   };
 
-  handleAddByFolder = () => {
-    const filePaths = dialog.showOpenDialog({ properties: ['openFile', 'openDirectory', 'multiSelections'] });
-    console.log(filePaths);
+  handleAddByFolder = async () => {
+    const folderPaths = dialog.showOpenDialog({ properties: ['openFile', 'openDirectory', 'multiSelections'] });
+    console.log(folderPaths);
+    if (!folderPaths) {
+      return;
+    }
+    const parentDir = path.resolve(folderPaths[0], '..');
+    const readAllDirs = folderPaths.map(folder => recursiveReadDir(folder).then(results => ({ folder, paths: results.map(filePath => filePath.substr(parentDir.length)) })));
+    const allFilePaths = await Promise.all(readAllDirs);
+    const flattenedFilePaths = allFilePaths.reduce((acc, info) => [...acc, ...info.paths], []);
+    console.log(flattenedFilePaths);
   };
 
   updateTotalResources = (newAddedFilePaths) => () => {
@@ -370,6 +379,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   getHandleAddByFile = () => (
     (this.isAddFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFile : null
+  )
+
+  getHandleAddByFolder = () => (
+    (this.isAddFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFolder : null
   )
 
   getAllSuggestions = (totalResources) => {
@@ -482,6 +495,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             onSelectedRowIds={this.onSelectedIds}
             selectAll={selectAll}
             handleAddByFile={this.getHandleAddByFile()}
+            handleAddByFolder={this.getHandleAddByFolder()}
             getSuggestions={this.getSuggestions}
             onAutosuggestInputChanged={this.handleAutosuggestInputChanged}
           />
