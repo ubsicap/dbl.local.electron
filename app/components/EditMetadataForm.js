@@ -109,16 +109,23 @@ class EditMetadataForm extends React.PureComponent<Props> {
     this.props.editActiveFormInput(formKey, name, event.target.value);
   };
 
+  handleChangeMulti = (selectedValues, name) => {
+    const { formKey } = this.props;
+    this.props.editActiveFormInput(formKey, name, selectedValues.map(selected => selected.value));
+  };
+
   getErrorInField = (field) => {
     const { formErrors } = this.props;
     const { [field.name]: errorInField = {} } = formErrors;
     return errorInField;
   };
 
-  getValue = (field) => {
+  getValue = (field) => `${this.getMultiValues(field)}`
+
+  getMultiValues = (field) => {
     const { activeFormEdits } = this.props;
     const fieldValues = editMetadataService.getFieldValues(field, activeFormEdits);
-    return `${fieldValues}`;
+    return fieldValues;
   }
 
   getIsDisabled = (field) => {
@@ -139,13 +146,37 @@ class EditMetadataForm extends React.PureComponent<Props> {
   helperOrErrorText = (field) => formatError(this.getErrorInField(field)) || field.help;
 
   renderTextOrSelectField = (formKey, field, classes) => {
+    const id = `${formKey}/${field.name}`;
+    const helperText = this.helperOrErrorText(field);
     if (editMetadataService.getIsMulti(field)) {
-      return (null);
+      const value = this.getMultiValues(field).map(val => ({ value: val }));
+      const options = (field.options && field.options.map(option => (
+        <div key={`${formKey}/${field.name}/${option}`} value={option} >
+          {option}
+        </div>
+      )));
+      return (
+        <SuperSelectField
+          key={id}
+          id={id}
+          name={field.name}
+          multiple
+          floatingLabel={field.label}
+          hintText={helperText}
+          onChange={this.handleChangeMulti}
+          value={value}
+          /* elementHeight={58} */
+          /* selectionsRenderer={this.handleCustomDisplaySelections('state31')} */
+          style={{ width: 300, marginTop: 20, marginRight: 40 }}
+        >
+          {options}
+        </SuperSelectField>
+      );
     }
     return (
       <TextField
-        key={`${formKey}/${field.name}`}
-        id={`${formKey}/${field.name}`}
+        key={id}
+        id={id}
         label={field.label}
         className={field.type === 'xml' ? classes.xmlField : classes.textField}
         select={Boolean(field.options) || (field.type === 'boolean')}
@@ -156,7 +187,7 @@ class EditMetadataForm extends React.PureComponent<Props> {
         value={this.getValue(field)}
         /* placeholder="Placeholder" */
         /* autoComplete={field.default} */
-        helperText={this.helperOrErrorText(field)}
+        helperText={helperText}
         required={editMetadataService.getIsRequired(field)}
         disabled={this.getIsDisabled(field)}
         onChange={this.handleChange(field.name)}
@@ -168,7 +199,7 @@ class EditMetadataForm extends React.PureComponent<Props> {
         margin="normal"
       >
         { (field.options && field.options.map(option => (
-          <MenuItem key={`${formKey}/${field.name}/${option}`} value={option}>
+          <MenuItem key={`${formKey}/${field.name}/${option}`} value={option} >
             {option}
           </MenuItem>
         ))) ||
