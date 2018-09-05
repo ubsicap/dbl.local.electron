@@ -26,7 +26,7 @@ function getHasFormFieldsChanged(fields, activeFormEdits) {
 function getFieldValues(field, activeFormEdits) {
   const { [field.name]: stateValue } = activeFormEdits;
   if (stateValue === undefined || stateValue === null) {
-    return field.default;
+    return field.default || [''];
   }
   return Array.isArray(stateValue) ? stateValue : [stateValue];
 }
