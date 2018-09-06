@@ -155,8 +155,7 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
           const { wizard, uri } = bestWizard;
           await bundleService.runPublicationWizard(_bundleId, pubId, wizard, uri);
         }
-      } catch (errorReadable) {
-        const error = await errorReadable.text();
+      } catch (error) {
         dispatch(failure(_bundleId, error));
       }
     }

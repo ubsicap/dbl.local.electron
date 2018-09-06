@@ -233,14 +233,6 @@ function handlePostFormResponse(response) {
   return response.text();
 }
 
-function handleTextResponse(response) {
-  if (!response.ok) {
-    return Promise.reject(response.statusText);
-  }
-
-  return response.text();
-}
-
 function getManifestResourcePaths(bundleId) {
   const requestOptions = {
     method: 'GET',
@@ -416,20 +408,15 @@ function stopCreateContent(bundleId, mode = 'success') {
 }
 
 function postResource(bundleId, filePath, bundlePath) {
-  // const form = new FormData();
-  // form.append('content', fs.createReadStream(filePath));
-  // const contentStream = fs.createReadStream(filePath);
-  // const content = fs.readFileSync(filePath);
   const filename = path.basename(filePath);
   const uri = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/resource/${bundlePath}`;
   const options = {
     method: 'POST',
     uri,
     formData: {
-      // Like <input type="text" name="name">
+      // Like <input type="file" name="content">
       name: filename,
-      // Like <input type="file" name="file">
-      file: {
+      content: {
         value: fs.createReadStream(filePath),
         options: {
           filename
@@ -438,10 +425,10 @@ function postResource(bundleId, filePath, bundlePath) {
     },
     headers: {
       ...authHeader()
-      /* 'content-type': 'application/x-www-form-urlencoded' */ // Is set automatically
+      /* 'content-type': 'multipart/form-data' */ // Is set automatically
     }
   };
-  return rp(options).then(handlePostFormResponse);
+  return rp(options);
 }
 
 function updateManifestResource(bundleId, bundlePath) {
