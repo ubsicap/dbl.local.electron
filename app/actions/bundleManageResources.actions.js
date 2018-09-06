@@ -142,7 +142,7 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
         await bundleService.postResource(_bundleId, filePath, containerPath);
         await bundleService.updateManifestResource(_bundleId, containerPath);
         dispatch(success(_bundleId, filePath, containerPath));
-        await utilities.sleep(500);
+        // await utilities.sleep(500); // avoid hang?
         const { bundleManageResources } = getState();
         const { publicationsHealth } = bundleManageResources;
         const { publications } = publicationsHealth;
