@@ -201,8 +201,13 @@ const materialStyles = theme => ({
     left: 'auto',
     position: 'sticky',
   },
-  progress: {
-    margin: theme.spacing.unit * 2,
+  buttonProgress: {
+    color: theme.palette.secondary.main,
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    marginTop: -12,
+    marginLeft: -12,
   },
 });
 
@@ -482,7 +487,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                 {modeUi.appBar.OkButtonLabel}
                 {loading &&
                 <CircularProgress
-                  className={classes.progress}
+                  className={classes.buttonProgress}
                   size={50}
                   color="secondary"
                   variant="determinate"
