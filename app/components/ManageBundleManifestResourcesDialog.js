@@ -231,6 +231,15 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
   }
 
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.progress !== this.props.progress) {
+      const { bundleId } = this.props;
+      this.props.getManifestResources(bundleId);
+    }
+    if (nextProps.manifestResources.length !== this.props.manifestResources) {
+      this.setState({ totalResources: nextProps.manifestResources });
+    }
+  }
 
   componentDidUpdate(prevProps) {
     if (this.props.showMetadataFile && !prevProps.showMetadataFile) {
