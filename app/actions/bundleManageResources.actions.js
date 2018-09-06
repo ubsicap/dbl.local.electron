@@ -24,7 +24,7 @@ function buildBundleArgUrl(routeUrl, args) {
 export function openResourceManager(_bundleId, _mode = 'download') {
   return async dispatch => {
     const isInCreateMode = await bundleService.bundleIsInCreateMode(_bundleId);
-    if (!isInCreateMode) {
+    if (!isInCreateMode && _mode !== 'download') {
       await bundleService.startCreateContent(_bundleId);
     }
     dispatch(navigate(_bundleId, _mode));
