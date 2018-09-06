@@ -1,9 +1,8 @@
 import fs from 'fs-extra';
 import path from 'path';
-// import FormData from 'form-data'
+import rp from 'request-promise-native';
 import uuidv1 from 'uuid/v1';
 import { authHeader } from '../helpers';
-import { utilities } from '../utils/utilities';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 import download from './download-with-fetch.flow';
 
@@ -420,14 +419,29 @@ function postResource(bundleId, filePath, bundlePath) {
   // const form = new FormData();
   // form.append('content', fs.createReadStream(filePath));
   // const contentStream = fs.createReadStream(filePath);
-  const content = fs.readFileSync(filePath, 'utf8');
-  const requestOptions = {
+  // const content = fs.readFileSync(filePath);
+  const filename = path.basename(filePath);
+  const uri = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/resource/${bundlePath}`;
+  const options = {
     method: 'POST',
-    headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `content=${content}`
+    uri,
+    formData: {
+      // Like <input type="text" name="name">
+      name: filename,
+      // Like <input type="file" name="file">
+      file: {
+        value: fs.createReadStream(filePath),
+        options: {
+          filename
+        }
+      }
+    },
+    headers: {
+      ...authHeader()
+      /* 'content-type': 'application/x-www-form-urlencoded' */ // Is set automatically
+    }
   };
-  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/resource/${bundlePath}`;
-  return fetch(url, requestOptions).then(handlePostFormResponse);
+  return rp(options).then(handlePostFormResponse);
 }
 
 function updateManifestResource(bundleId, bundlePath) {
