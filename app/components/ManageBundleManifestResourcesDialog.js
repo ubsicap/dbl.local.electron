@@ -3,6 +3,7 @@ import fs from 'fs-extra';
 import sort from 'fast-sort';
 import md5File from 'md5-file/promise';
 import recursiveReadDir from 'recursive-readdir';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
@@ -38,6 +39,8 @@ const NEED_CONTAINER = '/?';
 type Props = {
   classes: {},
   open: boolean,
+  loading: boolean,
+  progress: number,
   bundleId: ?string,
   selectedBundle: {},
   mode: string,
@@ -129,9 +132,11 @@ const makeGetManifestResourcesData = () => createSelector(
 
 function mapStateToProps(state, props) {
   const { bundles, bundleEditMetadata, bundleManageResources } = state;
-  const { publicationsHealth } = bundleManageResources;
-  const { errorMessage: publicationsHealthMessage,
-    navigation: publicationsHealthMessageLink } = publicationsHealth || {};
+  const { publicationsHealth, progress = 100, loading = false } = bundleManageResources;
+  const {
+    errorMessage: publicationsHealthMessage,
+    navigation: publicationsHealthMessageLink
+  } = publicationsHealth || {};
   const { bundleId, mode } = props.match.params;
   const { showMetadataFile } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
@@ -140,6 +145,8 @@ function mapStateToProps(state, props) {
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
   return {
     open: Boolean(bundleId),
+    loading,
+    progress,
     bundleId,
     selectedBundle,
     mode,
@@ -193,7 +200,10 @@ const materialStyles = theme => ({
     bottom: 20,
     left: 'auto',
     position: 'sticky',
-  }
+  },
+  progress: {
+    margin: theme.spacing.unit * 2,
+  },
 });
 
 function mapSuggestions(suggestions) {
@@ -270,8 +280,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   shouldDisableAddFiles = () => {
     const { selectedIds = [] } = this.state;
-    const { isOkToAddFiles = false } = this.props;
-    return selectedIds.length === 0 || !isOkToAddFiles || this.hasAnySelectedUnassignedContainers();
+    const { isOkToAddFiles = false, loading = false } = this.props;
+    return loading ||
+      selectedIds.length === 0 || !isOkToAddFiles || this.hasAnySelectedUnassignedContainers();
   }
 
   getUpdatedTotalResources(filePath, update) {
@@ -442,7 +453,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   render() {
     const {
       classes, open, selectedBundle = {}, columnConfig, manifestResources,
-      publicationsHealthMessage = ''
+      publicationsHealthMessage = '', loading, progress
     } = this.props;
     const { selectAll, totalResources = manifestResources } = this.state;
     const { displayAs = {} } = selectedBundle;
@@ -469,6 +480,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               >
                 {modeUi.appBar.OkButtonIcon}
                 {modeUi.appBar.OkButtonLabel}
+                {loading &&
+                <CircularProgress
+                  className={classes.progress}
+                  size={50}
+                  color="secondary"
+                  variant="determinate"
+                  value={progress}
+                />}
               </Button>
             </Toolbar>
           </AppBar>

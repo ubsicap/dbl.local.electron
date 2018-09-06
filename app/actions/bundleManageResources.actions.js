@@ -3,7 +3,6 @@ import { bundleResourceManagerConstants } from '../constants/bundleResourceManag
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
 import { bundleService } from '../services/bundle.service';
-import { utilities } from '../utils/utilities';
 
 export const bundleManageResourceActions = {
   openResourceManager,
@@ -141,7 +140,6 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
       try {
         await bundleService.postResource(_bundleId, filePath, containerPath);
         await bundleService.updateManifestResource(_bundleId, containerPath);
-        dispatch(success(_bundleId, filePath, containerPath));
         // await utilities.sleep(500); // avoid hang?
         const { bundleManageResources } = getState();
         const { publicationsHealth } = bundleManageResources;
@@ -155,6 +153,7 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
           const { wizard, uri } = bestWizard;
           await bundleService.runPublicationWizard(_bundleId, pubId, wizard, uri);
         }
+        dispatch(success(_bundleId, filePath, containerPath));
       } catch (error) {
         dispatch(failure(_bundleId, error));
       }
