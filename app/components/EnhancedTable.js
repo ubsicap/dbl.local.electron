@@ -58,13 +58,19 @@ class EnhancedTable extends Component<Props> {
   state = {
     order: 'asc',
     orderBy: this.props.defaultOrderBy || this.props.columnConfig[0].name,
-    selectedRowIds: this.props.selectAll ? getAllSelectableRowIds(this.props.data) : []
+    selectedRowIds: []
   };
 
   componentWillReceiveProps(nextProps) {
     // You don't have to do this check first, but it can help prevent an unneeded render
-    if (nextProps.selectAll && nextProps.selectAll !== this.state.selectAll) {
-      this.setState({ selectedRowIds: getAllSelectableRowIds(nextProps.data) });
+    if (nextProps.selectAll && nextProps.data.length &&
+      (this.props.data !== nextProps.data ||
+      this.state.selectedRowIds.length === 0 ||
+      nextProps.selectAll !== this.props.selectAll)) {
+      this.setState(
+        { selectedRowIds: getAllSelectableRowIds(nextProps.data) },
+        this.reportSelectedRowIds
+      );
     }
   }
 
