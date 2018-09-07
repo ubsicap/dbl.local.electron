@@ -198,14 +198,6 @@ const materialStyles = theme => ({
   input: {
     display: 'none',
   },
-  fab: {
-    margin: 0,
-    top: 'auto',
-    right: 20,
-    bottom: 20,
-    left: 'auto',
-    position: 'sticky',
-  },
   buttonProgress: {
     color: theme.palette.secondary.main,
     position: 'absolute',

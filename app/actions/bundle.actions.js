@@ -6,6 +6,7 @@ import { updateSearchResultsForBundleId } from '../actions/bundleFilter.actions'
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
+import { dblDotLocalService } from '../services/dbl_dot_local.service';
 
 export const bundleActions = {
   fetchAll,
@@ -60,27 +61,28 @@ function updateUploadJobs(bundleId, uploadJob, removeJobOrBundle) {
 }
 
 export function fetchAll() {
-  return dispatch => {
+  return async dispatch => {
     dispatch(request());
     const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO;
     if (isDemoMode) {
       const mockBundles = getMockBundles();
       dispatch(success(mockBundles));
     } else {
-      return bundleService
-        .fetchAll()
-        .then(
-          bundles => dispatch(success(bundles)),
-          error => dispatch(failure(error))
-        );
+      try {
+        const newMediaTypes = await dblDotLocalService.newBundleMedia();
+        const bundles = await bundleService.fetchAll();
+        dispatch(success(bundles, newMediaTypes));
+      } catch (error) {
+        dispatch(failure(error));
+      }
     }
   };
 
   function request() {
     return { type: bundleConstants.FETCH_REQUEST };
   }
-  function success(bundles) {
-    return { type: bundleConstants.FETCH_SUCCESS, bundles };
+  function success(bundles, newMediaTypes) {
+    return { type: bundleConstants.FETCH_SUCCESS, bundles, newMediaTypes };
   }
   function failure(error) {
     return { type: bundleConstants.FETCH_FAILURE, error };

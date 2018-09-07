@@ -62,7 +62,8 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
         loading: true
       };
     case bundleConstants.FETCH_SUCCESS: {
-      const allBundles = action.bundles.map(bundle => addBundleDecorators(bundle));
+      const { bundles: bundlesRaw, newMediaTypes = [] } = action;
+      const allBundles = bundlesRaw.map(bundle => addBundleDecorators(bundle));
       const { items, addedByBundleIds } = sortAndFilterBundlesAsEntries(allBundles);
       const uploadJobs = items.filter(b => b.uploadJob).reduce((acc, b) =>
         ({ ...acc, [b.id]: b.uploadJob, [b.uploadJob]: b.id }), {});
@@ -73,6 +74,7 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
         addedByBundleIds,
         uploadJobs,
         loading: false,
+        newMediaTypes
       };
     }
     case bundleConstants.FETCH_FAILURE:

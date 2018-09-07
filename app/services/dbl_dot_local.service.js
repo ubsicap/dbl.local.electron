@@ -3,11 +3,14 @@ import path from 'path';
 import childProcess from 'child_process';
 import log from 'electron-log';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
+import { authHeader } from '../helpers';
 
 export const dblDotLocalService = {
   health,
   htmlBaseUrl,
   newBundleMedia,
+  sessionAddTasks,
+  createNewBundle,
   ensureDblDotLocal,
   getDblDotLocalConfigFilePath,
   importConfigXml,
@@ -16,6 +19,7 @@ export const dblDotLocalService = {
 export default dblDotLocalService;
 
 const UX_API = 'ux';
+const SESSION_API = 'session';
 
 function health(method = 'GET') {
   const requestOptions = {
@@ -45,10 +49,29 @@ async function newBundleMedia() {
   };
   try {
     const response = await fetch(`${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${UX_API}/new-bundle-media`, requestOptions);
-    return handlResponseAsReadable(response);
+    return handlResponseAsReadable(response).json();
   } catch (error) {
     return handlResponseAsReadable(error);
   }
+}
+
+async function sessionAddTasks(innerTasks) {
+  const requestOptions = {
+    method: 'POST',
+    headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `xml=<tasks> ${encodeURIComponent(innerTasks)} </tasks>`
+  };
+  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${SESSION_API}/add-tasks`;
+  try {
+    const response = await fetch(url, requestOptions);
+    return handlResponseAsReadable(response).json();
+  } catch (error) {
+    return handlResponseAsReadable(error);
+  }
+}
+
+function createNewBundle(medium) {
+  return sessionAddTasks(`<createNewBundle><medium>${medium}</medium></createNewBundle>`);
 }
 
 function handlResponseAsReadable(response) {
