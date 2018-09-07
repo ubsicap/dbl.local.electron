@@ -289,8 +289,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   shouldDisableDownload = () => {
-    const { selectedIds = [] } = this.state;
-    return selectedIds.length === 0;
+    const { selectedIds = [], selectAll } = this.state;
+    return !selectAll && selectedIds.length === 0;
   }
 
   shouldDisableAddFiles = () => {
