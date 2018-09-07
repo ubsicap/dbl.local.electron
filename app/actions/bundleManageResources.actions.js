@@ -3,6 +3,7 @@ import { bundleResourceManagerConstants } from '../constants/bundleResourceManag
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
 import { bundleService } from '../services/bundle.service';
+import { utilities } from '../utils/utilities';
 
 export const bundleManageResourceActions = {
   openResourceManager,
@@ -138,9 +139,11 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
     /* eslint-disable no-await-in-loop */
     for (const [filePath, containerPath] of Object.entries(_fileToContainerPaths)) {
       try {
+        await utilities.sleep(50); // avoid hang?
         await bundleService.postResource(_bundleId, filePath, containerPath);
+        await utilities.sleep(250); // avoid hang?
         await bundleService.updateManifestResource(_bundleId, containerPath);
-        // await utilities.sleep(500); // avoid hang?
+        await utilities.sleep(50); // avoid hang?
         const { bundleManageResources } = getState();
         const { publicationsHealth } = bundleManageResources;
         const { publications } = publicationsHealth;
