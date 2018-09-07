@@ -67,10 +67,7 @@ class EnhancedTable extends Component<Props> {
       (this.props.data !== nextProps.data ||
       this.state.selectedRowIds.length === 0 ||
       nextProps.selectAll !== this.props.selectAll)) {
-      this.setState(
-        { selectedRowIds: getAllSelectableRowIds(nextProps.data) },
-        this.reportSelectedRowIds
-      );
+      this.setState({ selectedRowIds: getAllSelectableRowIds(nextProps.data) });
     }
   }
 

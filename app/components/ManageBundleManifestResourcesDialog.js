@@ -344,6 +344,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { selectedIds: origSelectedIds } = this.state;
     const selectedIds = utilities.union(origSelectedIds, addedFilePaths);
     this.setState({ addedFilePaths, selectedIds }, this.updateTotalResources(newAddedFilePaths));
+    this.setState({ selectAll: true });
   };
 
   handleAddByFolder = async () => {
