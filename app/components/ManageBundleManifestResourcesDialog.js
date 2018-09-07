@@ -336,7 +336,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   handleAddByFile = () => {
     const newAddedFilePaths = dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] });
-    console.log(newAddedFilePaths);
+    // console.log(newAddedFilePaths);
     if (!newAddedFilePaths) {
       return;
     }
@@ -350,7 +350,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   handleAddByFolder = async () => {
     const folderPaths = dialog.showOpenDialog({ properties: ['openFile', 'openDirectory', 'multiSelections'] });
-    console.log(folderPaths);
     if (!folderPaths) {
       return;
     }
@@ -423,7 +422,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   getSuggestions = (value, reason) => {
-    console.log({ getSuggestions: true, value, reason });
+    // console.log({ getSuggestions: true, value, reason });
     const inputValue = value ? value.trim() : null;
     const updatedResources = this.updateSelectedResourcesContainers(value || '');
     if (!inputValue) {
