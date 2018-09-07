@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import fs from 'fs-extra';
 import sort from 'fast-sort';
+import upath from 'upath';
 import md5File from 'md5-file/promise';
 import recursiveReadDir from 'recursive-readdir';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -58,8 +59,8 @@ type Props = {
   checkPublicationsHealth: () => {}
 };
 
-function createUpdatedTotalResources(origTotalResources, filePath, update) {
-  return origTotalResources.map(r => (r.id === filePath ? { ...r, ...update } : r));
+function createUpdatedTotalResources(origTotalResources, filePath, updateFunc) {
+  return origTotalResources.map(r => (r.id === filePath ? { ...r, ...updateFunc(r) } : r));
 }
 
 function formatBytesByKbs(bytes) {
@@ -83,7 +84,7 @@ function formatUriForApi(resource) {
 
 function createResourceData(manifestResourceRaw, fileStoreInfo, mode) {
   const { uri = '', checksum = '', size: sizeRaw = 0, mimeType = '' } = manifestResourceRaw;
-  const container = formatContainer(path.dirname(uri));
+  const container = formatContainer(upath.normalizeTrim(path.dirname(uri)));
   const name = path.basename(uri);
   /* const ext = path.extname(uri); */
   const size = formatBytesByKbs(sizeRaw);
@@ -95,11 +96,15 @@ function createResourceData(manifestResourceRaw, fileStoreInfo, mode) {
   };
 }
 
-function createAddedResource(filePath) {
-  const fileName = path.basename(filePath);
-  const [id, uri, name] = [filePath, fileName, fileName, fileName];
-  return {
-    id, uri, status: 'add?', mimeType: '', container: NEED_CONTAINER, name, size: 0, checksum: '', disabled: false
+function createAddedResource(fullToRelativePaths) {
+  return (filePath) => {
+    const fileName = path.basename(filePath);
+    const relativePath = fullToRelativePaths ? upath.normalizeTrim(fullToRelativePaths[filePath]) : '';
+    const relativeFolder = formatContainer(path.dirname(relativePath));
+    const [id, uri, name] = [filePath, fileName, fileName];
+    return {
+      id, uri, status: 'add?', mimeType: '', container: relativeFolder || NEED_CONTAINER, relativeFolder, name, size: 0, checksum: '', disabled: false
+    };
   };
 }
 
@@ -111,7 +116,7 @@ function getLabel(columnName) {
   return ['size'].includes(columnName) ? 'size (kb)' : null;
 }
 
-const secondarySorts = ['container', 'name'];
+const secondarySorts = ['container', 'name', 'status'];
 
 function createColumnConfig() {
   const { id, uri, disabled, ...columns } = createResourceData({}, {}, 'ignore');
@@ -302,7 +307,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   getUpdatedTotalResources(filePath, update) {
     const { totalResources } = this.state;
-    return createUpdatedTotalResources(totalResources, filePath, update);
+    return createUpdatedTotalResources(totalResources, filePath, () => update);
   }
 
   updateAddedResourcesWithFileStats = (newlyAddedFilePaths) => () => {
@@ -316,13 +321,18 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     });
   }
 
-  updateSelectedResourcesContainers = (newContainer) => {
+  getUpdateSelectedResourcesContainers = (newContainer) => {
     const { totalResources: origTotalResources, selectedIds } = this.state;
     const totalResources = selectedIds.reduce((acc, filePath) => {
       const container = formatContainer(newContainer);
       const updatedTotalResources = createUpdatedTotalResources(
         acc,
-        filePath, { container }
+        filePath,
+        (resource) => ({
+          container: (resource.relativeFolder ?
+            formatContainer(upath.joinSafe(container, resource.relativeFolder)) :
+            container)
+        })
       );
       return updatedTotalResources;
     }, origTotalResources);
@@ -330,7 +340,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   updateSelectedResourcesContainersSetState = (newContainer) => {
-    const totalResources = this.updateSelectedResourcesContainers(newContainer);
+    const totalResources = this.getUpdateSelectedResourcesContainers(newContainer);
     this.setState({ totalResources });
   }
 
@@ -343,10 +353,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.setAddedFilePathsAndSelectAll(newAddedFilePaths);
   };
 
-  setAddedFilePathsAndSelectAll = (newAddedFilePaths) => {
+  setAddedFilePathsAndSelectAll = (newAddedFilePaths, fullToRelativePaths) => {
     const addedFilePaths = this.getUnionWithAddedFiles(newAddedFilePaths);
     const selectedIds = this.getUnionWithSelectedIds(addedFilePaths);
-    this.setState({ addedFilePaths, selectedIds }, this.updateTotalResources(newAddedFilePaths));
+    this.setState({ addedFilePaths, selectedIds }, this.updateTotalResources(newAddedFilePaths, fullToRelativePaths));
     this.setState({ selectAll: true });
   };
 
@@ -368,20 +378,26 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       return;
     }
     const parentDir = path.resolve(folderPaths[0], '..');
-    const readAllDirs = folderPaths.map(folder => recursiveReadDir(folder).then(results => ({ folder, fullPaths: results, relativePaths: results.map(filePath => filePath.substr(parentDir.length)) })));
+    const readAllDirs = folderPaths.map(folder => recursiveReadDir(folder)
+      .then(fullPaths => ({
+        folder,
+        fullPaths,
+        fullToRelativePaths: fullPaths.reduce((acc, filePath) =>
+          ({ ...acc, [filePath]: filePath.substr(parentDir.length) }), {})
+      })));
     const allFilePaths = await Promise.all(readAllDirs);
-    const flattenedRelativePaths = allFilePaths.reduce((acc, info) => [...acc, ...info.relativePaths], []);
-    console.log(flattenedRelativePaths);
-    const flattenedFullPaths = allFilePaths.reduce((acc, info) => [...acc, ...info.fullPaths], []);
-    console.log(flattenedFullPaths);
-    this.setAddedFilePathsAndSelectAll(flattenedFullPaths);
+    const allFullToRelativePaths = allFilePaths.reduce((acc, info) =>
+      ({ ...acc, ...info.fullToRelativePaths }), {});
+    const allFullPaths = Object.keys(allFullToRelativePaths);
+    // console.log(allFullPaths);
+    this.setAddedFilePathsAndSelectAll(allFullPaths, allFullToRelativePaths);
   };
 
-  updateTotalResources = (newAddedFilePaths) => () => {
+  updateTotalResources = (newAddedFilePaths, fullToRelativePaths) => () => {
     const { manifestResources } = this.props;
     const { totalResources = manifestResources } = this.state;
     const otherResources = totalResources.filter(r => !newAddedFilePaths.includes(r.id));
-    const newlyAddedResources = newAddedFilePaths.map(createAddedResource);
+    const newlyAddedResources = newAddedFilePaths.map(createAddedResource(fullToRelativePaths));
     this.setState(
       { totalResources: [...otherResources, ...newlyAddedResources] },
       this.updateAddedResourcesWithFileStats(newAddedFilePaths)
@@ -441,7 +457,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   getSuggestions = (value, reason) => {
     // console.log({ getSuggestions: true, value, reason });
     const inputValue = value ? value.trim() : null;
-    const updatedResources = this.updateSelectedResourcesContainers(value || '');
+    const updatedResources = this.getUpdateSelectedResourcesContainers(value || '');
     if (!inputValue) {
       return this.getAllSuggestions(updatedResources);
     }
