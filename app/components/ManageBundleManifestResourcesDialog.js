@@ -206,8 +206,8 @@ const materialStyles = theme => ({
     position: 'absolute',
     top: '50%',
     left: '50%',
-    marginTop: -12,
-    marginLeft: -12,
+    marginTop: -25,
+    marginLeft: -23,
   },
 });
 
@@ -269,6 +269,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const filesToContainers = selectedResources.reduce((acc, selectedResource) =>
       ({ ...acc, [selectedResource.id]: formatUriForApi(selectedResource) }), {});
     this.props.addManifestResources(bundleId, filesToContainers);
+    this.setState({ selectedIds: [] });
   }
 
   handleClose = () => {
@@ -404,11 +405,11 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   getHandleAddByFile = () => (
-    (this.isAddFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFile : null
+    (!this.props.loading && this.isAddFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFile : null
   )
 
   getHandleAddByFolder = () => (
-    (this.isAddFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFolder : null
+    (!this.props.loading && this.isAddFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFolder : null
   )
 
   getAllSuggestions = (totalResources) => {
@@ -500,7 +501,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                   className={classes.buttonProgress}
                   size={50}
                   color="secondary"
-                  variant="determinate"
+                  variant="indeterminate"
                   value={progress}
                 />}
               </Button>
