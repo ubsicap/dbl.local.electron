@@ -4,6 +4,8 @@ import { withStyles } from '@material-ui/core/styles';
 import { compose } from 'recompose';
 import Button from '@material-ui/core/Button';
 import AddIcon from '@material-ui/icons/Add';
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
 import Tooltip from '@material-ui/core/Tooltip';
 import Bundles from '../components/Bundles';
 import MenuAppBar from '../components/MenuAppBar';
@@ -43,6 +45,11 @@ class BundlesPage extends PureComponent<Props> {
     this.setState({ anchorEl: null });
   };
 
+  handleCreateNew = (medium) => () => {
+    this.handleCloseMenu();
+    console.log(medium);
+  };
+
   render() {
     const { classes } = this.props;
     const { anchorEl } = this.state;
@@ -63,6 +70,16 @@ class BundlesPage extends PureComponent<Props> {
             <AddIcon />
           </Button>
         </Tooltip>
+        <Menu
+          id="simple-menu"
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={this.handleCloseMenu}
+        >
+          <MenuItem onClick={this.handleCreateNew('audio')}>audio</MenuItem>
+          <MenuItem onClick={this.handleCreateNew('video')}>video</MenuItem>
+          <MenuItem onClick={this.handleCreateNew('braille')}>braille</MenuItem>
+        </Menu>
       </div>
     );
   }
