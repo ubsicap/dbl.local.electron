@@ -13,8 +13,17 @@ import { loadHtmlBaseUrl } from '../actions/dblDotLocalConfig.actions';
 
 type Props = {
   classes: {},
+  newMediaTypes: [],
   loadHtmlBaseUrl: () => {}
 };
+
+function mapStateToProps(state) {
+  const { bundles } = state;
+  const { newMediaTypes = [] } = bundles;
+  return {
+    newMediaTypes
+  };
+}
 
 const materialStyles = theme => ({
   fab: {
@@ -51,7 +60,7 @@ class BundlesPage extends PureComponent<Props> {
   };
 
   render() {
-    const { classes } = this.props;
+    const { classes, newMediaTypes } = this.props;
     const { anchorEl } = this.state;
     return (
       <div data-tid="container">
@@ -76,9 +85,9 @@ class BundlesPage extends PureComponent<Props> {
           open={Boolean(anchorEl)}
           onClose={this.handleCloseMenu}
         >
-          <MenuItem onClick={this.handleCreateNew('audio')}>audio</MenuItem>
-          <MenuItem onClick={this.handleCreateNew('video')}>video</MenuItem>
-          <MenuItem onClick={this.handleCreateNew('braille')}>braille</MenuItem>
+          {newMediaTypes.map(medium => (
+            <MenuItem key={medium} onClick={this.handleCreateNew(medium)}>{medium}</MenuItem>
+          ))}
         </Menu>
       </div>
     );
@@ -88,7 +97,7 @@ class BundlesPage extends PureComponent<Props> {
 export default compose(
   withStyles(materialStyles, { name: 'BundlesPage' }),
   connect(
-    null,
+    mapStateToProps,
     mapDispatchToProps
   ),
 )(BundlesPage);
