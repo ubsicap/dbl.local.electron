@@ -340,13 +340,27 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     if (!newAddedFilePaths) {
       return;
     }
-    const { addedFilePaths: origAddedFilePaths = [] } = this.state;
-    const addedFilePaths = utilities.union(origAddedFilePaths, newAddedFilePaths);
-    const { selectedIds: origSelectedIds } = this.state;
-    const selectedIds = utilities.union(origSelectedIds, addedFilePaths);
+    this.setAddedFilePathsAndSelectAll(newAddedFilePaths);
+  };
+
+  setAddedFilePathsAndSelectAll = (newAddedFilePaths) => {
+    const addedFilePaths = this.getUnionWithAddedFiles(newAddedFilePaths);
+    const selectedIds = this.getUnionWithSelectedIds(addedFilePaths);
     this.setState({ addedFilePaths, selectedIds }, this.updateTotalResources(newAddedFilePaths));
     this.setState({ selectAll: true });
   };
+
+  getUnionWithAddedFiles = (newAddedFilePaths) => {
+    const { addedFilePaths: origAddedFilePaths = [] } = this.state;
+    const addedFilePaths = utilities.union(origAddedFilePaths, newAddedFilePaths);
+    return addedFilePaths;
+  }
+
+  getUnionWithSelectedIds = (addedFilePaths) => {
+    const { selectedIds: origSelectedIds } = this.state;
+    const selectedIds = utilities.union(origSelectedIds, addedFilePaths);
+    return selectedIds;
+  }
 
   handleAddByFolder = async () => {
     const folderPaths = dialog.showOpenDialog({ properties: ['openFile', 'openDirectory', 'multiSelections'] });
@@ -354,10 +368,13 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       return;
     }
     const parentDir = path.resolve(folderPaths[0], '..');
-    const readAllDirs = folderPaths.map(folder => recursiveReadDir(folder).then(results => ({ folder, paths: results.map(filePath => filePath.substr(parentDir.length)) })));
+    const readAllDirs = folderPaths.map(folder => recursiveReadDir(folder).then(results => ({ folder, fullPaths: results, relativePaths: results.map(filePath => filePath.substr(parentDir.length)) })));
     const allFilePaths = await Promise.all(readAllDirs);
-    const flattenedFilePaths = allFilePaths.reduce((acc, info) => [...acc, ...info.paths], []);
-    console.log(flattenedFilePaths);
+    const flattenedRelativePaths = allFilePaths.reduce((acc, info) => [...acc, ...info.relativePaths], []);
+    console.log(flattenedRelativePaths);
+    const flattenedFullPaths = allFilePaths.reduce((acc, info) => [...acc, ...info.fullPaths], []);
+    console.log(flattenedFullPaths);
+    this.setAddedFilePathsAndSelectAll(flattenedFullPaths);
   };
 
   updateTotalResources = (newAddedFilePaths) => () => {
