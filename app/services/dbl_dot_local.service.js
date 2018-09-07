@@ -7,6 +7,7 @@ import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 export const dblDotLocalService = {
   health,
   htmlBaseUrl,
+  newBundleMedia,
   ensureDblDotLocal,
   getDblDotLocalConfigFilePath,
   importConfigXml,
@@ -31,6 +32,19 @@ async function htmlBaseUrl() {
   };
   try {
     const response = await fetch(`${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${UX_API}/html-base-url`, requestOptions);
+    return handlResponseAsReadable(response);
+  } catch (error) {
+    return handlResponseAsReadable(error);
+  }
+}
+
+async function newBundleMedia() {
+  const requestOptions = {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' }
+  };
+  try {
+    const response = await fetch(`${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${UX_API}/new-bundle-media`, requestOptions);
     return handlResponseAsReadable(response);
   } catch (error) {
     return handlResponseAsReadable(error);
