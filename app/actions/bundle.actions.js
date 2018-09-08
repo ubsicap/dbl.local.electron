@@ -161,6 +161,9 @@ export function setupBundlesEventSource(authentication) {
     // console.log(e);
     const data = JSON.parse(e.data);
     const bundleId = data.args[0];
+    if (bundleId.startsWith('session')) {
+      return; // skip session change modes
+    }
     dispatch(updateBundle(bundleId));
   }
 
