@@ -10,11 +10,13 @@ import Tooltip from '@material-ui/core/Tooltip';
 import Bundles from '../components/Bundles';
 import MenuAppBar from '../components/MenuAppBar';
 import { loadHtmlBaseUrl } from '../actions/dblDotLocalConfig.actions';
+import { createNewBundle } from '../actions/bundle.actions';
 
 type Props = {
   classes: {},
   newMediaTypes: [],
-  loadHtmlBaseUrl: () => {}
+  loadHtmlBaseUrl: () => {},
+  createNewBundle: () => {}
 };
 
 function mapStateToProps(state) {
@@ -35,6 +37,7 @@ const materialStyles = theme => ({
 
 const mapDispatchToProps = {
   loadHtmlBaseUrl,
+  createNewBundle
 };
 
 class BundlesPage extends PureComponent<Props> {
@@ -56,7 +59,7 @@ class BundlesPage extends PureComponent<Props> {
 
   handleCreateNew = (medium) => () => {
     this.handleCloseMenu();
-    console.log(medium);
+    this.props.createNewBundle(medium);
   };
 
   render() {

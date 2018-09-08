@@ -111,7 +111,7 @@ const getPropsParent = (state, props) => props.parent;
 const getPropsDblId = (state, props) => props.dblId;
 const makeGetEntryPageUrl = () => createSelector(
   [getDblBaseUrl, getPropsDblId, getPropsRevision, getPropsParent],
-  (dblBaseUrl, dblId, revision, parent) => (`${dblBaseUrl}/entry?id=${dblId}&revision=${parseInt(revision, 10) || parent.revision}`)
+  (dblBaseUrl, dblId, revision, parent) => (`${dblBaseUrl}/entry?id=${dblId}&revision=${parseInt(revision, 10) || (parent ? parent.revision : '0')}`)
 );
 
 const makeMapStateToProps = () => {

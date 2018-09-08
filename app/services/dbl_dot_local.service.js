@@ -64,7 +64,7 @@ async function sessionAddTasks(innerTasks) {
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${SESSION_API}/add-tasks`;
   try {
     const response = await fetch(url, requestOptions);
-    return handlResponseAsReadable(response).json();
+    return handlResponseAsReadable(response).text();
   } catch (error) {
     return handlResponseAsReadable(error);
   }

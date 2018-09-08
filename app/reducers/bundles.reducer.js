@@ -283,8 +283,8 @@ function formatRevisionDisplayAs(bundle) {
   if (!revision && !parent) {
     return 'Update';
   }
-  if (parent) {
-    const { revision: parentRevision } = parent;
+  if (parent || revision === '0') {
+    const { revision: parentRevision = 0 } = parent || {};
     return `> Rev ${parentRevision}`;
   }
   return `Rev ${revision}`;
