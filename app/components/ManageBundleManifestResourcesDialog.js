@@ -4,6 +4,7 @@ import sort from 'fast-sort';
 import upath from 'upath';
 import md5File from 'md5-file/promise';
 import recursiveReadDir from 'recursive-readdir';
+import hidefile from 'hidefile';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
@@ -80,6 +81,37 @@ function formatContainer(containerInput) {
 function formatUriForApi(resource) {
   const { container, name } = resource;
   return `${container.substr(1)}${name}`;
+}
+
+function ignoreFunc(file, stats) {
+  // `file` is the path to the file, and `stats` is an `fs.Stats`
+  // object returned from `fs.lstat()`.
+  // return stats.isDirectory() && path.basename(file) == "test";
+  if (!stats.isFile()) {
+    return false;
+  }
+  // const stat = winattr.getSync(upath.normalizeSafe(file));
+  try {
+    // currently crashes due to this issue: https://github.com/stevenvachon/winattr/issues/4
+    /*
+    When building using electron-builder, the hostscript.js file will be put in a .asar file,
+    which is not readably by cscript.exe, which will lead to an exception in a json.parse call.
+
+    To fix this, you can install hazardous and add
+    require('hazardous');
+    to the top of
+    winattr/lib/shell/index.js (before requiring the path).
+
+    Then add
+    "asar": true, "asarUnpack": ["node_modules/winattr/lib/shell/hostscript.js"],
+    to you package.json and it is fixed.
+     */
+    // in dev __dirname == / (see https://github.com/webpack/webpack/issues/1599)
+    return hidefile.isHiddenSync(upath.normalizeSafe(file));
+  } catch (error) {
+    // console.log(error);
+  }
+  return false;
 }
 
 function createResourceData(manifestResourceRaw, fileStoreInfo, mode) {
@@ -370,7 +402,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       return;
     }
     const parentDir = path.resolve(folderPaths[0], '..');
-    const readAllDirs = folderPaths.map(folder => recursiveReadDir(folder)
+    const readAllDirs = folderPaths.map(folder => recursiveReadDir(folder, [ignoreFunc])
       .then(fullPaths => ({
         folder,
         fullPaths,
