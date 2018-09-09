@@ -4,7 +4,6 @@ import sort from 'fast-sort';
 import upath from 'upath';
 import md5File from 'md5-file/promise';
 import recursiveReadDir from 'recursive-readdir';
-import hidefile from 'hidefile';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
@@ -83,7 +82,7 @@ function formatUriForApi(resource) {
   return `${container.substr(1)}${name}`;
 }
 
-function ignoreFunc(file, stats) {
+function ignoreHiddenFunc(file, stats) {
   // `file` is the path to the file, and `stats` is an `fs.Stats`
   // object returned from `fs.lstat()`.
   // return stats.isDirectory() && path.basename(file) == "test";
@@ -107,7 +106,7 @@ function ignoreFunc(file, stats) {
     to you package.json and it is fixed.
      */
     // in dev __dirname == / (see https://github.com/webpack/webpack/issues/1599)
-    return hidefile.isHiddenSync(upath.normalizeSafe(file));
+    // return hidefile.isHiddenSync(upath.normalizeSafe(file));
   } catch (error) {
     // console.log(error);
   }
@@ -402,7 +401,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       return;
     }
     const parentDir = path.resolve(folderPaths[0], '..');
-    const readAllDirs = folderPaths.map(folder => recursiveReadDir(folder, [ignoreFunc])
+    const knownUnwantedFiles = ['desktop.ini', 'thumbs.db', '.DS_Store', ignoreHiddenFunc];
+    const readAllDirs = folderPaths.map(folder => recursiveReadDir(folder, knownUnwantedFiles)
       .then(fullPaths => ({
         folder,
         fullPaths,

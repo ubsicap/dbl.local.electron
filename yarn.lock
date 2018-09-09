@@ -4646,10 +4646,6 @@ fstream@^1.0.0, fstream@^1.0.10, fstream@^1.0.2, fstream@~1.0.10:
     mkdirp ">=0.5 0"
     rimraf "2"
 
-fswin@^2.16.1102:
-  version "2.17.1227"
-  resolved "https://registry.yarnpkg.com/fswin/-/fswin-2.17.1227.tgz#c598061e1ac1e7110e2e6ce884296efa27dc2507"
-
 function-bind@^1.0.2, function-bind@^1.1.0, function-bind@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/function-bind/-/function-bind-1.1.1.tgz#a56899d3ea3c9bab874bb9773b7c5ede92f4895d"
@@ -5090,12 +5086,6 @@ hawk@~6.0.2:
     cryptiles "3.x.x"
     hoek "4.x.x"
     sntp "2.x.x"
-
-hidefile@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/hidefile/-/hidefile-2.0.0.tgz#792cbfd661057deb83f069d611f4bc559a5d3a35"
-  dependencies:
-    winattr "^2.0.0"
 
 highlight-words-core@^1.2.0:
   version "1.2.0"
@@ -11365,12 +11355,6 @@ widest-line@^2.0.0:
   resolved "https://registry.yarnpkg.com/widest-line/-/widest-line-2.0.0.tgz#0142a4e8a243f8882c0233aa0e0281aa76152273"
   dependencies:
     string-width "^2.1.1"
-
-winattr@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/winattr/-/winattr-2.0.0.tgz#553d4e347c8c598551a8d7032eefe36526bd5026"
-  dependencies:
-    fswin "^2.16.1102"
 
 window-size@0.1.0:
   version "0.1.0"
