@@ -24,7 +24,7 @@ export const bundleActions = {
 export default bundleActions;
 
 export function updateBundle(bundleId) {
-  return async (dispatch, getState) => {
+  return async (dispatch) => {
     const isDemoMode = history.location.pathname.includes('/demo');
     if (isDemoMode) {
       return;
@@ -34,25 +34,46 @@ export function updateBundle(bundleId) {
       if (!bundleService.apiBundleHasMetadata(rawBundle)) {
         return; // hasn't downloaded metadata yet. (don't expect to be in our list)
       }
-      const bundle = await bundleService.convertApiBundleToNathanaelBundle(rawBundle);
-      const addedBundle = getAddedBundle(getState, bundleId);
-      if (addedBundle) {
-        dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle, rawBundle });
-        const { id, uploadJob } = bundle;
-        if (uploadJob) {
-          dispatch(updateUploadJobs(id, uploadJob));
-        } else {
-          dispatch(updateUploadJobs(id, null, id));
-        }
-      } else {
-        dispatch(addBundle(bundle, rawBundle));
-      }
+      dispatch(updateOrAddBundle(rawBundle));
     } catch (error) {
       if (error.status === 404) {
         // this has been deleted.
         return;
       }
       throw error;
+    }
+  };
+}
+
+function tryAddNewEntry(bundleId) {
+  return async (dispatch) => {
+    const rawBundle = await bundleService.fetchById(bundleId);
+    if (!bundleService.apiBundleHasMetadata(rawBundle)) {
+      return; // hasn't downloaded metadata yet. (don't expect to be in our list)
+    }
+    const { dbl: { parent } } = rawBundle;
+    if (parent) {
+      return;
+    }
+    dispatch(updateOrAddBundle(rawBundle));
+  };
+}
+
+function updateOrAddBundle(rawBundle) {
+  return async (dispatch, getState) => {
+    const { local_id: bundleId } = rawBundle;
+    const bundle = await bundleService.convertApiBundleToNathanaelBundle(rawBundle);
+    const addedBundle = getAddedBundle(getState, bundleId);
+    if (addedBundle) {
+      dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle, rawBundle });
+      const { id, uploadJob } = bundle;
+      if (uploadJob) {
+        dispatch(updateUploadJobs(id, uploadJob));
+      } else {
+        dispatch(updateUploadJobs(id, null, id));
+      }
+    } else {
+      dispatch(addBundle(bundle, rawBundle));
     }
   };
 }
@@ -136,7 +157,8 @@ export function setupBundlesEventSource(authentication) {
       'downloader/spec_status': (e) => listenDownloaderSpecStatus(e, dispatch, getState),
       'storer/delete_resource': (e) => listenStorerDeleteResource(e, dispatch, getState),
       'storer/update_from_download': (e) => listenStorerUpdateFromDownload(e, dispatch, getState),
-      'storer/delete_bundle': (e) => listenStorerDeleteBundle(e, dispatch, getState)
+      'storer/delete_bundle': (e) => listenStorerDeleteBundle(e, dispatch, getState),
+      'storer/write_resource': listenStorerWriteResource(dispatch, getState)
     };
     Object.keys(listeners).forEach((evType) => {
       const handler = listeners[evType];
@@ -165,6 +187,22 @@ export function setupBundlesEventSource(authentication) {
       return; // skip session change modes
     }
     dispatch(updateBundle(bundleId));
+  }
+
+  function listenStorerWriteResource(dispatch) {
+    return (event) => {
+      /*
+      {'event': 'storer/write_resource',
+       'data': {'args': ('50501698-e832-4db5-8973-f85340dc2e39', 'metadata.xml'),
+        'component': 'storer', 'type': 'write_resource'}}
+      */
+      const data = JSON.parse(event.data);
+      const [bundleId, fileName] = data.args;
+      if (fileName !== 'metadata.xml') {
+        return;
+      }
+      dispatch(tryAddNewEntry(bundleId));
+    };
   }
 
   /* {'event': 'uploader/createJob', 'data': {'args': ('2f57466e-a5c4-41de-a67e-4ba5b54e7870', '3a6424b3-8b52-4f05-b69c-3e8cdcf85b0c'), 'component': 'uploader', 'type': 'createJob'}} */

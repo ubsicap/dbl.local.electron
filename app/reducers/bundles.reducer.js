@@ -45,7 +45,7 @@ function getSelectedState(state, bundleToToggle, bundleIdToRemove, newItemsByDbl
       newItemsByDblIds[origSelectedBundleDblId] : [];
     return {
       selectedBundle: newBundleToSelect,
-      selectedDBLEntryId: newBundleToSelect.dblId
+      selectedDBLEntryId: (newBundleToSelect ? newBundleToSelect.dblId : null)
     };
   }
   return {
