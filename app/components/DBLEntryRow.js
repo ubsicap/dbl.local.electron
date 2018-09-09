@@ -298,12 +298,14 @@ class DBLEntryRow extends PureComponent<Props> {
       >
         <div className={styles.bundleRowTop}>
           <div className={styles.bundleRowTopLeftSideIcon}>
-            { (medium === 'text' && <Book />)
-            || (medium === 'audio' && <Headset />)
-            || (medium === 'video' && <Videocam />)
-            || (medium === 'print' && <Print />)
-            || (medium === 'braille' && <Grain />)
-            || medium }
+            <Tooltip title={medium}>
+              { (medium === 'text' && <Book />)
+              || (medium === 'audio' && <Headset />)
+              || (medium === 'video' && <Videocam />)
+              || (medium === 'print' && <Print />)
+              || (medium === 'braille' && <Grain />)
+              || medium }
+            </Tooltip>
           </div>
           <div className={styles.bundleRowTopLeftSideLanguageAndCountry}>
             <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.languageAndCountry)} className={styles.languageAndCountryLabel} />
