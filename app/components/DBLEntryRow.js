@@ -9,6 +9,7 @@ import Book from '@material-ui/icons/Book';
 import Headset from '@material-ui/icons/Headset';
 import Videocam from '@material-ui/icons/Videocam';
 import Print from '@material-ui/icons/Print';
+import Grain from '@material-ui/icons/Grain';
 import Button from '@material-ui/core/Button';
 import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
@@ -301,6 +302,7 @@ class DBLEntryRow extends PureComponent<Props> {
             || (medium === 'audio' && <Headset />)
             || (medium === 'video' && <Videocam />)
             || (medium === 'print' && <Print />)
+            || (medium === 'braille' && <Grain />)
             || medium }
           </div>
           <div className={styles.bundleRowTopLeftSideLanguageAndCountry}>
