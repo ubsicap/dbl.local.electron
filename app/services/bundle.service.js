@@ -15,6 +15,7 @@ export const bundleService = {
   update,
   apiBundleHasMetadata,
   convertApiBundleToNathanaelBundle,
+  getInitialTaskAndStatus,
   getManifestResourcePaths,
   getManifestResourceDetails,
   downloadResources,
@@ -131,6 +132,20 @@ function convertBundleApiListToBundles(apiBundles) {
   return bundles;
 }
 
+function getInitialTaskAndStatus(apiBundle) {
+  const { dbl, mode } = apiBundle;
+  let task = dbl.currentRevision === '0' ? 'UPLOAD' : 'DOWNLOAD';
+  let status = dbl.currentRevision === '0' ? 'DRAFT' : 'NOT_STARTED';
+  if (mode === 'download') {
+    task = 'DOWNLOAD';
+    status = 'IN_PROGRESS';
+  } else if (mode === 'upload' || mode === 'create') {
+    task = 'UPLOAD';
+    status = mode === 'create' ? 'DRAFT' : 'IN_PROGRESS';
+  }
+  return { task, status };
+}
+
 async function convertApiBundleToNathanaelBundle(apiBundle) {
   const {
     mode, metadata, dbl, store, upload
@@ -139,17 +154,11 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
   const { file_info: fileInfo } = store;
   const { parent } = dbl;
   const bundleId = apiBundle.local_id;
-  let task = dbl.currentRevision === '0' ? 'UPLOAD' : 'DOWNLOAD';
-  let status = dbl.currentRevision === '0' ? 'DRAFT' : 'NOT_STARTED';
   let resourceCountStored;
   let resourceCountManifest;
-  if (mode === 'download') {
-    task = 'DOWNLOAD';
-    status = 'IN_PROGRESS';
-  } else if (mode === 'upload' || mode === 'create') {
-    task = 'UPLOAD';
-    status = mode === 'create' ? 'DRAFT' : 'IN_PROGRESS';
-  }
+  const initTaskStatus = getInitialTaskAndStatus(apiBundle);
+  const { task } = initTaskStatus;
+  let { status } = initTaskStatus;
   if (fileInfo && Object.keys(fileInfo).length > 1) {
     // compare the manifest and resources to determine whether user can download more or not.
     const manifestPaths = await getManifestResourcePaths(bundleId);

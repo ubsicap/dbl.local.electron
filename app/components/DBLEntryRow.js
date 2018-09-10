@@ -15,7 +15,6 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import FileDownload from 'material-ui/svg-icons/file/file-download';
 import Folder from 'material-ui/svg-icons/file/folder';
-import FolderOpen from 'material-ui/svg-icons/file/folder-open';
 import Save from '@material-ui/icons/Save';
 import CallSplit from '@material-ui/icons/CallSplit';
 import Link from '@material-ui/icons/Link';
@@ -138,6 +137,12 @@ const makeMapStateToProps = () => {
 class DBLEntryRow extends PureComponent<Props> {
   props: Props;
 
+  componentWillReceiveProps(nextProps) {
+    if (this.props.task === 'SAVETO' && nextProps.task !== 'SAVETO') {
+      this.openInFolder();
+    }
+  }
+
   onKeyPress = (event) => {
     if (['Enter', ' '].includes(event.key)) {
       this.onClickBundleRow();
@@ -157,7 +162,8 @@ class DBLEntryRow extends PureComponent<Props> {
 
   showStoredButton = () => {
     const { task, status } = this.props;
-    return ((task === 'DOWNLOAD' && status === 'COMPLETED') || status === 'DRAFT');
+    return ((task === 'DOWNLOAD' && status === 'COMPLETED')
+      || status === 'DRAFT');
   }
 
   showDownloadButton = () => {
@@ -238,10 +244,9 @@ class DBLEntryRow extends PureComponent<Props> {
     });
   }
 
-  openInFolder = (event) => {
+  openInFolder = () => {
     const { bundlesSaveTo, bundleId } = this.props;
     const { savedToHistory } = bundlesSaveTo;
-    event.stopPropagation();
     const bundleSavedToInfo = getBundleExportInfo(bundleId, savedToHistory);
     if (bundleSavedToInfo) {
       const { folderName } = bundleSavedToInfo;
@@ -326,15 +331,6 @@ class DBLEntryRow extends PureComponent<Props> {
             </Tooltip>
           </div>
           <div className={styles.bundleRowTopRightSide}>
-            {task === 'SAVETO' && (
-              <Button variant="flat" size="small" className={classes.button}
-                onKeyPress={this.openInFolder}
-                onClick={this.openInFolder}
-              >
-                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
-                <FolderOpen className={classNames(classes.rightIcon, classes.iconSmall)} />
-              </Button>
-            )}
             {this.showStoredButton() && (
               <Button variant="flat" size="small" className={classes.button}
                 onClick={this.onClickManageResources(resourceManagerMode)}
@@ -437,9 +433,6 @@ function getBundleExportInfo(bundleId, savedToHistory) {
 }
 
 function pickBackgroundColor(task, status) {
-  if (task === 'SAVETO') {
-    return '#FFE793';
-  }
   switch (status) {
     case 'DRAFT': return '#F5D2D2';
     case 'NOT_STARTED': return '#EDEDED';

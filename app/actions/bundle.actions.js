@@ -501,6 +501,7 @@ export function requestSaveBundleTo(id, selectedFolder) {
             if (resourceProgress && resourceProgress % 100 === 0) {
               const updatedArgs = {
                 _id: id,
+                apiBundle: bundleInfo,
                 resourcePath,
                 resourceTotalBytesSaved,
                 bundleBytesSaved,
@@ -537,14 +538,16 @@ export function requestSaveBundleTo(id, selectedFolder) {
 
   function updated({
     _id,
+    apiBundle,
     resourcePath,
     resourceTotalBytesSaved,
     bundleBytesSaved,
-    bundleBytesToSave
+    bundleBytesToSave,
   }) {
     return {
       type: bundleConstants.SAVETO_UPDATED,
       id: _id,
+      apiBundle,
       resourcePath,
       resourceTotalBytesSaved,
       bundleBytesSaved,
@@ -692,21 +695,6 @@ function getMockBundles() {
       task: 'SAVETO',
       status: 'IN_PROGRESS',
       progress: 66,
-      resourceCountStored: 2,
-      resourceCountManifest: 2
-    },
-    {
-      id: 'bundle11',
-      dblId: 'dblId5',
-      revision: '5',
-      parent: null,
-      medium: 'audio',
-      name: 'Audio Bundle #5',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'SAVETO',
-      status: 'COMPLETED',
-      progress: 100,
       resourceCountStored: 2,
       resourceCountManifest: 2
     }

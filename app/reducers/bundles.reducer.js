@@ -1,5 +1,6 @@
 import sort from 'fast-sort';
 import { bundleConstants } from '../constants/bundle.constants';
+import { bundleService } from '../services/bundle.service';
 
 function sortAndFilterBundlesAsEntries(allBundles) {
   const sortedBundles = sort(allBundles).asc([
@@ -167,6 +168,12 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
     case bundleConstants.SAVETO_UPDATED: {
       const progress = calcProgress(action.bundleBytesSaved, action.bundleBytesToSave);
       const status = progress === 100 ? 'COMPLETED' : 'IN_PROGRESS';
+      const { apiBundle } = action;
+      if (status === 'COMPLETED') {
+        const { task, status: initStatus } = bundleService.getInitialTaskAndStatus(apiBundle);
+        const finalStatus = initStatus === 'DRAFT' ? initStatus : 'COMPLETED';
+        return updateTaskStatusProgress(action.id, task, finalStatus, progress);
+      }
       return updateTaskStatusProgress(action.id, 'SAVETO', status, progress);
     }
     case bundleConstants.REMOVE_RESOURCES_REQUEST: {
