@@ -37,7 +37,8 @@ export const bundleService = {
   updateManifestResource,
   getPublicationWizards,
   testPublicationWizards,
-  runPublicationWizard
+  runPublicationWizard,
+  checkAllFields
 };
 export default bundleService;
 
@@ -118,7 +119,7 @@ async function fetchAll() {
   );
   const apiBundles = await handleResponse(response);
   const bundles = await convertBundleApiListToBundles(apiBundles);
-  return bundles;
+  return { bundles, apiBundles };
 }
 
 function apiBundleHasMetadata(apiBundle) {
@@ -362,6 +363,15 @@ function postFormFields({
   const newInstanceKey = keyField && !formKey.endsWith(newKeyPath) ? newKeyPath : '';
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${FORM_API}/${bundleId}${formKey}${newInstanceKey}`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
+}
+
+function checkAllFields(bundleId) {
+  const requestOptions = {
+    method: 'GET',
+    headers: authHeader()
+  };
+  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${FORM_API}/check-metadata/${bundleId}`;
+  return fetch(url, requestOptions).then(handleResponse);
 }
 
 function startUploadBundle(bundleId) {

@@ -92,7 +92,7 @@ export function fetchAll() {
     } else {
       try {
         const newMediaTypes = await dblDotLocalService.newBundleMedia();
-        const bundles = await bundleService.fetchAll();
+        const { bundles } = await bundleService.fetchAll();
         dispatch(success(bundles, newMediaTypes));
       } catch (error) {
         dispatch(failure(error));
