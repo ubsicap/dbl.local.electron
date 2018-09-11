@@ -1,3 +1,9 @@
+### Version 0.10.0
+#### Features
+- Create new bundles (audio, video, print, text, braille)
+- Add resources by File or Folder
+- Add multiple canon spec components
+
 ### Version 0.9.2
 #### Fixes
 - Fixed `dbl_dot_local.exe` hang after (200kb) maxBuffer is reached for unused stdin and stdout pipes.
