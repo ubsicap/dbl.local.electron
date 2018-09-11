@@ -6,6 +6,7 @@ import { bundles } from './bundles.reducer';
 import { bundlesFilter } from './bundlesFilter.reducer';
 import { bundlesSaveTo } from './bundlesSaveTo.reducer';
 import { bundleEditMetadata } from './bundleEditMetadata.reducer';
+import { bundleManageResources } from './bundleResourceManager.reducer';
 import { dblDotLocalConfig } from './dblDotLocalConfig.reducer';
 import { alert } from './alert.reducer';
 
@@ -16,6 +17,7 @@ const rootReducer = combineReducers({
   bundles,
   bundlesFilter,
   bundleEditMetadata,
+  bundleManageResources,
   bundlesSaveTo,
   alert,
 });

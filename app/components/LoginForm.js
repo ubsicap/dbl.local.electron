@@ -1,6 +1,7 @@
 // @flow
 import React from 'react';
 import { connect } from 'react-redux';
+import { DebounceInput } from 'react-debounce-input';
 import Tooltip from '@material-ui/core/Tooltip';
 import { userActions, alertActions } from '../actions';
 import { loadHtmlBaseUrl } from '../actions/dblDotLocalConfig.actions';
@@ -63,8 +64,8 @@ class LoginForm extends React.Component {
     }
   }
 
-  handleChange(e) {
-    const { name, value } = e.target;
+  handleChange = (name) => (e) => {
+    const { value } = e.target;
     this.ensureLoadHtmlBaseUrl();
     this.setState({ [name]: value });
   }
@@ -109,13 +110,28 @@ class LoginForm extends React.Component {
                     <h6 className="text-center">Connect to the {this.renderLinkToDBLOrNot('DBL')}</h6>
                     <form name="form" onSubmit={this.handleSubmit}>
                       <div className={`form-group${submitted && !username ? ' has-error' : ''}`}>
-                        <input placeholder="username" type="email" className="form-control" name="username" value={username} onChange={this.handleChange} />
+                        <DebounceInput
+                          debounceTimeout={300}
+                          type="email"
+                          className="form-control"
+                          value={username}
+                          placeholder="username (email)"
+                          onChange={this.handleChange('username')}
+                        />
                         {submitted && !username &&
                         <div className="help-block">Username is required</div>
                                   }
                       </div>
                       <div className={`form-group${submitted && !password ? ' has-error' : ''}`}>
-                        <input placeholder="password" type="password" className="form-control" name="password" value={password} onChange={this.handleChange} onFocus={e => e.target.select()} />
+                        <DebounceInput
+                          debounceTimeout={300}
+                          type="password"
+                          className="form-control"
+                          value={password}
+                          placeholder="password"
+                          onChange={this.handleChange('password')}
+                          onFocus={e => e.target.select()}
+                        />
                         {submitted && !password &&
                         <div className="help-block">Password is required</div>
                                   }

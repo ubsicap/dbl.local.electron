@@ -1,5 +1,6 @@
 import sort from 'fast-sort';
 import { bundleConstants } from '../constants/bundle.constants';
+import { bundleService } from '../services/bundle.service';
 
 function sortAndFilterBundlesAsEntries(allBundles) {
   const sortedBundles = sort(allBundles).asc([
@@ -45,7 +46,7 @@ function getSelectedState(state, bundleToToggle, bundleIdToRemove, newItemsByDbl
       newItemsByDblIds[origSelectedBundleDblId] : [];
     return {
       selectedBundle: newBundleToSelect,
-      selectedDBLEntryId: newBundleToSelect.dblId
+      selectedDBLEntryId: (newBundleToSelect ? newBundleToSelect.dblId : null)
     };
   }
   return {
@@ -62,7 +63,8 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
         loading: true
       };
     case bundleConstants.FETCH_SUCCESS: {
-      const allBundles = action.bundles.map(bundle => addBundleDecorators(bundle));
+      const { bundles: bundlesRaw, newMediaTypes = [] } = action;
+      const allBundles = bundlesRaw.map(bundle => addBundleDecorators(bundle));
       const { items, addedByBundleIds } = sortAndFilterBundlesAsEntries(allBundles);
       const uploadJobs = items.filter(b => b.uploadJob).reduce((acc, b) =>
         ({ ...acc, [b.id]: b.uploadJob, [b.uploadJob]: b.id }), {});
@@ -73,6 +75,7 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
         addedByBundleIds,
         uploadJobs,
         loading: false,
+        newMediaTypes
       };
     }
     case bundleConstants.FETCH_FAILURE:
@@ -165,6 +168,12 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
     case bundleConstants.SAVETO_UPDATED: {
       const progress = calcProgress(action.bundleBytesSaved, action.bundleBytesToSave);
       const status = progress === 100 ? 'COMPLETED' : 'IN_PROGRESS';
+      const { apiBundle } = action;
+      if (status === 'COMPLETED') {
+        const { task, status: initStatus } = bundleService.getInitialTaskAndStatus(apiBundle);
+        const finalStatus = initStatus === 'DRAFT' ? initStatus : 'COMPLETED';
+        return updateTaskStatusProgress(action.id, task, finalStatus, progress);
+      }
       return updateTaskStatusProgress(action.id, 'SAVETO', status, progress);
     }
     case bundleConstants.REMOVE_RESOURCES_REQUEST: {
@@ -281,8 +290,8 @@ function formatRevisionDisplayAs(bundle) {
   if (!revision && !parent) {
     return 'Update';
   }
-  if (parent) {
-    const { revision: parentRevision } = parent;
+  if (parent || revision === '0') {
+    const { revision: parentRevision = 0 } = parent || {};
     return `> Rev ${parentRevision}`;
   }
   return `Rev ${revision}`;
@@ -316,12 +325,7 @@ function formatStatus(bundle) {
   } else if (bundle.task === 'UPLOAD' && bundle.status === 'IN_PROGRESS') {
     newStatusDisplayAs = 'Uploading';
   } else if (bundle.status === 'NOT_STARTED') {
-    if (bundle.resourceCountStored > 0) {
-      const remaining = bundle.resourceCountManifest - bundle.resourceCountStored;
-      newStatusDisplayAs = `Download (...${remaining})`;
-    } else {
-      newStatusDisplayAs = 'Download';
-    }
+    newStatusDisplayAs = 'Download';
   } else if (bundle.task === 'DOWNLOAD' && bundle.status === 'IN_PROGRESS') {
     newStatusDisplayAs = `Downloading ${formattedProgress}`;
   } else if (bundle.task === 'REMOVE_RESOURCES' && bundle.status === 'IN_PROGRESS') {

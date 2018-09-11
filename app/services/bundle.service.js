@@ -1,9 +1,12 @@
+import fs from 'fs-extra';
 import path from 'path';
+import rp from 'request-promise-native';
 import uuidv1 from 'uuid/v1';
 import { authHeader } from '../helpers';
-import { utilities } from '../utils/utilities';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 import download from './download-with-fetch.flow';
+
+const { app } = require('electron').remote;
 
 export const bundleService = {
   create,
@@ -12,11 +15,14 @@ export const bundleService = {
   update,
   apiBundleHasMetadata,
   convertApiBundleToNathanaelBundle,
+  getInitialTaskAndStatus,
   getManifestResourcePaths,
+  getManifestResourceDetails,
   downloadResources,
   removeResources,
   getResourcePaths,
   requestSaveResourceTo,
+  saveMetadataToTempFolder,
   removeBundle,
   getFormBundleTree,
   getFormFields,
@@ -24,7 +30,15 @@ export const bundleService = {
   postFormFields,
   startUploadBundle,
   startCreateContent,
-  stopCreateContent
+  stopCreateContent,
+  bundleIsInCreateMode,
+  unlockCreateMode,
+  postResource,
+  updateManifestResource,
+  getPublicationWizards,
+  testPublicationWizards,
+  runPublicationWizard,
+  checkAllFields
 };
 export default bundleService;
 
@@ -36,6 +50,9 @@ const FORM_API = 'form';
 const FORM_BUNDLE_API = `${FORM_API}/bundle`;
 const FORM_BUNDLE_API_DELETE = `${FORM_API}/delete`;
 const MANIFEST_API = 'manifest';
+const MANIFEST_DETAILS = 'details';
+const PUBLICATION_API = 'publication';
+
 /*
 {
   "099a30a6-b707-4df8-b4dd-7149f25658b7": {
@@ -102,7 +119,7 @@ async function fetchAll() {
   );
   const apiBundles = await handleResponse(response);
   const bundles = await convertBundleApiListToBundles(apiBundles);
-  return bundles;
+  return { bundles, apiBundles };
 }
 
 function apiBundleHasMetadata(apiBundle) {
@@ -116,6 +133,20 @@ function convertBundleApiListToBundles(apiBundles) {
   return bundles;
 }
 
+function getInitialTaskAndStatus(apiBundle) {
+  const { dbl, mode } = apiBundle;
+  let task = dbl.currentRevision === '0' ? 'UPLOAD' : 'DOWNLOAD';
+  let status = dbl.currentRevision === '0' ? 'DRAFT' : 'NOT_STARTED';
+  if (mode === 'download') {
+    task = 'DOWNLOAD';
+    status = 'IN_PROGRESS';
+  } else if (mode === 'upload' || mode === 'create') {
+    task = 'UPLOAD';
+    status = mode === 'create' ? 'DRAFT' : 'IN_PROGRESS';
+  }
+  return { task, status };
+}
+
 async function convertApiBundleToNathanaelBundle(apiBundle) {
   const {
     mode, metadata, dbl, store, upload
@@ -124,29 +155,19 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
   const { file_info: fileInfo } = store;
   const { parent } = dbl;
   const bundleId = apiBundle.local_id;
-  let task = dbl.currentRevision === '0' ? 'UPLOAD' : 'DOWNLOAD';
-  let status = dbl.currentRevision === '0' ? 'DRAFT' : 'NOT_STARTED';
   let resourceCountStored;
   let resourceCountManifest;
-  if (mode === 'download') {
-    task = 'DOWNLOAD';
-    status = 'IN_PROGRESS';
-  } else if (mode === 'upload' || mode === 'create') {
-    task = 'UPLOAD';
-    status = mode === 'create' ? 'DRAFT' : 'IN_PROGRESS';
-  }
+  const initTaskStatus = getInitialTaskAndStatus(apiBundle);
+  const { task } = initTaskStatus;
+  let { status } = initTaskStatus;
   if (fileInfo && Object.keys(fileInfo).length > 1) {
     // compare the manifest and resources to determine whether user can download more or not.
     const manifestPaths = await getManifestResourcePaths(bundleId);
     const resourcePaths = await getResourcePaths(bundleId);
     resourceCountManifest = (manifestPaths || []).length;
     resourceCountStored = (resourcePaths || []).length;
-    if (task === 'DOWNLOAD') {
-      if (utilities.areEqualCollections(manifestPaths, resourcePaths)) {
-        status = 'COMPLETED';
-      } else {
-        status = 'NOT_STARTED';
-      }
+    if (task === 'DOWNLOAD' && mode === 'store') {
+      status = 'COMPLETED'; // even if only some are stored
     }
     // btw. it's possible that it could be in the process of REMOVE_RESOURCES,
     // but that's typically going to be so fast
@@ -222,14 +243,6 @@ function handlePostFormResponse(response) {
   return response.text();
 }
 
-function handleTextResponse(response) {
-  if (!response.ok) {
-    return Promise.reject(response.statusText);
-  }
-
-  return response.text();
-}
-
 function getManifestResourcePaths(bundleId) {
   const requestOptions = {
     method: 'GET',
@@ -239,8 +252,21 @@ function getManifestResourcePaths(bundleId) {
   return fetch(url, requestOptions).then(handleResponse);
 }
 
-function downloadResources(bundleId) {
-  return bundleAddTasks(bundleId, '<downloadResources/>');
+function getManifestResourceDetails(bundleId) {
+  const requestOptions = {
+    method: 'GET',
+    headers: authHeader()
+  };
+  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${MANIFEST_API}/${bundleId}/${MANIFEST_DETAILS}`;
+  return fetch(url, requestOptions).then(handleResponse);
+}
+
+/* <downloadResources>
+      <resource uri="release/English.lds"/>
+ */
+function downloadResources(bundleId, uris = []) {
+  const urisXml = uris.map(uri => `<resource uri="${uri}"/>`).join('') || '';
+  return bundleAddTasks(bundleId, `<downloadResources>${urisXml}</downloadResources>`);
 }
 
 function removeResources(bundleId) {
@@ -268,6 +294,20 @@ function getResourcePaths(bundleId) {
   };
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${RESOURCE_API_LIST}`;
   return fetch(url, requestOptions).then(handleResponse);
+}
+
+async function saveMetadataToTempFolder(bundleId) {
+  const temp = app.getPath('temp');
+  const metadataXmlResource = 'metadata.xml';
+  const tmpFolder = path.join(temp, bundleId);
+  const metadataFile = path.join(tmpFolder, metadataXmlResource);
+  await bundleService.requestSaveResourceTo(
+    tmpFolder,
+    bundleId,
+    metadataXmlResource,
+    () => {}
+  );
+  return metadataFile;
 }
 
 /*
@@ -325,6 +365,15 @@ function postFormFields({
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }
 
+function checkAllFields(bundleId) {
+  const requestOptions = {
+    method: 'GET',
+    headers: authHeader()
+  };
+  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${FORM_API}/check-metadata/${bundleId}`;
+  return fetch(url, requestOptions).then(handleResponse);
+}
+
 function startUploadBundle(bundleId) {
   return bundleAddTasks(bundleId, '<cancelUploadJobs/><createUploadJob/><uploadResources/><submitJobIfComplete><forkAfterUpload>true</forkAfterUpload></submitJobIfComplete>');
 }
@@ -352,6 +401,18 @@ function startCreateContent(bundleId, label) {
   );
 }
 
+async function bundleIsInCreateMode(bundleId) {
+  const rawBundleInfo = await bundleService.fetchById(bundleId);
+  return rawBundleInfo.mode === 'create';
+}
+
+async function unlockCreateMode(bundleId) {
+  if (await bundleService.bundleIsInCreateMode(bundleId)) {
+    // unblock block tasks like 'Delete'
+    await bundleService.stopCreateContent(bundleId);
+  }
+}
+
 /*
   /bundle/<id>/creation/stop/success
   /bundle/<id>/creation/stop/failure, where 'failure' will clear any following tasks
@@ -362,5 +423,71 @@ function stopCreateContent(bundleId, mode = 'success') {
     headers: { ...authHeader() }
   };
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/creation/stop/${mode}`;
+  return fetch(url, requestOptions).then(handlePostFormResponse);
+}
+
+function postResource(bundleId, filePath, bundlePath) {
+  const filename = path.basename(filePath);
+  const uri = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/resource/${bundlePath}`;
+  const options = {
+    method: 'POST',
+    uri,
+    formData: {
+      // Like <input type="file" name="content">
+      name: filename,
+      content: {
+        value: fs.createReadStream(filePath),
+        options: {
+          filename
+        }
+      }
+    },
+    headers: {
+      ...authHeader()
+      /* 'content-type': 'multipart/form-data' */ // Is set automatically
+    }
+  };
+  return rp(options);
+}
+
+function updateManifestResource(bundleId, bundlePath) {
+  const requestOptions = {
+    method: 'POST',
+    headers: { ...authHeader() },
+  };
+  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${MANIFEST_API}/${bundleId}/update/${bundlePath}`;
+  return fetch(url, requestOptions).then(handlePostFormResponse);
+}
+
+async function getPublicationWizards() {
+  const requestOptions = {
+    method: 'GET',
+    headers: authHeader()
+  };
+  const response = await fetch(
+    `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${PUBLICATION_API}/wizard`,
+    requestOptions
+  );
+  return handleResponse(response, (r) => r);
+}
+
+async function testPublicationWizards(bundleId, pubId) {
+  const requestOptions = {
+    method: 'GET',
+    headers: authHeader()
+  };
+  const response = await fetch(
+    `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${PUBLICATION_API}/wizard/${bundleId}/${pubId}`,
+    requestOptions
+  );
+  return handleResponse(response, (r) => r);
+}
+
+function runPublicationWizard(bundleId, pubId, wizardId, containerUri) {
+  const requestOptions = {
+    method: 'POST',
+    headers: { ...authHeader() },
+  };
+  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${PUBLICATION_API}/wizard/${bundleId}/${pubId}/${wizardId}/${containerUri}`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }

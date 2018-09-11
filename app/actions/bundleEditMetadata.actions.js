@@ -1,13 +1,10 @@
 import log from 'electron-log';
-import path from 'path';
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
 import { bundleService } from '../services/bundle.service';
 import { utilities } from '../utils/utilities';
 import editMetadataService from '../services/editMetadata.service';
-
-const { app } = require('electron').remote;
 
 export const bundleEditMetadataActions = {
   openEditMetadata,
@@ -16,7 +13,11 @@ export const bundleEditMetadataActions = {
   fetchActiveFormInputs,
   openMetadataFile,
   promptConfirmDeleteInstanceForm,
-  deleteInstanceForm
+  deleteInstanceForm,
+  saveMetadata,
+  saveFieldValuesForActiveForm,
+  reloadFieldValues,
+  setArchivistStatusOverrides
 };
 
 export default bundleEditMetadataActions;
@@ -25,21 +26,20 @@ function buildEditMetadataUrl(routeUrl, bundleId) {
   return routeUrl.replace(':bundleId', bundleId);
 }
 
-function getIsDemoEditMode(routeUrl, bundleId) {
-  const editMetadataUrl = buildEditMetadataUrl(routeUrl, bundleId);
-  return history.location.pathname === editMetadataUrl;
+async function getFormStructure(_bundleId) {
+  const isDemoMode = getIsDemoMode();
+  const response = isDemoMode ?
+    await getMockStructure() :
+    await bundleService.getFormBundleTree(_bundleId);
+  return response;
 }
 
 export function fetchFormStructure(_bundleId) {
   return async dispatch => {
     dispatch(request(_bundleId));
     try {
-      const isDemoMode =
-        getIsDemoEditMode(navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO, _bundleId);
-      const response = isDemoMode ?
-        await getMockStructure() :
-        await bundleService.getFormBundleTree(_bundleId);
-      dispatch(success(response));
+      const formStructure = await getFormStructure(_bundleId);
+      dispatch(success(formStructure));
     } catch (error) {
       dispatch(failure(error));
     }
@@ -59,8 +59,7 @@ export function fetchActiveFormInputs(bundleId, _formKey) {
   return async dispatch => {
     dispatch(request(_formKey));
     try {
-      const isDemoMode =
-        getIsDemoEditMode(navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO, bundleId);
+      const isDemoMode = getIsDemoMode();
       const response = isDemoMode ?
         await getMockFormInputs(bundleId, _formKey) :
         await bundleService.getFormFields(bundleId, _formKey);
@@ -86,27 +85,73 @@ export function editActiveFormInput(formKey, inputName, newValue) {
   };
 }
 
+export function setArchivistStatusOverrides(_bundleId) {
+  return async (dispatch, getState) => {
+    const { authentication } = getState();
+    const { whoami } = authentication;
+    const formStructure = await getFormStructure(_bundleId);
+    const appMetadataOverrides = getAppMetadataOverrides(formStructure);
+    const userMetadataOverrides = getUserMetadataOverrides(whoami);
+    const metadataOverrides = { ...appMetadataOverrides, ...userMetadataOverrides };
+    dispatch(myAction(_bundleId, metadataOverrides));
+  };
+
+  function myAction(bundleId, metadataOverrides) {
+    return { type: bundleEditMetadataConstants.SET_METADATA_OVERRIDES, metadataOverrides };
+  }
+}
+
+const { app } = require('electron').remote;
+
+function getAppMetadataOverrides(formStructure) {
+  const { id: identificationStatusFormKey } = formStructure.find(section => section.id.endsWith('dentification'));
+  const bundleProducerDefault = `${app.getName()}/${app.getVersion()}`;
+  const bundleProducer = { default: [bundleProducerDefault] };
+  return { [`/${identificationStatusFormKey}`]: { bundleProducer } };
+}
+
+function getUserMetadataOverrides(whoami) {
+  const archiveStatusFormKey = '/archiveStatus';
+  const { display_name: archivistName } = whoami;
+  const bundleCreatorName = archivistName;
+  return {
+    [archiveStatusFormKey]: {
+      archivistName: { default: [archivistName] },
+      bundleCreatorName: { default: [bundleCreatorName] }
+    }
+  };
+}
+
+function getIsDemoMode() {
+  return history.location.pathname.includes('/demo');
+}
+
 export function openEditMetadata(bundleId) {
   return async dispatch => {
     dispatch(request(bundleId));
-    const bundleInfo = await bundleService.fetchById(bundleId);
-    if (bundleInfo.mode !== 'create') {
-      const { dbl } = bundleInfo;
-      const { currentRevision } = dbl;
-      const isDraft = currentRevision === '0' || !currentRevision;
-      const label = isDraft ? '' : 'openEditMetadata';
-      try {
-        await bundleService.startCreateContent(bundleId, label);
-        if (isDraft) {
-          // ideally we'd wait/listen for the 'create' mode change event.
-          dispatchSuccess(bundleId);
-        }
-      } catch (errorReadable) {
-        const error = await errorReadable.text();
-        dispatch(failure(bundleId, error));
-      }
-    } else {
+    const isDemoMode = getIsDemoMode();
+    if (isDemoMode) {
       dispatchSuccess(bundleId);
+      return;
+    }
+    const bundleInfo = await bundleService.fetchById(bundleId);
+    if (bundleInfo.mode === 'create') {
+      dispatchSuccess(bundleId);
+      return;
+    }
+    const { dbl } = bundleInfo;
+    const { currentRevision } = dbl;
+    const isDraft = currentRevision === '0' || !currentRevision;
+    const label = isDraft ? '' : 'openEditMetadata';
+    try {
+      await bundleService.startCreateContent(bundleId, label);
+      if (isDraft) {
+        // ideally we'd wait/listen for the 'create' mode change event.
+        dispatchSuccess(bundleId);
+      }
+    } catch (errorReadable) {
+      const error = await errorReadable.text();
+      dispatch(failure(bundleId, error));
     }
     function dispatchSuccess(_bundleId) {
       dispatch(success(_bundleId));
@@ -136,7 +181,10 @@ export function openEditMetadata(bundleId) {
 
 export function closeEditMetadata(bundleId) {
   return async dispatch => {
-    await bundleService.stopCreateContent(bundleId);
+    const isDemoMode = getIsDemoMode();
+    if (!isDemoMode) {
+      bundleService.unlockCreateMode(bundleId);
+    }
     // ideally we'd wait for change mode to 'store' to complete
     dispatch({ type: bundleEditMetadataConstants.CLOSE_EDIT_METADATA, bundleId });
     await utilities.sleep(1);
@@ -155,18 +203,10 @@ export function openMetadataFile(bundleId) {
 function saveMetadatFileToTempBundleFolder(bundleId) {
   return async dispatch => {
     dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_REQUEST, bundleId });
-    const temp = app.getPath('temp');
-    const metadataXmlResource = 'metadata.xml';
-    const tmpFolder = path.join(temp, bundleId);
-    const metadataFile = path.join(tmpFolder, metadataXmlResource);
-    const downloadedItem = await bundleService.requestSaveResourceTo(
-      tmpFolder,
-      bundleId,
-      metadataXmlResource,
-      () => {}
-    );
+    const metadataFile = await bundleService.saveMetadataToTempFolder(bundleId);
+    await utilities.sleep(1000); // give time for OS to release the file.
     dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_SAVED, bundleId, metadataFile });
-    return downloadedItem;
+    return metadataFile;
   };
 }
 
@@ -234,6 +274,20 @@ function switchBackToBundlesPage() {
   history.push(bundlesPage);
 }
 
+export function reloadFieldValues(bundleId, formKey) {
+  return (dispatch, getState) => {
+    const { bundleEditMetadata } = getState();
+    const { moveNext: moveNextStep } = bundleEditMetadata;
+    dispatch(saveMetadataRequest({ moveNextStep }));
+    dispatch(fetchActiveFormInputs(bundleId, formKey));
+    return dispatch(saveMetadataSuccess(bundleId, formKey));
+  };
+}
+
+export function saveFieldValuesForActiveForm({ moveNext, forceSave } = {}) {
+  return saveMetadataRequest({ moveNextStep: moveNext, forceSave });
+}
+
 /*
   Expected Output:
     {
@@ -248,32 +302,27 @@ function switchBackToBundlesPage() {
       ]
     }
  */
-export function saveMetadata(
+export function saveMetadata({
   bundleId, formKey, fieldNameValues,
-  moveNext, isFactory, instanceKeyValue, saveOverrides = true,
-) {
+  moveNext, isFactory, instanceKeyValue,
+  saveOverrides = true, forceSave = false
+} = {}) {
   return async (dispatch, getState) => {
-    if (!formKey) {
-      return dispatch(saveMetadataRequest(null, null, moveNext));
-    }
     const { bundleEditMetadata } = getState();
     const moveNextStep = !moveNext ? bundleEditMetadata.moveNext : moveNext;
-    if (bundleId && Object.keys(fieldNameValues).length === 0) {
-      dispatch(saveMetadataRequest(null, null, moveNextStep));
-      dispatch(fetchActiveFormInputs(bundleId, formKey));
-      return dispatch(saveMetadataSuccess(bundleId, formKey));
-    }
+    const forceSaveState = !moveNext ? bundleEditMetadata.forceSave : forceSave;
     const fields = Object.keys(fieldNameValues).reduce((acc, name) => {
       const fieldNameInfo = fieldNameValues[name];
-      const { value: newFieldValue, type: fieldType } = fieldNameInfo;
+      const { values: newFieldValues, type: fieldType } = fieldNameInfo;
       const type = fieldType === 'xml' ? fieldType : 'values';
-      const normalized = newFieldValue.replace(/(\r\n\t|\n|\r\t)/gm, '').trim();
+      const normalizedValues = newFieldValues.map(fieldValue => fieldValue.replace(/(\r\n\t|\n|\r\t)/gm, '').trim());
       const valueObj = type === 'xml' ?
-        { text: normalized } : { valueList: [normalized] };
+        { text: `${normalizedValues}` } : { valueList: normalizedValues };
       return [...acc, { type, name, ...valueObj }];
     }, []);
-    const formId = bundleId;
-    dispatch(saveMetadataRequest(formId, fields, moveNextStep));
+    dispatch(saveMetadataRequest({
+      bundleId, fields, moveNextStep, forceSaveState
+    }));
     let postFormArgs = null;
     try {
       const [keyFieldName] = Object.keys(instanceKeyValue || {});
@@ -287,14 +336,14 @@ export function saveMetadata(
         return;
       }
       postFormArgs = {
-        bundleId, formKey, payload: { formId, fields }, keyField: keyFieldValue
+        bundleId, formKey, payload: { formId: bundleId, fields }, keyField: keyFieldValue
       };
       await bundleService.postFormFields({ ...postFormArgs });
       if (saveOverrides) {
         dispatch(fetchActiveFormInputs(bundleId, formKey));
       }
       dispatch(saveMetadataSuccess(bundleId, formKey));
-      if (isFactory) {
+      if (isFactory || forceSaveState /* reload 'present' status */) {
         dispatch(fetchFormStructure(bundleId));
       }
       dispatch(saveMetadatFileToTempBundleFolder(bundleId));
@@ -313,9 +362,15 @@ export function saveMetadata(
   };
 }
 
-function saveMetadataRequest(formId, fields, moveNextStep) {
+function saveMetadataRequest({
+  bundleId, fields, moveNextStep, forceSave
+}) {
   return {
-    type: bundleEditMetadataConstants.SAVE_METADATA_REQUEST, formId, fields, moveNextStep
+    type: bundleEditMetadataConstants.SAVE_METADATA_REQUEST,
+    bundleId,
+    fields,
+    moveNextStep,
+    forceSave
   };
 }
 
@@ -351,7 +406,9 @@ function saveAllOverrides(bundleId) {
           editMetadataService.getFormInputsWithOverrides(formKey, formInputs, metadataOverrides);
         const fieldNameValues =
           editMetadataService.getFormFieldValues(bundleId, formKey, formWithOverrides.fields, {});
-        dispatch(saveMetadata(bundleId, formKey, fieldNameValues, null, null, null, false));
+        dispatch(saveMetadata({
+          bundleId, formKey, fieldNameValues, saveOverrides: false
+        }));
       } catch (error) {
         // be silent about fetch form errors
       }
@@ -664,7 +721,7 @@ function getMockStructure() {
 
 function getMockFormInputs() {
   const mockFormInputs = {
-    id: 'bfaa79fd-2c60-41e0-9599-3b77bbf7042e',
+    id: 'e9257364-21f5-4678-a6ce-fc07ef9b11e3',
     category: 'information',
     fields: [
       {
@@ -678,8 +735,10 @@ function getMockFormInputs() {
         type: 'string',
         label: 'Name',
         help: "The entry's name, in English",
-        default: 'DBL Unit Test Gospels',
-        regex: '\\S.*\\S'
+        regex: '\\S.*\\S',
+        default: [
+          'TEST Audio Bundles'
+        ]
       },
       {
         name: 'nameLocal',
@@ -687,17 +746,21 @@ function getMockFormInputs() {
         type: 'string',
         label: 'Local Name',
         help: "The entry's localized name",
-        default: '',
-        regex: '\\S.*\\S'
+        regex: '\\S.*\\S',
+        default: [
+          'TEST Audio Bible - Local'
+        ]
       },
       {
         name: 'abbreviation',
-        nValues: '1',
+        nValues: '?',
         type: 'string',
         label: 'Abbreviation',
-        help: "The entry's abbreviation, in English (no exotic characters)",
-        default: 'DBLUTG',
-        regex: '[\\-A-Za-z0-9]{2,12}'
+        help: "The entry's abbreviation, in English (no exotic characters). This is not required for non-text media, but is strongly recommended.",
+        regex: '[\\-A-Za-z0-9]{2,12}',
+        default: [
+          'DBLTD'
+        ]
       },
       {
         name: 'abbreviationLocal',
@@ -705,8 +768,10 @@ function getMockFormInputs() {
         type: 'string',
         label: 'Local Abbreviation',
         help: "The entry's localized abbreviation",
-        default: '',
-        regex: '\\S.{0,10}\\S'
+        regex: '\\S.{0,10}\\S',
+        default: [
+          ''
+        ]
       },
       {
         name: 'description',
@@ -714,8 +779,10 @@ function getMockFormInputs() {
         type: 'string',
         label: 'Description',
         help: "The entry's description, in English",
-        default: 'English: DBL Unit Test Version with Gospels Only',
-        regex: '\\S.*\\S'
+        regex: '\\S.*\\S',
+        default: [
+          'TEST Audio Bible - Description'
+        ]
       },
       {
         name: 'descriptionLocal',
@@ -723,8 +790,10 @@ function getMockFormInputs() {
         type: 'string',
         label: 'Local Description',
         help: "The entry's localized description",
-        default: '',
-        regex: '\\S.*\\S'
+        regex: '\\S.*\\S',
+        default: [
+          ''
+        ]
       },
       {
         name: 'scope',
@@ -732,7 +801,9 @@ function getMockFormInputs() {
         type: 'string',
         label: 'Scope',
         help: "The entry's scope (across all publications)",
-        default: 'Portions',
+        default: [
+          'New Testament'
+        ],
         options: [
           'Bible',
           'Bible with Deuterocanon',
@@ -752,8 +823,21 @@ function getMockFormInputs() {
         type: 'string',
         label: 'Completion Date',
         help: 'The date on which this entry was completed',
-        default: '2017-12-01',
-        regex: '[12]\\d{3}(-[01]\\d(-[0-3]\\d(T[012]\\d:[0-5]\\d:[0-5]\\d)?)?)?'
+        regex: '[12]\\d{3}(-[01]\\d(-[0-3]\\d(T[012]\\d:[0-5]\\d:[0-5]\\d)?)?)?',
+        default: [
+          ''
+        ]
+      },
+      {
+        name: 'bundleProducer',
+        nValues: '1',
+        type: 'string',
+        label: 'Bundle Producer',
+        help: 'The client and client version that produced this bundle',
+        regex: '\\S.*\\S',
+        default: [
+          'nathanael/0.9.0'
+        ]
       }
     ]
   };

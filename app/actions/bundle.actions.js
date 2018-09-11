@@ -6,9 +6,11 @@ import { updateSearchResultsForBundleId } from '../actions/bundleFilter.actions'
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
+import { dblDotLocalService } from '../services/dbl_dot_local.service';
 
 export const bundleActions = {
   fetchAll,
+  createNewBundle,
   updateBundle,
   removeBundle,
   setupBundlesEventSource,
@@ -22,7 +24,7 @@ export const bundleActions = {
 export default bundleActions;
 
 export function updateBundle(bundleId) {
-  return async (dispatch, getState) => {
+  return async (dispatch) => {
     const isDemoMode = history.location.pathname.includes('/demo');
     if (isDemoMode) {
       return;
@@ -32,19 +34,7 @@ export function updateBundle(bundleId) {
       if (!bundleService.apiBundleHasMetadata(rawBundle)) {
         return; // hasn't downloaded metadata yet. (don't expect to be in our list)
       }
-      const bundle = await bundleService.convertApiBundleToNathanaelBundle(rawBundle);
-      const addedBundle = getAddedBundle(getState, bundleId);
-      if (addedBundle) {
-        dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle, rawBundle });
-        const { id, uploadJob } = bundle;
-        if (uploadJob) {
-          dispatch(updateUploadJobs(id, uploadJob));
-        } else {
-          dispatch(updateUploadJobs(id, null, id));
-        }
-      } else {
-        dispatch(addBundle(bundle, rawBundle));
-      }
+      dispatch(updateOrAddBundle(rawBundle));
     } catch (error) {
       if (error.status === 404) {
         // this has been deleted.
@@ -55,35 +45,90 @@ export function updateBundle(bundleId) {
   };
 }
 
+function tryAddNewEntry(bundleId) {
+  return async (dispatch) => {
+    const rawBundle = await bundleService.fetchById(bundleId);
+    if (!bundleService.apiBundleHasMetadata(rawBundle)) {
+      return; // hasn't downloaded metadata yet. (don't expect to be in our list)
+    }
+    const { dbl: { parent } } = rawBundle;
+    if (parent) {
+      return;
+    }
+    dispatch(updateOrAddBundle(rawBundle));
+  };
+}
+
+function updateOrAddBundle(rawBundle) {
+  return async (dispatch, getState) => {
+    const { local_id: bundleId } = rawBundle;
+    const bundle = await bundleService.convertApiBundleToNathanaelBundle(rawBundle);
+    const addedBundle = getAddedBundle(getState, bundleId);
+    if (addedBundle) {
+      dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle, rawBundle });
+      const { id, uploadJob } = bundle;
+      if (uploadJob) {
+        dispatch(updateUploadJobs(id, uploadJob));
+      } else {
+        dispatch(updateUploadJobs(id, null, id));
+      }
+    } else {
+      dispatch(addBundle(bundle, rawBundle));
+    }
+  };
+}
+
 function updateUploadJobs(bundleId, uploadJob, removeJobOrBundle) {
   return { type: bundleConstants.UPDATE_UPLOAD_JOBS, bundleId, uploadJob, removeJobOrBundle };
 }
 
 export function fetchAll() {
-  return dispatch => {
+  return async dispatch => {
     dispatch(request());
     const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO;
     if (isDemoMode) {
       const mockBundles = getMockBundles();
       dispatch(success(mockBundles));
     } else {
-      return bundleService
-        .fetchAll()
-        .then(
-          bundles => dispatch(success(bundles)),
-          error => dispatch(failure(error))
-        );
+      try {
+        const newMediaTypes = await dblDotLocalService.newBundleMedia();
+        const { bundles } = await bundleService.fetchAll();
+        dispatch(success(bundles, newMediaTypes));
+      } catch (error) {
+        dispatch(failure(error));
+      }
     }
   };
 
   function request() {
     return { type: bundleConstants.FETCH_REQUEST };
   }
-  function success(bundles) {
-    return { type: bundleConstants.FETCH_SUCCESS, bundles };
+  function success(bundles, newMediaTypes) {
+    return { type: bundleConstants.FETCH_SUCCESS, bundles, newMediaTypes };
   }
   function failure(error) {
     return { type: bundleConstants.FETCH_FAILURE, error };
+  }
+}
+
+export function createNewBundle(_medium) {
+  return async dispatch => {
+    try {
+      dispatch(request(_medium));
+      await dblDotLocalService.createNewBundle(_medium);
+      dispatch(success(_medium));
+    } catch (error) {
+      dispatch(failure(error));
+    }
+  };
+  function request(medium) {
+    return { type: bundleConstants.CREATE_REQUEST, medium };
+  }
+  function success(medium) {
+    return { type: bundleConstants.CREATE_SUCCESS, medium };
+  }
+  function failure(error) {
+    return { type: bundleConstants.CREATE_FAILURE, error };
   }
 }
 
@@ -112,7 +157,8 @@ export function setupBundlesEventSource(authentication) {
       'downloader/spec_status': (e) => listenDownloaderSpecStatus(e, dispatch, getState),
       'storer/delete_resource': (e) => listenStorerDeleteResource(e, dispatch, getState),
       'storer/update_from_download': (e) => listenStorerUpdateFromDownload(e, dispatch, getState),
-      'storer/delete_bundle': (e) => listenStorerDeleteBundle(e, dispatch, getState)
+      'storer/delete_bundle': (e) => listenStorerDeleteBundle(e, dispatch, getState),
+      'storer/write_resource': listenStorerWriteResource(dispatch, getState)
     };
     Object.keys(listeners).forEach((evType) => {
       const handler = listeners[evType];
@@ -137,7 +183,26 @@ export function setupBundlesEventSource(authentication) {
     // console.log(e);
     const data = JSON.parse(e.data);
     const bundleId = data.args[0];
+    if (bundleId.startsWith('session')) {
+      return; // skip session change modes
+    }
     dispatch(updateBundle(bundleId));
+  }
+
+  function listenStorerWriteResource(dispatch) {
+    return (event) => {
+      /*
+      {'event': 'storer/write_resource',
+       'data': {'args': ('50501698-e832-4db5-8973-f85340dc2e39', 'metadata.xml'),
+        'component': 'storer', 'type': 'write_resource'}}
+      */
+      const data = JSON.parse(event.data);
+      const [bundleId, fileName] = data.args;
+      if (fileName !== 'metadata.xml') {
+        return;
+      }
+      dispatch(tryAddNewEntry(bundleId));
+    };
   }
 
   /* {'event': 'uploader/createJob', 'data': {'args': ('2f57466e-a5c4-41de-a67e-4ba5b54e7870', '3a6424b3-8b52-4f05-b69c-3e8cdcf85b0c'), 'component': 'uploader', 'type': 'createJob'}} */
@@ -328,9 +393,9 @@ function getAddedBundle(getState, bundleId) {
 
 
 export function uploadBundle(id) {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     try {
-      unlockCreateMode(getState, id);
+      bundleService.unlockCreateMode(id);
       dispatch(request(id));
       await bundleService.startUploadBundle(id);
     } catch (errorReadable) {
@@ -346,22 +411,22 @@ export function uploadBundle(id) {
   }
 }
 
-export function downloadResources(id) {
+export function downloadResources(_id, _uris = []) {
   return async dispatch => {
     try {
-      const manifestResourcePaths = await bundleService.getManifestResourcePaths(id);
-      dispatch(request(id, manifestResourcePaths));
-      dispatch(updateSearchResultsForBundleId(id));
-      await bundleService.downloadResources(id);
+      const manifestResourcePaths = await bundleService.getManifestResourcePaths(_id);
+      dispatch(request(_id, manifestResourcePaths, _uris));
+      dispatch(updateSearchResultsForBundleId(_id));
+      await bundleService.downloadResources(_id, _uris);
     } catch (errorReadable) {
       const error = await errorReadable.text();
-      dispatch(failure(id, error));
+      dispatch(failure(_id, error));
     }
   };
-  function request(_id, manifestResourcePaths) {
-    return { type: bundleConstants.DOWNLOAD_RESOURCES_REQUEST, id: _id, manifestResourcePaths };
+  function request(id, manifestResourcePaths, uris) {
+    return { type: bundleConstants.DOWNLOAD_RESOURCES_REQUEST, id, manifestResourcePaths, uris };
   }
-  function failure(_id, error) {
+  function failure(id, error) {
     return { type: bundleConstants.DOWNLOAD_RESOURCES_FAILURE, id, error };
   }
 }
@@ -386,19 +451,11 @@ export function removeResources(id) {
   }
 }
 
-async function unlockCreateMode(getState, bundleId) {
-  const bundleInfo = await bundleService.fetchById(bundleId);
-  if (bundleInfo.mode === 'create') {
-    // unblock block tasks like 'Delete'
-    await bundleService.stopCreateContent(bundleId);
-  }
-}
-
 export function removeBundle(id) {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     dispatch(request(id));
     try {
-      unlockCreateMode(getState, id);
+      bundleService.unlockCreateMode(id);
       await bundleService.removeBundle(id);
     } catch (error) {
       dispatch(failure(id, error));
@@ -444,6 +501,7 @@ export function requestSaveBundleTo(id, selectedFolder) {
             if (resourceProgress && resourceProgress % 100 === 0) {
               const updatedArgs = {
                 _id: id,
+                apiBundle: bundleInfo,
                 resourcePath,
                 resourceTotalBytesSaved,
                 bundleBytesSaved,
@@ -480,14 +538,16 @@ export function requestSaveBundleTo(id, selectedFolder) {
 
   function updated({
     _id,
+    apiBundle,
     resourcePath,
     resourceTotalBytesSaved,
     bundleBytesSaved,
-    bundleBytesToSave
+    bundleBytesToSave,
   }) {
     return {
       type: bundleConstants.SAVETO_UPDATED,
       id: _id,
+      apiBundle,
       resourcePath,
       resourceTotalBytesSaved,
       bundleBytesSaved,
@@ -635,21 +695,6 @@ function getMockBundles() {
       task: 'SAVETO',
       status: 'IN_PROGRESS',
       progress: 66,
-      resourceCountStored: 2,
-      resourceCountManifest: 2
-    },
-    {
-      id: 'bundle11',
-      dblId: 'dblId5',
-      revision: '5',
-      parent: null,
-      medium: 'audio',
-      name: 'Audio Bundle #5',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'SAVETO',
-      status: 'COMPLETED',
-      progress: 100,
       resourceCountStored: 2,
       resourceCountManifest: 2
     }

@@ -9,11 +9,12 @@ import Book from '@material-ui/icons/Book';
 import Headset from '@material-ui/icons/Headset';
 import Videocam from '@material-ui/icons/Videocam';
 import Print from '@material-ui/icons/Print';
+import Grain from '@material-ui/icons/Grain';
 import Button from '@material-ui/core/Button';
 import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import FileDownload from 'material-ui/svg-icons/file/file-download';
-import FolderOpen from 'material-ui/svg-icons/file/folder-open';
+import Folder from 'material-ui/svg-icons/file/folder';
 import Save from '@material-ui/icons/Save';
 import CallSplit from '@material-ui/icons/CallSplit';
 import Link from '@material-ui/icons/Link';
@@ -24,6 +25,7 @@ import ControlledHighlighter from './ControlledHighlighter';
 import { toggleSelectEntry, requestSaveBundleTo,
   downloadResources, uploadBundle } from '../actions/bundle.actions';
 import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
+import { openResourceManager } from '../actions/bundleManageResources.actions';
 import { utilities } from '../utils/utilities';
 import DeleteOrCleanButton from './DeleteOrCleanButton';
 import ConfirmButton from './ConfirmButton';
@@ -54,6 +56,7 @@ type Props = {
   entryPageUrl: string,
   toggleSelectEntry: () => {},
   downloadResources: () => {},
+  openResourceManager: () => {},
   requestSaveBundleTo: () => {},
   openEditMetadata: () => {},
   uploadBundle: () => {}
@@ -62,6 +65,7 @@ type Props = {
 const mapDispatchToProps = {
   toggleSelectEntry,
   downloadResources,
+  openResourceManager,
   requestSaveBundleTo,
   openEditMetadata,
   uploadBundle
@@ -107,7 +111,7 @@ const getPropsParent = (state, props) => props.parent;
 const getPropsDblId = (state, props) => props.dblId;
 const makeGetEntryPageUrl = () => createSelector(
   [getDblBaseUrl, getPropsDblId, getPropsRevision, getPropsParent],
-  (dblBaseUrl, dblId, revision, parent) => (`${dblBaseUrl}/entry?id=${dblId}&revision=${parseInt(revision, 10) || parent.revision}`)
+  (dblBaseUrl, dblId, revision, parent) => (`${dblBaseUrl}/entry?id=${dblId}&revision=${parseInt(revision, 10) || (parent ? parent.revision : '0')}`)
 );
 
 const makeMapStateToProps = () => {
@@ -133,6 +137,12 @@ const makeMapStateToProps = () => {
 class DBLEntryRow extends PureComponent<Props> {
   props: Props;
 
+  componentWillReceiveProps(nextProps) {
+    if (this.props.task === 'SAVETO' && nextProps.task !== 'SAVETO') {
+      this.openInFolder();
+    }
+  }
+
   onKeyPress = (event) => {
     if (['Enter', ' '].includes(event.key)) {
       this.onClickBundleRow();
@@ -146,10 +156,14 @@ class DBLEntryRow extends PureComponent<Props> {
   }
 
   showStatusAsText = () => {
+    const { status } = this.props;
+    return (['IN_PROGRESS'].includes(status));
+  }
+
+  showStoredButton = () => {
     const { task, status } = this.props;
-    return ((task === 'UPLOAD' || task === 'DOWNLOAD') &&
-      (status === 'DRAFT' || status === 'IN_PROGRESS' || status === 'COMPLETED')) ||
-      ((task === 'REMOVE_RESOURCES') && status === 'IN_PROGRESS');
+    return ((task === 'DOWNLOAD' && status === 'COMPLETED')
+      || status === 'DRAFT');
   }
 
   showDownloadButton = () => {
@@ -194,9 +208,9 @@ class DBLEntryRow extends PureComponent<Props> {
     matches: this.getMatches(textToHighlight)
   })
 
-  onClickDownloadResources = (event) => {
+  onClickManageResources = (mode) => (event) => {
     const { bundleId } = this.props;
-    this.props.downloadResources(bundleId);
+    this.props.openResourceManager(bundleId, mode);
     event.stopPropagation();
   }
 
@@ -230,10 +244,9 @@ class DBLEntryRow extends PureComponent<Props> {
     });
   }
 
-  openInFolder = (event) => {
+  openInFolder = () => {
     const { bundlesSaveTo, bundleId } = this.props;
     const { savedToHistory } = bundlesSaveTo;
-    event.stopPropagation();
     const bundleSavedToInfo = getBundleExportInfo(bundleId, savedToHistory);
     if (bundleSavedToInfo) {
       const { folderName } = bundleSavedToInfo;
@@ -277,6 +290,7 @@ class DBLEntryRow extends PureComponent<Props> {
     if (!shouldShowRow) {
       return (null);
     }
+    const resourceManagerMode = status === 'DRAFT' ? 'addFiles' : 'download';
     return (
       <div
         className={styles.bundleRow}
@@ -289,11 +303,14 @@ class DBLEntryRow extends PureComponent<Props> {
       >
         <div className={styles.bundleRowTop}>
           <div className={styles.bundleRowTopLeftSideIcon}>
-            { (medium === 'text' && <Book />)
-            || (medium === 'audio' && <Headset />)
-            || (medium === 'video' && <Videocam />)
-            || (medium === 'print' && <Print />)
-            || medium }
+            <Tooltip title={medium}>
+              { (medium === 'text' && <Book />)
+              || (medium === 'audio' && <Headset />)
+              || (medium === 'video' && <Videocam />)
+              || (medium === 'print' && <Print />)
+              || (medium === 'braille' && <Grain />)
+              || medium }
+            </Tooltip>
           </div>
           <div className={styles.bundleRowTopLeftSideLanguageAndCountry}>
             <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.languageAndCountry)} className={styles.languageAndCountryLabel} />
@@ -314,13 +331,12 @@ class DBLEntryRow extends PureComponent<Props> {
             </Tooltip>
           </div>
           <div className={styles.bundleRowTopRightSide}>
-            {task === 'SAVETO' && (
+            {this.showStoredButton() && (
               <Button variant="flat" size="small" className={classes.button}
-                onKeyPress={this.openInFolder}
-                onClick={this.openInFolder}
+                onClick={this.onClickManageResources(resourceManagerMode)}
               >
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
-                <FolderOpen className={classNames(classes.rightIcon, classes.iconSmall)} />
+                <Folder className={classNames(classes.rightIcon, classes.iconSmall)} />
               </Button>
             )}
             {this.showStatusAsText() && (
@@ -330,8 +346,8 @@ class DBLEntryRow extends PureComponent<Props> {
             )}
             {this.showDownloadButton() && (
               <Button variant="flat" size="small" className={classes.button}
-                onKeyPress={this.onClickDownloadResources}
-                onClick={this.onClickDownloadResources}
+                onKeyPress={this.onClickManageResources('download')}
+                onClick={this.onClickManageResources('download')}
               >
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
                 <FileDownload className={classNames(classes.rightIcon, classes.iconSmall)} />
@@ -417,9 +433,6 @@ function getBundleExportInfo(bundleId, savedToHistory) {
 }
 
 function pickBackgroundColor(task, status) {
-  if (task === 'SAVETO') {
-    return '#FFE793';
-  }
   switch (status) {
     case 'DRAFT': return '#F5D2D2';
     case 'NOT_STARTED': return '#EDEDED';

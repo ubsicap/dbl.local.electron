@@ -13,17 +13,18 @@ import Save from '@material-ui/icons/Save';
 import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
 import { updateBundle } from '../actions/bundle.actions';
-import { closeEditMetadata, saveMetadata, openMetadataFile } from '../actions/bundleEditMetadata.actions';
+import { closeEditMetadata, saveFieldValuesForActiveForm, openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import EditMetadataStepper from './EditMetadataStepper';
 import rowStyles from './DBLEntryRow.css';
 
 const { shell } = require('electron');
 
-function mapStateToProps(state) {
+function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundles } = state;
-  const { editingMetadata, editedMetadata, showMetadataFile } = bundleEditMetadata;
-  const { selectedBundle } = bundles;
-  const bundleId = editingMetadata || editedMetadata;
+  const { showMetadataFile } = bundleEditMetadata;
+  const { addedByBundleIds } = bundles;
+  const { bundleId, section: showSection } = props.match.params;
+  const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
   const {
     requestingSaveMetadata = false,
     wasMetadataSaved = false,
@@ -31,20 +32,21 @@ function mapStateToProps(state) {
     moveNext = null
   } = bundleEditMetadata;
   return {
-    open: Boolean(bundleEditMetadata.editingMetadata || false),
+    open: Boolean(bundleId || false),
     bundleId,
     selectedBundle,
     requestingSaveMetadata,
     wasMetadataSaved,
     moveNext,
     couldNotSaveMetadataMessage,
-    showMetadataFile
+    showMetadataFile,
+    showSection
   };
 }
 
 const mapDispatchToProps = {
   closeEditMetadata,
-  saveMetadata,
+  saveFieldValuesForActiveForm,
   updateBundle,
   openMetadataFile
 };
@@ -69,12 +71,13 @@ const materialStyles = theme => ({
 
 type Props = {
   open: boolean,
-  bundleId: ?string,
+  bundleId: string,
+  showSection: ?string,
   selectedBundle: {},
   closeEditMetadata: () => {},
   updateBundle: () => {},
   classes: {},
-  saveMetadata: () => {},
+  saveFieldValuesForActiveForm: () => {},
   openMetadataFile: () => {},
   wasMetadataSaved: boolean,
   showMetadataFile: ?string,
@@ -103,7 +106,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   }
 
   handleClose = () => {
-    this.props.saveMetadata(null, null, null, { exit: true });
+    this.props.saveFieldValuesForActiveForm({ moveNext: { exit: true } });
   };
 
   handleReview = () => {
@@ -111,7 +114,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   }
 
   render() {
-    const { classes, open, selectedBundle = {} } = this.props;
+    const { classes, open, selectedBundle = {}, bundleId, showSection } = this.props;
     const { displayAs = {} } = selectedBundle;
     const { languageAndCountry, name } = displayAs;
     return (
@@ -123,7 +126,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
                 <CloseIcon />
               </IconButton>
               <Typography variant="title" color="inherit" className={classes.flex}>
-                Edit <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry}</span> {name}
+                Edit metadata: <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry} </span> {name}
               </Typography>
               <Button key="btnOpenXml" color="inherit" disable={this.props.showMetadataFile} onClick={this.handleReview}>
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
@@ -135,7 +138,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
               </Button>
             </Toolbar>
           </AppBar>
-          <EditMetadataStepper myStructurePath="" shouldLoadDetails={false} />
+          <EditMetadataStepper bundleId={bundleId} showSection={showSection} myStructurePath="" shouldLoadDetails={false} />
         </div>
       </Zoom>
     );
