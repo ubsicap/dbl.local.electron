@@ -125,7 +125,7 @@ const getPropsFormsErrorStatus = (state, props) => props.formsErrorStatus;
 const makeGetFormsErrors = () => createSelector(
   [getPropsFormsErrorStatus],
   (formsErrorStatus) => Object.entries(formsErrorStatus).reduce((acc, [formKey, errorStatus]) => {
-    if (errorStatus.form_field) {
+    if (errorStatus.field_issues.length === 0) {
       return acc;
     }
     return { ...acc, [formKey]: { ...errorStatus } };
@@ -221,7 +221,8 @@ class DBLEntryRow extends PureComponent<Props> {
 
   shouldDisableRevise = () => (this.props.isRequestingRevision || this.props.isDownloading)
 
-  shouldDisableUpload = () => this.shouldDisableReviseOrEdit();
+  shouldDisableUpload = () => this.shouldDisableReviseOrEdit() ||
+    Object.keys(this.props.formsErrors).length > 0;
 
   shouldDisableReviseOrEdit = () => {
     const { isUploading = false, task, status } = this.props;
