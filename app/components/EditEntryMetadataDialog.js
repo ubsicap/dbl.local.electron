@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
+import Badge from '@material-ui/core/Badge';
 import Button from '@material-ui/core/Button';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -14,6 +15,7 @@ import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
 import { updateBundle } from '../actions/bundle.actions';
 import { closeEditMetadata, saveFieldValuesForActiveForm, openMetadataFile } from '../actions/bundleEditMetadata.actions';
+import editMetadataService from '../services/editMetadata.service';
 import EditMetadataStepper from './EditMetadataStepper';
 import rowStyles from './DBLEntryRow.css';
 
@@ -25,6 +27,7 @@ function mapStateToProps(state, props) {
   const { addedByBundleIds } = bundles;
   const { bundleId, section: showSection } = props.match.params;
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
+  const getFormsErrors = editMetadataService.makeGetFormsErrors();
   const {
     requestingSaveMetadata = false,
     wasMetadataSaved = false,
@@ -40,7 +43,8 @@ function mapStateToProps(state, props) {
     moveNext,
     couldNotSaveMetadataMessage,
     showMetadataFile,
-    showSection
+    showSection,
+    formsErrors: getFormsErrors(state, props)
   };
 }
 
@@ -67,6 +71,9 @@ const materialStyles = theme => ({
   iconSmall: {
     fontSize: 20,
   },
+  badge: {
+    margin: theme.spacing.unit * 2,
+  },
 });
 
 type Props = {
@@ -74,6 +81,7 @@ type Props = {
   bundleId: string,
   showSection: ?string,
   selectedBundle: {},
+  formsErrors: {},
   closeEditMetadata: () => {},
   updateBundle: () => {},
   classes: {},
@@ -118,9 +126,16 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   }
 
   render() {
-    const { classes, open, selectedBundle = {}, bundleId, showSection } = this.props;
+    const { classes, open, selectedBundle = {}, bundleId, showSection, formsErrors } = this.props;
     const { displayAs = {} } = selectedBundle;
     const { languageAndCountry, name } = displayAs;
+    const formsErrorsCount = Object.keys(formsErrors).length;
+    const conditionallyRenderSaveOrGotoError = (errorCount, saveNode, gotoErrorNode) => {
+      if (!formsErrorsCount) {
+        return saveNode;
+      }
+      return <Badge key="badge" className={classes.badge} badgeContent={errorCount} color="error">{gotoErrorNode}</Badge>;
+    };
     return (
       <Zoom in={open}>
         <div>
@@ -137,8 +152,12 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
                 Review
               </Button>
               <Button key="btnSave" color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.navigateToNextErrror}>
-                <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
-                Save
+                {conditionallyRenderSaveOrGotoError(
+                  formsErrorsCount,
+                  [<Save key="iconSave" className={classNames(classes.leftIcon, classes.iconSmall)} />, 'Save'],
+                  'Goto'
+                  )
+                }
               </Button>
             </Toolbar>
           </AppBar>

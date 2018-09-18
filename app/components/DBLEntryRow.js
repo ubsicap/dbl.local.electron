@@ -26,6 +26,7 @@ import ControlledHighlighter from './ControlledHighlighter';
 import { toggleSelectEntry, requestSaveBundleTo,
   downloadResources, uploadBundle, updateBundle } from '../actions/bundle.actions';
 import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
+import editMetadataService from '../services/editMetadata.service';
 import { openResourceManager } from '../actions/bundleManageResources.actions';
 import { utilities } from '../utils/utilities';
 import DeleteOrCleanButton from './DeleteOrCleanButton';
@@ -120,25 +121,13 @@ const makeGetEntryPageUrl = () => createSelector(
   (dblBaseUrl, dblId, revision, parent) => (`${dblBaseUrl}/entry?id=${dblId}&revision=${parseInt(revision, 10) || (parent ? parent.revision : '0')}`)
 );
 
-const getPropsFormsErrorStatus = (state, props) => props.formsErrorStatus;
-
-const makeGetFormsErrors = () => createSelector(
-  [getPropsFormsErrorStatus],
-  (formsErrorStatus) => Object.entries(formsErrorStatus).reduce((acc, [formKey, errorStatus]) => {
-    if (errorStatus.field_issues.length === 0) {
-      return acc;
-    }
-    return { ...acc, [formKey]: { ...errorStatus } };
-  }, {})
-);
-
 const makeMapStateToProps = () => {
   const shouldShowRow = makeShouldShowRow();
   const getMatches = makeGetBundleMatches();
   const getIsRequestingRevision = makeGetIsRequestingRevision();
   const getEntryPageUrl = makeGetEntryPageUrl();
   const getIsDownloading = makeGetIsDownloading();
-  const getFormsErrors = makeGetFormsErrors();
+  const getFormsErrors = editMetadataService.makeGetFormsErrors();
   const mapStateToProps = (state, props) => {
     const { bundlesSaveTo } = state;
     return {
@@ -296,11 +285,6 @@ class DBLEntryRow extends PureComponent<Props> {
     <ControlledHighlighter {...this.getHighlighterSharedProps(this.props.displayAs.status)} />
   );
 
-  /*
-    <Badge className={classes.margin} badgeContent={10} color="secondary">
-          <MailIcon />
-        </Badge>
-        */
   renderEditIcon = () => {
     const { status, classes, formsErrors } = this.props;
     const formsErrorCount = Object.keys(formsErrors).length;
