@@ -23,7 +23,7 @@ import CloudUpload from '@material-ui/icons/CloudUpload';
 import styles from './DBLEntryRow.css';
 import ControlledHighlighter from './ControlledHighlighter';
 import { toggleSelectEntry, requestSaveBundleTo,
-  downloadResources, uploadBundle } from '../actions/bundle.actions';
+  downloadResources, uploadBundle, updateBundle } from '../actions/bundle.actions';
 import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
 import { openResourceManager } from '../actions/bundleManageResources.actions';
 import { utilities } from '../utils/utilities';
@@ -60,7 +60,8 @@ type Props = {
   openResourceManager: () => {},
   requestSaveBundleTo: () => {},
   openEditMetadata: () => {},
-  uploadBundle: () => {}
+  uploadBundle: () => {},
+  updateBundle: () => {}
 };
 
 const mapDispatchToProps = {
@@ -69,7 +70,8 @@ const mapDispatchToProps = {
   openResourceManager,
   requestSaveBundleTo,
   openEditMetadata,
-  uploadBundle
+  uploadBundle,
+  updateBundle
 };
 
 const getTask = (state, props) => props.task;
@@ -141,7 +143,7 @@ class DBLEntryRow extends PureComponent<Props> {
   componentDidMount() {
     // compute manifest count if we have resources
     if (this.props.resourceCountManifest === null && this.props.resourceCountStored) {
-      this.props.uploadBundle(this.props.bundleId);
+      this.props.updateBundle(this.props.bundleId);
     }
   }
 
@@ -151,7 +153,7 @@ class DBLEntryRow extends PureComponent<Props> {
     }
     // recompute manifest count for drafts if we have changed resource count
     if (nextProps.status === 'DRAFT' && this.props.resourceCountStored !== nextProps.resourceCountStored) {
-      this.props.uploadBundle(this.props.bundleId);
+      this.props.updateBundle(this.props.bundleId);
     }
   }
 

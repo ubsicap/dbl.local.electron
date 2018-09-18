@@ -317,7 +317,7 @@ function formatLanguageAndCountry(bundle) {
 function formatStatus(bundle) {
   const formattedProgress = formatProgress(bundle);
   const stored = (bundle.resourceCountStored === bundle.resourceCountManifest) ?
-    bundle.resourceCountManifest : `${bundle.resourceCountStored}/${bundle.resourceCountManifest}`;
+    bundle.resourceCountManifest : `${bundle.resourceCountStored}/${bundle.resourceCountManifest || '...'}`;
   let newStatusDisplayAs;
   if (bundle.isUploading) {
     const uploadingMessage = (!bundle.resourceCountStored || bundle.resourceCountStored === 0) ? 'metadata' : formattedProgress;

@@ -14,6 +14,7 @@ export const bundleService = {
   fetchAll,
   fetchById,
   getFlatFileInfo,
+  getHasStoredResources,
   update,
   apiBundleHasMetadata,
   convertApiBundleToNathanaelBundle,
@@ -131,7 +132,7 @@ function apiBundleHasMetadata(apiBundle) {
 function convertBundleApiListToBundles(apiBundles) {
   const bundles = Promise.all(Object.values(apiBundles)
     .filter(apiBundleHasMetadata)
-    .map(convertApiBundleToNathanaelBundle));
+    .map(apiBundle => convertApiBundleToNathanaelBundle(apiBundle)));
   return bundles;
 }
 
@@ -162,20 +163,29 @@ function getFlatFileInfo(apiBundle) {
   return traverse(apiBundle.store.file_info).reduce(addFileInfo, {});
 }
 
+function getHasStoredResources(apiBundle) {
+  // assume the first file to be stored is 'metadata.xml' which is not a resource
+  return Object.keys(apiBundle.store.file_info || {}).length > 1;
+}
+
+function getResourcFileStoredCount(apiBundle) {
+  const flatFileInfo = getFlatFileInfo(apiBundle);
+  const flatFilePaths = Object.keys(flatFileInfo || {});
+  const resourceCountStored = (flatFilePaths.length > 1 ? flatFilePaths.length - 1 : 0);
+  return resourceCountStored;
+}
+
 async function convertApiBundleToNathanaelBundle(apiBundle, resourceCountManifest = null) {
   const {
-    mode, metadata, dbl, store, upload
+    mode, metadata, dbl, upload
   } = apiBundle;
   const { jobId: uploadJob } = upload || {};
-  const { file_info: fileInfo } = store;
   const { parent } = dbl;
   const bundleId = apiBundle.local_id;
   const initTaskStatus = getInitialTaskAndStatus(apiBundle);
   const { task } = initTaskStatus;
   let { status } = initTaskStatus;
-  const flatFileInfo = getFlatFileInfo(apiBundle);
-  const flatFilePaths = Object.keys(flatFileInfo || {});
-  const resourceCountStored = (flatFilePaths.length > 1 ? flatFilePaths.length - 1 : 0);
+  const resourceCountStored = getResourcFileStoredCount(apiBundle);
   if (resourceCountStored) {
     // compare the manifest and resources to determine whether user can download more or not.
     if (task === 'DOWNLOAD' && mode === 'store') {
@@ -196,8 +206,7 @@ async function convertApiBundleToNathanaelBundle(apiBundle, resourceCountManifes
     uploadJob,
     resourceCountStored,
     resourceCountManifest,
-    parent,
-    fileInfo
+    parent
   };
 }
 
