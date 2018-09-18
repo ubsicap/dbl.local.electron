@@ -109,7 +109,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     this.props.saveFieldValuesForActiveForm({ moveNext: { exit: true } });
   };
 
-  handleCheckAllAndClose = () => {
+  navigateToNextErrror = () => {
     this.props.saveFieldValuesForActiveForm({ moveNext: { exit: true, checkAllForms: true } });
   }
 
@@ -136,7 +136,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
                 Review
               </Button>
-              <Button key="btnSave" color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleCheckAllAndClose}>
+              <Button key="btnSave" color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.navigateToNextErrror}>
                 <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
                 Save
               </Button>

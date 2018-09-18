@@ -1,3 +1,4 @@
+import traverse from 'traverse';
 import fs from 'fs-extra';
 import path from 'path';
 import rp from 'request-promise-native';
@@ -12,6 +13,7 @@ export const bundleService = {
   create,
   fetchAll,
   fetchById,
+  getFlatFileInfo,
   update,
   apiBundleHasMetadata,
   convertApiBundleToNathanaelBundle,
@@ -147,7 +149,20 @@ function getInitialTaskAndStatus(apiBundle) {
   return { task, status };
 }
 
-async function convertApiBundleToNathanaelBundle(apiBundle) {
+function addFileInfo(acc, fileInfoNode) {
+  if (fileInfoNode.is_dir || this.isRoot || fileInfoNode.size === undefined) {
+    return acc;
+  }
+  const { path: pathParts } = this;
+  const fullKey = pathParts.join('/');
+  return { ...acc, [fullKey]: fileInfoNode };
+}
+
+function getFlatFileInfo(apiBundle) {
+  return traverse(apiBundle.store.file_info).reduce(addFileInfo, {});
+}
+
+async function convertApiBundleToNathanaelBundle(apiBundle, resourceCountManifest = null) {
   const {
     mode, metadata, dbl, store, upload
   } = apiBundle;
@@ -155,25 +170,17 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
   const { file_info: fileInfo } = store;
   const { parent } = dbl;
   const bundleId = apiBundle.local_id;
-  let resourceCountStored;
-  let resourceCountManifest;
   const initTaskStatus = getInitialTaskAndStatus(apiBundle);
   const { task } = initTaskStatus;
   let { status } = initTaskStatus;
-  if (fileInfo && Object.keys(fileInfo).length > 1) {
+  const flatFileInfo = getFlatFileInfo(apiBundle);
+  const flatFilePaths = Object.keys(flatFileInfo || {});
+  const resourceCountStored = (flatFilePaths.length > 1 ? flatFilePaths.length - 1 : 0);
+  if (resourceCountStored) {
     // compare the manifest and resources to determine whether user can download more or not.
-    const manifestPaths = await getManifestResourcePaths(bundleId);
-    const resourcePaths = await getResourcePaths(bundleId);
-    resourceCountManifest = (manifestPaths || []).length;
-    resourceCountStored = (resourcePaths || []).length;
     if (task === 'DOWNLOAD' && mode === 'store') {
       status = 'COMPLETED'; // even if only some are stored
     }
-    // btw. it's possible that it could be in the process of REMOVE_RESOURCES,
-    // but that's typically going to be so fast
-    // we can probably just display it as ready to download.
-  } else {
-    resourceCountStored = 0;
   }
   return {
     id: bundleId,
@@ -189,7 +196,8 @@ async function convertApiBundleToNathanaelBundle(apiBundle) {
     uploadJob,
     resourceCountStored,
     resourceCountManifest,
-    parent
+    parent,
+    fileInfo
   };
 }
 

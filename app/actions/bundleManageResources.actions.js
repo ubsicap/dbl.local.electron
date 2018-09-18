@@ -54,22 +54,13 @@ export function closeResourceManager(_bundleId) {
   }
 }
 
-function addFileInfo(acc, fileInfoNode) {
-  if (fileInfoNode.is_dir || this.isRoot || fileInfoNode.size === undefined) {
-    return acc;
-  }
-  const { path } = this;
-  const fullKey = path.join('/');
-  return { ...acc, [fullKey]: fileInfoNode };
-}
-
 export function getManifestResources(_bundleId) {
   return async dispatch => {
     try {
       dispatch(request(_bundleId));
       const manifestResources = await bundleService.getManifestResourceDetails(_bundleId);
       const rawBundle = await bundleService.fetchById(_bundleId);
-      const storedFiles = traverse(rawBundle.store.file_info).reduce(addFileInfo, {});
+      const storedFiles = bundleService.getFlatFileInfo(rawBundle);
       dispatch(success(_bundleId, manifestResources, storedFiles));
     } catch (error) {
       dispatch(failure(_bundleId, error));

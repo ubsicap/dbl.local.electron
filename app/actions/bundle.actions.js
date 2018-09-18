@@ -62,7 +62,9 @@ function tryAddNewEntry(bundleId) {
 function updateOrAddBundle(rawBundle) {
   return async (dispatch, getState) => {
     const { local_id: bundleId } = rawBundle;
-    const bundle = await bundleService.convertApiBundleToNathanaelBundle(rawBundle);
+    const manifestResources = await bundleService.getManifestResourcePaths(bundleId);
+    const resourceCountManifest = (manifestResources || []).length;
+    const bundle = await bundleService.convertApiBundleToNathanaelBundle(rawBundle, resourceCountManifest);
     const addedBundle = getAddedBundle(getState, bundleId);
     if (addedBundle) {
       dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle, rawBundle });

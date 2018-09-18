@@ -43,6 +43,7 @@ type Props = {
   medium: string,
   displayAs: {},
   resourceCountStored?: number,
+  resourceCountManifest?: ?number,
   bundleMatches: {},
   bundlesSaveTo: {},
   progress?: ?number,
@@ -137,9 +138,20 @@ const makeMapStateToProps = () => {
 class DBLEntryRow extends PureComponent<Props> {
   props: Props;
 
+  componentDidMount() {
+    // compute manifest count if we have resources
+    if (this.props.resourceCountManifest === null && this.props.resourceCountStored) {
+      this.props.uploadBundle(this.props.bundleId);
+    }
+  }
+
   componentWillReceiveProps(nextProps) {
     if (this.props.task === 'SAVETO' && nextProps.task !== 'SAVETO') {
       this.openInFolder();
+    }
+    // recompute manifest count for drafts if we have changed resource count
+    if (nextProps.status === 'DRAFT' && this.props.resourceCountStored !== nextProps.resourceCountStored) {
+      this.props.uploadBundle(this.props.bundleId);
     }
   }
 
@@ -400,6 +412,7 @@ class DBLEntryRow extends PureComponent<Props> {
 DBLEntryRow.defaultProps = {
   progress: null,
   resourceCountStored: 0,
+  resourceCountManifest: 0,
   isUploading: null,
   isDownloading: null
 };
