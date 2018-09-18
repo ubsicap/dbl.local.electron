@@ -55,6 +55,7 @@ type Props = {
   classes: {},
   isRequestingRevision: boolean,
   entryPageUrl: string,
+  formsErrorStatus: {},
   toggleSelectEntry: () => {},
   downloadResources: () => {},
   openResourceManager: () => {},
@@ -141,8 +142,9 @@ class DBLEntryRow extends PureComponent<Props> {
   props: Props;
 
   componentDidMount() {
-    // compute manifest count if we have resources
-    if (this.props.resourceCountManifest === null && this.props.resourceCountStored) {
+    const { resourceCountManifest, resourceCountStored, status, formsErrorStatus } = this.props;
+    if ((resourceCountManifest === null && resourceCountStored) ||
+      (status === 'DRAFT' && Object.keys(formsErrorStatus).length === 0)) {
       this.props.updateBundle(this.props.bundleId);
     }
   }
@@ -152,7 +154,8 @@ class DBLEntryRow extends PureComponent<Props> {
       this.openInFolder();
     }
     // recompute manifest count for drafts if we have changed resource count
-    if (nextProps.status === 'DRAFT' && this.props.resourceCountStored !== nextProps.resourceCountStored) {
+    if ((nextProps.resourceCountManifest === null && nextProps.resourceCountStored) ||
+      (nextProps.status === 'DRAFT' && this.props.resourceCountStored !== nextProps.resourceCountStored)) {
       this.props.updateBundle(this.props.bundleId);
     }
   }

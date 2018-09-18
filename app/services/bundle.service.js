@@ -175,10 +175,11 @@ function getResourcFileStoredCount(apiBundle) {
   return resourceCountStored;
 }
 
-async function convertApiBundleToNathanaelBundle(apiBundle, resourceCountManifest = null) {
+async function convertApiBundleToNathanaelBundle(apiBundle, lazyLoads = {}) {
   const {
     mode, metadata, dbl, upload
   } = apiBundle;
+  const { resourceCountManifest = null, formsErrorStatus = {} } = lazyLoads;
   const { jobId: uploadJob } = upload || {};
   const { parent } = dbl;
   const bundleId = apiBundle.local_id;
@@ -187,7 +188,6 @@ async function convertApiBundleToNathanaelBundle(apiBundle, resourceCountManifes
   let { status } = initTaskStatus;
   const resourceCountStored = getResourcFileStoredCount(apiBundle);
   if (resourceCountStored) {
-    // compare the manifest and resources to determine whether user can download more or not.
     if (task === 'DOWNLOAD' && mode === 'store') {
       status = 'COMPLETED'; // even if only some are stored
     }
@@ -206,7 +206,8 @@ async function convertApiBundleToNathanaelBundle(apiBundle, resourceCountManifes
     uploadJob,
     resourceCountStored,
     resourceCountManifest,
-    parent
+    parent,
+    formsErrorStatus
   };
 }
 

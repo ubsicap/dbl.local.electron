@@ -65,8 +65,13 @@ function updateOrAddBundle(rawBundle) {
     const hasStoredResources = bundleService.getHasStoredResources(rawBundle);
     const manifestResources = hasStoredResources ?
       await bundleService.getManifestResourcePaths(bundleId) : 0;
+    const { status } = bundleService.getInitialTaskAndStatus(rawBundle);
+    const formsErrorStatus = status === 'DRAFT' ? await bundleService.checkAllFields(bundleId) : {};
     const resourceCountManifest = (manifestResources || []).length;
-    const bundle = await bundleService.convertApiBundleToNathanaelBundle(rawBundle, resourceCountManifest);
+    const bundle = await bundleService.convertApiBundleToNathanaelBundle(
+      rawBundle,
+      { resourceCountManifest, formsErrorStatus }
+    );
     const addedBundle = getAddedBundle(getState, bundleId);
     if (addedBundle) {
       dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle, rawBundle });
