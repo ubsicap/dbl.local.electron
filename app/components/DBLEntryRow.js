@@ -5,6 +5,7 @@ import classNames from 'classnames';
 import { compose } from 'recompose';
 import { createSelector } from 'reselect';
 import LinearProgress from 'material-ui/LinearProgress';
+import Badge from '@material-ui/core/Badge';
 import Book from '@material-ui/icons/Book';
 import Headset from '@material-ui/icons/Headset';
 import Videocam from '@material-ui/icons/Videocam';
@@ -56,6 +57,7 @@ type Props = {
   isRequestingRevision: boolean,
   entryPageUrl: string,
   formsErrorStatus: {},
+  formsErrors: {},
   toggleSelectEntry: () => {},
   downloadResources: () => {},
   openResourceManager: () => {},
@@ -118,12 +120,25 @@ const makeGetEntryPageUrl = () => createSelector(
   (dblBaseUrl, dblId, revision, parent) => (`${dblBaseUrl}/entry?id=${dblId}&revision=${parseInt(revision, 10) || (parent ? parent.revision : '0')}`)
 );
 
+const getPropsFormsErrorStatus = (state, props) => props.formsErrorStatus;
+
+const makeGetFormsErrors = () => createSelector(
+  [getPropsFormsErrorStatus],
+  (formsErrorStatus) => Object.entries(formsErrorStatus).reduce((acc, [formKey, errorStatus]) => {
+    if (errorStatus.form_field) {
+      return acc;
+    }
+    return { ...acc, [formKey]: { ...errorStatus } };
+  }, {})
+);
+
 const makeMapStateToProps = () => {
   const shouldShowRow = makeShouldShowRow();
   const getMatches = makeGetBundleMatches();
   const getIsRequestingRevision = makeGetIsRequestingRevision();
   const getEntryPageUrl = makeGetEntryPageUrl();
   const getIsDownloading = makeGetIsDownloading();
+  const getFormsErrors = makeGetFormsErrors();
   const mapStateToProps = (state, props) => {
     const { bundlesSaveTo } = state;
     return {
@@ -132,7 +147,8 @@ const makeMapStateToProps = () => {
       bundleMatches: getMatches(state, props),
       bundlesSaveTo,
       entryPageUrl: getEntryPageUrl(state, props),
-      isDownloading: getIsDownloading(state, props)
+      isDownloading: getIsDownloading(state, props),
+      formsErrors: getFormsErrors(state, props)
     };
   };
   return mapStateToProps;
@@ -279,10 +295,25 @@ class DBLEntryRow extends PureComponent<Props> {
     <ControlledHighlighter {...this.getHighlighterSharedProps(this.props.displayAs.status)} />
   );
 
+  /*
+    <Badge className={classes.margin} badgeContent={10} color="secondary">
+          <MailIcon />
+        </Badge>
+        */
   renderEditIcon = () => {
-    const { status, classes } = this.props;
+    const { status, classes, formsErrors } = this.props;
+    const formsErrorCount = Object.keys(formsErrors).length;
+    const conditionallyRenderBadge = (errorCount, node) => {
+      if (!errorCount) {
+        return node;
+      }
+      return <Badge key="badge" className={classes.badge} badgeContent={errorCount} color="error">{node}</Badge>;
+    };
     if (status === 'DRAFT') {
-      return [<Edit key="btnEdit" className={classNames(classes.leftIcon, classes.iconSmall)} />, 'Edit'];
+      return [
+        conditionallyRenderBadge(formsErrorCount, <Edit key="btnEdit" className={classNames(classes.leftIcon, classes.iconSmall)} />),
+        'Edit'
+      ];
     }
     return [
       <CallSplit
@@ -425,6 +456,9 @@ DBLEntryRow.defaultProps = {
 const materialStyles = theme => ({
   button: {
     margin: theme.spacing.unit,
+  },
+  badge: {
+    margin: theme.spacing.unit * 2,
   },
   leftIcon: {
     marginRight: theme.spacing.unit,
