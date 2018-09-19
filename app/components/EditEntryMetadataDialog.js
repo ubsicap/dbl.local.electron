@@ -72,7 +72,7 @@ const materialStyles = theme => ({
     fontSize: 20,
   },
   badge: {
-    margin: theme.spacing.unit * 2,
+    marginRight: theme.spacing.unit * 2,
   },
 });
 

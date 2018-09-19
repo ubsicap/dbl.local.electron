@@ -83,12 +83,14 @@ function getFormInputsWithOverrides(formKey, inputs, metadataOverrides) {
 
 const getPropsFormsErrorStatus = (state, props) => props.formsErrorStatus;
 
-const makeGetFormsErrors = () => createSelector(
-  [getPropsFormsErrorStatus],
-  (formsErrorStatus) => Object.entries(formsErrorStatus).reduce((acc, [formKey, errorStatus]) => {
-    if (errorStatus.field_issues.length === 0) {
-      return acc;
-    }
-    return { ...acc, [formKey]: { ...errorStatus } };
-  }, {})
-);
+function makeGetFormsErrors() {
+  return createSelector(
+    [getPropsFormsErrorStatus],
+    (formsErrorStatus) => Object.entries(formsErrorStatus).reduce((acc, [formKey, errorStatus]) => {
+      if (errorStatus.field_issues.length === 0) {
+        return acc;
+      }
+      return { ...acc, [formKey]: { ...errorStatus } };
+    }, {})
+  );
+}

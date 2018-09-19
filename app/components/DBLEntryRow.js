@@ -443,7 +443,7 @@ const materialStyles = theme => ({
     margin: theme.spacing.unit,
   },
   badge: {
-    margin: theme.spacing.unit * 2,
+    marginRight: theme.spacing.unit * 2,
   },
   leftIcon: {
     marginRight: theme.spacing.unit,
