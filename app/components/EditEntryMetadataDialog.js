@@ -6,6 +6,7 @@ import Badge from '@material-ui/core/Badge';
 import Button from '@material-ui/core/Button';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
+import NavigateNext from '@material-ui/icons/NavigateNext';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import CloseIcon from '@material-ui/icons/Close';
@@ -44,7 +45,7 @@ function mapStateToProps(state, props) {
     couldNotSaveMetadataMessage,
     showMetadataFile,
     showSection,
-    formsErrors: getFormsErrors(state, props)
+    formsErrors: getFormsErrors(state, selectedBundle)
   };
 }
 
@@ -125,17 +126,32 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     this.props.openMetadataFile(this.props.bundleId);
   }
 
+  conditionallyRenderSaveOrGotoErrorButton = () => {
+    const { classes, formsErrors } = this.props;
+    const formsErrorsCount = Object.keys(formsErrors).length;
+    if (!formsErrorsCount) {
+      return (
+        <Button key="btnSave" color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose}>
+          <Save key="iconSave" className={classNames(classes.leftIcon, classes.iconSmall)} />
+          Save
+        </Button>
+      );
+    }
+    return (
+      <Button key="btnGotoError" color="inherit" onClick={this.navigateToNextErrror}>
+        1
+        <Badge key="badge" className={classes.badge} badgeContent={formsErrorsCount} color="error">
+          <NavigateNext key="navigateNext" className={classNames(classes.leftIcon, classes.iconSmall)} />
+        </Badge>
+        Next
+      </Button>
+    );
+  }
+
   render() {
-    const { classes, open, selectedBundle = {}, bundleId, showSection, formsErrors } = this.props;
+    const { classes, open, selectedBundle = {}, bundleId, showSection } = this.props;
     const { displayAs = {} } = selectedBundle;
     const { languageAndCountry, name } = displayAs;
-    const formsErrorsCount = Object.keys(formsErrors).length;
-    const conditionallyRenderSaveOrGotoError = (errorCount, saveNode, gotoErrorNode) => {
-      if (!formsErrorsCount) {
-        return saveNode;
-      }
-      return <Badge key="badge" className={classes.badge} badgeContent={errorCount} color="error">{gotoErrorNode}</Badge>;
-    };
     return (
       <Zoom in={open}>
         <div>
@@ -151,14 +167,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
                 Review
               </Button>
-              <Button key="btnSave" color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.navigateToNextErrror}>
-                {conditionallyRenderSaveOrGotoError(
-                  formsErrorsCount,
-                  [<Save key="iconSave" className={classNames(classes.leftIcon, classes.iconSmall)} />, 'Save'],
-                  'Goto'
-                  )
-                }
-              </Button>
+              {this.conditionallyRenderSaveOrGotoErrorButton()}
             </Toolbar>
           </AppBar>
           <EditMetadataStepper bundleId={bundleId} showSection={showSection} myStructurePath="" shouldLoadDetails={false} />
