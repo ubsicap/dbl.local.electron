@@ -126,55 +126,56 @@ function getIsDemoMode() {
   return history.location.pathname.includes('/demo');
 }
 
-export function openEditMetadata(bundleId) {
-  return async dispatch => {
-    dispatch(request(bundleId));
+export function openEditMetadata(_bundleId) {
+  return async (dispatch, getState) => {
+    const { bundles } = getState();
+    const { addedByBundleIds } = bundles;
+    const bundleIdToEdit = _bundleId;
+    const bundleToEdit = _bundleId ? addedByBundleIds[bundleIdToEdit] : {};
+    dispatch(request(bundleToEdit));
     const isDemoMode = getIsDemoMode();
     if (isDemoMode) {
-      dispatchSuccess(bundleId);
+      dispatch(navigate(bundleToEdit));
       return;
     }
-    const bundleInfo = await bundleService.fetchById(bundleId);
-    if (bundleInfo.mode === 'create') {
-      dispatchSuccess(bundleId);
+    if (bundleToEdit.mode === 'create') {
+      dispatch(navigate(bundleToEdit));
       return;
     }
-    const { dbl } = bundleInfo;
-    const { currentRevision } = dbl;
-    const isDraft = currentRevision === '0' || !currentRevision;
+    const isDraft = bundleToEdit.status === 'DRAFT';
     const label = isDraft ? '' : 'openEditMetadata';
     try {
-      await bundleService.startCreateContent(bundleId, label);
+      await bundleService.startCreateContent(_bundleId, label);
       if (isDraft) {
         // ideally we'd wait/listen for the 'create' mode change event.
-        dispatchSuccess(bundleId);
+        dispatch(navigate(bundleToEdit));
       }
     } catch (errorReadable) {
       const error = await errorReadable.text();
-      dispatch(failure(bundleId, error));
-    }
-    function dispatchSuccess(_bundleId) {
-      dispatch(success(_bundleId));
-      navigate(_bundleId);
+      dispatch(failure(_bundleId, error));
     }
   };
-  function request(_bundleId) {
-    return { type: bundleEditMetadataConstants.OPEN_EDIT_METADATA_REQUEST, bundleId: _bundleId };
+  function request(bundleToEdit) {
+    const { id: bundleId } = bundleToEdit;
+    return { type: bundleEditMetadataConstants.OPEN_EDIT_METADATA_REQUEST, bundleId, bundleToEdit };
   }
-  function success(_bundleId) {
-    return { type: bundleEditMetadataConstants.OPEN_EDIT_METADATA, bundleId: _bundleId };
+  function success(bundleToEdit) {
+    const { id: bundleId } = bundleToEdit;
+    return { type: bundleEditMetadataConstants.OPEN_EDIT_METADATA, bundleId, bundleToEdit };
   }
-  function navigate(_bundleId) {
+  function navigate(bundleToEdit) {
+    const { id: bundleId } = bundleToEdit;
     const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO;
     const editMetadataPage = isDemoMode ?
       navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO :
       navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA;
-    const editMetadataPageWithBundleId = buildEditMetadataUrl(editMetadataPage, _bundleId);
+    const editMetadataPageWithBundleId = buildEditMetadataUrl(editMetadataPage, bundleId);
     history.push(editMetadataPageWithBundleId);
+    return success(bundleToEdit);
   }
-  function failure(_bundleId, error) {
+  function failure(bundleId, error) {
     return {
-      type: bundleEditMetadataConstants.OPEN_EDIT_METADATA_FAILED, bundleId: _bundleId, error
+      type: bundleEditMetadataConstants.OPEN_EDIT_METADATA_FAILED, bundleId, error
     };
   }
 }

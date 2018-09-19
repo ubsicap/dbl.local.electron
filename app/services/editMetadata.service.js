@@ -8,7 +8,8 @@ const editMetadataService = {
   getIsRequired,
   getFormInputsWithOverrides,
   getIsMulti,
-  makeGetFormsErrors
+  makeGetFormsErrors,
+  getFormsErrors
 };
 
 export default editMetadataService;
@@ -86,11 +87,16 @@ const getPropsFormsErrorStatus = (state, props) => props.formsErrorStatus;
 function makeGetFormsErrors() {
   return createSelector(
     [getPropsFormsErrorStatus],
-    (formsErrorStatus) => Object.entries(formsErrorStatus).reduce((acc, [formKey, errorStatus]) => {
-      if (errorStatus.field_issues.length === 0) {
-        return acc;
-      }
-      return { ...acc, [formKey]: { ...errorStatus } };
-    }, {})
+    getFormsErrors
   );
+}
+
+function getFormsErrors(formsErrorStatus) {
+  const formsErrors = Object.entries(formsErrorStatus).reduce((acc, [formKey, errorStatus]) => {
+    if (errorStatus.field_issues.length === 0) {
+      return acc;
+    }
+    return { ...acc, [formKey]: { ...errorStatus } };
+  }, {});
+  return formsErrors;
 }

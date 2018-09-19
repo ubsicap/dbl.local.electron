@@ -24,9 +24,9 @@ const { shell } = require('electron');
 
 function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundles } = state;
+  const { bundleId, section: showSection } = props.match.params;
   const { showMetadataFile } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
-  const { bundleId, section: showSection } = props.match.params;
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
   const getFormsErrors = editMetadataService.makeGetFormsErrors();
   const {
