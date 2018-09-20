@@ -1,7 +1,5 @@
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
-import { userConstants } from '../constants/user.constants';
 import editMetadataService from '../services/editMetadata.service';
-import { bundleService } from '../services/bundle.service';
 
 const initialState = {
   editingMetadata: null,
@@ -18,12 +16,15 @@ const initialActiveFormState = {
 };
 
 function changeStateForNewActiveForm(state, newState) {
-  const { editingMetadata, formStructure, metadataOverrides, formFieldIssues, errorTree } = state;
+  const {
+    editingMetadata, bundleToEdit, formStructure, metadataOverrides, formFieldIssues, errorTree
+  } = state;
   return {
     editingMetadata,
     formStructure,
     metadataOverrides,
     ...initialActiveFormState,
+    bundleToEdit,
     formFieldIssues,
     errorTree,
     ...newState
@@ -42,9 +43,10 @@ export function bundleEditMetadata(state = initialState, action) {
       const { bundleToEdit, bundleId: editingMetadata } = action;
       const formsErrors = editMetadataService.getFormsErrors(bundleToEdit.formsErrorStatus);
       const formFieldIssues = Object.entries(formsErrors).reduce((acc, [formKey, errorStatus]) => {
-        const myformFieldIssues = getFormFieldIssues(`/${formKey}`, errorStatus.field_issues);
+        const myformFieldIssues = getFormFieldIssues(formKey, errorStatus.field_issues);
         return { ...acc, ...myformFieldIssues };
       }, {});
+      const [currentFormWithErrors] = Object.keys(formFieldIssues);
       const errorTree = getErrorTree(formFieldIssues);
       return {
         ...state,
@@ -52,7 +54,8 @@ export function bundleEditMetadata(state = initialState, action) {
         editingMetadata,
         bundleToEdit,
         formFieldIssues,
-        errorTree
+        errorTree,
+        currentFormWithErrors
       };
     }
     case bundleEditMetadataConstants.CLOSE_EDIT_METADATA: {
@@ -84,11 +87,16 @@ export function bundleEditMetadata(state = initialState, action) {
     }
     case bundleEditMetadataConstants.METADATA_FORM_INPUTS_LOADED: {
       const { formKey, inputs } = action;
-      const { metadataOverrides } = state;
+      const {
+        metadataOverrides, formFieldIssues,
+        currentFormWithErrors: currentFormWithErrorsPrev
+      } = state;
       const formInputs =
         editMetadataService.getFormInputsWithOverrides(formKey, inputs, metadataOverrides);
       const activeFormInputs = { [formKey]: formInputs };
-      return changeStateForNewActiveForm(state, { activeFormInputs });
+      const currentFormWithErrors = formKey in formFieldIssues ?
+        formKey : currentFormWithErrorsPrev;
+      return changeStateForNewActiveForm(state, { activeFormInputs, currentFormWithErrors });
     }
     case bundleEditMetadataConstants.METADATA_FORM_INPUT_EDITED: {
       const { inputName, newValue } = action;
@@ -145,10 +153,11 @@ export function bundleEditMetadata(state = initialState, action) {
       };
     }
     case bundleEditMetadataConstants.SAVE_METADATA_FAILED: {
-      const { error = {} } = action;
+      const { error = {}, formKey } = action;
       const { field_issues: fieldIssues = [] } = error || {};
-      const { formKey } = action;
-      const formFieldIssues = getFormFieldIssues(formKey, fieldIssues);
+      const { formFieldIssues: formFieldIssuesAll } = state;
+      const newFormFieldIssues = getFormFieldIssues(formKey, fieldIssues);
+      const formFieldIssues = { ...formFieldIssuesAll, ...newFormFieldIssues };
       const errorTree = getErrorTree(formFieldIssues);
       return {
         ...state,

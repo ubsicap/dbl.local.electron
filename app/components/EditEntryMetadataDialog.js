@@ -25,10 +25,12 @@ const { shell } = require('electron');
 function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundles } = state;
   const { bundleId, section: showSection } = props.match.params;
-  const { showMetadataFile } = bundleEditMetadata;
+  const { showMetadataFile, currentFormWithErrors } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
   const getFormsErrors = editMetadataService.makeGetFormsErrors();
+  const formsErrors = getFormsErrors(state, selectedBundle);
+  const currentFormNumWithErrors = Object.keys(formsErrors).indexOf(currentFormWithErrors) + 1;
   const {
     requestingSaveMetadata = false,
     wasMetadataSaved = false,
@@ -45,7 +47,8 @@ function mapStateToProps(state, props) {
     couldNotSaveMetadataMessage,
     showMetadataFile,
     showSection,
-    formsErrors: getFormsErrors(state, selectedBundle)
+    formsErrors,
+    currentFormNumWithErrors
   };
 }
 
@@ -83,6 +86,7 @@ type Props = {
   showSection: ?string,
   selectedBundle: {},
   formsErrors: {},
+  currentFormNumWithErrors: number,
   closeEditMetadata: () => {},
   updateBundle: () => {},
   classes: {},
@@ -137,9 +141,10 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
         </Button>
       );
     }
+    const { currentFormNumWithErrors } = this.props;
     return (
       <Button key="btnGotoError" color="inherit" onClick={this.navigateToNextErrror}>
-        1
+        {currentFormNumWithErrors}
         <Badge key="badge" className={classes.badge} badgeContent={formsErrorsCount} color="error">
           <NavigateNext key="navigateNext" className={classNames(classes.leftIcon, classes.iconSmall)} />
         </Badge>

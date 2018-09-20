@@ -96,7 +96,7 @@ function getFormsErrors(formsErrorStatus) {
     if (errorStatus.field_issues.length === 0) {
       return acc;
     }
-    return { ...acc, [formKey]: { ...errorStatus } };
+    return { ...acc, [`/${formKey}`]: { ...errorStatus } };
   }, {});
   return formsErrors;
 }
