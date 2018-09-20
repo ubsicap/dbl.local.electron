@@ -160,7 +160,9 @@ class DBLEntryRow extends PureComponent<Props> {
     }
     // recompute manifest count for drafts if we have changed resource count
     if ((nextProps.resourceCountManifest === null && nextProps.resourceCountStored) ||
-      (nextProps.status === 'DRAFT' && this.props.resourceCountStored !== nextProps.resourceCountStored)) {
+      (nextProps.status === 'DRAFT' &&
+        (this.props.resourceCountStored !== nextProps.resourceCountStored ||
+          Object.keys(nextProps.formsErrorStatus).length === 0))) {
       this.props.updateBundle(this.props.bundleId);
     }
   }
