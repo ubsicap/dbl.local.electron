@@ -123,7 +123,12 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   };
 
   navigateToNextErrror = () => {
-    this.props.saveFieldValuesForActiveForm({ moveNext: { exit: true, checkAllForms: true } });
+    const { formsErrors, currentFormNumWithErrors } = this.props;
+    const formKeys = Object.keys(formsErrors);
+    const nextIndex = currentFormNumWithErrors % formKeys.length;
+    const nextFormKey = formKeys[nextIndex];
+    const id = nextFormKey.split('/')[1];
+    this.props.saveFieldValuesForActiveForm({ moveNext: { formKey: nextFormKey, newStepIndex: 0, id } });
   }
 
   handleReview = () => {
