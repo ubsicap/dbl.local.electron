@@ -25,7 +25,7 @@ const { shell } = require('electron');
 function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundles } = state;
   const { bundleId, section: showSection } = props.match.params;
-  const { showMetadataFile, currentFormWithErrors } = bundleEditMetadata;
+  const { showMetadataFile, currentFormWithErrors, nextFormWithErrors } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
   const getFormsErrors = editMetadataService.makeGetFormsErrors();
@@ -48,7 +48,8 @@ function mapStateToProps(state, props) {
     showMetadataFile,
     showSection,
     formsErrors,
-    currentFormNumWithErrors
+    currentFormNumWithErrors,
+    nextFormWithErrors
   };
 }
 
@@ -87,6 +88,7 @@ type Props = {
   selectedBundle: {},
   formsErrors: {},
   currentFormNumWithErrors: number,
+  nextFormWithErrors: ?string,
   closeEditMetadata: () => {},
   updateBundle: () => {},
   classes: {},
@@ -123,11 +125,9 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   };
 
   navigateToNextErrror = () => {
-    const { formsErrors, currentFormNumWithErrors } = this.props;
-    const formKeys = Object.keys(formsErrors);
-    const nextIndex = currentFormNumWithErrors % formKeys.length;
-    const nextFormKey = formKeys[nextIndex];
-    this.props.saveFieldValuesForActiveForm({ moveNext: { formKey: nextFormKey } });
+    const { nextFormWithErrors } = this.props;
+    const moveNext = nextFormWithErrors ? { formKey: nextFormWithErrors } : null;
+    this.props.saveFieldValuesForActiveForm({ moveNext });
   }
 
   handleReview = () => {

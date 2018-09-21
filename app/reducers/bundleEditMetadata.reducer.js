@@ -45,7 +45,7 @@ export function bundleEditMetadata(state = initialState, action) {
       const {
         formFieldIssues, errorTree
       } = getFormErrorData(bundleToEdit);
-      const [currentFormWithErrors] = Object.keys(formFieldIssues);
+      const [currentFormWithErrors, nextFormWithErrors] = Object.keys(formFieldIssues);
       return {
         ...state,
         requestingRevision: null,
@@ -53,7 +53,8 @@ export function bundleEditMetadata(state = initialState, action) {
         bundleToEdit,
         formFieldIssues,
         errorTree,
-        currentFormWithErrors
+        currentFormWithErrors,
+        nextFormWithErrors
       };
     }
     case bundleEditMetadataConstants.CLOSE_EDIT_METADATA: {
@@ -87,14 +88,21 @@ export function bundleEditMetadata(state = initialState, action) {
       const { formKey, inputs } = action;
       const {
         metadataOverrides, formFieldIssues,
-        currentFormWithErrors: currentFormWithErrorsPrev
+        currentFormWithErrors: currentFormWithErrorsPrev,
+        nextFormWithErrors: nextFormWithErrorsPrev
       } = state;
       const formInputs =
         editMetadataService.getFormInputsWithOverrides(formKey, inputs, metadataOverrides);
       const activeFormInputs = { [formKey]: formInputs };
-      const currentFormWithErrors = formKey in formFieldIssues ?
+      const formErrorKeys = Object.keys(formFieldIssues);
+      const formIndexWithError = formErrorKeys.indexOf(formKey);
+      const currentFormWithErrors = formIndexWithError !== -1 ?
         formKey : currentFormWithErrorsPrev;
-      return changeStateForNewActiveForm(state, { activeFormInputs, currentFormWithErrors });
+      const nextFormWithErrors = formIndexWithError !== -1 ?
+        formErrorKeys[((formIndexWithError + 1) % formErrorKeys.length)] : nextFormWithErrorsPrev;
+      return changeStateForNewActiveForm(state, {
+        activeFormInputs, currentFormWithErrors, nextFormWithErrors
+      });
     }
     case bundleEditMetadataConstants.METADATA_FORM_INPUT_EDITED: {
       const { inputName, newValue } = action;
