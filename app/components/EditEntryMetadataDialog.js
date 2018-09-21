@@ -148,7 +148,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     const { currentFormNumWithErrors } = this.props;
     return (
       <Button key="btnGotoError" color="inherit" onClick={this.navigateToNextErrror}>
-        {currentFormNumWithErrors}
+        {currentFormNumWithErrors || ''}
         <Badge key="badge" className={classes.badge} badgeContent={formsErrorsCount} color="error">
           <NavigateNext key="navigateNext" className={classNames(classes.leftIcon, classes.iconSmall)} />
         </Badge>

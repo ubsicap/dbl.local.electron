@@ -167,23 +167,12 @@ export function bundleEditMetadata(state = initialState, action) {
       };
     }
     case bundleConstants.UPDATE_BUNDLE: {
-      if (!state.editingMetadata) {
+      if (!state.editingMetadata || action.bundle.id !== state.bundleToEdit.id) {
         return state;
       }
-      const {
-        bundle: bundleToEdit,
-        formFieldIssues: formFieldIssuesOrig,
-        currentFormWithErrors: currentFormWithErrorsOrig
-      } = action;
+      const { bundle: bundleToEdit } = action;
       const { formFieldIssues, errorTree } = getFormErrorData(bundleToEdit);
-      const newKeys = Object.keys(formFieldIssues);
-      let currentFormWithErrors = null;
-      if (newKeys.length) {
-        const origKeys = Object.keys(formFieldIssuesOrig);
-        const origIndex = origKeys.indexOf(currentFormWithErrorsOrig);
-        const nextIndex = (origIndex + 1) % newKeys.length;
-        currentFormWithErrors = newKeys[nextIndex];
-      }
+      const currentFormWithErrors = null;
       return {
         ...state,
         bundleToEdit,
