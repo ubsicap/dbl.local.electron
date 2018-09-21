@@ -5,6 +5,7 @@ import { navigationConstants } from '../constants/navigation.constants';
 import { bundleService } from '../services/bundle.service';
 import { utilities } from '../utils/utilities';
 import editMetadataService from '../services/editMetadata.service';
+import { bundleActions } from '../actions/bundle.actions';
 
 export const bundleEditMetadataActions = {
   openEditMetadata,
@@ -344,6 +345,7 @@ export function saveMetadata({
         dispatch(fetchActiveFormInputs(bundleId, formKey));
       }
       dispatch(saveMetadataSuccess(bundleId, formKey));
+      dispatch(bundleActions.updateBundle(bundleId)); // adjust formsErrorStatus
       if (isFactory || forceSaveState /* reload 'present' status */) {
         dispatch(fetchFormStructure(bundleId));
       }

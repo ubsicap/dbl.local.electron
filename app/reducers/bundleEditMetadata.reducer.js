@@ -1,5 +1,6 @@
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 import editMetadataService from '../services/editMetadata.service';
+import { bundleConstants } from '../constants/bundle.constants';
 
 const initialState = {
   editingMetadata: null,
@@ -41,13 +42,10 @@ export function bundleEditMetadata(state = initialState, action) {
     }
     case bundleEditMetadataConstants.OPEN_EDIT_METADATA: {
       const { bundleToEdit, bundleId: editingMetadata } = action;
-      const formsErrors = editMetadataService.getFormsErrors(bundleToEdit.formsErrorStatus);
-      const formFieldIssues = Object.entries(formsErrors).reduce((acc, [formKey, errorStatus]) => {
-        const myformFieldIssues = getFormFieldIssues(formKey, errorStatus.field_issues);
-        return { ...acc, ...myformFieldIssues };
-      }, {});
+      const {
+        formFieldIssues, errorTree
+      } = getFormErrorData(bundleToEdit);
       const [currentFormWithErrors] = Object.keys(formFieldIssues);
-      const errorTree = getErrorTree(formFieldIssues);
       return {
         ...state,
         requestingRevision: null,
@@ -168,10 +166,47 @@ export function bundleEditMetadata(state = initialState, action) {
         errorTree
       };
     }
-    default: {
+    case bundleConstants.UPDATE_BUNDLE: {
+      if (!state.editingMetadata) {
+        return state;
+      }
+      const {
+        bundle: bundleToEdit,
+        formFieldIssues: formFieldIssuesOrig,
+        currentFormWithErrors: currentFormWithErrorsOrig
+      } = action;
+      const { formFieldIssues, errorTree } = getFormErrorData(bundleToEdit);
+      const newKeys = Object.keys(formFieldIssues);
+      let currentFormWithErrors = null;
+      if (newKeys.length) {
+        const origKeys = Object.keys(formFieldIssuesOrig);
+        const origIndex = origKeys.indexOf(currentFormWithErrorsOrig);
+        const nextIndex = (origIndex + 1) % newKeys.length;
+        currentFormWithErrors = newKeys[nextIndex];
+      }
+      return {
+        ...state,
+        bundleToEdit,
+        formFieldIssues,
+        errorTree,
+        currentFormWithErrors
+      };
+    } default: {
       return state;
     }
   }
+}
+
+function getFormErrorData(bundleToEdit) {
+  const formsErrors = editMetadataService.getFormsErrors(bundleToEdit.formsErrorStatus);
+  const formFieldIssues = Object.entries(formsErrors).reduce((acc, [formKey, errorStatus]) => {
+    const myformFieldIssues = getFormFieldIssues(formKey, errorStatus.field_issues);
+    return { ...acc, ...myformFieldIssues };
+  }, {});
+  const errorTree = getErrorTree(formFieldIssues);
+  return {
+    formsErrors, formFieldIssues, errorTree
+  };
 }
 
 function getParentErrorBranches(formKey, formErrors) {
