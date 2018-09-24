@@ -24,7 +24,7 @@ const { shell } = require('electron');
 
 function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundles } = state;
-  const { bundleId, section: showSection } = props.match.params;
+  const { bundleId } = props.match.params;
   const { showMetadataFile, currentFormWithErrors, nextFormWithErrors } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
@@ -46,7 +46,6 @@ function mapStateToProps(state, props) {
     moveNext,
     couldNotSaveMetadataMessage,
     showMetadataFile,
-    showSection,
     formsErrors,
     currentFormNumWithErrors,
     nextFormWithErrors
@@ -84,7 +83,6 @@ const materialStyles = theme => ({
 type Props = {
   open: boolean,
   bundleId: string,
-  showSection: ?string,
   selectedBundle: {},
   formsErrors: {},
   currentFormNumWithErrors: number,
@@ -158,7 +156,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   }
 
   render() {
-    const { classes, open, selectedBundle = {}, bundleId, showSection } = this.props;
+    const { classes, open, selectedBundle = {}, bundleId } = this.props;
     const { displayAs = {} } = selectedBundle;
     const { languageAndCountry, name } = displayAs;
     return (
@@ -179,7 +177,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
               {this.conditionallyRenderSaveOrGotoErrorButton()}
             </Toolbar>
           </AppBar>
-          <EditMetadataStepper bundleId={bundleId} showSection={showSection} myStructurePath="" shouldLoadDetails={false} />
+          <EditMetadataStepper bundleId={bundleId} myStructurePath="" shouldLoadDetails={false} />
         </div>
       </Zoom>
     );

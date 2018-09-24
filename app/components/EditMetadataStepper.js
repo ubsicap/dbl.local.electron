@@ -229,6 +229,11 @@ function formatSectionNameAffixed(section, prefix, postfix) {
   return (prefix || '') + formatStepLabel(section) + (postfix || '');
 }
 
+function findFormKeyStepIndex(steps, formKey) {
+  return steps.findIndex((step) =>
+    (step.formKey === formKey || step.formKey.includes(`${formKey}/`)));
+}
+
 class _EditMetadataStepper extends React.Component<Props> {
   props: Props;
   state = {
@@ -250,8 +255,7 @@ class _EditMetadataStepper extends React.Component<Props> {
       steps: nextSteps
     } = nextProps;
     const { formKey: nextMoveNextFormKey = null } = nextMoveNext || {};
-    const { steps: lastSteps = [], moveNext: lastMoveNext } = this.props;
-    const { formKey: lastMoveNextFormKey = null } = lastMoveNext || {};
+    const { steps: lastSteps = [] } = this.props;
     if (requestingSaveMetadata && !this.props.requestingSaveMetadata) {
       const activeStep = this.getStep(this.state.activeStepIndex);
       if (!activeStep) {
@@ -269,15 +273,9 @@ class _EditMetadataStepper extends React.Component<Props> {
         this.setState({ activeStepIndex: this.props.steps.length });
       }
     } else if (nextMoveNextFormKey) {
-      const newActiveStepIndex = nextSteps.findIndex((step) =>
-        (step.formKey === nextMoveNextFormKey || step.formKey.includes(`${nextMoveNextFormKey}/`)));
-      if (newActiveStepIndex !== -1) {
+      const newActiveStepIndex = findFormKeyStepIndex(nextSteps, nextMoveNextFormKey);
+      if (newActiveStepIndex !== -1 && this.state.activeStepIndex !== newActiveStepIndex) {
         this.setState({ activeStepIndex: newActiveStepIndex });
-      }
-    } else if (lastSteps.length === 0 && nextSteps.length !== lastSteps.length) {
-      const showIndex = initializeActiveStepIndex(nextProps);
-      if (this.state.activeStepIndex !== showIndex) {
-        this.setState({ activeStepIndex: showIndex });
       }
     }
   }

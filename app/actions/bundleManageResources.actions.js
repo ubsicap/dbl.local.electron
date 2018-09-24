@@ -91,28 +91,35 @@ export function checkPublicationsHealth(_bundleId) {
     const publicationStructure = publicationsContains.find(section => section.id === 'publication');
     const { instances: publicationInstances } = publicationStructure;
     const publicationInstanceIds = Object.keys(publicationInstances);
-    const editMetadataPageWithBundleId = buildBundleArgUrl(
-      navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_SECTION,
-      { bundleId: _bundleId, section: 'publications' }
-    );
     if (publicationInstanceIds.length === 0) {
+      const editMetadataPageWithFormKey = buildBundleArgUrl(
+        navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA,
+        { bundleId: _bundleId }
+      );
       return dispatch({
         type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR,
         error: 'NO_PUBLICATION_INSTANCE',
         publications: [],
         errorMessage: 'To add a resource, first add a publication to Publications',
-        navigation: editMetadataPageWithBundleId
+        navigation: editMetadataPageWithFormKey,
+        moveNext: '/publications/publication'
       });
     }
     const pubsMissingCanonSpecs = publicationInstanceIds.filter(pubId =>
       !(publicationInstances[pubId].contains.find(section => section.id === 'canonSpec').present));
     if (pubsMissingCanonSpecs.length > 0) {
+      const p1 = pubsMissingCanonSpecs[0];
+      const editMetadataPageWithFormKey = buildBundleArgUrl(
+        navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA,
+        { bundleId: _bundleId }
+      );
       return dispatch({
         type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR,
         error: 'MISSING_CANON_SPECS',
         publications: pubsMissingCanonSpecs,
         errorMessage: `To add a resource, first add Canon Specification to the following publications: ${pubsMissingCanonSpecs}`,
-        navigation: editMetadataPageWithBundleId
+        navigation: editMetadataPageWithFormKey,
+        moveNext: `/publications/publication/${p1}/canonSpec`
       });
     }
     // now get the publication structure for each publication

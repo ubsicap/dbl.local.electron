@@ -60,6 +60,10 @@ export function bundleEditMetadata(state = initialState, action) {
     case bundleEditMetadataConstants.CLOSE_EDIT_METADATA: {
       return initialState;
     }
+    case bundleEditMetadataConstants.SET_EDIT_METADATA_MOVE_NEXT: {
+      const { moveNextStep: moveNext } = action;
+      return { ...state, moveNext };
+    }
     case bundleEditMetadataConstants.METADATA_FILE_SHOW_REQUEST: {
       return { ...state, requestingShowMetadataFile: true };
     }

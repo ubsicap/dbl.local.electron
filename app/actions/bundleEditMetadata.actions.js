@@ -10,6 +10,7 @@ import { bundleActions } from '../actions/bundle.actions';
 export const bundleEditMetadataActions = {
   openEditMetadata,
   closeEditMetadata,
+  setMoveNextStep,
   fetchFormStructure,
   fetchActiveFormInputs,
   openMetadataFile,
@@ -375,6 +376,10 @@ function saveMetadataRequest({
     moveNextStep,
     forceSave
   };
+}
+
+export function setMoveNextStep(moveNextStep) {
+  return { type: bundleEditMetadataConstants.SET_EDIT_METADATA_MOVE_NEXT, moveNextStep };
 }
 
 export function saveMetadataSuccess(bundleId, formKey, moveNextStep) {

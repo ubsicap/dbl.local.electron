@@ -27,7 +27,7 @@ import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth
 } from '../actions/bundleManageResources.actions';
 import { downloadResources } from '../actions/bundle.actions';
-import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
+import { openMetadataFile, setMoveNextStep } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
 import EnhancedTable from './EnhancedTable';
 import { utilities } from '../utils/utilities';
@@ -51,8 +51,10 @@ type Props = {
   isOkToAddFiles: boolean,
   publicationsHealthMessage: ?string,
   publicationsHealthMessageLink: ?string,
+  publicationsHealthMessageLinkHash: ?string,
   closeResourceManager: () => {},
   openMetadataFile: () => {},
+  setMoveNextStep: () => {},
   getManifestResources: () => {},
   downloadResources: () => {},
   addManifestResources: () => {},
@@ -171,7 +173,8 @@ function mapStateToProps(state, props) {
   const { publicationsHealth, progress = 100, loading = false } = bundleManageResources;
   const {
     errorMessage: publicationsHealthMessage,
-    navigation: publicationsHealthMessageLink
+    navigation: publicationsHealthMessageLink,
+    moveNext: publicationsHealthMessageLinkHash
   } = publicationsHealth || {};
   const { bundleId, mode } = props.match.params;
   const { showMetadataFile } = bundleEditMetadata;
@@ -191,13 +194,15 @@ function mapStateToProps(state, props) {
     columnConfig,
     isOkToAddFiles: !publicationsHealthMessage,
     publicationsHealthMessage,
-    publicationsHealthMessageLink
+    publicationsHealthMessageLink,
+    publicationsHealthMessageLinkHash
   };
 }
 
 const mapDispatchToProps = {
   closeResourceManager,
   openMetadataFile,
+  setMoveNextStep,
   getManifestResources,
   downloadResources,
   addManifestResources,
@@ -310,6 +315,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   handleGoFixError = () => {
     history.push(this.props.publicationsHealthMessageLink);
+    this.props.setMoveNextStep({ formKey: this.props.publicationsHealthMessageLinkHash });
   }
 
   onSelectedIds = (selectedIds) => {
