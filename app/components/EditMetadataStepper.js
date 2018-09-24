@@ -244,28 +244,40 @@ class _EditMetadataStepper extends React.Component<Props> {
   }
 
   componentWillReceiveProps(nextProps) {
-    const { requestingSaveMetadata, wasMetadataSaved, moveNext, steps } = nextProps;
-    const { steps: currentSteps } = this.props;
-    if (currentSteps.length === 0 && steps.length !== currentSteps.length) {
-      const showIndex = initializeActiveStepIndex(nextProps);
-      if (this.state.activeStepIndex !== showIndex) {
-        this.setState({ activeStepIndex: showIndex });
-      }
-    }
+    const {
+      requestingSaveMetadata, wasMetadataSaved,
+      moveNext: nextMoveNext,
+      steps: nextSteps
+    } = nextProps;
+    const { formKey: nextMoveNextFormKey = null } = nextMoveNext || {};
+    const { steps: lastSteps = [], moveNext: lastMoveNext } = this.props;
+    const { formKey: lastMoveNextFormKey = null } = lastMoveNext || {};
     if (requestingSaveMetadata && !this.props.requestingSaveMetadata) {
       const activeStep = this.getStep(this.state.activeStepIndex);
       if (!activeStep) {
         this.props.saveMetadataSuccess(); // nothing to save
       }
-    } else if (wasMetadataSaved && moveNext &&
+    } else if (wasMetadataSaved &&
+      nextMoveNext && nextMoveNext.newStepIndex !== null && nextMoveNext.newStepIndex >= 0 &&
       !requestingSaveMetadata && this.props.requestingSaveMetadata) {
-      const step = this.getStep(moveNext.newStepIndex);
-      if (step && step.formKey === moveNext.formKey && step.id === moveNext.id) {
-        const nextStepIndex = (moveNext.newStepIndex !==
-          this.state.activeStepIndex ? moveNext.newStepIndex : null);
+      const step = this.getStep(nextMoveNext.newStepIndex);
+      if (step && step.formKey === nextMoveNext.formKey && step.id === nextMoveNext.id) {
+        const nextStepIndex = (nextMoveNext.newStepIndex !==
+          this.state.activeStepIndex ? nextMoveNext.newStepIndex : null);
         this.setState({ activeStepIndex: nextStepIndex });
-      } else if (this.props.myStructurePath === moveNext.formKey) {
+      } else if (this.props.myStructurePath === nextMoveNext.formKey) {
         this.setState({ activeStepIndex: this.props.steps.length });
+      }
+    } else if (nextMoveNextFormKey) {
+      const newActiveStepIndex = nextSteps.findIndex((step) =>
+        (step.formKey === nextMoveNextFormKey || step.formKey.includes(`${nextMoveNextFormKey}/`)));
+      if (newActiveStepIndex !== -1) {
+        this.setState({ activeStepIndex: newActiveStepIndex });
+      }
+    } else if (lastSteps.length === 0 && nextSteps.length !== lastSteps.length) {
+      const showIndex = initializeActiveStepIndex(nextProps);
+      if (this.state.activeStepIndex !== showIndex) {
+        this.setState({ activeStepIndex: showIndex });
       }
     }
   }
