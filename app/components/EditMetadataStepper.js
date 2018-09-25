@@ -421,9 +421,9 @@ class _EditMetadataStepper extends React.Component<Props> {
     // that the original metadata has errors, in which case, the errors should still
     // be reported. So, just present the Save button to all the user to reload the form
     // and clear recent errors (or continue to show the original errors.)
-    const hasFormErrors = this.hasStepFormErrors(step);
+    // const hasFormErrors = this.hasStepFormErrors(step);
     const isLastStep = this.isLastStep(activeStepIndex, steps);
-    if ((hasFormChanged || hasFormErrors) && !contains) {
+    if ((hasFormChanged /* ||  hasFormErrors */) && !contains) {
       return (
         <div>
           <Button
