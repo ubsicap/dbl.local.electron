@@ -42,11 +42,12 @@ export function bundleEditMetadata(state = initialState, action) {
       };
     }
     case bundleEditMetadataConstants.OPEN_EDIT_METADATA: {
-      const { bundleToEdit, bundleId: editingMetadata, moveNextStep: moveNext } = action;
+      const { bundleToEdit, bundleId: editingMetadata } = action;
       const {
         formFieldIssues, errorTree
       } = getFormErrorData(bundleToEdit);
       const [currentFormWithErrors, nextFormWithErrors] = Object.keys(formFieldIssues);
+      const moveNext = currentFormWithErrors ? { formKey: currentFormWithErrors } : action.moveNextStep;
       return {
         ...state,
         requestingRevision: null,
