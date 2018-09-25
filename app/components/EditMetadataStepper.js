@@ -231,13 +231,13 @@ function formatSectionNameAffixed(section, prefix, postfix) {
 
 function findFormKeyStepIndex(steps, formKey) {
   return steps.findIndex((step) =>
-    (step.formKey === formKey || step.formKey.includes(`${formKey}/`)));
+    (step.formKey === formKey || formKey.includes(`${step.formKey}/`)));
 }
 
 class _EditMetadataStepper extends React.Component<Props> {
   props: Props;
   state = {
-    activeStepIndex: 0,
+    activeStepIndex: -1,
     completed: {}
   };
 
@@ -245,6 +245,10 @@ class _EditMetadataStepper extends React.Component<Props> {
     if (this.props.formStructure.length === 0 && this.props.myStructurePath.length === 0) {
       this.props.setArchivistStatusOverrides(this.props.bundleId);
       this.props.fetchFormStructure(this.props.bundleId);
+    }
+    const { moveNext: { formKey: moveNextFormKey = null } } = this.props;
+    if (this.state.activeStepIndex === -1 && moveNextFormKey) {
+      this.trySetActiveStepToMoveNextFormKey(this.props.steps, moveNextFormKey);
     }
   }
 
@@ -255,7 +259,6 @@ class _EditMetadataStepper extends React.Component<Props> {
       steps: nextSteps
     } = nextProps;
     const { formKey: nextMoveNextFormKey = null } = nextMoveNext || {};
-    const { steps: lastSteps = [] } = this.props;
     if (requestingSaveMetadata && !this.props.requestingSaveMetadata) {
       const activeStep = this.getStep(this.state.activeStepIndex);
       if (!activeStep) {
@@ -273,10 +276,14 @@ class _EditMetadataStepper extends React.Component<Props> {
         this.setState({ activeStepIndex: this.props.steps.length });
       }
     } else if (nextMoveNextFormKey) {
-      const newActiveStepIndex = findFormKeyStepIndex(nextSteps, nextMoveNextFormKey);
-      if (newActiveStepIndex !== -1 && this.state.activeStepIndex !== newActiveStepIndex) {
-        this.setState({ activeStepIndex: newActiveStepIndex });
-      }
+      this.trySetActiveStepToMoveNextFormKey(nextSteps, nextMoveNextFormKey);
+    }
+  }
+
+  trySetActiveStepToMoveNextFormKey = (steps, nextMoveNextFormKey) => {
+    const newActiveStepIndex = findFormKeyStepIndex(steps, nextMoveNextFormKey);
+    if (newActiveStepIndex !== -1 && this.state.activeStepIndex !== newActiveStepIndex) {
+      this.setState({ activeStepIndex: newActiveStepIndex });
     }
   }
 

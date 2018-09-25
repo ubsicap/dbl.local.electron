@@ -128,20 +128,20 @@ function getIsDemoMode() {
   return history.location.pathname.includes('/demo');
 }
 
-export function openEditMetadata(_bundleId) {
+export function openEditMetadata(_bundleId, _moveNextStep) {
   return async (dispatch, getState) => {
     const { bundles } = getState();
     const { addedByBundleIds } = bundles;
     const bundleIdToEdit = _bundleId;
     const bundleToEdit = _bundleId ? addedByBundleIds[bundleIdToEdit] : {};
-    dispatch(request(bundleToEdit));
+    dispatch(request(bundleToEdit, _moveNextStep));
     const isDemoMode = getIsDemoMode();
     if (isDemoMode) {
-      dispatch(navigate(bundleToEdit));
+      dispatch(navigate(bundleToEdit, _moveNextStep));
       return;
     }
     if (bundleToEdit.mode === 'create') {
-      dispatch(navigate(bundleToEdit));
+      dispatch(navigate(bundleToEdit, _moveNextStep));
       return;
     }
     const isDraft = bundleToEdit.status === 'DRAFT';
@@ -150,22 +150,32 @@ export function openEditMetadata(_bundleId) {
       await bundleService.startCreateContent(_bundleId, label);
       if (isDraft) {
         // ideally we'd wait/listen for the 'create' mode change event.
-        dispatch(navigate(bundleToEdit));
+        dispatch(navigate(bundleToEdit, _moveNextStep));
       }
     } catch (errorReadable) {
       const error = await errorReadable.text();
-      dispatch(failure(_bundleId, error));
+      dispatch(failure(_bundleId, error, _moveNextStep));
     }
   };
-  function request(bundleToEdit) {
+  function request(bundleToEdit, moveNextStep) {
     const { id: bundleId } = bundleToEdit;
-    return { type: bundleEditMetadataConstants.OPEN_EDIT_METADATA_REQUEST, bundleId, bundleToEdit };
+    return {
+      type: bundleEditMetadataConstants.OPEN_EDIT_METADATA_REQUEST,
+      bundleId,
+      bundleToEdit,
+      moveNextStep
+    };
   }
-  function success(bundleToEdit) {
+  function success(bundleToEdit, moveNextStep) {
     const { id: bundleId } = bundleToEdit;
-    return { type: bundleEditMetadataConstants.OPEN_EDIT_METADATA, bundleId, bundleToEdit };
+    return {
+      type: bundleEditMetadataConstants.OPEN_EDIT_METADATA,
+      bundleId,
+      bundleToEdit,
+      moveNextStep
+    };
   }
-  function navigate(bundleToEdit) {
+  function navigate(bundleToEdit, moveNextStep) {
     const { id: bundleId } = bundleToEdit;
     const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO;
     const editMetadataPage = isDemoMode ?
@@ -173,11 +183,11 @@ export function openEditMetadata(_bundleId) {
       navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA;
     const editMetadataPageWithBundleId = buildEditMetadataUrl(editMetadataPage, bundleId);
     history.push(editMetadataPageWithBundleId);
-    return success(bundleToEdit);
+    return success(bundleToEdit, moveNextStep);
   }
-  function failure(bundleId, error) {
+  function failure(bundleId, error, moveNextStep) {
     return {
-      type: bundleEditMetadataConstants.OPEN_EDIT_METADATA_FAILED, bundleId, error
+      type: bundleEditMetadataConstants.OPEN_EDIT_METADATA_FAILED, bundleId, error, moveNextStep
     };
   }
 }

@@ -65,12 +65,12 @@ export function bundleManageResources(state = initialState, action) {
     }
     case bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR: {
       const {
-        error, publications, errorMessage, navigation, moveNext
+        error, publications, errorMessage, goFix
       } = action;
       return {
         ...state,
         publicationsHealth: {
-          error, publications, errorMessage, navigation, moveNext
+          error, publications, errorMessage, goFix
         }
       };
     }

@@ -4,6 +4,7 @@ import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
 import { bundleService } from '../services/bundle.service';
 import { utilities } from '../utils/utilities';
+import { openEditMetadata } from './bundleEditMetadata.actions';
 
 export const bundleManageResourceActions = {
   openResourceManager,
@@ -92,34 +93,24 @@ export function checkPublicationsHealth(_bundleId) {
     const { instances: publicationInstances } = publicationStructure;
     const publicationInstanceIds = Object.keys(publicationInstances);
     if (publicationInstanceIds.length === 0) {
-      const editMetadataPageWithFormKey = buildBundleArgUrl(
-        navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA,
-        { bundleId: _bundleId }
-      );
       return dispatch({
         type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR,
         error: 'NO_PUBLICATION_INSTANCE',
         publications: [],
         errorMessage: 'To add a resource, first add a publication to Publications',
-        navigation: editMetadataPageWithFormKey,
-        moveNext: '/publications/publication'
+        goFix: () => dispatch(openEditMetadata(_bundleId, { formKey: '/publications/publication' }))
       });
     }
     const pubsMissingCanonSpecs = publicationInstanceIds.filter(pubId =>
       !(publicationInstances[pubId].contains.find(section => section.id === 'canonSpec').present));
     if (pubsMissingCanonSpecs.length > 0) {
       const p1 = pubsMissingCanonSpecs[0];
-      const editMetadataPageWithFormKey = buildBundleArgUrl(
-        navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA,
-        { bundleId: _bundleId }
-      );
       return dispatch({
         type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR,
         error: 'MISSING_CANON_SPECS',
         publications: pubsMissingCanonSpecs,
         errorMessage: `To add a resource, first add Canon Specification to the following publications: ${pubsMissingCanonSpecs}`,
-        navigation: editMetadataPageWithFormKey,
-        moveNext: `/publications/publication/${p1}/canonSpec`
+        goFix: () => dispatch(openEditMetadata(_bundleId, { formKey: `/publications/publication/${p1}/canonSpec` }))
       });
     }
     // now get the publication structure for each publication

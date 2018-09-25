@@ -36,12 +36,13 @@ export function bundleEditMetadata(state = initialState, action) {
   switch (action.type) {
     case bundleEditMetadataConstants.OPEN_EDIT_METADATA_REQUEST: {
       return {
-        ...state,
-        requestingRevision: action.bundleId
+        ...initialState,
+        requestingRevision: action.bundleId,
+        moveNext: action.moveNextStep
       };
     }
     case bundleEditMetadataConstants.OPEN_EDIT_METADATA: {
-      const { bundleToEdit, bundleId: editingMetadata } = action;
+      const { bundleToEdit, bundleId: editingMetadata, moveNextStep: moveNext } = action;
       const {
         formFieldIssues, errorTree
       } = getFormErrorData(bundleToEdit);
@@ -49,6 +50,7 @@ export function bundleEditMetadata(state = initialState, action) {
       return {
         ...state,
         requestingRevision: null,
+        moveNext,
         editingMetadata,
         bundleToEdit,
         formFieldIssues,
