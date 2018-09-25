@@ -201,12 +201,6 @@ type Props = {
     activeFormConfirmingDelete: ?boolean
 };
 
-
-function initializeActiveStepIndex(props) {
-  const { showSection, steps } = props;
-  return showSection ? steps.findIndex((s) => s.id === showSection) : 0;
-}
-
 function getIsFactory(section) {
   return section.name.includes('{0}');
 }
@@ -230,25 +224,39 @@ function formatSectionNameAffixed(section, prefix, postfix) {
 }
 
 function findFormKeyStepIndex(steps, formKey) {
-  return steps.findIndex((step) =>
-    (step.formKey === formKey || formKey.includes(`${step.formKey}/`)));
+  return steps.reduce((acc, step, stepIdx) => {
+    const { formKey: lastFormKey = '' } = acc;
+    if ((step.formKey === formKey || formKey.includes(`${step.formKey}/`)) &&
+      step.formKey.length > lastFormKey.length) {
+      return { newActiveStepIndex: stepIdx, formKey: step.formKey };
+    }
+    return acc;
+  }, { newActiveStepIndex: -1, formKey: '' });
 }
 
 class _EditMetadataStepper extends React.Component<Props> {
   props: Props;
-  state = {
-    activeStepIndex: -1,
-    completed: {}
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      activeStepIndex: -1,
+      completed: {}
+    };
+    const { moveNext } = this.props;
+    const { formKey: moveNextFormKey = null } = moveNext || {};
+    if (!moveNextFormKey) {
+      this.state.activeStepIndex = 0;
+    } else {
+      const { steps } = this.props;
+      const { newActiveStepIndex } = findFormKeyStepIndex(steps, moveNextFormKey);
+      this.state.activeStepIndex = newActiveStepIndex;
+    }
+  }
 
   componentDidMount() {
     if (this.props.formStructure.length === 0 && this.props.myStructurePath.length === 0) {
       this.props.setArchivistStatusOverrides(this.props.bundleId);
       this.props.fetchFormStructure(this.props.bundleId);
-    }
-    const { moveNext: { formKey: moveNextFormKey = null } } = this.props;
-    if (this.state.activeStepIndex === -1 && moveNextFormKey) {
-      this.trySetActiveStepToMoveNextFormKey(this.props.steps, moveNextFormKey);
     }
   }
 
@@ -281,7 +289,7 @@ class _EditMetadataStepper extends React.Component<Props> {
   }
 
   trySetActiveStepToMoveNextFormKey = (steps, nextMoveNextFormKey) => {
-    const newActiveStepIndex = findFormKeyStepIndex(steps, nextMoveNextFormKey);
+    const { newActiveStepIndex } = findFormKeyStepIndex(steps, nextMoveNextFormKey);
     if (newActiveStepIndex !== -1 && this.state.activeStepIndex !== newActiveStepIndex) {
       this.setState({ activeStepIndex: newActiveStepIndex });
     }
