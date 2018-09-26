@@ -353,6 +353,9 @@ class DBLEntryRow extends PureComponent<Props> {
           <div className={styles.bundleRowTopLeftSideName}>
             <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.name)} />
           </div>
+          <div className={styles.bundleRowTopLeftSideName}>
+            <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.rightsHolders)} />
+          </div>
           <div className={styles.bundleRowTopMiddle}>
             <Tooltip title={this.props.entryPageUrl} placement="right">
               <Button variant="flat" size="small" className={classes.button}

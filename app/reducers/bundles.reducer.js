@@ -303,6 +303,7 @@ function formatDisplayAs(bundle) {
     displayAs: {
       languageAndCountry: formatLanguageAndCountry(bundle),
       name: bundle.name,
+      rightsHolders: bundle.rightsHolders,
       revision: (bundle.dblId ? revision : 'New'),
       status: formatStatus(bundle)
     }
