@@ -357,6 +357,7 @@ export function saveMetadata({
       };
       await bundleService.postFormFields({ ...postFormArgs });
       if (saveOverrides) {
+        // reset state so that saving overrides does not result in infinite loop when errors occur
         dispatch(fetchActiveFormInputs(bundleId, formKey));
       }
       dispatch(saveMetadataSuccess(bundleId, formKey));
