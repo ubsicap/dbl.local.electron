@@ -140,7 +140,7 @@ export function bundleEditMetadata(state = initialState, action) {
     }
     case bundleEditMetadataConstants.SAVE_METADATA_REQUEST: {
       const { moveNextStep: moveNext, forceSave } = action;
-      const { formKey: moveNextFormKey = null } = moveNext;
+      const { formKey: moveNextFormKey = null } = moveNext || {};
       const { currentFormWithErrors, nextFormWithErrors } = getNavigationFormsWithErrors(moveNextFormKey);
       return {
         ...state,
