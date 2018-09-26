@@ -16,6 +16,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import FileDownload from 'material-ui/svg-icons/file/file-download';
 import Folder from 'material-ui/svg-icons/file/folder';
+import Group from '@material-ui/icons/Group';
 import Save from '@material-ui/icons/Save';
 import CallSplit from '@material-ui/icons/CallSplit';
 import Link from '@material-ui/icons/Link';
@@ -354,7 +355,12 @@ class DBLEntryRow extends PureComponent<Props> {
             <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.name)} />
           </div>
           <div className={styles.bundleRowTopLeftSideName}>
-            <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.rightsHolders)} />
+            <Tooltip title="Rightsholders">
+              <div>
+                <Group className={classNames(classes.leftIcon, classes.iconSmall)} />
+                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.rightsHolders)} />
+              </div>
+            </Tooltip>
           </div>
           <div className={styles.bundleRowTopMiddle}>
             <Tooltip title={this.props.entryPageUrl} placement="right">
