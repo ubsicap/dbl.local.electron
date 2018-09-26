@@ -227,7 +227,7 @@ function formatSectionNameAffixed(section, prefix, postfix) {
 function findFormKeyStepIndex(steps, formKey) {
   return steps.reduce((acc, step, stepIdx) => {
     const { formKey: lastFormKey = '' } = acc;
-    if ((step.formKey === formKey || formKey.includes(`${step.formKey}/`)) &&
+    if ((step.formKey === formKey || formKey.includes(`${step.formKey}/`) || step.formKey.includes(`${formKey}/`)) &&
       step.formKey.length > lastFormKey.length) {
       return { newActiveStepIndex: stepIdx, formKey: step.formKey };
     }
