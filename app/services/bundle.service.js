@@ -201,6 +201,7 @@ async function convertApiBundleToNathanaelBundle(apiBundle, lazyLoads = {}) {
     countryIso: metadata.countries || '',
     languageIso: metadata.language,
     rightsHolders: metadata.rightsHolders || '',
+    license: dbl.license || 'creator',
     mode,
     task,
     status,

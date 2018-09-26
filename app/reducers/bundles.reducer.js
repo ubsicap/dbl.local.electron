@@ -304,6 +304,7 @@ function formatDisplayAs(bundle) {
       languageAndCountry: formatLanguageAndCountry(bundle),
       name: bundle.name,
       rightsHolders: bundle.rightsHolders,
+      license: ['owned', 'creator'].includes(bundle.license) ? bundle.license : `lic: #${bundle.license}`,
       revision: (bundle.dblId ? revision : 'New'),
       status: formatStatus(bundle)
     }

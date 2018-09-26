@@ -6,6 +6,7 @@ import { compose } from 'recompose';
 import { createSelector } from 'reselect';
 import LinearProgress from 'material-ui/LinearProgress';
 import Badge from '@material-ui/core/Badge';
+import VerifiedUser from '@material-ui/icons/VerifiedUser';
 import Book from '@material-ui/icons/Book';
 import Headset from '@material-ui/icons/Headset';
 import Videocam from '@material-ui/icons/Videocam';
@@ -359,6 +360,14 @@ class DBLEntryRow extends PureComponent<Props> {
               <div>
                 <Group className={classNames(classes.leftIcon, classes.iconSmall)} />
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.rightsHolders)} />
+              </div>
+            </Tooltip>
+          </div>
+          <div className={styles.bundleRowTopMiddle}>
+            <Tooltip title="license">
+              <div>
+                <VerifiedUser className={classNames(classes.leftIcon, classes.iconSmall)} />
+                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.license)} />
               </div>
             </Tooltip>
           </div>
