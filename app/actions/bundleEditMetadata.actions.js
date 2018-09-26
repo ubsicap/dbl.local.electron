@@ -342,7 +342,7 @@ export function saveMetadata({
       const [keyFieldValue] = Object.values(instanceKeyValue || {});
       if (keyFieldName && !(keyFieldValue && keyFieldValue.trim())) {
         const error = {
-          field_issues: [[keyFieldName, 'Required field', keyFieldValue]],
+          field_issues: [[keyFieldName, 'Required field', keyFieldValue, 'Required field']],
           response_valid: false
         };
         dispatch(saveMetadataFailed(bundleId, formKey, error));

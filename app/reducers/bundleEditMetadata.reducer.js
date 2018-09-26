@@ -230,8 +230,8 @@ function getParentErrorBranches(formKey, formErrors) {
 
 function getFormFieldIssues(formKey, fieldIssues) {
   const formFieldIssues = fieldIssues.reduce((acc, issue) => {
-    const [name, rule, value] = issue;
-    const fieldError = { name, rule, value };
+    const [name, machineRule, value, rule] = issue;
+    const fieldError = { name, rule, value, machineRule };
     const { [formKey]: formErrors = {} } = acc;
     return { ...acc, [formKey]: { ...formErrors, [name]: fieldError } };
   }, {});
