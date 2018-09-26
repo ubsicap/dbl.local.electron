@@ -6,8 +6,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
 import SuperSelectField from 'material-ui-superselectfield/es';
 import {
-  saveMetadata, fetchActiveFormInputs, editActiveFormInput,
-  reloadFieldValues
+  saveMetadata, saveMetadataSuccess, fetchActiveFormInputs, editActiveFormInput
 } from '../actions/bundleEditMetadata.actions';
 import editMetadataService from '../services/editMetadata.service';
 
@@ -25,7 +24,7 @@ type Props = {
   fetchActiveFormInputs: () => {},
   editActiveFormInput: () => {},
   saveMetadata: () => {},
-  reloadFieldValues: () => {}
+  saveMetadataSuccess: () => {}
 };
 
 function mapStateToProps(state) {
@@ -46,7 +45,7 @@ const mapDispatchToProps = {
   saveMetadata,
   fetchActiveFormInputs,
   editActiveFormInput,
-  reloadFieldValues
+  saveMetadataSuccess
 };
 
 const materialStyles = theme => ({
@@ -91,7 +90,7 @@ class EditMetadataForm extends React.PureComponent<Props> {
       } = this.props;
       const { fields = [] } = inputs;
       if (!forceSave && !editMetadataService.getHasFormFieldsChanged(fields, activeFormEdits)) {
-        this.props.reloadFieldValues(bundleId, formKey);
+        this.props.saveMetadataSuccess(bundleId, formKey);
         return;
       }
       const fieldNameValues = editMetadataService

@@ -206,7 +206,7 @@ export function bundleEditMetadata(state = initialState, action) {
     const formErrorKeys = Object.keys(formFieldIssues);
     const formIndexWithError = formErrorKeys.indexOf(formKey);
     const currentFormWithErrors = formIndexWithError !== -1 ?
-      formKey : currentFormWithErrorsPrev;
+      formKey : null;
     const nextFormWithErrors = formIndexWithError !== -1 ?
       formErrorKeys[((formIndexWithError + 1) % formErrorKeys.length)] : nextFormWithErrorsPrev;
     return { currentFormWithErrors, nextFormWithErrors };
