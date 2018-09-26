@@ -94,19 +94,12 @@ export function bundleEditMetadata(state = initialState, action) {
     case bundleEditMetadataConstants.METADATA_FORM_INPUTS_LOADED: {
       const { formKey, inputs } = action;
       const {
-        metadataOverrides, formFieldIssues,
-        currentFormWithErrors: currentFormWithErrorsPrev,
-        nextFormWithErrors: nextFormWithErrorsPrev
+        metadataOverrides
       } = state;
       const formInputs =
         editMetadataService.getFormInputsWithOverrides(formKey, inputs, metadataOverrides);
       const activeFormInputs = { [formKey]: formInputs };
-      const formErrorKeys = Object.keys(formFieldIssues);
-      const formIndexWithError = formErrorKeys.indexOf(formKey);
-      const currentFormWithErrors = formIndexWithError !== -1 ?
-        formKey : currentFormWithErrorsPrev;
-      const nextFormWithErrors = formIndexWithError !== -1 ?
-        formErrorKeys[((formIndexWithError + 1) % formErrorKeys.length)] : nextFormWithErrorsPrev;
+      const { currentFormWithErrors, nextFormWithErrors } = getNavigationFormsWithErrors(formKey);
       return changeStateForNewActiveForm(state, {
         activeFormInputs, currentFormWithErrors, nextFormWithErrors
       });
@@ -147,13 +140,17 @@ export function bundleEditMetadata(state = initialState, action) {
     }
     case bundleEditMetadataConstants.SAVE_METADATA_REQUEST: {
       const { moveNextStep: moveNext, forceSave } = action;
+      const { formKey: moveNextFormKey = null } = moveNext;
+      const { currentFormWithErrors, nextFormWithErrors } = getNavigationFormsWithErrors(moveNextFormKey);
       return {
         ...state,
         requestingSaveMetadata: true,
         shouldSaveActiveForm: true,
         wasMetadataSaved: false,
         moveNext,
-        forceSave
+        forceSave,
+        currentFormWithErrors,
+        nextFormWithErrors
       };
     }
     case bundleEditMetadataConstants.SAVE_METADATA_SUCCESS: {
@@ -172,13 +169,16 @@ export function bundleEditMetadata(state = initialState, action) {
       const newFormFieldIssues = getFormFieldIssues(formKey, fieldIssues);
       const formFieldIssues = { ...formFieldIssuesAll, ...newFormFieldIssues };
       const errorTree = getErrorTree(formFieldIssues);
+      const { currentFormWithErrors, nextFormWithErrors } = getNavigationFormsWithErrors(formKey);
       return {
         ...state,
         requestingSaveMetadata: false,
         wasMetadataSaved: false,
         couldNotSaveMetadataMessage: null, /* todo */
         formFieldIssues,
-        errorTree
+        errorTree,
+        currentFormWithErrors,
+        nextFormWithErrors
       };
     }
     case bundleConstants.UPDATE_BUNDLE: {
@@ -187,17 +187,29 @@ export function bundleEditMetadata(state = initialState, action) {
       }
       const { bundle: bundleToEdit } = action;
       const { formFieldIssues, errorTree } = getFormErrorData(bundleToEdit);
-      const currentFormWithErrors = null;
       return {
         ...state,
         bundleToEdit,
         formFieldIssues,
-        errorTree,
-        currentFormWithErrors
+        errorTree
       };
     } default: {
       return state;
     }
+  }
+  function getNavigationFormsWithErrors(formKey) {
+    const {
+      formFieldIssues,
+      currentFormWithErrors: currentFormWithErrorsPrev,
+      nextFormWithErrors: nextFormWithErrorsPrev
+    } = state;
+    const formErrorKeys = Object.keys(formFieldIssues);
+    const formIndexWithError = formErrorKeys.indexOf(formKey);
+    const currentFormWithErrors = formIndexWithError !== -1 ?
+      formKey : currentFormWithErrorsPrev;
+    const nextFormWithErrors = formIndexWithError !== -1 ?
+      formErrorKeys[((formIndexWithError + 1) % formErrorKeys.length)] : nextFormWithErrorsPrev;
+    return { currentFormWithErrors, nextFormWithErrors };
   }
 }
 
