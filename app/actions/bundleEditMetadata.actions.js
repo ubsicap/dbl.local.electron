@@ -11,6 +11,7 @@ export const bundleEditMetadataActions = {
   openEditMetadata,
   closeEditMetadata,
   setMoveNextStep,
+  updateFormFieldIssues,
   fetchFormStructure,
   fetchActiveFormInputs,
   openMetadataFile,
@@ -57,7 +58,7 @@ export function fetchFormStructure(_bundleId) {
   }
 }
 
-export function fetchActiveFormInputs(bundleId, _formKey) {
+export function fetchActiveFormInputs(bundleId, _formKey, doUpdateBundleFormFieldErrors) {
   return async dispatch => {
     dispatch(request(_formKey));
     try {
@@ -65,6 +66,9 @@ export function fetchActiveFormInputs(bundleId, _formKey) {
       const response = isDemoMode ?
         await getMockFormInputs(bundleId, _formKey) :
         await bundleService.getFormFields(bundleId, _formKey);
+      if (doUpdateBundleFormFieldErrors) {
+        dispatch(updateFormFieldIssues(bundleId));
+      }
       dispatch(success(_formKey, response));
     } catch (error) {
       dispatch(failure(error));
@@ -292,7 +296,7 @@ export function reloadFieldValues(bundleId, formKey) {
     const { bundleEditMetadata } = getState();
     const { moveNext: moveNextStep } = bundleEditMetadata;
     dispatch(saveMetadataRequest({ moveNextStep }));
-    dispatch(fetchActiveFormInputs(bundleId, formKey));
+    dispatch(fetchActiveFormInputs(bundleId, formKey, true));
     return dispatch(saveMetadataSuccess(bundleId, formKey));
   };
 }
@@ -356,7 +360,7 @@ export function saveMetadata({
         dispatch(fetchActiveFormInputs(bundleId, formKey));
       }
       dispatch(saveMetadataSuccess(bundleId, formKey));
-      dispatch(bundleActions.updateBundle(bundleId)); // adjust formsErrorStatus
+      dispatch(updateFormFieldIssues(bundleId));
       if (isFactory || forceSaveState /* reload 'present' status */) {
         dispatch(fetchFormStructure(bundleId));
       }
@@ -374,6 +378,10 @@ export function saveMetadata({
       }
     }
   };
+}
+
+export function updateFormFieldIssues(bundleId) {
+  return bundleActions.updateBundle(bundleId); // adjust formsErrorStatus (form field issues)
 }
 
 function saveMetadataRequest({

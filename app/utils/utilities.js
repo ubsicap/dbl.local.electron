@@ -5,6 +5,7 @@ const { shell } = require('electron');
 export const utilities = {
   areEqualArrays,
   areEqualArraysDeep,
+  areEqualObjectsDeep,
   areEqualCollections,
   onOpenLink,
   sleep,
@@ -39,6 +40,12 @@ export function areEqualArrays(a1, a2, funcSort) {
 
 export function areEqualArraysDeep(a1, a2) {
   return a1 === a2 || (a1.length === a2.length && JSON.stringify(a1) === JSON.stringify(a2));
+}
+
+export function areEqualObjectsDeep(o1, o2) {
+  return o1 === o2 ||
+  (areEqualArraysDeep(Object.keys(o1), Object.keys(o2)) &&
+   areEqualArraysDeep(Object.values(o1), Object.values(o2)));
 }
 
 export function areEqualCollections(c1, c2) {

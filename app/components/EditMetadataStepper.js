@@ -8,8 +8,6 @@ import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
 import StepContent from '@material-ui/core/StepContent';
 import Button from '@material-ui/core/Button';
-import Paper from '@material-ui/core/Paper';
-import Typography from '@material-ui/core/Typography';
 import Save from '@material-ui/icons/Save';
 import Undo from '@material-ui/icons/Undo';
 import Delete from '@material-ui/icons/Delete';
@@ -22,9 +20,10 @@ import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import classNames from 'classnames';
 import { fetchFormStructure, saveMetadataSuccess, setArchivistStatusOverrides,
   saveFieldValuesForActiveForm, fetchActiveFormInputs,
-  promptConfirmDeleteInstanceForm, deleteInstanceForm } from '../actions/bundleEditMetadata.actions';
+  promptConfirmDeleteInstanceForm, deleteInstanceForm, updateFormFieldIssues } from '../actions/bundleEditMetadata.actions';
 import EditMetadataForm from './EditMetadataForm';
 import editMetadataService from '../services/editMetadata.service';
+import { utilities } from '../utils/utilities';
 
 const materialStyles = theme => ({
   root: {
@@ -168,7 +167,8 @@ const mapDispatchToProps = {
   saveFieldValuesForActiveForm,
   fetchActiveFormInputs,
   promptConfirmDeleteInstanceForm,
-  deleteInstanceForm
+  deleteInstanceForm,
+  updateFormFieldIssues
 };
 
 function getStepFormKey(stepId, structurePath) {
@@ -188,6 +188,7 @@ type Props = {
     promptConfirmDeleteInstanceForm: () => {},
     deleteInstanceForm: () => {},
     setArchivistStatusOverrides: () => {},
+    updateFormFieldIssues: () => {},
     bundleId: string,
     formStructure: [],
     steps: [],
@@ -262,9 +263,11 @@ class _EditMetadataStepper extends React.Component<Props> {
 
   componentWillReceiveProps(nextProps) {
     const {
+      bundleId,
       requestingSaveMetadata, wasMetadataSaved,
       moveNext: nextMoveNext,
-      steps: nextSteps
+      steps: nextSteps,
+      activeFormEdits: nextActiveFormEdits
     } = nextProps;
     const { formKey: nextMoveNextFormKey = null } = nextMoveNext || {};
     if (requestingSaveMetadata && !this.props.requestingSaveMetadata) {
@@ -285,6 +288,15 @@ class _EditMetadataStepper extends React.Component<Props> {
       }
     } else if (nextMoveNextFormKey) {
       this.trySetActiveStepToMoveNextFormKey(nextSteps, nextMoveNextFormKey);
+    } else if (!utilities.areEqualObjectsDeep(nextActiveFormEdits, this.props.activeFormEdits)) {
+      const hasNextFormChanged = this.computeHasActiveFormChanged(nextActiveFormEdits);
+      if (!hasNextFormChanged) {
+        const hasLastFormChanged = this.computeHasActiveFormChanged(this.props.activeFormEdits);
+        if (hasLastFormChanged) {
+          // user has effectively undone their changes manually. so reset the state of the errors.
+          this.props.updateFormFieldIssues(bundleId);
+        }
+      }
     }
   }
 
@@ -313,7 +325,7 @@ class _EditMetadataStepper extends React.Component<Props> {
     const { bundleId } = this.props;
     const step = this.getStep(stepIndex);
     const { formKey } = step;
-    this.props.fetchActiveFormInputs(bundleId, formKey);
+    this.props.fetchActiveFormInputs(bundleId, formKey, true);
   };
 
   handleDeleteForm = step => () => {
@@ -402,9 +414,15 @@ class _EditMetadataStepper extends React.Component<Props> {
   getHasFormChanged = (stepIndex) => {
     const { activeFormEdits } = this.props;
     const isActiveForm = this.getIsActiveIndex(stepIndex);
-    const fields = isActiveForm ? this.getActiveFormFields() : [];
-    const hasFormChanged = isActiveForm ?
-      editMetadataService.getHasFormFieldsChanged(fields, activeFormEdits) : false;
+    if (!isActiveForm)
+      return false;
+    const hasFormChanged = this.computeHasActiveFormChanged(activeFormEdits);
+    return hasFormChanged;
+  }
+
+  computeHasActiveFormChanged = (activeFormEdits) => {
+    const fields = this.getActiveFormFields();
+    const hasFormChanged = editMetadataService.getHasFormFieldsChanged(fields, activeFormEdits);
     return hasFormChanged;
   }
 
@@ -544,14 +562,6 @@ class _EditMetadataStepper extends React.Component<Props> {
               </Step>
             ))}
         </Stepper>
-        {activeStepIndex === steps.length && (
-          <Paper square elevation={0} className={classes.resetContainer}>
-            <Typography>All steps completed - you&quot;re finished</Typography>
-            <Button onClick={this.handleReset} className={classes.button}>
-              Reset
-            </Button>
-          </Paper>
-        )}
       </div>
     );
   }
