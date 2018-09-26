@@ -227,7 +227,7 @@ function formatSectionNameAffixed(section, prefix, postfix) {
 function findFormKeyStepIndex(steps, formKey) {
   return steps.reduce((acc, step, stepIdx) => {
     const { formKey: lastFormKey = '' } = acc;
-    if ((step.formKey === formKey || formKey.includes(`${step.formKey}/`) || step.formKey.includes(`${formKey}/`)) &&
+    if ((step.formKey === formKey || formKey.includes(`${step.formKey}/`)) &&
       step.formKey.length > lastFormKey.length) {
       return { newActiveStepIndex: stepIdx, formKey: step.formKey };
     }
@@ -250,7 +250,7 @@ class _EditMetadataStepper extends React.Component<Props> {
     } else {
       const { steps } = this.props;
       const { newActiveStepIndex } = findFormKeyStepIndex(steps, moveNextFormKey);
-      this.state.activeStepIndex = newActiveStepIndex;
+      this.state.activeStepIndex = newActiveStepIndex !== -1 ? newActiveStepIndex : 0;
     }
   }
 
