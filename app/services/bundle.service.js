@@ -43,7 +43,7 @@ export const bundleService = {
   runPublicationWizard,
   checkAllFields,
   updatePublications,
-  getPublicationsInstanceIds
+  getPublicationsInstances
 };
 export default bundleService;
 
@@ -514,10 +514,10 @@ function runPublicationWizard(bundleId, pubId, wizardId, containerUri) {
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }
 
-async function updatePublications(bundleId, publications) {
+async function updatePublications(bundleId, publicationIds) {
   /* eslint-disable no-restricted-syntax */
   /* eslint-disable no-await-in-loop */
-  for (const pubId of publications) {
+  for (const pubId of publicationIds) {
     const wizardTestResults = await bundleService.testPublicationWizards(bundleId, pubId);
     const bestWizard = wizardTestResults.reduce(
       (acc, r) => (r.hits.length > acc.hits.length ? r : acc),
@@ -528,11 +528,10 @@ async function updatePublications(bundleId, publications) {
   }
 }
 
-function getPublicationsInstanceIds(formStructure) {
+function getPublicationsInstances(formStructure) {
   const publicationsStructure = formStructure.find(section => section.id === 'publications');
   const { contains: publicationsContains } = publicationsStructure;
   const publicationStructure = publicationsContains.find(section => section.id === 'publication');
   const { instances: publicationInstances } = publicationStructure;
-  const publicationInstanceIds = Object.keys(publicationInstances);
-  return publicationInstanceIds;
+  return publicationInstances;
 }

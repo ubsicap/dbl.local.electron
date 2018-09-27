@@ -417,8 +417,8 @@ function saveSuccessMiddleware(bundleId, formKey) {
        */
       if (formKey.startsWith('/publications/publication/') && formKey.endsWith('/canonSpec')) {
         const { bundleEditMetadata: { formStructure } } = getState();
-        const publications = bundleService.getPublicationsInstanceIds(formStructure);
-        await bundleService.updatePublications(bundleId, publications);
+        const publicationInstances = bundleService.getPublicationsInstances(formStructure);
+        await bundleService.updatePublications(bundleId, Object.keys(publicationInstances));
       }
     } catch (error) {
       log.error(`publication wizards error: ${error}`);

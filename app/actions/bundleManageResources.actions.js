@@ -87,7 +87,8 @@ export function getManifestResources(_bundleId) {
 export function checkPublicationsHealth(_bundleId) {
   return async dispatch => {
     const sections = await bundleService.getFormBundleTree(_bundleId);
-    const publicationInstanceIds = bundleService.getPublicationInstanceIds(sections);
+    const publicationInstances = bundleService.getPublicationsInstances(sections);
+    const publicationInstanceIds = Object.keys(publicationInstances);
     if (publicationInstanceIds.length === 0) {
       return dispatch({
         type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR,
