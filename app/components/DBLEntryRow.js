@@ -6,7 +6,7 @@ import { compose } from 'recompose';
 import { createSelector } from 'reselect';
 import LinearProgress from 'material-ui/LinearProgress';
 import Badge from '@material-ui/core/Badge';
-import VerifiedUser from '@material-ui/icons/VerifiedUser';
+import VerifiedUserOutlined from '@material-ui/icons/VerifiedUserOutlined';
 import Book from '@material-ui/icons/Book';
 import Headset from '@material-ui/icons/Headset';
 import Videocam from '@material-ui/icons/Videocam';
@@ -17,7 +17,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import FileDownload from 'material-ui/svg-icons/file/file-download';
 import Folder from 'material-ui/svg-icons/file/folder';
-import Group from '@material-ui/icons/Group';
+import Copyright from '@material-ui/icons/Copyright';
 import Save from '@material-ui/icons/Save';
 import CallSplit from '@material-ui/icons/CallSplit';
 import Link from '@material-ui/icons/Link';
@@ -358,7 +358,7 @@ class DBLEntryRow extends PureComponent<Props> {
           <div className={styles.bundleRowTopLeftSideName}>
             <Tooltip title="Rightsholders">
               <div>
-                <Group className={classNames(classes.leftIcon, classes.iconSmall)} />
+                <Copyright className={classNames(classes.leftIcon, classes.iconSmall)} />
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.rightsHolders)} />
               </div>
             </Tooltip>
@@ -366,7 +366,7 @@ class DBLEntryRow extends PureComponent<Props> {
           <div className={styles.bundleRowTopMiddle}>
             <Tooltip title="license">
               <div>
-                <VerifiedUser className={classNames(classes.leftIcon, classes.iconSmall)} />
+                <VerifiedUserOutlined className={classNames(classes.leftIcon, classes.iconSmall)} />
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.license)} />
               </div>
             </Tooltip>
