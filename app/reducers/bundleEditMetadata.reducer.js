@@ -240,10 +240,17 @@ function getParentErrorBranches(formKey, formErrors) {
   return parentErrorBranches;
 }
 
+function getFieldError(issue) {
+  const [name, machineRule, origValue, rule] = issue;
+  const value = origValue === 0 && machineRule === ('bad_arity_expected_1') ? '' : origValue;
+  const fieldError = { name, rule, value, machineRule };
+  return fieldError;
+}
+
 function getFormFieldIssues(formKey, fieldIssues) {
   const formFieldIssues = fieldIssues.reduce((acc, issue) => {
-    const [name, machineRule, value, rule] = issue;
-    const fieldError = { name, rule, value, machineRule };
+    const fieldError = getFieldError(issue);
+    const { name } = fieldError;
     const { [formKey]: formErrors = {} } = acc;
     return { ...acc, [formKey]: { ...formErrors, [name]: fieldError } };
   }, {});
