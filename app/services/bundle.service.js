@@ -41,7 +41,9 @@ export const bundleService = {
   getPublicationWizards,
   testPublicationWizards,
   runPublicationWizard,
-  checkAllFields
+  checkAllFields,
+  updatePublications,
+  getPublicationsInstanceIds
 };
 export default bundleService;
 
@@ -510,4 +512,27 @@ function runPublicationWizard(bundleId, pubId, wizardId, containerUri) {
   };
   const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${PUBLICATION_API}/wizard/${bundleId}/${pubId}/${wizardId}/${containerUri}`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
+}
+
+async function updatePublications(bundleId, publications) {
+  /* eslint-disable no-restricted-syntax */
+  /* eslint-disable no-await-in-loop */
+  for (const pubId of publications) {
+    const wizardTestResults = await bundleService.testPublicationWizards(bundleId, pubId);
+    const bestWizard = wizardTestResults.reduce(
+      (acc, r) => (r.hits.length > acc.hits.length ? r : acc),
+      { hits: [], misses: [] }
+    );
+    const { wizard, uri } = bestWizard;
+    await bundleService.runPublicationWizard(bundleId, pubId, wizard, uri);
+  }
+}
+
+function getPublicationsInstanceIds(formStructure) {
+  const publicationsStructure = formStructure.find(section => section.id === 'publications');
+  const { contains: publicationsContains } = publicationsStructure;
+  const publicationStructure = publicationsContains.find(section => section.id === 'publication');
+  const { instances: publicationInstances } = publicationStructure;
+  const publicationInstanceIds = Object.keys(publicationInstances);
+  return publicationInstanceIds;
 }

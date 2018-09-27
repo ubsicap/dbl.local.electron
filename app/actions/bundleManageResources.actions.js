@@ -87,11 +87,7 @@ export function getManifestResources(_bundleId) {
 export function checkPublicationsHealth(_bundleId) {
   return async dispatch => {
     const sections = await bundleService.getFormBundleTree(_bundleId);
-    const publicationsStructure = sections.find(section => section.id === 'publications');
-    const { contains: publicationsContains } = publicationsStructure;
-    const publicationStructure = publicationsContains.find(section => section.id === 'publication');
-    const { instances: publicationInstances } = publicationStructure;
-    const publicationInstanceIds = Object.keys(publicationInstances);
+    const publicationInstanceIds = bundleService.getPublicationInstanceIds(sections);
     if (publicationInstanceIds.length === 0) {
       return dispatch({
         type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR,
@@ -128,23 +124,12 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
     /* eslint-disable no-await-in-loop */
     for (const [filePath, containerPath] of Object.entries(_fileToContainerPaths)) {
       try {
-        await utilities.sleep(50); // avoid hang?
         await bundleService.postResource(_bundleId, filePath, containerPath);
-        await utilities.sleep(250); // avoid hang?
         await bundleService.updateManifestResource(_bundleId, containerPath);
-        await utilities.sleep(50); // avoid hang?
         const { bundleManageResources } = getState();
         const { publicationsHealth } = bundleManageResources;
         const { publications } = publicationsHealth;
-        for (const pubId of publications) {
-          const wizardTestResults = await bundleService.testPublicationWizards(_bundleId, pubId);
-          const bestWizard = wizardTestResults.reduce(
-            (acc, r) => (r.hits.length > acc.hits.length ? r : acc),
-            { hits: [], misses: [] }
-          );
-          const { wizard, uri } = bestWizard;
-          await bundleService.runPublicationWizard(_bundleId, pubId, wizard, uri);
-        }
+        await bundleService.updatePublications(_bundleId, publications);
         dispatch(success(_bundleId, filePath, containerPath));
       } catch (error) {
         dispatch(failure(_bundleId, error));

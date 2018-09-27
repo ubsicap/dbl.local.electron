@@ -366,6 +366,7 @@ export function saveMetadata({
         dispatch(fetchFormStructure(bundleId));
       }
       dispatch(saveMetadatFileToTempBundleFolder(bundleId));
+      dispatch(saveSuccessMiddleware(bundleId, formKey));
       if (saveOverrides) {
         dispatch(saveAllOverrides(bundleId));
       }
@@ -404,6 +405,24 @@ export function setMoveNextStep(moveNextStep) {
 export function saveMetadataSuccess(bundleId, formKey, moveNextStep) {
   return {
     type: bundleEditMetadataConstants.SAVE_METADATA_SUCCESS, bundleId, formKey, moveNextStep
+  };
+}
+
+function saveSuccessMiddleware(bundleId, formKey) {
+  return async (dispatch, getState) => {
+    try {
+      /*
+       * technically this middleWare should be AFTER metadata success and formStructure reloaded,
+       * since formStructure can change based on state of posting metadata
+       */
+      if (formKey.startsWith('/publications/publication/') && formKey.endsWith('/canonSpec')) {
+        const { bundleEditMetadata: { formStructure } } = getState();
+        const publications = bundleService.getPublicationsInstanceIds(formStructure);
+        await bundleService.updatePublications(bundleId, publications);
+      }
+    } catch (error) {
+      log.error(`publication wizards error: ${error}`);
+    }
   };
 }
 
