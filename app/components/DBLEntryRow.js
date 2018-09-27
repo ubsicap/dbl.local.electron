@@ -41,6 +41,7 @@ type Props = {
   bundleId: string,
   dblId: string,
   revision: string,
+  license: string,
   parent: ?{},
   task: string,
   status: string,
@@ -212,7 +213,9 @@ class DBLEntryRow extends PureComponent<Props> {
     return status === 'DRAFT' || isUploading || (task === 'UPLOAD' && status === 'IN_PROGRESS');
   }
 
-  shouldDisableRevise = () => (this.props.isRequestingRevision || this.props.isDownloading)
+  shouldShowEditRevise = () => (this.props.license === 'owned');
+
+  shouldDisableRevise = () => (this.props.isRequestingRevision || this.props.isDownloading) && !this.shouldShowEditRevise()
 
   shouldDisableUpload = () => this.shouldDisableReviseOrEdit() ||
     Object.keys(this.props.formsErrors).length > 0;
@@ -418,13 +421,14 @@ class DBLEntryRow extends PureComponent<Props> {
         )}
         {isSelected && (
           <Toolbar style={{ minHeight: '36px' }}>
+            {this.shouldShowEditRevise() &&
             <Button
               disabled={this.shouldDisableReviseOrEdit()}
               variant="flat" size="small" className={classes.button}
               onKeyPress={this.onClickEditMetadata}
               onClick={this.onClickEditMetadata}>
               {this.renderEditIcon()}
-            </Button>
+            </Button>}
             <Button variant="flat" size="small" className={classes.button}
               disabled={this.shouldDisableSaveTo()}
               onKeyPress={this.startSaveBundleTo}
