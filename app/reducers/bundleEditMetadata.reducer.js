@@ -199,8 +199,7 @@ export function bundleEditMetadata(state = initialState, action) {
   }
   function getNavigationFormsWithErrors(formKey) {
     const {
-      formFieldIssues,
-      currentFormWithErrors: currentFormWithErrorsPrev,
+      formFieldIssues = {},
       nextFormWithErrors: nextFormWithErrorsPrev
     } = state;
     const formErrorKeys = Object.keys(formFieldIssues);
@@ -215,10 +214,10 @@ export function bundleEditMetadata(state = initialState, action) {
 
 function getFormErrorData(bundleToEdit) {
   const formsErrors = editMetadataService.getFormsErrors(bundleToEdit.formsErrorStatus);
-  const formFieldIssues = Object.entries(formsErrors).reduce((acc, [formKey, errorStatus]) => {
+  const { formFieldIssues } = Object.entries(formsErrors).reduce((acc, [formKey, errorStatus]) => {
     const myformFieldIssues = getFormFieldIssues(formKey, errorStatus.field_issues);
-    return { ...acc, ...myformFieldIssues };
-  }, {});
+    return { ...acc, formFieldIssues: { ...acc.formFieldIssues, ...myformFieldIssues } };
+  }, { formFieldIssues: {} });
   const errorTree = getErrorTree(formFieldIssues);
   return {
     formsErrors, formFieldIssues, errorTree
