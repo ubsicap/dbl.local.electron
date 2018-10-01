@@ -232,7 +232,10 @@ function formatError(fieldError) {
     return null;
   }
   const { rule, value } = fieldError;
-  return `${rule}: '${value}'`;
+  if (value !== null) {
+    return `${rule}: '${value}'`;
+  }
+  return rule;
 }
 
 export default compose(

@@ -93,7 +93,7 @@ function makeGetFormsErrors() {
 
 function getFormsErrors(formsErrorStatus) {
   const formsErrors = Object.entries(formsErrorStatus).reduce((acc, [formKey, errorStatus]) => {
-    if (errorStatus.field_issues.length === 0) {
+    if (errorStatus.field_issues.length === 0 && errorStatus.document_issues.length === 0) {
       return acc;
     }
     return { ...acc, [`/${formKey}`]: { ...errorStatus } };

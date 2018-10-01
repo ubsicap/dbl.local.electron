@@ -164,9 +164,8 @@ export function bundleEditMetadata(state = initialState, action) {
     }
     case bundleEditMetadataConstants.SAVE_METADATA_FAILED: {
       const { error = {}, formKey } = action;
-      const { field_issues: fieldIssues = [] } = error || {};
       const { formFieldIssues: formFieldIssuesAll } = state;
-      const newFormFieldIssues = getFormFieldIssues(formKey, fieldIssues);
+      const newFormFieldIssues = getFormErrors(formKey, error);
       const formFieldIssues = { ...formFieldIssuesAll, ...newFormFieldIssues };
       const errorTree = getErrorTree(formFieldIssues);
       const { currentFormWithErrors, nextFormWithErrors } = getNavigationFormsWithErrors(formKey);
@@ -214,10 +213,10 @@ export function bundleEditMetadata(state = initialState, action) {
 
 function getFormErrorData(bundleToEdit) {
   const formsErrors = editMetadataService.getFormsErrors(bundleToEdit.formsErrorStatus);
-  const { formFieldIssues } = Object.entries(formsErrors).reduce((acc, [formKey, errorStatus]) => {
-    const myformFieldIssues = getFormFieldIssues(formKey, errorStatus.field_issues);
-    return { ...acc, formFieldIssues: { ...acc.formFieldIssues, ...myformFieldIssues } };
-  }, { formFieldIssues: {} });
+  const formFieldIssues = Object.entries(formsErrors).reduce((acc, [formKey, errorStatus]) => {
+    const myformFieldIssues = getFormErrors(formKey, errorStatus);
+    return { ...acc, ...myformFieldIssues };
+  }, {});
   const errorTree = getErrorTree(formFieldIssues);
   return {
     formsErrors, formFieldIssues, errorTree
@@ -239,27 +238,42 @@ function getParentErrorBranches(formKey, formErrors) {
   return parentErrorBranches;
 }
 
-function getFieldError(issue) {
-  const [name, machineRule, origValue, rule] = issue;
+function getFieldError(fieldIssue) {
+  const [name, machineRule, origValue, rule] = fieldIssue;
   const value = origValue === 0 && machineRule === ('bad_arity_expected_1') ? '' : origValue;
   const fieldError = { name, rule, value, machineRule };
   return fieldError;
 }
 
-function getFormFieldIssues(formKey, fieldIssues) {
-  const formFieldIssues = fieldIssues.reduce((acc, issue) => {
-    const fieldError = getFieldError(issue);
+function getDocumentError(docIssue) {
+  const [machineRule, name, rule] = docIssue;
+  const docError = {
+    name, rule, value: null, machineRule, isDocIssue: true
+  };
+  return docError;
+}
+
+function getErrors(formKey, formIssues, errorFactory) {
+  const errors = formIssues.reduce((acc, issue) => {
+    const fieldError = errorFactory(issue);
     const { name } = fieldError;
     const { [formKey]: formErrors = {} } = acc;
     return { ...acc, [formKey]: { ...formErrors, [name]: fieldError } };
   }, {});
-  return formFieldIssues;
+  return errors;
 }
 
-function getErrorTree(formFieldIssues) {
-  const errorTree = Object.keys(formFieldIssues).reduce(
+function getFormErrors(formKey, errorStatus) {
+  const { field_issues: fieldIssues, document_issues: docIssues } = errorStatus;
+  const fieldErrors = getErrors(formKey, fieldIssues, getFieldError);
+  const documentErrors = getErrors(formKey, docIssues, getDocumentError);
+  return { ...fieldErrors, ...documentErrors };
+}
+
+function getErrorTree(formsErrors) {
+  const errorTree = Object.keys(formsErrors).reduce(
     (accTree, formErrorEndpoint) => {
-      const formErrors = formFieldIssues[formErrorEndpoint];
+      const formErrors = formsErrors[formErrorEndpoint];
       const parentErrorBranches = getParentErrorBranches(formErrorEndpoint, formErrors);
       const combinedErrors = Object.keys(parentErrorBranches).reduce((accErrors, branchKey) => {
         const origErrors = accTree[branchKey] || {};
