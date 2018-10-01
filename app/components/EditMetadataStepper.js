@@ -6,11 +6,13 @@ import { createSelector } from 'reselect';
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
+import StepIcon from '@material-ui/core/StepIcon';
 import StepContent from '@material-ui/core/StepContent';
 import Button from '@material-ui/core/Button';
 import Save from '@material-ui/icons/Save';
 import Undo from '@material-ui/icons/Undo';
 import Delete from '@material-ui/icons/Delete';
+import Build from '@material-ui/icons/Build';
 import Tooltip from '@material-ui/core/Tooltip';
 import Warning from '@material-ui/icons/Warning';
 import NavigateNext from '@material-ui/icons/NavigateNext';
@@ -550,6 +552,7 @@ class _EditMetadataStepper extends React.Component<Props> {
                   onClick={this.handleStep(index)}
                   completed={this.state.completed[index]}
                   error={this.hasErrorsInStepsOrForms(step)}
+                  /* icon={<StepIcon icon={<Build />} className={classNames(classes.root, classes.error)} error={this.hasErrorsInStepsOrForms(step)} />} */
                 >
                   {step.label}
                 </StepLabel>
