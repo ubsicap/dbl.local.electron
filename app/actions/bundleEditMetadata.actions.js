@@ -43,6 +43,8 @@ export function fetchFormStructure(_bundleId) {
     try {
       const formStructure = await getFormStructure(_bundleId);
       dispatch(success(formStructure));
+      // formStructure Middleware
+      dispatch(tryUpdateMetadataSources(_bundleId, formStructure));
     } catch (error) {
       dispatch(failure(error));
     }
@@ -56,6 +58,36 @@ export function fetchFormStructure(_bundleId) {
   function failure(error) {
     return { type: bundleEditMetadataConstants.METADATA_FORM_FETCH_ERROR, error };
   }
+}
+
+function tryUpdateMetadataSources(bundleId, formStructure) {
+  return async (dispatch, getState) => {
+    const relationInstances = bundleService.getSubSectionInstances(formStructure, 'relationships', 'relation');
+    const relationInstanceIds = Object.keys(relationInstances);
+    if (relationInstanceIds.length === 0) {
+      return;
+    }
+    try {
+      const relationPathBase = '/relationships/relation/';
+      relationInstanceIds.forEach(async (dblIdTarget) => {
+        const formKey = `${relationPathBase}${dblIdTarget}`;
+        const formRelation = await bundleService.getFormFields(bundleId, formKey);
+        const [revisionField] = formRelation.fields.filter(f => f.name === 'revision');
+        const revisionTarget = revisionField.default[0];
+        const { bundles: { allBundles } } = getState();
+        const dblTargetBundles = allBundles.filter(b => b.dblId === dblIdTarget && b.revision === revisionTarget);
+        if (dblTargetBundles.length === 0) {
+          // download entry/revision to bundle
+          console.log(`create bundle and download for entry: ${dblIdTarget}/${revisionTarget}`);
+        } else {
+          // update links to review this metadata
+          console.log(`found bundle for entry: ${dblIdTarget}/${revisionTarget}`);
+        }
+      });
+    } catch (error) {
+      log.error(`metadata sources error: ${error}`);
+    }
+  };
 }
 
 export function fetchActiveFormInputs(bundleId, _formKey, doUpdateBundleFormFieldErrors) {
@@ -408,21 +440,28 @@ export function saveMetadataSuccess(bundleId, formKey, moveNextStep) {
   };
 }
 
-function saveSuccessMiddleware(bundleId, formKey) {
+function tryUpdatePublications(formKey, bundleId) {
   return async (dispatch, getState) => {
     try {
-      /*
-       * technically this middleWare should be AFTER metadata success and formStructure reloaded,
-       * since formStructure can change based on state of posting metadata
-       */
       if (formKey.startsWith('/publications/publication/') && formKey.endsWith('/canonSpec')) {
         const { bundleEditMetadata: { formStructure } } = getState();
         const publicationInstances = bundleService.getPublicationsInstances(formStructure);
         await bundleService.updatePublications(bundleId, Object.keys(publicationInstances));
+        return;
       }
     } catch (error) {
       log.error(`publication wizards error: ${error}`);
     }
+  };
+}
+
+function saveSuccessMiddleware(bundleId, formKey) {
+  return dispatch => {
+    /*
+      * technically this middleWare should be AFTER metadata success and formStructure reloaded,
+      * since formStructure can change based on state of posting metadata
+      */
+    dispatch(tryUpdatePublications(formKey, bundleId));
   };
 }
 

@@ -20,9 +20,22 @@ function sortAndFilterBundlesAsEntries(allBundles) {
     b => b.displayAs.languageAndCountry,
     b => b.displayAs.name,
   ]);
-  const addedByBundleIds = sortedBundles.reduce((acc, bundle) => ({ ...acc, [bundle.id]: bundle }), {});
-  const byBundleDblIds = items.reduce((acc, bundle) => ({ ...acc, [bundle.dblId]: bundle }), {});
+  const addedByBundleIds = indexBy(sortedBundles, 'id');
+  const byBundleDblIds = indexBy(items, 'dblId');
   return { items, addedByBundleIds, byBundleDblIds };
+}
+
+/* consider converting indexBy to extension method:
+  Object.defineProperty(String.prototype, "SayHi", {
+      value: function SayHi() {
+          return "Hi " + this + "!";
+      },
+      writable: true,
+      configurable: true
+  });
+*/
+function indexBy(items, byField) {
+  return items.reduce((acc, item) => ({ ...acc, [item[byField]]: item }), {});
 }
 
 function getSelectedState(state, bundleToToggle, bundleIdToRemove, newItemsByDblIds) {

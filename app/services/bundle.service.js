@@ -43,7 +43,8 @@ export const bundleService = {
   runPublicationWizard,
   checkAllFields,
   updatePublications,
-  getPublicationsInstances
+  getPublicationsInstances,
+  getSubSectionInstances
 };
 export default bundleService;
 
@@ -529,9 +530,13 @@ async function updatePublications(bundleId, publicationIds) {
 }
 
 function getPublicationsInstances(formStructure) {
-  const publicationsStructure = formStructure.find(section => section.id === 'publications');
-  const { contains: publicationsContains } = publicationsStructure;
-  const publicationStructure = publicationsContains.find(section => section.id === 'publication');
-  const { instances: publicationInstances } = publicationStructure;
-  return publicationInstances;
+  return getSubSectionInstances(formStructure, 'publications', 'publication');
+}
+
+function getSubSectionInstances(formStructure, sectionId, subSectionId) {
+  const sectionStructure = formStructure.find(section => section.id === sectionId);
+  const { contains } = sectionStructure;
+  const subSectionStructure = contains.find(section => section.id === subSectionId);
+  const { instances } = subSectionStructure;
+  return instances;
 }
