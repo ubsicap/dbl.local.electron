@@ -400,7 +400,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       return;
     }
     const parentDir = path.resolve(folderPaths[0], '..');
-    const knownUnwantedFiles = ['desktop.ini', 'thumbs.db', '.DS_Store', ignoreHiddenFunc];
+    const knownUnwantedFiles = ['metadata.xml', 'desktop.ini', 'thumbs.db', '.DS_Store', ignoreHiddenFunc];
     const readAllDirs = folderPaths.map(folder => recursiveReadDir(folder, knownUnwantedFiles)
       .then(fullPaths => ({
         folder,
