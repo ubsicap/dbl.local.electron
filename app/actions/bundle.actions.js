@@ -11,6 +11,7 @@ import { dblDotLocalService } from '../services/dbl_dot_local.service';
 export const bundleActions = {
   fetchAll,
   createNewBundle,
+  createDraftRevision,
   updateBundle,
   removeBundle,
   setupBundlesEventSource,
@@ -83,6 +84,24 @@ function updateOrAddBundle(rawBundle) {
       }
     } else {
       dispatch(addBundle(bundle, rawBundle));
+    }
+  };
+}
+
+export function createDraftRevision(_bundleId) {
+  return async (dispatch, getState) => {
+    const { bundles } = getState();
+    const { addedByBundleIds } = bundles;
+    const bundleIdToEdit = _bundleId;
+    const bundleToEdit = _bundleId ? addedByBundleIds[bundleIdToEdit] : {};
+    if (bundleToEdit.mode === 'create' || bundleToEdit.status === 'DRAFT') {
+      return;
+    }
+    try {
+      await bundleService.startCreateContent(_bundleId, 'createDraftRevision');
+    } catch (errorReadable) {
+      const error = await errorReadable.text();
+      log.error(`error creating draft revision: ${error}`);
     }
   };
 }

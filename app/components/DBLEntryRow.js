@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
+import { lighten } from '@material-ui/core/styles/colorManipulator';
 import { withStyles } from '@material-ui/core/styles';
 import classNames from 'classnames';
 import { compose } from 'recompose';
@@ -19,14 +20,14 @@ import FileDownload from 'material-ui/svg-icons/file/file-download';
 import Folder from 'material-ui/svg-icons/file/folder';
 import Copyright from '@material-ui/icons/Copyright';
 import Save from '@material-ui/icons/Save';
-import CallSplit from '@material-ui/icons/CallSplit';
+import CreateNewFolder from '@material-ui/icons/CreateNewFolder';
 import Link from '@material-ui/icons/Link';
 import Edit from '@material-ui/icons/Edit';
 import CloudUpload from '@material-ui/icons/CloudUpload';
 import styles from './DBLEntryRow.css';
 import ControlledHighlighter from './ControlledHighlighter';
 import { toggleSelectEntry, requestSaveBundleTo,
-  downloadResources, uploadBundle, updateBundle } from '../actions/bundle.actions';
+  downloadResources, uploadBundle, updateBundle, createDraftRevision } from '../actions/bundle.actions';
 import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
 import editMetadataService from '../services/editMetadata.service';
 import { openResourceManager } from '../actions/bundleManageResources.actions';
@@ -68,7 +69,8 @@ type Props = {
   requestSaveBundleTo: () => {},
   openEditMetadata: () => {},
   uploadBundle: () => {},
-  updateBundle: () => {}
+  updateBundle: () => {},
+  createDraftRevision: () => {}
 };
 
 const mapDispatchToProps = {
@@ -78,7 +80,8 @@ const mapDispatchToProps = {
   requestSaveBundleTo,
   openEditMetadata,
   uploadBundle,
-  updateBundle
+  updateBundle,
+  createDraftRevision
 };
 
 const getTask = (state, props) => props.task;
@@ -204,7 +207,7 @@ class DBLEntryRow extends PureComponent<Props> {
   }
 
   shouldDisableCleanResources = () =>
-    (this.hasNoStoredResources() || this.shouldDisableReviseOrEdit());
+    (this.hasNoStoredResources() || this.shouldDisableDraftRevisionOrEdit());
 
   shouldDisableSaveTo = () => this.shouldDisableCleanResources();
 
@@ -213,14 +216,15 @@ class DBLEntryRow extends PureComponent<Props> {
     return status === 'DRAFT' || isUploading || (task === 'UPLOAD' && status === 'IN_PROGRESS');
   }
 
-  shouldShowEditRevise = () => (this.props.license === 'owned');
+  shouldShowDraftRevision = () => (this.props.status !== 'DRAFT' && this.props.license === 'owned');
+  shouldShowEdit = () => (this.props.status === 'DRAFT' && this.props.license === 'owned');
 
-  shouldDisableRevise = () => (this.props.isRequestingRevision || this.props.isDownloading) && !this.shouldShowEditRevise()
+  shouldDisableRevise = () => (this.props.isRequestingRevision || this.props.isDownloading)
 
-  shouldDisableUpload = () => this.shouldDisableReviseOrEdit() ||
+  shouldDisableUpload = () => this.shouldDisableDraftRevisionOrEdit() ||
     Object.keys(this.props.formsErrors).length > 0;
 
-  shouldDisableReviseOrEdit = () => {
+  shouldDisableDraftRevisionOrEdit = () => {
     const { isUploading = false, task, status } = this.props;
     return isUploading || (task === 'UPLOAD' && status === 'IN_PROGRESS') || this.shouldDisableRevise();
   }
@@ -247,6 +251,12 @@ class DBLEntryRow extends PureComponent<Props> {
   onClickEditMetadata = (event) => {
     const { bundleId } = this.props;
     this.props.openEditMetadata(bundleId);
+    event.stopPropagation();
+  }
+
+  onClickDraftRevision = (event) => {
+    const { bundleId } = this.props;
+    this.props.createDraftRevision(bundleId);
     event.stopPropagation();
   }
 
@@ -307,17 +317,14 @@ class DBLEntryRow extends PureComponent<Props> {
         'Edit'
       ];
     }
-    return [
-      <CallSplit
-        key="btnRevise"
-        className={classNames(classes.leftIcon, classes.iconSmall)}
-      />, 'Revise'];
+    return (null);
   };
 
   render() {
     const {
       bundleId,
       dblId,
+      revision,
       medium,
       task,
       status,
@@ -333,13 +340,13 @@ class DBLEntryRow extends PureComponent<Props> {
     const resourceManagerMode = status === 'DRAFT' ? 'addFiles' : 'download';
     return (
       <div
-        className={styles.bundleRow}
+        className={classNames(styles.bundleRow, pickBackgroundColor(classes, task, status))}
         key={bundleId}
         onKeyPress={this.onKeyPress}
         onClick={this.onClickBundleRow}
         tabIndex={0}
         role="button"
-        style={{ background: `${pickBackgroundColor(task, status)}`, borderBottom: '1px solid lightgray' }}
+        style={{ borderBottom: '1px solid lightgray' }}
       >
         <div className={styles.bundleRowTop}>
           <div className={styles.bundleRowTopLeftSideIcon}>
@@ -421,13 +428,29 @@ class DBLEntryRow extends PureComponent<Props> {
         )}
         {isSelected && (
           <Toolbar style={{ minHeight: '36px' }}>
-            {this.shouldShowEditRevise() &&
+            {this.shouldShowEdit() &&
             <Button
-              disabled={this.shouldDisableReviseOrEdit()}
+              disabled={this.shouldDisableDraftRevisionOrEdit()}
               variant="flat" size="small" className={classes.button}
               onKeyPress={this.onClickEditMetadata}
-              onClick={this.onClickEditMetadata}>
+              onClick={this.onClickEditMetadata}
+            >
               {this.renderEditIcon()}
+            </Button>}
+            {this.shouldShowDraftRevision() &&
+            <Button
+              color="secondary"
+              disabled={this.shouldDisableDraftRevisionOrEdit()}
+              variant="outlined" size="small"
+              className={classNames(classes.button, classes.draftMode)}
+              onKeyPress={this.onClickDraftRevision}
+              onClick={this.onClickDraftRevision}
+            >
+              <CreateNewFolder
+                key="btnDraft"
+                className={classNames(classes.leftIcon, classes.iconSmall)}
+              />
+              {`Draft > Rev ${revision}`}
             </Button>}
             <Button variant="flat" size="small" className={classes.button}
               disabled={this.shouldDisableSaveTo()}
@@ -478,6 +501,10 @@ const materialStyles = theme => ({
   iconSmall: {
     fontSize: 20,
   },
+  draftMode: { backgroundColor: lighten(theme.palette.secondary.light, 0.85) },
+  draftButtonText: { color: 'black' },
+  storedMode: { backgroundColor: 'white' },
+  noneStoredMode: { backgroundColor: '#EDEDED' },
 });
 
 
@@ -493,12 +520,12 @@ function getBundleExportInfo(bundleId, savedToHistory) {
   return savedToHistory ? savedToHistory[bundleId] : null;
 }
 
-function pickBackgroundColor(task, status) {
+function pickBackgroundColor(classes, task, status) {
   switch (status) {
-    case 'DRAFT': return '#F5D2D2';
-    case 'NOT_STARTED': return '#EDEDED';
+    case 'DRAFT': return classes.draftMode;
+    case 'NOT_STARTED': return classes.noneStoredMode;
     default:
-      return 'white';
+      return classes.storedMode;
   }
 }
 

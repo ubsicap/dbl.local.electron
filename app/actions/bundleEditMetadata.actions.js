@@ -44,7 +44,7 @@ export function fetchFormStructure(_bundleId) {
       const formStructure = await getFormStructure(_bundleId);
       dispatch(success(formStructure));
       // formStructure Middleware
-      dispatch(tryUpdateMetadataSources(_bundleId, formStructure));
+      // dispatch(tryUpdateMetadataSources(_bundleId, formStructure));
     } catch (error) {
       dispatch(failure(error));
     }
@@ -181,9 +181,12 @@ export function openEditMetadata(_bundleId, _moveNextStep) {
       return;
     }
     const isDraft = bundleToEdit.status === 'DRAFT';
-    const label = isDraft ? '' : 'openEditMetadata';
+    if (!isDraft) {
+      dispatch(failure(_bundleId, 'not yet in draft mode', _moveNextStep));
+      return;
+    }
     try {
-      await bundleService.startCreateContent(_bundleId, label);
+      await bundleService.startCreateContent(_bundleId, '');
       if (isDraft) {
         // ideally we'd wait/listen for the 'create' mode change event.
         dispatch(navigate(bundleToEdit, _moveNextStep));
