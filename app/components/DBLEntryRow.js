@@ -274,8 +274,9 @@ class DBLEntryRow extends PureComponent<Props> {
     this.setState({ anchorEl: null });
   };
 
-  handleClickMediaType = (medium) => () => {
+  handleClickMediaType = (medium) => (event) => {
     this.handleCloseMediaTypeMenu();
+    event.stopPropagation();
     // this.props.createNewBundle(medium);
   };
 
