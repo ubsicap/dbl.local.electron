@@ -494,7 +494,7 @@ class DBLEntryRow extends PureComponent<Props> {
                   key="btnForkNewEntry"
                   className={classNames(classes.leftIcon, classes.iconSmall)}
                 />
-                Create New
+                Save As (New)
               </Button>
               <Menu
                 id="new-media-type-menu"
@@ -518,7 +518,7 @@ class DBLEntryRow extends PureComponent<Props> {
               onKeyPress={this.startSaveBundleTo}
               onClick={this.startSaveBundleTo}>
               <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
-              Save To
+              Export To
             </Button>
             <DeleteOrCleanButton {...this.props} shouldDisableCleanResources={this.shouldDisableCleanResources()} />
             {this.shouldShowUpload() &&
