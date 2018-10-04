@@ -227,6 +227,7 @@ class DBLEntryRow extends PureComponent<Props> {
   }
 
   shouldShowDraftRevision = () => (this.props.status !== 'DRAFT' && this.props.license === 'owned');
+  shouldShowSaveAsNew = () => (this.props.status !== 'DRAFT');
   shouldShowEdit = () => (this.props.status === 'DRAFT' && this.props.license === 'owned');
 
   shouldDisableRevise = () => (this.props.isRequestingRevision || this.props.isDownloading)
@@ -485,7 +486,7 @@ class DBLEntryRow extends PureComponent<Props> {
               />
               {`Draft > Rev ${revision}`}
             </Button>}
-            {this.shouldShowDraftRevision() &&
+            {this.shouldShowSaveAsNew() &&
             <div>
               <Button
                 color="primary"
