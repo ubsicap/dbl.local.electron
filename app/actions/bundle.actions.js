@@ -53,8 +53,8 @@ function tryAddNewEntry(bundleId) {
     if (!bundleService.apiBundleHasMetadata(rawBundle)) {
       return; // hasn't downloaded metadata yet. (don't expect to be in our list)
     }
-    const { dbl: { parent } } = rawBundle;
-    if (parent) {
+    const { dbl: { parent, id: dblId } } = rawBundle;
+    if (parent && parent.dblId === dblId) {
       return;
     }
     dispatch(updateOrAddBundle(rawBundle));
