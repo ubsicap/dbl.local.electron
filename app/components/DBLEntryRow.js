@@ -125,7 +125,7 @@ const getPropsParent = (state, props) => props.parent;
 const getPropsDblId = (state, props) => props.dblId;
 const makeGetEntryPageUrl = () => createSelector(
   [getDblBaseUrl, getPropsDblId, getPropsRevision, getPropsParent],
-  (dblBaseUrl, dblId, revision, parent) => (`${dblBaseUrl}/entry?id=${dblId}&revision=${getRevisionOrParentRevision(revision, parent)}`)
+  (dblBaseUrl, dblId, revision, parent) => (`${dblBaseUrl}/entry?id=${dblId}&revision=${getRevisionOrParentRevision(revision, parent) || 1}`)
 );
 
 function getRevisionOrParentRevision(revision, parent) {

@@ -308,7 +308,7 @@ function formatRevisionDisplayAs(bundle) {
     if (parentRevision) {
       return `> Rev ${parentRevision}`;
     }
-    return 'New';
+    return 'Rev 1 (New)';
   }
   return `Rev ${revision}`;
 }
