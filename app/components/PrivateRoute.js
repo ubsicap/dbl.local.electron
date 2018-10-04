@@ -2,13 +2,14 @@ import React from 'react';
 import { Route, Redirect } from 'react-router-dom';
 
 type Props = {
-    component: React.Node
+    component: React.Node,
+    location: {}
 };
 
 /*
  * From https://github.com/cornflourblue/react-redux-registration-login-example/blob/master/src/_components/PrivateRoute.jsx
  */
-export const PrivateRoute = ({ component: Component, ...rest }) => (
+export const PrivateRoute = ({ component: Component, ...rest }: Props) => (
   <Route
     {...rest}
     render={props => (
