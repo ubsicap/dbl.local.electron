@@ -67,7 +67,7 @@ const styles = theme => ({
 
 const cards = [1];
 
-function Album(props: Props) {
+function WorkspacesPage(props: Props) {
   const { classes } = props;
 
   return (
@@ -118,7 +118,7 @@ function Album(props: Props) {
                 <Card className={classes.card}>
                   <CardContent className={classes.cardContent}>
                     <Typography gutterBottom variant="headline" component="h2">
-                      WBT (IPC - LCH)
+                      Primary
                     </Typography>
                     <Typography>
                       This is a media card. You can use this section to describe the content.
@@ -152,4 +152,4 @@ function Album(props: Props) {
   );
 }
 
-export default withStyles(styles)(Album);
+export default withStyles(styles)(WorkspacesPage);
