@@ -9,6 +9,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Tooltip from '@material-ui/core/Tooltip';
 import Bundles from '../components/Bundles';
 import MenuAppBar from '../components/MenuAppBar';
+import { ux } from '../utils/ux';
 import { loadHtmlBaseUrl } from '../actions/dblDotLocalConfig.actions';
 import { createNewBundle } from '../actions/bundle.actions';
 
@@ -27,7 +28,7 @@ function mapStateToProps(state) {
   };
 }
 
-const materialStyles = theme => ({
+const materialStyles = () => ({
   fab: {
     position: 'fixed',
     bottom: '10px',
@@ -89,7 +90,9 @@ class BundlesPage extends PureComponent<Props> {
           onClose={this.handleCloseMenu}
         >
           {newMediaTypes.map(medium => (
-            <MenuItem key={medium} onClick={this.handleCreateNew(medium)}>{medium}</MenuItem>
+            <MenuItem key={medium} onClick={this.handleCreateNew(medium)}>
+              { ux.getMediumIcon(medium) }{medium}
+            </MenuItem>
           ))}
         </Menu>
       </div>

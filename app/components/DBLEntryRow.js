@@ -6,17 +6,11 @@ import classNames from 'classnames';
 import { compose } from 'recompose';
 import { createSelector } from 'reselect';
 import LinearProgress from 'material-ui/LinearProgress';
+import { Menu, MenuItem, Toolbar, Tooltip } from '@material-ui/core';
 import Badge from '@material-ui/core/Badge';
 import VerifiedUserOutlined from '@material-ui/icons/VerifiedUserOutlined';
-import Book from '@material-ui/icons/Book';
 import AddCircle from '@material-ui/icons/AddCircle';
-import Headset from '@material-ui/icons/Headset';
-import Videocam from '@material-ui/icons/Videocam';
-import Print from '@material-ui/icons/Print';
-import Grain from '@material-ui/icons/Grain';
 import Button from '@material-ui/core/Button';
-import Toolbar from '@material-ui/core/Toolbar';
-import Tooltip from '@material-ui/core/Tooltip';
 import FileDownload from 'material-ui/svg-icons/file/file-download';
 import Folder from 'material-ui/svg-icons/file/folder';
 import Copyright from '@material-ui/icons/Copyright';
@@ -33,6 +27,7 @@ import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
 import editMetadataService from '../services/editMetadata.service';
 import { openResourceManager } from '../actions/bundleManageResources.actions';
 import { utilities } from '../utils/utilities';
+import { ux } from '../utils/ux';
 import DeleteOrCleanButton from './DeleteOrCleanButton';
 import ConfirmButton from './ConfirmButton';
 
@@ -64,6 +59,7 @@ type Props = {
   entryPageUrl: string,
   formsErrorStatus: {},
   formsErrors: {},
+  newMediaTypes: [],
   toggleSelectEntry: () => {},
   downloadResources: () => {},
   openResourceManager: () => {},
@@ -140,12 +136,13 @@ const makeMapStateToProps = () => {
   const getIsDownloading = makeGetIsDownloading();
   const getFormsErrors = editMetadataService.makeGetFormsErrors();
   const mapStateToProps = (state, props) => {
-    const { bundlesSaveTo } = state;
+    const { bundlesSaveTo, bundles: { newMediaTypes = [] } } = state;
     return {
       isRequestingRevision: getIsRequestingRevision(state, props),
       shouldShowRow: shouldShowRow(state, props),
       bundleMatches: getMatches(state, props),
       bundlesSaveTo,
+      newMediaTypes,
       entryPageUrl: getEntryPageUrl(state, props),
       isDownloading: getIsDownloading(state, props),
       formsErrors: getFormsErrors(state, props)
@@ -156,6 +153,9 @@ const makeMapStateToProps = () => {
 
 class DBLEntryRow extends PureComponent<Props> {
   props: Props;
+  state = {
+    anchorEl: null
+  }
 
   componentDidMount() {
     const { resourceCountManifest, resourceCountStored, status, formsErrorStatus } = this.props;
@@ -265,11 +265,19 @@ class DBLEntryRow extends PureComponent<Props> {
     event.stopPropagation();
   }
 
-  onClickForkNewEntry = (event) => {
-    const { bundleId } = this.props;
-    // this.props.createDraftRevision(bundleId);
+  onClickForkNewEntry = event => {
+    this.setState({ anchorEl: event.currentTarget });
     event.stopPropagation();
-  }
+  };
+
+  handleCloseMediaTypeMenu = () => {
+    this.setState({ anchorEl: null });
+  };
+
+  handleClickMediaType = (medium) => () => {
+    this.handleCloseMediaTypeMenu();
+    // this.props.createNewBundle(medium);
+  };
 
   onClickUploadBundle = (event) => {
     const { bundleId } = this.props;
@@ -346,17 +354,13 @@ class DBLEntryRow extends PureComponent<Props> {
 
   render() {
     const {
-      bundleId,
-      dblId,
-      revision,
-      medium,
-      status,
-      displayAs,
-      progress,
-      isSelected,
-      shouldShowRow,
-      classes
+      bundleId, dblId, revision, medium, status,
+      displayAs, progress,
+      isSelected, shouldShowRow,
+      classes,
+      newMediaTypes
     } = this.props;
+    const { anchorEl } = this.state;
     if (!shouldShowRow) {
       return (null);
     }
@@ -374,12 +378,7 @@ class DBLEntryRow extends PureComponent<Props> {
         <div className={styles.bundleRowTop}>
           <div className={styles.bundleRowTopLeftSideIcon}>
             <Tooltip title={medium}>
-              { (medium === 'text' && <Book />)
-              || (medium === 'audio' && <Headset />)
-              || (medium === 'video' && <Videocam />)
-              || (medium === 'print' && <Print />)
-              || (medium === 'braille' && <Grain />)
-              || medium }
+              { ux.getMediumIcon(medium) }
             </Tooltip>
           </div>
           <div className={styles.bundleRowTopLeftSideLanguageAndCountry}>
@@ -477,21 +476,42 @@ class DBLEntryRow extends PureComponent<Props> {
               {`Draft > Rev ${revision}`}
             </Button>}
             {this.shouldShowDraftRevision() &&
-            <Button
-              color="primary"
-              disabled={this.shouldDisableDraftRevisionOrEdit()}
-              variant="outlined"
-              size="small"
-              className={classNames(classes.button, classes.draftNew)}
-              onKeyPress={this.onClickForkNewEntry}
-              onClick={this.onClickForkNewEntry}
-            >
-              <AddCircle
-                key="btnForkNewEntry"
-                className={classNames(classes.leftIcon, classes.iconSmall)}
-              />
-              Create New
-            </Button>}
+            <div>
+              <Button
+                color="primary"
+                variant="outlined"
+                aria-owns={anchorEl ? 'new-media-type-menu' : null}
+                aria-haspopup="true"
+                aria-label="create new media type from this bundle"
+                disabled={this.shouldDisableDraftRevisionOrEdit()}
+                size="small"
+                className={classNames(classes.button, classes.draftNew)}
+                onKeyPress={this.onClickForkNewEntry}
+                onClick={this.onClickForkNewEntry}
+              >
+                <AddCircle
+                  key="btnForkNewEntry"
+                  className={classNames(classes.leftIcon, classes.iconSmall)}
+                />
+                Create New
+              </Button>
+              <Menu
+                id="new-media-type-menu"
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={this.handleCloseMediaTypeMenu}
+              >
+                {newMediaTypes.map(mediumOption => (
+                  <MenuItem
+                    key={mediumOption}
+                    onClick={this.handleClickMediaType(mediumOption)}
+                  >
+                    {ux.getMediumIcon(mediumOption)}
+                    {mediumOption}
+                  </MenuItem>
+                ))}
+              </Menu>
+            </div>}
             <Button variant="flat" size="small" className={classes.button}
               disabled={this.shouldDisableSaveTo()}
               onKeyPress={this.startSaveBundleTo}
