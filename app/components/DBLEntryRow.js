@@ -9,6 +9,7 @@ import LinearProgress from 'material-ui/LinearProgress';
 import Badge from '@material-ui/core/Badge';
 import VerifiedUserOutlined from '@material-ui/icons/VerifiedUserOutlined';
 import Book from '@material-ui/icons/Book';
+import AddCircle from '@material-ui/icons/AddCircle';
 import Headset from '@material-ui/icons/Headset';
 import Videocam from '@material-ui/icons/Videocam';
 import Print from '@material-ui/icons/Print';
@@ -124,8 +125,12 @@ const getPropsParent = (state, props) => props.parent;
 const getPropsDblId = (state, props) => props.dblId;
 const makeGetEntryPageUrl = () => createSelector(
   [getDblBaseUrl, getPropsDblId, getPropsRevision, getPropsParent],
-  (dblBaseUrl, dblId, revision, parent) => (`${dblBaseUrl}/entry?id=${dblId}&revision=${parseInt(revision, 10) || (parent ? parent.revision : '0')}`)
+  (dblBaseUrl, dblId, revision, parent) => (`${dblBaseUrl}/entry?id=${dblId}&revision=${getRevisionOrParentRevision(revision, parent)}`)
 );
+
+function getRevisionOrParentRevision(revision, parent) {
+  return parseInt(revision, 10) || (parent ? parent.revision : 0);
+}
 
 const makeMapStateToProps = () => {
   const shouldShowRow = makeShouldShowRow();
@@ -260,6 +265,12 @@ class DBLEntryRow extends PureComponent<Props> {
     event.stopPropagation();
   }
 
+  onClickForkNewEntry = (event) => {
+    const { bundleId } = this.props;
+    // this.props.createDraftRevision(bundleId);
+    event.stopPropagation();
+  }
+
   onClickUploadBundle = (event) => {
     const { bundleId } = this.props;
     this.props.uploadBundle(bundleId);
@@ -320,13 +331,25 @@ class DBLEntryRow extends PureComponent<Props> {
     return (null);
   };
 
+  pickBackgroundColor = () => {
+    const {
+      classes, status, revision, parent
+    } = this.props;
+    const effectiveRevision = getRevisionOrParentRevision(revision, parent);
+    switch (status) {
+      case 'DRAFT': return effectiveRevision ? classes.draftRevision : classes.draftNew;
+      case 'NOT_STARTED': return classes.noneStoredMode;
+      default:
+        return classes.storedMode;
+    }
+  }
+
   render() {
     const {
       bundleId,
       dblId,
       revision,
       medium,
-      task,
       status,
       displayAs,
       progress,
@@ -340,7 +363,7 @@ class DBLEntryRow extends PureComponent<Props> {
     const resourceManagerMode = status === 'DRAFT' ? 'addFiles' : 'download';
     return (
       <div
-        className={classNames(styles.bundleRow, pickBackgroundColor(classes, task, status))}
+        className={classNames(styles.bundleRow, this.pickBackgroundColor())}
         key={bundleId}
         onKeyPress={this.onKeyPress}
         onClick={this.onClickBundleRow}
@@ -441,8 +464,9 @@ class DBLEntryRow extends PureComponent<Props> {
             <Button
               color="secondary"
               disabled={this.shouldDisableDraftRevisionOrEdit()}
-              variant="outlined" size="small"
-              className={classNames(classes.button, classes.draftMode)}
+              variant="outlined"
+              size="small"
+              className={classNames(classes.button, classes.draftRevision)}
               onKeyPress={this.onClickDraftRevision}
               onClick={this.onClickDraftRevision}
             >
@@ -451,6 +475,22 @@ class DBLEntryRow extends PureComponent<Props> {
                 className={classNames(classes.leftIcon, classes.iconSmall)}
               />
               {`Draft > Rev ${revision}`}
+            </Button>}
+            {this.shouldShowDraftRevision() &&
+            <Button
+              color="primary"
+              disabled={this.shouldDisableDraftRevisionOrEdit()}
+              variant="outlined"
+              size="small"
+              className={classNames(classes.button, classes.draftNew)}
+              onKeyPress={this.onClickForkNewEntry}
+              onClick={this.onClickForkNewEntry}
+            >
+              <AddCircle
+                key="btnForkNewEntry"
+                className={classNames(classes.leftIcon, classes.iconSmall)}
+              />
+              Create New
             </Button>}
             <Button variant="flat" size="small" className={classes.button}
               disabled={this.shouldDisableSaveTo()}
@@ -501,8 +541,8 @@ const materialStyles = theme => ({
   iconSmall: {
     fontSize: 20,
   },
-  draftMode: { backgroundColor: lighten(theme.palette.secondary.light, 0.85) },
-  draftButtonText: { color: 'black' },
+  draftRevision: { backgroundColor: lighten(theme.palette.secondary.light, 0.85) },
+  draftNew: { backgroundColor: lighten(theme.palette.primary.main, 0.60) },
   storedMode: { backgroundColor: 'white' },
   noneStoredMode: { backgroundColor: '#EDEDED' },
 });
@@ -518,15 +558,6 @@ export default compose(
 
 function getBundleExportInfo(bundleId, savedToHistory) {
   return savedToHistory ? savedToHistory[bundleId] : null;
-}
-
-function pickBackgroundColor(classes, task, status) {
-  switch (status) {
-    case 'DRAFT': return classes.draftMode;
-    case 'NOT_STARTED': return classes.noneStoredMode;
-    default:
-      return classes.storedMode;
-  }
 }
 
 function stopPropagation(event) {
