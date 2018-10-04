@@ -8,12 +8,14 @@ import EditMetadataDialog from './components/EditEntryMetadataDialog';
 import ManageBundleManifestResourcesDialog from './components/ManageBundleManifestResourcesDialog';
 import { PrivateRoute } from './components/PrivateRoute';
 import { navigationConstants } from './constants/navigation.constants';
+import WorkspacesPage from './containers/WorkspacesPage';
 
 export default () => (
   <App>
     <Switch>
+      <Route exact path={navigationConstants.NAVIGATION_WORKSPACES} component={WorkspacesPage} />
       <Route path={navigationConstants.NAVIGATION_LOGIN} component={LoginForm} />
-      <Redirect exact from="/" to={navigationConstants.NAVIGATION_BUNDLES} />
+      <Redirect exact from="/" to={navigationConstants.NAVIGATION_WORKSPACES} />
       <PrivateRoute exact path={navigationConstants.NAVIGATION_BUNDLES} component={BundlesPage} />
       <PrivateRoute exact path={navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA} component={EditMetadataDialog} />
       <PrivateRoute exact path={navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_SECTION} component={EditMetadataDialog} />
