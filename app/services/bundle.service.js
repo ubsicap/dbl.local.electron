@@ -37,6 +37,7 @@ export const bundleService = {
   bundleIsInCreateMode,
   unlockCreateMode,
   postResource,
+  forkBundle,
   updateManifestResource,
   getPublicationWizards,
   testPublicationWizards,
@@ -410,10 +411,20 @@ function deleteForm(bundleId, formKey) {
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }
 
-function startCreateContent(bundleId, label) {
+function forkBundle(bundleId, medium) {
+  const mediumElement = medium ? `<medium>${medium}</medium>` : '';
+  return bundleAddTasks(bundleId, `<forkBundle>${mediumElement}</forkBundle>`);
+}
+
+function createLabelElement(label, bundleId) {
   const uuid1 = uuidv1();
-  const creator = label ? 'NoOpCreator' : 'AsyncCreator';
   const labelElement = label ? `<label>${label}-${bundleId}-${uuid1}</label>` : '';
+  return labelElement;
+}
+
+function startCreateContent(bundleId, label) {
+  const creator = label ? 'NoOpCreator' : 'AsyncCreator';
+  const labelElement = createLabelElement(label, bundleId);
   const tasksCopyResources = label ?
     '<tasks><copyResources><fromBundleLabel>_parent</fromBundleLabel></copyResources></tasks>' : '';
   return bundleAddTasks(

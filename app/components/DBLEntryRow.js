@@ -21,7 +21,7 @@ import Edit from '@material-ui/icons/Edit';
 import CloudUpload from '@material-ui/icons/CloudUpload';
 import styles from './DBLEntryRow.css';
 import ControlledHighlighter from './ControlledHighlighter';
-import { toggleSelectEntry, requestSaveBundleTo,
+import { toggleSelectEntry, requestSaveBundleTo, forkIntoNewBundle,
   downloadResources, uploadBundle, updateBundle, createDraftRevision } from '../actions/bundle.actions';
 import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
 import editMetadataService from '../services/editMetadata.service';
@@ -64,6 +64,7 @@ type Props = {
   downloadResources: () => {},
   openResourceManager: () => {},
   requestSaveBundleTo: () => {},
+  forkIntoNewBundle: () => {},
   openEditMetadata: () => {},
   uploadBundle: () => {},
   updateBundle: () => {},
@@ -75,6 +76,7 @@ const mapDispatchToProps = {
   downloadResources,
   openResourceManager,
   requestSaveBundleTo,
+  forkIntoNewBundle,
   openEditMetadata,
   uploadBundle,
   updateBundle,
@@ -121,11 +123,11 @@ const getPropsParent = (state, props) => props.parent;
 const getPropsDblId = (state, props) => props.dblId;
 const makeGetEntryPageUrl = () => createSelector(
   [getDblBaseUrl, getPropsDblId, getPropsRevision, getPropsParent],
-  (dblBaseUrl, dblId, revision, parent) => (`${dblBaseUrl}/entry?id=${dblId}&revision=${getRevisionOrParentRevision(revision, parent) || 1}`)
+  (dblBaseUrl, dblId, revision, parent) => (`${dblBaseUrl}/entry?id=${dblId}&revision=${getRevisionOrParentRevision(dblId, revision, parent) || 1}`)
 );
 
-function getRevisionOrParentRevision(revision, parent) {
-  return parseInt(revision, 10) || (parent ? parent.revision : 0);
+function getRevisionOrParentRevision(dblId, revision, parent) {
+  return parseInt(revision, 10) || (parent && parent.dblId === dblId ? parent.revision : 0);
 }
 
 const makeMapStateToProps = () => {
@@ -158,7 +160,9 @@ class DBLEntryRow extends PureComponent<Props> {
   }
 
   componentDidMount() {
-    const { resourceCountManifest, resourceCountStored, status, formsErrorStatus } = this.props;
+    const {
+      resourceCountManifest, resourceCountStored, status, formsErrorStatus
+    } = this.props;
     if ((resourceCountManifest === null && resourceCountStored) ||
       (status === 'DRAFT' && Object.keys(formsErrorStatus).length === 0)) {
       this.props.updateBundle(this.props.bundleId);
@@ -276,9 +280,10 @@ class DBLEntryRow extends PureComponent<Props> {
   };
 
   handleClickMediaType = (medium) => (event) => {
-    this.handleCloseMediaTypeMenu();
+    const { bundleId } = this.props;
+    this.props.forkIntoNewBundle(bundleId, medium);
+    this.handleCloseMediaTypeMenu(event);
     event.stopPropagation();
-    // this.props.createNewBundle(medium);
   };
 
   onClickUploadBundle = (event) => {
@@ -343,9 +348,9 @@ class DBLEntryRow extends PureComponent<Props> {
 
   pickBackgroundColor = () => {
     const {
-      classes, status, revision, parent
+      classes, status, revision, parent, dblId
     } = this.props;
-    const effectiveRevision = getRevisionOrParentRevision(revision, parent);
+    const effectiveRevision = getRevisionOrParentRevision(dblId, revision, parent);
     switch (status) {
       case 'DRAFT': return effectiveRevision ? classes.draftRevision : classes.draftNew;
       case 'NOT_STARTED': return classes.noneStoredMode;

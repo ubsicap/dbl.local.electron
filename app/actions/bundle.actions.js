@@ -11,6 +11,7 @@ import { dblDotLocalService } from '../services/dbl_dot_local.service';
 export const bundleActions = {
   fetchAll,
   createNewBundle,
+  forkIntoNewBundle,
   createDraftRevision,
   updateBundle,
   removeBundle,
@@ -138,6 +139,28 @@ export function fetchAll() {
     return { type: bundleConstants.FETCH_FAILURE, error };
   }
 }
+
+export function forkIntoNewBundle(_bundleId, _medium) {
+  return async dispatch => {
+    try {
+      dispatch(request(_bundleId, _medium));
+      await bundleService.forkBundle(_bundleId, _medium);
+      dispatch(success(_bundleId, _medium));
+    } catch (error) {
+      dispatch(failure(error));
+    }
+  };
+  function request(bundleId, medium) {
+    return { type: bundleConstants.CREATE_REQUEST, medium, bundleId };
+  }
+  function success(bundleId, medium) {
+    return { type: bundleConstants.CREATE_SUCCESS, medium, bundleId };
+  }
+  function failure(error) {
+    return { type: bundleConstants.CREATE_FAILURE, error };
+  }
+}
+
 
 export function createNewBundle(_medium) {
   return async dispatch => {
