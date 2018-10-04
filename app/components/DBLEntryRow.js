@@ -396,12 +396,16 @@ class DBLEntryRow extends PureComponent<Props> {
           <div className={styles.bundleRowTopLeftSideName}>
             <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.name)} />
           </div>
-          <div className={styles.bundleRowTopLeftSideName}>
-            <Tooltip title="Rightsholders">
-              <div>
-                <Copyright className={classNames(classes.leftIcon, classes.iconSmall)} />
-                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.rightsHolders)} />
-              </div>
+          <div className={styles.bundleRowTopMiddle}>
+            <Tooltip title={this.props.entryPageUrl} placement="right">
+              <Button variant="flat" size="small" className={classes.button}
+                disabled={dblId === undefined}
+                onKeyPress={this.onOpenDBLEntryLink}
+                onClick={this.onOpenDBLEntryLink}
+              >
+                <Link className={classNames(classes.leftIcon, classes.iconSmall)} />
+                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
+              </Button>
             </Tooltip>
           </div>
           <div className={styles.bundleRowTopMiddle}>
@@ -414,16 +418,12 @@ class DBLEntryRow extends PureComponent<Props> {
               </div>
             </Tooltip>
           </div>
-          <div className={styles.bundleRowTopMiddle}>
-            <Tooltip title={this.props.entryPageUrl} placement="right">
-              <Button variant="flat" size="small" className={classes.button}
-                disabled={dblId === undefined}
-                onKeyPress={this.onOpenDBLEntryLink}
-                onClick={this.onOpenDBLEntryLink}
-              >
-                <Link className={classNames(classes.leftIcon, classes.iconSmall)} />
-                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
-              </Button>
+          <div className={styles.bundleRowTopLeftSideName}>
+            <Tooltip title="Rightsholders">
+              <div>
+                <Copyright className={classNames(classes.leftIcon, classes.iconSmall)} />
+                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.rightsHolders)} />
+              </div>
             </Tooltip>
           </div>
           <div className={styles.bundleRowTopRightSide}>
