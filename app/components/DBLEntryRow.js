@@ -9,6 +9,7 @@ import LinearProgress from 'material-ui/LinearProgress';
 import { Menu, MenuItem, Toolbar, Tooltip } from '@material-ui/core';
 import Badge from '@material-ui/core/Badge';
 import VerifiedUserOutlined from '@material-ui/icons/VerifiedUserOutlined';
+import VerifiedUser from '@material-ui/icons/VerifiedUser';
 import AddCircle from '@material-ui/icons/AddCircle';
 import Button from '@material-ui/core/Button';
 import FileDownload from 'material-ui/svg-icons/file/file-download';
@@ -361,7 +362,7 @@ class DBLEntryRow extends PureComponent<Props> {
 
   render() {
     const {
-      bundleId, dblId, revision, medium, status,
+      bundleId, dblId, revision, medium, status, license,
       displayAs, progress,
       isSelected, shouldShowRow,
       classes,
@@ -405,7 +406,9 @@ class DBLEntryRow extends PureComponent<Props> {
           <div className={styles.bundleRowTopMiddle}>
             <Tooltip title="license">
               <div>
-                <VerifiedUserOutlined className={classNames(classes.leftIcon, classes.iconSmall)} />
+                {license === 'owned' ?
+                  <VerifiedUser className={classNames(classes.leftIcon, classes.iconSmall)} />
+                : <VerifiedUserOutlined className={classNames(classes.leftIcon, classes.iconSmall)} />}
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.license)} />
               </div>
             </Tooltip>
