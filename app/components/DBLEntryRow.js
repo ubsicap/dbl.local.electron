@@ -270,8 +270,9 @@ class DBLEntryRow extends PureComponent<Props> {
     event.stopPropagation();
   };
 
-  handleCloseMediaTypeMenu = () => {
+  handleCloseMediaTypeMenu = (event) => {
     this.setState({ anchorEl: null });
+    event.stopPropagation();
   };
 
   handleClickMediaType = (medium) => (event) => {
