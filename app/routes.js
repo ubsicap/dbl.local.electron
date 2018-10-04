@@ -19,8 +19,6 @@ export default () => (
       <PrivateRoute exact path={navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_SECTION} component={EditMetadataDialog} />
       <PrivateRoute exact path={navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_FORMKEY} component={EditMetadataDialog} />
       <PrivateRoute exact path={navigationConstants.NAVIGATION_BUNDLE_MANAGE_RESOURCES} component={ManageBundleManifestResourcesDialog} />
-      <Route exact path={navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO} component={EditMetadataDialog} />
-      <Route exact path={navigationConstants.NAVIGATION_BUNDLES_DEMO} component={BundlesPage} />
     </Switch>
   </App>
 );

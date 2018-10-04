@@ -160,13 +160,6 @@ export default class MenuBuilder {
           click: () => dblDotLocalService.exportConfigXml(this.mainWindow)
         },
         {
-          label: 'Bundles (Demo)',
-          accelerator: 'Ctrl+B',
-          click: () => {
-            this.navigate(navigationConstants.NAVIGATION_BUNDLES_DEMO);
-          }
-        },
-        {
           label: 'E&xit',
           accelerator: 'Ctrl+W',
           click: () => {
