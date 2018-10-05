@@ -85,34 +85,32 @@ function handlResponseAsReadable(response) {
   return response;
 }
 
-async function ensureDblDotLocal() {
+async function ensureDblDotLocal(configXmlFile) {
   try {
     return await dblDotLocalService.health();
   } catch (error) {
     if (error.message === 'Failed to fetch') {
-      const configXmlFile = dblDotLocalService.getDblDotLocalConfigFilePath();
       const doesConfigExists = await fs.exists(configXmlFile);
       if (!doesConfigExists) {
-        const browserWindow = getCurrentWindow();
-        importConfigXml(browserWindow);
-        const doesConfigExistsAgain = await fs.exists(configXmlFile);
-        if (!doesConfigExistsAgain) {
-          browserWindow.close();
-          return;
-        }
+        importConfigXml();
       }
-      startDblDotLocalSubProcess();
+      const doesConfigExistsAgain = await fs.exists(configXmlFile);
+      if (!doesConfigExistsAgain) {
+        // browserWindow.close();
+        return;
+      }
+      startDblDotLocalSubProcess(configXmlFile);
     }
   }
 }
 
-function startDblDotLocalSubProcess() {
+function startDblDotLocalSubProcess(configXmlFile) {
   // try to start local dbl_dot_local.exe process if it exists.
   const dblDotLocalExecPath = getDblDotLocalExecPath();
   console.log(dblDotLocalExecPath);
   if (fs.exists(dblDotLocalExecPath)) {
     const cwd = getDblDotLocalExecCwd();
-    const subProcess = childProcess.spawn(dblDotLocalExecPath, {
+    const subProcess = childProcess.spawn(dblDotLocalExecPath, [configXmlFile], {
       cwd,
       stdio: [ 'ignore', 'ignore', 'pipe' ],
       detached: false
@@ -179,7 +177,8 @@ function getConfigXmlDefaultFolder() {
   return defaultPath;
 }
 
-function importConfigXml(browserWindow) {
+function importConfigXml() {
+  const browserWindow = getCurrentWindow();
   const defaultPath = getConfigXmlDefaultFolder();
   const dialog = getDialog();
   const filePaths = dialog.showOpenDialog(

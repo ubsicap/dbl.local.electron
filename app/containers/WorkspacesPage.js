@@ -126,6 +126,22 @@ class WorkspacesPage extends PureComponent<Props> {
     this.updateWorkspaceCards({ name, fullPath, dateModified, stats });
   };
 
+  handleEditName = (card) => (event) => {
+    // launch edit dialog
+  }
+
+  handleClickOkEditName = (card) => (newName) => {
+
+  }
+
+  handleImportConfigXml = (card) => (event) => {
+
+  }
+
+  handleLogin = (card) => (event) => {
+    
+  }
+
   render() {
     const { classes } = this.props;
     const { cards } = this.state;
@@ -184,13 +200,13 @@ class WorkspacesPage extends PureComponent<Props> {
                       </Typography>
                     </CardContent>
                     <CardActions>
-                      <Button size="small" color="primary">
+                      <Button size="small" color="primary" onClick={this.handleEditName(card)}>
                         Edit Name
                       </Button>
-                      <Button size="small" color="primary">
+                      <Button size="small" color="primary" onClick={this.handleImportConfigXml(card)}>
                         Import config.xml
                       </Button>
-                      <Button variant="contained" size="small" color="primary">
+                      <Button variant="contained" size="small" color="primary" onClick={this.handleLogin(card)}>
                         Login
                       </Button>
                     </CardActions>

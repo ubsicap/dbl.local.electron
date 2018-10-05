@@ -150,14 +150,9 @@ export default class MenuBuilder {
           }
         },
         {
-          label: '&Import config.xml',
-          accelerator: 'Ctrl+I',
-          click: () => dblDotLocalService.importConfigXml(this.mainWindow)
-        },
-        {
-          label: '&Export config.xml',
-          accelerator: 'Ctrl+E',
-          click: () => dblDotLocalService.exportConfigXml(this.mainWindow)
+          label: 'Switch Wor&kspace',
+          accelerator: 'Ctrl+K',
+          click: this.navigate(navigationConstants.NAVIGATION_WORKSPACES)
         },
         {
           label: 'E&xit',

@@ -18,7 +18,6 @@ userService.logout().catch((error) => {
 }).then(() => renderApp()).catch();
 
 async function renderApp() {
-  await dblDotLocalService.ensureDblDotLocal();
   render(
     <AppContainer>
       <Root store={store} history={history} />
