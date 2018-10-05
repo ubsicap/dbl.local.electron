@@ -1,4 +1,7 @@
-import React from 'react';
+import React, { PureComponent } from 'react';
+import fs from 'fs-extra';
+import path from 'path';
+import sort from 'fast-sort';
 import classNames from 'classnames';
 import AppBar from '@material-ui/core/AppBar';
 import Button from '@material-ui/core/Button';
@@ -12,6 +15,8 @@ import Grid from '@material-ui/core/Grid';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
+
+const { app } = require('electron').remote;
 
 type Props = {
   classes: {}
@@ -65,91 +70,116 @@ const styles = theme => ({
   },
 });
 
-const cards = [1];
+class WorkspacesPage extends PureComponent<Props> {
+  props: Props;
+  state = { cards: [] }
 
-function WorkspacesPage(props: Props) {
-  const { classes } = props;
+  async componentDidMount() {
+    // read directories
+    const workspacesDir = path.join(app.getPath('userData'), 'workspaces');
+    await fs.ensureDir(workspacesDir);
+    const files = await fs.readdir(workspacesDir);
+    files.map(file => path.join(workspacesDir, file)).forEach(fullPath => {
+      const stats = fs.lstatSync(fullPath);
+      if (!stats.isDirectory()) {
+        return;
+      }
+      const name = path.basename(fullPath);
+      const dateModified = stats.mtime;
+      const cards = [...this.state.cards, { name, fullPath, stats, dateModified }];
+      const orderByConfig = [{ desc: 'dateModified' }];
+      const sorted = sort(cards).by(orderByConfig);
+      this.setState({ cards: sorted });
+    });
+  }
 
-  return (
-    <React.Fragment>
-      <CssBaseline />
-      <AppBar className={classes.appBar}>
-        <Toolbar>
-          <ImportExport className={classes.icon} />
-          <Typography variant="title" color="inherit" noWrap>
-            nathanael
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      <main>
-        {/* Hero unit */}
-        <div className={classes.heroUnit}>
-          <div className={classes.heroContent}>
-            <Typography variant="display3" align="center" color="textPrimary" gutterBottom>
-              Workspaces
+  render() {
+    const { classes } = this.props;
+    const { cards } = this.state;
+    return (
+      <React.Fragment>
+        <CssBaseline />
+        <AppBar className={classes.appBar}>
+          <Toolbar>
+            <ImportExport className={classes.icon} />
+            <Typography variant="title" color="inherit" noWrap>
+              nathanael
             </Typography>
-            <Typography variant="title" align="center" color="textSecondary" paragraph>
-              A workspace provides a way to associate DBL organization access tokens with their own list of DBL entries.
-              Users should create a workspace for each organization for which they have DBL roles.
-            </Typography>
-            <div className={classes.heroButtons}>
-              <Grid container spacing={16} justify="center">
-                <Grid item>
-                  <Button variant="contained" color="primary">
-                    <AddCircle className={classes.icon} />
-                    Create A Workspace
-                  </Button>
+          </Toolbar>
+        </AppBar>
+        <main>
+          {/* Hero unit */}
+          <div className={classes.heroUnit}>
+            <div className={classes.heroContent}>
+              <Typography variant="display3" align="center" color="textPrimary" gutterBottom>
+                Workspaces
+              </Typography>
+              <Typography variant="title" align="center" color="textSecondary" paragraph>
+                A workspace provides a way to associate DBL organization access tokens with their own list of DBL entries.
+                Users should create a workspace for each organization for which they have DBL roles.
+              </Typography>
+              <div className={classes.heroButtons}>
+                <Grid container spacing={16} justify="center">
+                  <Grid item>
+                    <Button variant="contained" color="primary">
+                      <AddCircle className={classes.icon} />
+                      Create A Workspace
+                    </Button>
+                  </Grid>
+                  <Grid item>
+                    <Button variant="outlined" color="primary">
+                      <Refresh className={classes.icon} />
+                      Refresh All
+                    </Button>
+                  </Grid>
                 </Grid>
-                <Grid item>
-                  <Button variant="outlined" color="primary">
-                    <Refresh className={classes.icon} />
-                    Refresh All
-                  </Button>
-                </Grid>
-              </Grid>
+              </div>
             </div>
           </div>
-        </div>
-        <div className={classNames(classes.layout, classes.cardGrid)}>
-          {/* End hero unit */}
-          <Grid container spacing={40}>
-            {cards.map(card => (
-              <Grid item key={card} sm={12} md={12} lg={12}>
-                <Card className={classes.card}>
-                  <CardContent className={classes.cardContent}>
-                    <Typography gutterBottom variant="headline" component="h2">
-                      Primary
-                    </Typography>
-                    <Typography>
-                      This is a media card. You can use this section to describe the content.
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button size="small" color="primary">
-                      Edit
-                    </Button>
-                    <Button size="small" color="primary">
-                      Login
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </div>
-      </main>
-      {/* Footer */}
-      <footer className={classes.footer}>
-        <Typography variant="title" align="center" gutterBottom>
-          Summary
-        </Typography>
-        <Typography variant="subheading" align="center" color="textSecondary" component="p">
-          This nathanael has {cards.length} workspace(s)
-        </Typography>
-      </footer>
-      {/* End footer */}
-    </React.Fragment>
-  );
+          <div className={classNames(classes.layout, classes.cardGrid)}>
+            {/* End hero unit */}
+            <Grid container spacing={40}>
+              {cards.map(card => (
+                <Grid item key={card.name} sm={12} md={12} lg={12}>
+                  <Card className={classes.card}>
+                    <CardContent className={classes.cardContent}>
+                      <Typography gutterBottom variant="headline" component="h2">
+                        {card.name}
+                      </Typography>
+                      <Typography>
+                        {card.dateModified.toLocaleString()}
+                      </Typography>
+                    </CardContent>
+                    <CardActions>
+                      <Button size="small" color="primary">
+                        Edit Name
+                      </Button>
+                      <Button size="small" color="primary">
+                        Import config.xml
+                      </Button>
+                      <Button size="small" color="primary">
+                        Login
+                      </Button>
+                    </CardActions>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </div>
+        </main>
+        {/* Footer */}
+        <footer className={classes.footer}>
+          <Typography variant="title" align="center" gutterBottom>
+            Summary
+          </Typography>
+          <Typography variant="subheading" align="center" color="textSecondary" component="p">
+            This nathanael has {cards.length} workspace(s)
+          </Typography>
+        </footer>
+        {/* End footer */}
+      </React.Fragment>
+    );
+  }
 }
 
 export default withStyles(styles)(WorkspacesPage);
