@@ -157,7 +157,7 @@ class WorkspacesPage extends PureComponent<Props> {
                       <Button size="small" color="primary">
                         Import config.xml
                       </Button>
-                      <Button size="small" color="primary">
+                      <Button variant="contained" size="small" color="primary">
                         Login
                       </Button>
                     </CardActions>
