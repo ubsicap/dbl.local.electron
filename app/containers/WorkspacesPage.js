@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import fs from 'fs-extra';
 import path from 'path';
 import sort from 'fast-sort';
+import uuidv1 from 'uuid/v1';
 import classNames from 'classnames';
 import AppBar from '@material-ui/core/AppBar';
 import Button from '@material-ui/core/Button';
@@ -70,28 +71,60 @@ const styles = theme => ({
   },
 });
 
+const workspacesDir = path.join(app.getPath('userData'), 'workspaces');
+
+function createWorkspace(fullPath) {
+  const stats = fs.lstatSync(fullPath);
+  if (!stats.isDirectory()) {
+    return null;
+  }
+  const name = path.basename(fullPath);
+  const dateModified = stats.mtime;
+  const workspace = { name, fullPath, stats, dateModified };
+  return workspace;
+}
+
 class WorkspacesPage extends PureComponent<Props> {
   props: Props;
   state = { cards: [] }
 
-  async componentDidMount() {
+  componentDidMount() {
     // read directories
-    const workspacesDir = path.join(app.getPath('userData'), 'workspaces');
+    this.updateAllWorkspaceCards();
+  }
+
+  updateAllWorkspaceCards = async () => {
     await fs.ensureDir(workspacesDir);
     const files = await fs.readdir(workspacesDir);
     files.map(file => path.join(workspacesDir, file)).forEach(fullPath => {
-      const stats = fs.lstatSync(fullPath);
-      if (!stats.isDirectory()) {
+      const nextWorkspace = createWorkspace(fullPath);
+      if (nextWorkspace === null) {
         return;
       }
-      const name = path.basename(fullPath);
-      const dateModified = stats.mtime;
-      const cards = [...this.state.cards, { name, fullPath, stats, dateModified }];
-      const orderByConfig = [{ desc: 'dateModified' }];
-      const sorted = sort(cards).by(orderByConfig);
-      this.setState({ cards: sorted });
+      this.updateWorkspaceCards(nextWorkspace);
     });
   }
+
+  refreshAll = () => {
+    this.setState({ cards: [] }, this.updateAllWorkspaceCards);
+  }
+
+  updateWorkspaceCards = (nextWorkspace) => {
+    const cards = [...this.state.cards, nextWorkspace];
+    const orderByConfig = [{ desc: 'dateModified' }];
+    const sorted = sort(cards).by(orderByConfig);
+    this.setState({ cards: sorted });
+  }
+
+  handleCreateWorkspace = () => {
+    const uuid1 = uuidv1();
+    const name = `My Org ${uuid1.substr(0, 5)}`;
+    const fullPath = path.join(workspacesDir, name);
+    fs.ensureDirSync(fullPath);
+    const stats = fs.lstatSync(fullPath);
+    const dateModified = stats.mtime;
+    this.updateWorkspaceCards({ name, fullPath, dateModified, stats });
+  };
 
   render() {
     const { classes } = this.props;
@@ -121,13 +154,13 @@ class WorkspacesPage extends PureComponent<Props> {
               <div className={classes.heroButtons}>
                 <Grid container spacing={16} justify="center">
                   <Grid item>
-                    <Button variant="contained" color="primary">
+                    <Button variant="contained" color="primary" onClick={this.handleCreateWorkspace}>
                       <AddCircle className={classes.icon} />
                       Create A Workspace
                     </Button>
                   </Grid>
                   <Grid item>
-                    <Button variant="outlined" color="primary">
+                    <Button variant="outlined" color="primary" onClick={this.refreshAll}>
                       <Refresh className={classes.icon} />
                       Refresh All
                     </Button>
