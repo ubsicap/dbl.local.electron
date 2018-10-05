@@ -4,6 +4,8 @@ import childProcess from 'child_process';
 import log from 'electron-log';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 import { authHeader } from '../helpers';
+import { history } from '../store/configureStore';
+import { navigationConstants } from '../constants/navigation.constants';
 
 export const dblDotLocalService = {
   health,
@@ -12,7 +14,6 @@ export const dblDotLocalService = {
   sessionAddTasks,
   createNewBundle,
   ensureDblDotLocal,
-  getDblDotLocalConfigFilePath,
   importConfigXml,
   exportConfigXml
 };
@@ -96,8 +97,8 @@ async function ensureDblDotLocal(configXmlFile) {
       }
       const doesConfigExistsAgain = await fs.exists(configXmlFile);
       if (!doesConfigExistsAgain) {
-        // browserWindow.close();
-        return;
+        history.push(navigationConstants.NAVIGATION_WORKSPACES);
+        throw new Error(`Could not find config.xml after import: ${configXmlFile}`);
       }
       startDblDotLocalSubProcess(configXmlFile);
     }
@@ -162,10 +163,6 @@ function getDialog() {
   return dialog;
 }
 
-function getDblDotLocalConfigFilePath() {
-  return path.join(getDblDotLocalExecCwd(), 'config.xml');
-}
-
 function getDblDotLocalExecPath() {
   return path.join(getDblDotLocalExecCwd(), 'dbl_dot_local.exe');
 }
@@ -177,7 +174,7 @@ function getConfigXmlDefaultFolder() {
   return defaultPath;
 }
 
-function importConfigXml() {
+function importConfigXml(destination) {
   const browserWindow = getCurrentWindow();
   const defaultPath = getConfigXmlDefaultFolder();
   const dialog = getDialog();
@@ -197,7 +194,6 @@ function importConfigXml() {
     return;
   }
   const [newSourceFilePath] = filePaths;
-  const destination = dblDotLocalService.getDblDotLocalConfigFilePath();
   const newConfigFile = fs.readFileSync(newSourceFilePath);
   fs.writeFileSync(destination, newConfigFile);
   dialog.showMessageBox(
@@ -207,7 +203,8 @@ function importConfigXml() {
   browserWindow.close();
 }
 
-function exportConfigXml(browserWindow) {
+function exportConfigXml(sourceFilePath) {
+  const browserWindow = getCurrentWindow();
   const defaultPath = getConfigXmlDefaultFolder();
   const dialog = getDialog();
   const destinationFileName = dialog.showSaveDialog(
@@ -224,7 +221,6 @@ function exportConfigXml(browserWindow) {
   if (!destinationFileName) {
     return;
   }
-  const sourceFilePath = dblDotLocalService.getDblDotLocalConfigFilePath();
   const activeConfigFile = fs.readFileSync(sourceFilePath);
   fs.writeFileSync(destinationFileName, activeConfigFile);
   const { shell } = electron;
