@@ -143,16 +143,9 @@ export default class MenuBuilder {
       {
         label: '&File',
         submenu: [{
-          label: loginLabel,
-          accelerator: 'Ctrl+L',
-          click: () => {
-            this.navigate(navigationConstants.NAVIGATION_LOGIN);
-          }
-        },
-        {
           label: 'Switch Wor&kspace',
           accelerator: 'Ctrl+K',
-          click: this.navigate(navigationConstants.NAVIGATION_WORKSPACES)
+          click: () => (this.navigate(navigationConstants.NAVIGATION_WORKSPACES))
         },
         {
           label: 'E&xit',
