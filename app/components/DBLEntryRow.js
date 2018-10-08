@@ -8,6 +8,7 @@ import { createSelector } from 'reselect';
 import LinearProgress from 'material-ui/LinearProgress';
 import { Menu, MenuItem, Toolbar, Tooltip } from '@material-ui/core';
 import Badge from '@material-ui/core/Badge';
+import VerifiedUserTwoTone from '@material-ui/icons/VerifiedUserTwoTone';
 import VerifiedUserOutlined from '@material-ui/icons/VerifiedUserOutlined';
 import VerifiedUser from '@material-ui/icons/VerifiedUser';
 import AddCircle from '@material-ui/icons/AddCircle';
@@ -361,6 +362,17 @@ class DBLEntryRow extends PureComponent<Props> {
     }
   }
 
+  renderLicenseIcon = (license) => {
+    const { classes } = this.props;
+    if (license === 'owned') {
+      return <VerifiedUser className={classNames(classes.leftIcon, classes.iconSmall)} />;  
+    }
+    if (license === 'open-access') {
+      return <VerifiedUserTwoTone className={classNames(classes.leftIcon, classes.iconSmall)} />;
+    }
+    return <VerifiedUserOutlined className={classNames(classes.leftIcon, classes.iconSmall)} />;
+  }
+
   render() {
     const {
       bundleId, dblId, revision, medium, status, license,
@@ -411,9 +423,7 @@ class DBLEntryRow extends PureComponent<Props> {
           <div className={styles.bundleRowTopMiddle}>
             <Tooltip title="license">
               <div>
-                {license === 'owned' ?
-                  <VerifiedUser className={classNames(classes.leftIcon, classes.iconSmall)} />
-                : <VerifiedUserOutlined className={classNames(classes.leftIcon, classes.iconSmall)} />}
+                {this.renderLicenseIcon(license)}
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.license)} />
               </div>
             </Tooltip>
