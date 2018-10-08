@@ -1,4 +1,6 @@
 import React, { PureComponent } from 'react';
+import { connect } from 'react-redux';
+import { compose } from 'recompose';
 import fs from 'fs-extra';
 import path from 'path';
 import sort from 'fast-sort';
@@ -16,11 +18,17 @@ import Grid from '@material-ui/core/Grid';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
+import { loginToWorkspace } from '../actions/dblDotLocalConfig.actions';
 
 const { app } = require('electron').remote;
 
 type Props = {
-  classes: {}
+  classes: {},
+  loginToWorkspace: () => {}
+};
+
+const mapDispatchToProps = {
+  loginToWorkspace
 };
 
 const styles = theme => ({
@@ -138,8 +146,8 @@ class WorkspacesPage extends PureComponent<Props> {
 
   }
 
-  handleLogin = (card) => (event) => {
-    
+  handleLogin = (workspace) => (event) => {
+    this.props.loginToWorkspace(workspace.fullPath);
   }
 
   render() {
@@ -231,4 +239,10 @@ class WorkspacesPage extends PureComponent<Props> {
   }
 }
 
-export default withStyles(styles)(WorkspacesPage);
+export default compose(
+  withStyles(styles, { name: 'WorkspacesPage' }),
+  connect(
+    null,
+    mapDispatchToProps
+  ),
+)(WorkspacesPage);
