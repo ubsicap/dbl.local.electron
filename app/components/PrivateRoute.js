@@ -1,5 +1,6 @@
 import React from 'react';
 import { Route, Redirect } from 'react-router-dom';
+import navigationConstants from '../constants/navigation.constants';
 
 type Props = {
     component: React.Node,
@@ -15,7 +16,7 @@ export const PrivateRoute = ({ component: Component, ...rest }: Props) => (
     render={props => (
         localStorage.getItem('user')
             ? <Component {...props} />
-            : <Redirect to={{ pathname: '/login', state: { from: props.location } }} />
+            : <Redirect to={{ pathname: navigationConstants.NAVIGATION_WORKSPACES, state: { from: props.location } }} />
     )}
   />
 );

@@ -6,6 +6,7 @@ import path from 'path';
 import sort from 'fast-sort';
 import uuidv1 from 'uuid/v1';
 import classNames from 'classnames';
+import NavigateBefore from '@material-ui/icons/NavigateBefore';
 import AppBar from '@material-ui/core/AppBar';
 import Button from '@material-ui/core/Button';
 import { AddCircle, ImportExport, Refresh } from '@material-ui/icons';
@@ -19,6 +20,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import { loginToWorkspace } from '../actions/dblDotLocalConfig.actions';
+import LoginForm from '../components/LoginForm';
 
 const { app } = require('electron').remote;
 
@@ -73,6 +75,9 @@ const styles = theme => ({
   cardContent: {
     flexGrow: 1,
   },
+  subHeading: {
+    marginLeft: '20px'
+  },
   footer: {
     backgroundColor: theme.palette.background.paper,
     padding: theme.spacing.unit * 6,
@@ -94,7 +99,7 @@ function createWorkspace(fullPath) {
 
 class WorkspacesPage extends PureComponent<Props> {
   props: Props;
-  state = { cards: [] }
+  state = { cards: [], workspaceForLogin: null }
 
   componentDidMount() {
     // read directories
@@ -148,11 +153,95 @@ class WorkspacesPage extends PureComponent<Props> {
 
   handleLogin = (workspace) => (event) => {
     this.props.loginToWorkspace(workspace.fullPath);
+    this.setState({ workspaceForLogin: workspace });
+  }
+
+  handleBackToWorkspaces = () => {
+    this.setState({ workspaceForLogin: null });
+  }
+
+  renderWorkspaceCardsOrLogin = () => {
+    const { classes } = this.props;
+    const { cards, workspaceForLogin } = this.state;
+    if (workspaceForLogin) {
+      return <LoginForm />;
+    }
+    return (
+      <React.Fragment>
+        <main>
+        {/* Hero unit */}
+        <div className={classes.heroUnit}>
+          <div className={classes.heroContent}>
+            <Typography variant="display3" align="center" color="textPrimary" gutterBottom>
+              Workspaces
+            </Typography>
+            <Typography variant="title" align="center" color="textSecondary" paragraph>
+              A workspace provides a way to associate DBL organization access tokens with their own list of DBL entries.
+              Users should create a workspace for each organization for which they have DBL roles.
+            </Typography>
+            <div className={classes.heroButtons}>
+              <Grid container spacing={16} justify="center">
+                <Grid item>
+                  <Button variant="contained" color="primary" onClick={this.handleCreateWorkspace}>
+                    <AddCircle className={classes.icon} />
+                    Create A Workspace
+                  </Button>
+                </Grid>
+                <Grid item>
+                  <Button variant="outlined" color="primary" onClick={this.refreshAll}>
+                    <Refresh className={classes.icon} />
+                    Refresh All
+                  </Button>
+                </Grid>
+              </Grid>
+            </div>
+          </div>
+        </div>
+        <div className={classNames(classes.layout, classes.cardGrid)}>
+          {/* End hero unit */}
+          <Grid container spacing={40}>
+            {cards.map(card => (
+              <Grid item key={card.name} sm={12} md={12} lg={12}>
+                <Card className={classes.card}>
+                  <CardContent className={classes.cardContent}>
+                    <Typography gutterBottom variant="headline" component="h2">
+                      {card.name}
+                    </Typography>
+                    <Typography>
+                      {card.dateModified.toLocaleString()}
+                    </Typography>
+                  </CardContent>
+                  <CardActions>
+                    <Button size="small" color="primary" onClick={this.handleEditName(card)}>
+                      Edit Name
+                    </Button>
+                    <Button size="small" color="primary" onClick={this.handleImportConfigXml(card)}>
+                      Import config.xml
+                    </Button>
+                    <Button variant="contained" size="small" color="primary" onClick={this.handleLogin(card)}>
+                      Login
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </div>
+      </main>
+        <footer className={classes.footer}>
+        <Typography variant="title" align="center" gutterBottom>
+          Summary
+        </Typography>
+        <Typography variant="subheading" align="center" color="textSecondary" component="p">
+          This nathanael has {cards.length} workspace(s)
+        </Typography>
+      </footer>
+      </React.Fragment>);
   }
 
   render() {
     const { classes } = this.props;
-    const { cards } = this.state;
+    const { workspaceForLogin } = this.state;
     return (
       <React.Fragment>
         <CssBaseline />
@@ -162,78 +251,17 @@ class WorkspacesPage extends PureComponent<Props> {
             <Typography variant="title" color="inherit" noWrap>
               nathanael
             </Typography>
+            {workspaceForLogin &&
+            <Button className={classes.subHeading} variant="subheading" color="inherit" onClick={this.handleBackToWorkspaces}>
+              <NavigateBefore />
+            </Button>}
+            {workspaceForLogin &&
+            <Typography variant="subheading" color="inherit" noWrap>
+              {workspaceForLogin.name}
+            </Typography>}
           </Toolbar>
         </AppBar>
-        <main>
-          {/* Hero unit */}
-          <div className={classes.heroUnit}>
-            <div className={classes.heroContent}>
-              <Typography variant="display3" align="center" color="textPrimary" gutterBottom>
-                Workspaces
-              </Typography>
-              <Typography variant="title" align="center" color="textSecondary" paragraph>
-                A workspace provides a way to associate DBL organization access tokens with their own list of DBL entries.
-                Users should create a workspace for each organization for which they have DBL roles.
-              </Typography>
-              <div className={classes.heroButtons}>
-                <Grid container spacing={16} justify="center">
-                  <Grid item>
-                    <Button variant="contained" color="primary" onClick={this.handleCreateWorkspace}>
-                      <AddCircle className={classes.icon} />
-                      Create A Workspace
-                    </Button>
-                  </Grid>
-                  <Grid item>
-                    <Button variant="outlined" color="primary" onClick={this.refreshAll}>
-                      <Refresh className={classes.icon} />
-                      Refresh All
-                    </Button>
-                  </Grid>
-                </Grid>
-              </div>
-            </div>
-          </div>
-          <div className={classNames(classes.layout, classes.cardGrid)}>
-            {/* End hero unit */}
-            <Grid container spacing={40}>
-              {cards.map(card => (
-                <Grid item key={card.name} sm={12} md={12} lg={12}>
-                  <Card className={classes.card}>
-                    <CardContent className={classes.cardContent}>
-                      <Typography gutterBottom variant="headline" component="h2">
-                        {card.name}
-                      </Typography>
-                      <Typography>
-                        {card.dateModified.toLocaleString()}
-                      </Typography>
-                    </CardContent>
-                    <CardActions>
-                      <Button size="small" color="primary" onClick={this.handleEditName(card)}>
-                        Edit Name
-                      </Button>
-                      <Button size="small" color="primary" onClick={this.handleImportConfigXml(card)}>
-                        Import config.xml
-                      </Button>
-                      <Button variant="contained" size="small" color="primary" onClick={this.handleLogin(card)}>
-                        Login
-                      </Button>
-                    </CardActions>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </div>
-        </main>
-        {/* Footer */}
-        <footer className={classes.footer}>
-          <Typography variant="title" align="center" gutterBottom>
-            Summary
-          </Typography>
-          <Typography variant="subheading" align="center" color="textSecondary" component="p">
-            This nathanael has {cards.length} workspace(s)
-          </Typography>
-        </footer>
-        {/* End footer */}
+        {this.renderWorkspaceCardsOrLogin()}
       </React.Fragment>
     );
   }

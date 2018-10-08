@@ -40,7 +40,6 @@ export function loginToWorkspace(workspaceFullPath) {
       const configXmlFile = path.join(workspaceFullPath, 'config.xml');
       await dblDotLocalService.ensureDblDotLocal(configXmlFile);
       dispatch(setWorkspaceFullPath(workspaceFullPath));
-      history.push(navigationConstants.NAVIGATION_LOGIN);
     } catch (error) {
       console.log(error);
     }
