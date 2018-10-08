@@ -4,8 +4,8 @@ import childProcess from 'child_process';
 import log from 'electron-log';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 import { authHeader } from '../helpers';
-import { history } from '../store/configureStore';
-import { navigationConstants } from '../constants/navigation.constants';
+// import { history } from '../store/configureStore';
+// import { navigationConstants } from '../constants/navigation.constants';
 
 export const dblDotLocalService = {
   health,
@@ -97,7 +97,7 @@ async function ensureDblDotLocal(configXmlFile) {
       }
       const doesConfigExistsAgain = await fs.exists(configXmlFile);
       if (!doesConfigExistsAgain) {
-        history.push(navigationConstants.NAVIGATION_WORKSPACES);
+        // history.push(navigationConstants.NAVIGATION_WORKSPACES);
         throw new Error(`Could not find config.xml after import: ${configXmlFile}`);
       }
       startDblDotLocalSubProcess(configXmlFile);
