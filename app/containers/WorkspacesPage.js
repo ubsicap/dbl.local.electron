@@ -95,7 +95,9 @@ function createWorkspace(fullPath) {
   const name = path.basename(fullPath);
   const dateModified = stats.mtime;
   const workspace = { name, fullPath, stats, dateModified };
-  return workspace;
+  const configXmlPath = dblDotLocalService.getConfigXmlFullPath(workspace);
+  const isReadyForLogin = fs.existsSync(configXmlPath);
+  return { ...workspace, isReadyForLogin };
 }
 
 class WorkspacesPage extends PureComponent<Props> {
@@ -244,7 +246,7 @@ class WorkspacesPage extends PureComponent<Props> {
                         <Settings className={classes.icon} />
                         Settings
                       </Button>
-                      <Button variant="contained" size="small" color="primary" onClick={this.handleLogin(card)}>
+                      <Button disabled={!card.isReadyForLogin} variant="contained" size="small" color="primary" onClick={this.handleLogin(card)}>
                         Login
                       </Button>
                     </CardActions>
