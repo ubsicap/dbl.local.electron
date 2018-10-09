@@ -16,7 +16,7 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
-import { loginToWorkspace } from '../actions/dblDotLocalConfig.actions';
+import { gotoWorkspaceLoginPage } from '../actions/dblDotLocalConfig.actions';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { logout } from '../actions/user.actions';
 import MenuAppBar from '../components/MenuAppBar';
@@ -25,12 +25,12 @@ const { app } = require('electron').remote;
 
 type Props = {
   classes: {},
-  loginToWorkspace: () => {},
+  gotoWorkspaceLoginPage: () => {},
   logout: () => {}
 };
 
 const mapDispatchToProps = {
-  loginToWorkspace,
+  gotoWorkspaceLoginPage,
   logout
 };
 
@@ -190,7 +190,7 @@ class WorkspacesPage extends PureComponent<Props> {
   }
 
   handleLogin = (workspace) => (event) => {
-    this.props.loginToWorkspace(workspace);
+    this.props.gotoWorkspaceLoginPage(workspace);
   }
 
   renderWorkspaceCards = () => {

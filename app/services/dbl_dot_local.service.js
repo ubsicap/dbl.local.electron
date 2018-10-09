@@ -13,7 +13,7 @@ export const dblDotLocalService = {
   newBundleMedia,
   sessionAddTasks,
   createNewBundle,
-  ensureDblDotLocal,
+  startDblDotLocal,
   importConfigXml,
   exportConfigXml,
   getDblDotLocalExecCwd,
@@ -88,21 +88,20 @@ function handlResponseAsReadable(response) {
   return response;
 }
 
-async function ensureDblDotLocal(configXmlFile) {
+async function startDblDotLocal(configXmlFile) {
   try {
-    return await dblDotLocalService.health();
+    const isAlreadyRunning = await dblDotLocalService.health();
+    if (isAlreadyRunning) {
+      return null;
+    }
   } catch (error) {
     if (error.message === 'Failed to fetch') {
-      const doesConfigExists = await fs.exists(configXmlFile);
-      if (!doesConfigExists) {
-        importConfigXml();
-      }
-      const doesConfigExistsAgain = await fs.exists(configXmlFile);
-      if (!doesConfigExistsAgain) {
+      const doesConfigExist = await fs.exists(configXmlFile);
+      if (!doesConfigExist) {
         // history.push(navigationConstants.NAVIGATION_WORKSPACES);
-        throw new Error(`Could not find config.xml after import: ${configXmlFile}`);
+        throw new Error(`Could not find config.xml: ${configXmlFile}`);
       }
-      startDblDotLocalSubProcess(configXmlFile);
+      return startDblDotLocalSubProcess(configXmlFile);
     }
   }
 }
@@ -129,6 +128,7 @@ function startDblDotLocalSubProcess(configXmlFile) {
         console.log(msg);
       });
     });
+    return subProcess;
   }
 }
 

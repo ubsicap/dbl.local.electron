@@ -6,6 +6,17 @@ const initialState = {
 
 export function dblDotLocalConfig(state = initialState, action) {
   switch (action.type) {
+    case dblDotLocalConfig.START_WORKSPACE_PROCESS: {
+      const { configXmlFile, dblDotLocalExecProcess } = action;
+      if (dblDotLocalExecProcess) {
+        return {
+          ...state,
+          configXmlFile,
+          dblDotLocalExecProcess
+        };
+      }
+      return state;
+    }
     case dblDotLocalConfigConstants.HTML_BASE_URL_RESPONSE:
     {
       const { dblBaseUrl } = action;

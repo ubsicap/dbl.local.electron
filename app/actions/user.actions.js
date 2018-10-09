@@ -2,7 +2,7 @@ import { userConstants } from '../constants';
 import { userService } from '../services';
 import { alertActions } from './';
 import { history } from '../store/configureStore';
-import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
+import dblDotLocalConstants from '../constants/dblDotLocal.constants';
 import { navigationConstants } from '../constants/navigation.constants';
 
 export const userActions = {
@@ -22,7 +22,7 @@ function formatErrorMessage(error) {
       errorMsg = `${
         error.message
       }. Check that 'DBL dot Local' process is running at ${
-        dblDotLocalConfig.getHttpDblDotLocalBaseUrl()
+        dblDotLocalConstants.getHttpDblDotLocalBaseUrl()
       }`;
     } else {
       errorMsg = error.message;
@@ -41,7 +41,7 @@ function login(username, password, _workspaceName) {
       history.push(navigationConstants.NAVIGATION_BUNDLES);
     } catch (error) {
       dispatch(failure(error));
-      const errorMsg = formatErrorMessage(error, dblDotLocalConfig);
+      const errorMsg = formatErrorMessage(error, dblDotLocalConstants);
       dispatch(alertActions.error({ error, message: errorMsg }));
       return true;
     }
@@ -58,6 +58,17 @@ function login(username, password, _workspaceName) {
   }
 }
 
+function killSpawnedDblDotLocalExecProcess() {
+  return (dispatch, getState) => {
+    const { dblDotLocalConfig } = getState();
+    const { dblDotLocalExecProcess = null } = dblDotLocalConfig || {};
+    if (dblDotLocalExecProcess) {
+      dblDotLocalExecProcess.kill();
+    }
+    return { type: dblDotLocalConstants.STOP_WORKSPACE_PROCESS, dblDotLocalExecProcess };
+  };
+}
+
 export function logout() {
   return dispatch => {
     const user = userService.getUser();
@@ -65,21 +76,24 @@ export function logout() {
     userService
       .logout()
       .then(() => {
+        dispatch(killSpawnedDblDotLocalExecProcess());
+        return user;
+      })
+      .then(() => {
         dispatch(success(user));
-        return true;
+        return user;
       })
       .catch(error => {
         dispatch(failure({ user, error }));
-        const message = formatErrorMessage(error, dblDotLocalConfig);
+        const message = formatErrorMessage(error, dblDotLocalConstants);
         dispatch(alertActions.error({ error, message }));
-        return true;
       });
   };
-  function request(_user) {
-    return { type: userConstants.LOGOUT_REQUEST, _user };
+  function request(user) {
+    return { type: userConstants.LOGOUT_REQUEST, user };
   }
-  function success(_user) {
-    return { type: userConstants.LOGOUT_SUCCESS, _user };
+  function success(user) {
+    return { type: userConstants.LOGOUT_SUCCESS, user };
   }
   function failure(error) {
     return { type: userConstants.LOGOUT_WITH_ERROR, error };

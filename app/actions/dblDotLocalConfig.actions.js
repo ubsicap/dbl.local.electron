@@ -6,7 +6,7 @@ import { utilities } from '../utils/utilities';
 
 export const dblDotLocalConfigActions = {
   loadHtmlBaseUrl,
-  loginToWorkspace
+  gotoWorkspaceLoginPage
 };
 
 export default dblDotLocalConfigActions;
@@ -34,20 +34,20 @@ export function loadHtmlBaseUrl() {
   }
 }
 
-export function loginToWorkspace(workspace) {
+export function gotoWorkspaceLoginPage(workspace) {
   return async dispatch => {
     try {
       const { fullPath: workspaceFullPath, name: workspaceName } = workspace;
       const configXmlFile = dblDotLocalService.getConfigXmlFullPath(workspace);
-      await dblDotLocalService.ensureDblDotLocal(configXmlFile);
-      dispatch(setWorkspaceFullPath(workspaceFullPath));
+      const dblDotLocalExecProcess = await dblDotLocalService.startDblDotLocal(configXmlFile);
+      dispatch(setWorkspaceFullPath(workspaceFullPath, dblDotLocalExecProcess));
       const loginUrl = utilities.buildRouteUrl(navigationConstants.NAVIGATION_WORKSPACES_LOGIN, { workspaceName });
       history.push(loginUrl);
     } catch (error) {
       console.log(error);
     }
   };
-  function setWorkspaceFullPath(fullPath, configXmlFile) {
-    return { type: dblDotLocalConfig.SET_WORKSPACE, fullPath, configXmlFile };
+  function setWorkspaceFullPath(fullPath, configXmlFile, dblDotLocalExecProcess) {
+    return { type: dblDotLocalConfig.START_WORKSPACE_PROCESS, fullPath, configXmlFile, dblDotLocalExecProcess };
   }
 }
