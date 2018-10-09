@@ -5,6 +5,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import sort from 'fast-sort';
 import uuidv1 from 'uuid/v1';
+import xml2js from 'xml2js';
 import classNames from 'classnames';
 import Button from '@material-ui/core/Button';
 import { AddCircle, Refresh } from '@material-ui/icons';
@@ -16,6 +17,7 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import { loginToWorkspace } from '../actions/dblDotLocalConfig.actions';
+import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { logout } from '../actions/user.actions';
 import MenuAppBar from '../components/MenuAppBar';
 
@@ -139,8 +141,32 @@ class WorkspacesPage extends PureComponent<Props> {
     this.updateWorkspaceCards({ name, fullPath, dateModified, stats });
   };
 
-  handleEditName = (card) => (event) => {
+  handleEdit = (workspace) => (event) => {
     // launch edit dialog
+    const parser = new xml2js.Parser();
+    const { fullPath } = workspace;
+    const configXmlPath = path.join(fullPath, 'config.xml');
+    if (!fs.existsSync(configXmlPath)) {
+      // import template.config.xml
+      const templateConfigXml = path.join(dblDotLocalService.getDblDotLocalExecCwd(), 'template.config.xml');
+      if (!fs.existsSync(templateConfigXml)) {
+        // prompt user to import a template
+        dblDotLocalService.importConfigXml(configXmlPath);
+      } else {
+        fs.copyFileSync(templateConfigXml, configXmlPath);
+      }
+      if (!fs.existsSync(configXmlPath)) {
+        console.log(`Missing ${configXmlPath}`);
+        return;
+      }
+    }
+    const configFile = fs.readFileSync(configXmlPath);
+    parser.parseString(configFile, (errParse, result) => {
+      console.dir(result);
+    });
+
+    // var builder = new xml2js.Builder();
+    // var xml = builder.buildObject(obj);
   }
 
   handleClickOkEditName = (card) => (newName) => {
@@ -204,11 +230,8 @@ class WorkspacesPage extends PureComponent<Props> {
                       </Typography>
                     </CardContent>
                     <CardActions>
-                      <Button size="small" color="primary" onClick={this.handleEditName(card)}>
-                        Edit Name
-                      </Button>
-                      <Button size="small" color="primary" onClick={this.handleImportConfigXml(card)}>
-                        Import config.xml
+                      <Button size="small" color="primary" onClick={this.handleEdit(card)}>
+                        Edit
                       </Button>
                       <Button variant="contained" size="small" color="primary" onClick={this.handleLogin(card)}>
                         Login

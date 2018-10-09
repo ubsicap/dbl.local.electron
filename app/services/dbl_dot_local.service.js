@@ -15,7 +15,8 @@ export const dblDotLocalService = {
   createNewBundle,
   ensureDblDotLocal,
   importConfigXml,
-  exportConfigXml
+  exportConfigXml,
+  getDblDotLocalExecCwd
 };
 export default dblDotLocalService;
 
@@ -181,7 +182,7 @@ function importConfigXml(destination) {
   const filePaths = dialog.showOpenDialog(
     browserWindow,
     {
-      title: 'Select config.xml for dbl_dot_local',
+      title: 'Select template config.xml',
       defaultPath,
       filters: [
         { name: 'XML files', extensions: ['xml'] },
@@ -196,11 +197,6 @@ function importConfigXml(destination) {
   const [newSourceFilePath] = filePaths;
   const newConfigFile = fs.readFileSync(newSourceFilePath);
   fs.writeFileSync(destination, newConfigFile);
-  dialog.showMessageBox(
-    browserWindow,
-    { message: `Imported ${newSourceFilePath}\n\nPlease restart.` }
-  );
-  browserWindow.close();
 }
 
 function exportConfigXml(sourceFilePath) {
