@@ -1,4 +1,3 @@
-import traverse from 'traverse';
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
@@ -14,14 +13,6 @@ export const bundleManageResourceActions = {
   checkPublicationsHealth
 };
 
-function buildBundleArgUrl(routeUrl, args) {
-  const url = Object.entries(args).reduce(
-    (acc, [key, value]) => (acc.replace(`:${key}`, value)),
-    routeUrl
-  );
-  return url;
-}
-
 export function openResourceManager(_bundleId, _mode = 'download') {
   return async dispatch => {
     const isInCreateMode = await bundleService.bundleIsInCreateMode(_bundleId);
@@ -35,7 +26,7 @@ export function openResourceManager(_bundleId, _mode = 'download') {
   }
   function navigate(bundleId, mode) {
     const manageResourcesUrl =
-      buildBundleArgUrl(navigationConstants.NAVIGATION_BUNDLE_MANAGE_RESOURCES, { bundleId, mode });
+      utilities.buildRouteUrl(navigationConstants.NAVIGATION_BUNDLE_MANAGE_RESOURCES, { bundleId, mode });
     history.push(manageResourcesUrl);
     return success(bundleId, mode);
   }

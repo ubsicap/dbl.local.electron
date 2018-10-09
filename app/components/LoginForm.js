@@ -7,14 +7,17 @@ import Button from '@material-ui/core/Button';
 import { userActions, alertActions } from '../actions';
 import { loadHtmlBaseUrl } from '../actions/dblDotLocalConfig.actions';
 import { utilities } from '../utils/utilities';
+import MenuAppBar from '../components/MenuAppBar';
 
-function mapStateToProps(state) {
+function mapStateToProps(state, props) {
+  const { workspaceName } = props.match.params;
   const { authentication, alert, dblDotLocalConfig } = state;
   const loggingIn = Boolean(authentication.loggingIn);
   return {
+    workspaceName: workspaceName || '(Unknown Workspace)',
     loggingIn,
     alert,
-    dblBaseUrl: dblDotLocalConfig.dblBaseUrl
+    dblBaseUrl: dblDotLocalConfig.dblBaseUrl,
   };
 }
 
@@ -32,7 +35,8 @@ type Props = {
   loadHtmlBaseUrl: () => {},
   loggingIn: boolean,
   alert: {},
-  dblBaseUrl: ?string
+  dblBaseUrl: ?string,
+  workspaceName: string
 };
 
 /*
@@ -76,10 +80,10 @@ class LoginForm extends React.Component {
 
     this.setState({ submitted: true });
     const { username, password } = this.state;
-    const { clear, login } = this.props;
+    const { clear, login, workspaceName } = this.props;
     if (username && password) {
       clear();
-      login(username, password);
+      login(username, password, workspaceName);
     }
   }
 
@@ -94,7 +98,7 @@ class LoginForm extends React.Component {
       </Tooltip>);
   }
 
-  render() {
+  renderLoginForm = () => {
     const { loggingIn, alert } = this.props;
     const { username, password, submitted } = this.state;
     return (
@@ -151,6 +155,16 @@ class LoginForm extends React.Component {
           </div>
         </div>
       </div>
+    );
+  }
+
+  render() {
+    const { workspaceName } = this.props;
+    return (
+      <React.Fragment>
+        <MenuAppBar showSearch={false} workspaceName={workspaceName} />
+        {this.renderLoginForm()}
+      </React.Fragment>
     );
   }
 }

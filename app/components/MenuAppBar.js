@@ -13,23 +13,27 @@ import MenuIcon from '@material-ui/icons/Menu';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
+import NavigateBefore from '@material-ui/icons/NavigateBefore';
 import { history } from '../store/configureStore';
+import { navigationConstants } from '../constants/navigation.constants';
+
 import { updateSearchInput, clearSearch } from '../actions/bundleFilter.actions';
 
 
-function mapStateToProps(state) {
+function mapStateToProps(state, props) {
   const { bundlesFilter, authentication } = state;
   const { isLoading: isLoadingSearch } = bundlesFilter;
   const { isSearchActive } = bundlesFilter;
   const { searchInputRaw } = bundlesFilter;
-  const { loggedIn, whoami } = authentication;
+  const { loggedIn, whoami, workspaceName = props.workspaceName } = authentication;
   const { display_name: userName = 'DEMO USER' } = whoami || {};
   return {
     loggedIn,
     userName,
     isLoadingSearch,
     isSearchActive,
-    searchInputRaw
+    searchInputRaw,
+    workspaceName
   };
 }
 
@@ -44,6 +48,8 @@ type Props = {
     userName: string,
     isSearchActive: boolean,
     searchInputRaw: ?string,
+    workspaceName: ?string,
+    showSearch: boolean,
     updateSearchInput: () => {},
     clearSearch: () => {}
 };
@@ -108,8 +114,12 @@ class MenuAppBar extends React.PureComponent {
     return isSearchActive ? searchInputRaw : '';
   }
 
+  handleBackToWorkspaces = () => {
+    history.push(navigationConstants.NAVIGATION_WORKSPACES);
+  }
+
   render() {
-    const { classes, loggedIn, userName } = this.props;
+    const { classes, loggedIn, userName, workspaceName, showSearch } = this.props;
     const { anchorEl } = this.state;
     const open = Boolean(anchorEl);
 
@@ -122,6 +132,7 @@ class MenuAppBar extends React.PureComponent {
           <Typography variant="title" color="inherit" className={classes.flex}>
             nathanael
           </Typography>
+          {showSearch &&
           <div>
             <DebounceInput
               debounceTimeout={300}
@@ -130,7 +141,15 @@ class MenuAppBar extends React.PureComponent {
               placeholder="Search"
               onChange={(event) => this.onChangeSearchInput(event, event.target.value)}
             />
-          </div>
+          </div>}
+          {workspaceName &&
+            <Button className={classes.subHeading} color="inherit" onClick={this.handleBackToWorkspaces}>
+              <NavigateBefore />
+            </Button>}
+          {workspaceName &&
+          <Typography variant="subheading" color="inherit" noWrap>
+            {workspaceName}
+          </Typography>}
           {loggedIn && (
             <div>
               <Button color="inherit">

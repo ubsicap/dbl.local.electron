@@ -10,7 +10,8 @@ export const utilities = {
   onOpenLink,
   sleep,
   union,
-  difference
+  difference,
+  buildRouteUrl
 };
 export default utilities;
 
@@ -62,4 +63,12 @@ function onOpenLink(url) {
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function buildRouteUrl(routeUrl, params) {
+  const url = Object.entries(params).reduce(
+    (acc, [key, value]) => (acc.replace(`:${key}`, value)),
+    routeUrl
+  );
+  return url;
 }

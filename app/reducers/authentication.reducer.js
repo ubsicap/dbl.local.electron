@@ -9,15 +9,18 @@ export function authentication(state = initialState, action) {
       return {
         loggedIn: false,
         loggingIn: true,
-        user: action.user
+        user: action.user,
+        workspaceName: action.workspaceName
       };
-    case userConstants.LOGIN_SUCCESS:
+    case userConstants.LOGIN_SUCCESS: {
+      const { whoami, workspaceName } = action;
       return {
         loggedIn: true,
         user: action.user,
-        whoami: action.whoami
+        whoami,
+        workspaceName
       };
-    case userConstants.LOGIN_FAILURE:
+    } case userConstants.LOGIN_FAILURE:
       return {
         loggedIn: false,
         error: action.error

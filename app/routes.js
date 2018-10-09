@@ -14,6 +14,7 @@ export default () => (
   <App>
     <Switch>
       <Route exact path={navigationConstants.NAVIGATION_WORKSPACES} component={WorkspacesPage} />
+      <Route exact path={navigationConstants.NAVIGATION_WORKSPACES_LOGIN} component={LoginForm} />
       <Redirect exact from="/" to={navigationConstants.NAVIGATION_WORKSPACES} />
       <PrivateRoute exact path={navigationConstants.NAVIGATION_BUNDLES} component={BundlesPage} />
       <PrivateRoute exact path={navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA} component={EditMetadataDialog} />
