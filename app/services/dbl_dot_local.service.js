@@ -16,7 +16,8 @@ export const dblDotLocalService = {
   ensureDblDotLocal,
   importConfigXml,
   exportConfigXml,
-  getDblDotLocalExecCwd
+  getDblDotLocalExecCwd,
+  getConfigXmlFullPath
 };
 export default dblDotLocalService;
 
@@ -221,4 +222,9 @@ function exportConfigXml(sourceFilePath) {
   fs.writeFileSync(destinationFileName, activeConfigFile);
   const { shell } = electron;
   shell.showItemInFolder(destinationFileName);
+}
+
+function getConfigXmlFullPath(workspace) {
+  const { fullPath: workspaceFullPath } = workspace;
+  return path.join(workspaceFullPath, 'config.xml');
 }

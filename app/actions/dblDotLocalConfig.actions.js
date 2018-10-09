@@ -1,8 +1,7 @@
-import path from 'path';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { history } from '../store/configureStore';
-import navigationConstants from '../constants/navigation.constants';
+import { navigationConstants } from '../constants/navigation.constants';
 import { utilities } from '../utils/utilities';
 
 export const dblDotLocalConfigActions = {
@@ -39,7 +38,7 @@ export function loginToWorkspace(workspace) {
   return async dispatch => {
     try {
       const { fullPath: workspaceFullPath, name: workspaceName } = workspace;
-      const configXmlFile = path.join(workspaceFullPath, 'config.xml');
+      const configXmlFile = dblDotLocalService.getConfigXmlFullPath(workspace);
       await dblDotLocalService.ensureDblDotLocal(configXmlFile);
       dispatch(setWorkspaceFullPath(workspaceFullPath));
       const loginUrl = utilities.buildRouteUrl(navigationConstants.NAVIGATION_WORKSPACES_LOGIN, { workspaceName });

@@ -141,11 +141,7 @@ class WorkspacesPage extends PureComponent<Props> {
     this.updateWorkspaceCards({ name, fullPath, dateModified, stats });
   };
 
-  handleEdit = (workspace) => (event) => {
-    // launch edit dialog
-    const parser = new xml2js.Parser();
-    const { fullPath } = workspace;
-    const configXmlPath = path.join(fullPath, 'config.xml');
+  readFileOrTemplate = (configXmlPath) => {
     if (!fs.existsSync(configXmlPath)) {
       // import template.config.xml
       const templateConfigXml = path.join(dblDotLocalService.getDblDotLocalExecCwd(), 'template.config.xml');
@@ -160,16 +156,25 @@ class WorkspacesPage extends PureComponent<Props> {
         return;
       }
     }
-    const configFile = fs.readFileSync(configXmlPath);
+    return fs.readFileSync(configXmlPath);
+  }
+
+  handleEdit = (workspace) => (event) => {
+    // launch edit dialog
+    const configXmlPath = dblDotLocalService.getConfigXmlFullPath(workspace);
+    const configFile = this.readFileOrTemplate(configXmlPath);
+    const parser = new xml2js.Parser();
     parser.parseString(configFile, (errParse, configXmlSettings) => {
       console.dir(configXmlSettings);
-      const cloned = JSON.parse(JSON.stringify(configXmlSettings));
+      const newConfigXml = JSON.parse(JSON.stringify(configXmlSettings));
       const builder = new xml2js.Builder();
       // set paths
-      cloned.settings.storer[0].bundleRootDir[0] = path.join(fullPath, 'bundles');
-      cloned.settings.storer[0].sessionBundleRootDir[0] = path.join(fullPath, 'sessions');
-      cloned.settings.system[0].logDir[0] = path.join(fullPath, 'log');
-      const xml = builder.buildObject(cloned);
+      const { fullPath } = workspace;
+      newConfigXml.settings.storer[0].bundleRootDir[0] = path.join(fullPath, 'bundles');
+      newConfigXml.settings.storer[0].sessionBundleRootDir[0] = path.join(fullPath, 'sessions');
+      newConfigXml.settings.system[0].logDir[0] = path.join(fullPath, 'log');
+      const xml = builder.buildObject(newConfigXml);
+      fs.writeFileSync(configXmlPath, xml);
       console.log(xml);
     });
   }
