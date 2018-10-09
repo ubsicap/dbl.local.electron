@@ -142,18 +142,10 @@ class MenuAppBar extends React.PureComponent {
               onChange={(event) => this.onChangeSearchInput(event, event.target.value)}
             />
           </div>}
-          {workspaceName &&
-            <Button className={classes.subHeading} color="inherit" onClick={this.handleBackToWorkspaces}>
-              <NavigateBefore />
-            </Button>}
-          {workspaceName &&
-          <Typography variant="subheading" color="inherit" noWrap>
-            {workspaceName}
-          </Typography>}
-          {loggedIn && (
+          {workspaceName && (
             <div>
-              <Button color="inherit">
-                {userName}
+              <Button color="inherit" onClick={this.handleMenu}>
+                { workspaceName } / {loggedIn ? userName : 'Login' }
                 <AccountCircle className={classNames(classes.rightIcon, classes.iconSmall)} />
               </Button>
               <Menu
@@ -170,8 +162,7 @@ class MenuAppBar extends React.PureComponent {
                 open={open}
                 onClose={this.handleClose}
               >
-                <MenuItem onClick={this.handleClose}>Profile</MenuItem>
-                <MenuItem onClick={this.handleClose}>My account</MenuItem>
+                <MenuItem onClick={this.handleBackToWorkspaces}>Logout (Workspaces)</MenuItem>
               </Menu>
             </div>
           )}
