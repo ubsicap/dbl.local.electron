@@ -8,7 +8,7 @@ import uuidv1 from 'uuid/v1';
 import xml2js from 'xml2js';
 import classNames from 'classnames';
 import Button from '@material-ui/core/Button';
-import { AddCircle, Refresh } from '@material-ui/icons';
+import { AddCircle, Refresh, Settings } from '@material-ui/icons';
 import Card from '@material-ui/core/Card';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
@@ -153,7 +153,7 @@ class WorkspacesPage extends PureComponent<Props> {
         // prompt user to import a template
         dblDotLocalService.importConfigXml(configXmlPath);
       } else {
-        fs.copyFileSync(templateConfigXml, configXmlPath);
+        fs.copySync(templateConfigXml, configXmlPath);
       }
       if (!fs.existsSync(configXmlPath)) {
         console.log(`Missing ${configXmlPath}`);
@@ -161,12 +161,17 @@ class WorkspacesPage extends PureComponent<Props> {
       }
     }
     const configFile = fs.readFileSync(configXmlPath);
-    parser.parseString(configFile, (errParse, result) => {
-      console.dir(result);
+    parser.parseString(configFile, (errParse, configXmlSettings) => {
+      console.dir(configXmlSettings);
+      const cloned = JSON.parse(JSON.stringify(configXmlSettings));
+      const builder = new xml2js.Builder();
+      // set paths
+      cloned.settings.storer[0].bundleRootDir[0] = path.join(fullPath, 'bundles');
+      cloned.settings.storer[0].sessionBundleRootDir[0] = path.join(fullPath, 'sessions');
+      cloned.settings.system[0].logDir[0] = path.join(fullPath, 'log');
+      const xml = builder.buildObject(cloned);
+      console.log(xml);
     });
-
-    // var builder = new xml2js.Builder();
-    // var xml = builder.buildObject(obj);
   }
 
   handleClickOkEditName = (card) => (newName) => {
@@ -231,7 +236,8 @@ class WorkspacesPage extends PureComponent<Props> {
                     </CardContent>
                     <CardActions>
                       <Button size="small" color="primary" onClick={this.handleEdit(card)}>
-                        Edit
+                        <Settings className={classes.icon} />
+                        Settings
                       </Button>
                       <Button variant="contained" size="small" color="primary" onClick={this.handleLogin(card)}>
                         Login
