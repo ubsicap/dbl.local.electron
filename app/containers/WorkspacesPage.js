@@ -225,7 +225,7 @@ class WorkspacesPage extends PureComponent<Props> {
                   {isRunningDblDotLocalProcess &&
                   <Grid item>
                     <Button variant="contained" color="secondary" onClick={this.handleLogin()}>
-                      Login to Running Process
+                      Login to Unknown Workspace
                     </Button>
                   </Grid>}
                   <Grid item>
