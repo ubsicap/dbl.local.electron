@@ -16,7 +16,7 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
-import { gotoWorkspaceLoginPage } from '../actions/dblDotLocalConfig.actions';
+import { gotoWorkspaceLoginPage, getDblDotLocalExecStatus } from '../actions/dblDotLocalConfig.actions';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { logout } from '../actions/user.actions';
 import MenuAppBar from '../components/MenuAppBar';
@@ -25,11 +25,22 @@ const { app } = require('electron').remote;
 
 type Props = {
   classes: {},
+  isRunningDblDotLocalProcess: boolean,
+  getDblDotLocalExecStatus: () => {},
   gotoWorkspaceLoginPage: () => {},
   logout: () => {}
 };
 
+function mapStateToProps(state) {
+  const { dblDotLocalConfig } = state;
+  const { isRunningDblDotLocalProcess = false } = dblDotLocalConfig;
+  return {
+    isRunningDblDotLocalProcess
+  };
+}
+
 const mapDispatchToProps = {
+  getDblDotLocalExecStatus,
   gotoWorkspaceLoginPage,
   logout
 };
@@ -105,8 +116,8 @@ class WorkspacesPage extends PureComponent<Props> {
   state = { cards: [] }
 
   componentDidMount() {
-    // read directories
     this.props.logout();
+    this.props.getDblDotLocalExecStatus();
     this.updateAllWorkspaceCards();
   }
 
@@ -194,7 +205,7 @@ class WorkspacesPage extends PureComponent<Props> {
   }
 
   renderWorkspaceCards = () => {
-    const { classes } = this.props;
+    const { classes, isRunningDblDotLocalProcess } = this.props;
     const { cards } = this.state;
     return (
       <React.Fragment>
@@ -211,6 +222,12 @@ class WorkspacesPage extends PureComponent<Props> {
               </Typography>
               <div className={classes.heroButtons}>
                 <Grid container spacing={16} justify="center">
+                  {isRunningDblDotLocalProcess &&
+                  <Grid item>
+                    <Button variant="contained" color="secondary" onClick={this.handleLogin()}>
+                      Login to Running Process
+                    </Button>
+                  </Grid>}
                   <Grid item>
                     <Button variant="contained" color="primary" onClick={this.handleCreateWorkspace}>
                       <AddCircle className={classes.icon} />
@@ -246,7 +263,7 @@ class WorkspacesPage extends PureComponent<Props> {
                         <Settings className={classes.icon} />
                         Settings
                       </Button>
-                      <Button disabled={!card.isReadyForLogin} variant="contained" size="small" color="primary" onClick={this.handleLogin(card)}>
+                      <Button disabled={!card.isReadyForLogin || isRunningDblDotLocalProcess} variant="contained" size="small" color="primary" onClick={this.handleLogin(card)}>
                         Login
                       </Button>
                     </CardActions>
@@ -281,7 +298,7 @@ class WorkspacesPage extends PureComponent<Props> {
 export default compose(
   withStyles(styles, { name: 'WorkspacesPage' }),
   connect(
-    null,
+    mapStateToProps,
     mapDispatchToProps
   ),
 )(WorkspacesPage);

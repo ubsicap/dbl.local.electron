@@ -65,7 +65,7 @@ function killSpawnedDblDotLocalExecProcess() {
     if (dblDotLocalExecProcess) {
       dblDotLocalExecProcess.kill();
     }
-    return { type: dblDotLocalConstants.STOP_WORKSPACE_PROCESS, dblDotLocalExecProcess };
+    return { type: dblDotLocalConstants.STOP_WORKSPACE_PROCESS_REQUEST, dblDotLocalExecProcess };
   };
 }
 

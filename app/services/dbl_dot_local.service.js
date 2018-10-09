@@ -17,7 +17,8 @@ export const dblDotLocalService = {
   importConfigXml,
   exportConfigXml,
   getDblDotLocalExecCwd,
-  getConfigXmlFullPath
+  getConfigXmlFullPath,
+  getDblDotLocalExecStatus
 };
 export default dblDotLocalService;
 
@@ -88,21 +89,31 @@ function handlResponseAsReadable(response) {
   return response;
 }
 
-async function startDblDotLocal(configXmlFile) {
+async function getDblDotLocalExecStatus() {
   try {
-    const isAlreadyRunning = await dblDotLocalService.health();
-    if (isAlreadyRunning) {
-      return null;
+    const isRunning = await dblDotLocalService.health();
+    if (isRunning) {
+      return { isRunning: true };
     }
   } catch (error) {
-    if (error.message === 'Failed to fetch') {
-      const doesConfigExist = await fs.exists(configXmlFile);
-      if (!doesConfigExist) {
-        // history.push(navigationConstants.NAVIGATION_WORKSPACES);
-        throw new Error(`Could not find config.xml: ${configXmlFile}`);
-      }
-      return startDblDotLocalSubProcess(configXmlFile);
+    return { isRunning: false, error };
+  }
+}
+
+async function startDblDotLocal(configXmlFile) {
+  try {
+    const { isRunning } = await getDblDotLocalExecStatus();
+    if (isRunning) {
+      return null;
     }
+    const doesConfigExist = await fs.exists(configXmlFile);
+    if (!doesConfigExist) {
+      // history.push(navigationConstants.NAVIGATION_WORKSPACES);
+      throw new Error(`Could not find config.xml: ${configXmlFile}`);
+    }
+    return startDblDotLocalSubProcess(configXmlFile);
+  } catch (error) {
+    console.log(error);
   }
 }
 
@@ -110,26 +121,27 @@ function startDblDotLocalSubProcess(configXmlFile) {
   // try to start local dbl_dot_local.exe process if it exists.
   const dblDotLocalExecPath = getDblDotLocalExecPath();
   console.log(dblDotLocalExecPath);
-  if (fs.exists(dblDotLocalExecPath)) {
-    const cwd = getDblDotLocalExecCwd();
-    const subProcess = childProcess.spawn(dblDotLocalExecPath, [configXmlFile], {
-      cwd,
-      stdio: [ 'ignore', 'ignore', 'pipe' ],
-      detached: false
-    });
-    subProcess.stderr.on('data', (data) => {
-      // log.error(data);
-      console.log(`dbl_dot_local.exe: ${data}`);
-    });
-    ['error', 'close', 'exit'].forEach(event => {
-      subProcess.on(event, (code) => {
-        const msg = `dbl_dot_local.exe (${event}): ${code}`;
-        log.error(msg);
-        console.log(msg);
-      });
-    });
-    return subProcess;
+  if (!fs.exists(dblDotLocalExecPath)) {
+    throw new Error(`Not found: ${dblDotLocalExecPath}`);
   }
+  const cwd = getDblDotLocalExecCwd();
+  const subProcess = childProcess.spawn(dblDotLocalExecPath, [configXmlFile], {
+    cwd,
+    stdio: [ 'ignore', 'ignore', 'pipe' ],
+    detached: false
+  });
+  subProcess.stderr.on('data', (data) => {
+    // log.error(data);
+    console.log(`dbl_dot_local.exe: ${data}`);
+  });
+  ['error', 'close', 'exit'].forEach(event => {
+    subProcess.on(event, (code) => {
+      const msg = `dbl_dot_local.exe (${event}): ${code}`;
+      log.error(msg);
+      console.log(msg);
+    });
+  });
+  return subProcess;
 }
 
 function getDblDotLocalExecCwd() {

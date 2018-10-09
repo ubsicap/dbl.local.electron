@@ -5,6 +5,7 @@ import { navigationConstants } from '../constants/navigation.constants';
 import { utilities } from '../utils/utilities';
 
 export const dblDotLocalConfigActions = {
+  getDblDotLocalExecStatus,
   loadHtmlBaseUrl,
   gotoWorkspaceLoginPage
 };
@@ -34,14 +35,30 @@ export function loadHtmlBaseUrl() {
   }
 }
 
+export function getDblDotLocalExecStatus() {
+  return async dispatch => {
+    const { isRunning } = await dblDotLocalService.getDblDotLocalExecStatus();
+    return dispatch({ type: dblDotLocalConfig.DBL_DOT_LOCAL_PROCESS_STATUS, isRunning });
+  };
+}
+
 export function gotoWorkspaceLoginPage(workspace) {
   return async dispatch => {
     try {
+      if (!workspace) {
+        history.push(navigationConstants.NAVIGATION_UNKNOWN_WORKSPACE_LOGIN);
+        return;
+      }
       const { fullPath: workspaceFullPath, name: workspaceName } = workspace;
       const configXmlFile = dblDotLocalService.getConfigXmlFullPath(workspace);
       const dblDotLocalExecProcess = await dblDotLocalService.startDblDotLocal(configXmlFile);
+      ['error', 'close', 'exit'].forEach(event => {
+        dblDotLocalExecProcess.on(event, (dblDotLocalExecProcessCode) => {
+          dispatch({ type: dblDotLocalConfig.STOP_WORKSPACE_PROCESS_DONE, dblDotLocalExecProcess, dblDotLocalExecProcessCode });
+        });
+      });
       dispatch(setWorkspaceFullPath(workspaceFullPath, dblDotLocalExecProcess));
-      const loginUrl = utilities.buildRouteUrl(navigationConstants.NAVIGATION_WORKSPACES_LOGIN, { workspaceName });
+      const loginUrl = utilities.buildRouteUrl(navigationConstants.NAVIGATION_WORKSPACE_LOGIN, { workspaceName });
       history.push(loginUrl);
     } catch (error) {
       console.log(error);

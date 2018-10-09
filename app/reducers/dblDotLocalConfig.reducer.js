@@ -6,13 +6,35 @@ const initialState = {
 
 export function dblDotLocalConfig(state = initialState, action) {
   switch (action.type) {
-    case dblDotLocalConfig.START_WORKSPACE_PROCESS: {
+    case dblDotLocalConfigConstants.DBL_DOT_LOCAL_PROCESS_STATUS: {
+      const { isRunning: isRunningDblDotLocalProcess } = action;
+      return {
+        ...state,
+        isRunningDblDotLocalProcess
+      };
+    }
+    case dblDotLocalConfigConstants.START_WORKSPACE_PROCESS: {
       const { configXmlFile, dblDotLocalExecProcess } = action;
       if (dblDotLocalExecProcess) {
         return {
           ...state,
           configXmlFile,
-          dblDotLocalExecProcess
+          dblDotLocalExecProcess,
+          processStarted: true,
+        };
+      }
+      return state;
+    }
+    case dblDotLocalConfigConstants.STOP_WORKSPACE_PROCESS_DONE: {
+      const { configXmlFile } = state;
+      const { dblDotLocalExecProcess, dblDotLocalExecProcessCode } = action;
+      if (dblDotLocalExecProcess) {
+        return {
+          ...state,
+          configXmlFile,
+          dblDotLocalExecProcess,
+          dblDotLocalExecProcessCode,
+          processStopped: true,
         };
       }
       return state;
