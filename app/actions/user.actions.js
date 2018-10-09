@@ -58,7 +58,7 @@ function login(username, password, _workspaceName) {
   }
 }
 
-function logout() {
+export function logout() {
   return dispatch => {
     const user = userService.getUser();
     dispatch(request({ user }));

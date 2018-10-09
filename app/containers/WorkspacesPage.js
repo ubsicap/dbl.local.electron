@@ -16,17 +16,20 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import { loginToWorkspace } from '../actions/dblDotLocalConfig.actions';
+import { logout } from '../actions/user.actions';
 import MenuAppBar from '../components/MenuAppBar';
 
 const { app } = require('electron').remote;
 
 type Props = {
   classes: {},
-  loginToWorkspace: () => {}
+  loginToWorkspace: () => {},
+  logout: () => {}
 };
 
 const mapDispatchToProps = {
-  loginToWorkspace
+  loginToWorkspace,
+  logout
 };
 
 const styles = theme => ({
@@ -99,6 +102,7 @@ class WorkspacesPage extends PureComponent<Props> {
 
   componentDidMount() {
     // read directories
+    this.props.logout();
     this.updateAllWorkspaceCards();
   }
 
