@@ -20,6 +20,7 @@ import { gotoWorkspaceLoginPage, getDblDotLocalExecStatus } from '../actions/dbl
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { logout } from '../actions/user.actions';
 import MenuAppBar from '../components/MenuAppBar';
+import WorkspaceEditDialog from '../components/WorkspaceEditDialog';
 
 const { app } = require('electron').remote;
 
@@ -189,11 +190,17 @@ class WorkspacesPage extends PureComponent<Props> {
       const xml = builder.buildObject(newConfigXml);
       fs.writeFileSync(configXmlPath, xml);
       console.log(xml);
+      this.setState({ openEditDialog: workspace });
     });
   }
 
-  handleClickOkEditName = (card) => (newName) => {
+  handleClickOkEdit = (settings) => (event) => {
+    console.log(settings);
+    this.setState({ openEditDialog: null });
+  }
 
+  handleClickCancelEdit = (event) => {
+    this.setState({ openEditDialog: null });
   }
 
   handleImportConfigXml = (card) => (event) => {
@@ -206,7 +213,7 @@ class WorkspacesPage extends PureComponent<Props> {
 
   renderWorkspaceCards = () => {
     const { classes, isRunningDblDotLocalProcess } = this.props;
-    const { cards } = this.state;
+    const { cards, openEditDialog } = this.state;
     return (
       <React.Fragment>
         <main>
@@ -263,6 +270,7 @@ class WorkspacesPage extends PureComponent<Props> {
                         <Settings className={classes.icon} />
                         Settings
                       </Button>
+                      <WorkspaceEditDialog settings={this.state.openEditDialog} handleClickOk={this.handleClickOkEdit} handleClickCancel={this.handleClickCancelEdit} />
                       <Button disabled={!card.isReadyForLogin || isRunningDblDotLocalProcess} variant="contained" size="small" color="primary" onClick={this.handleLogin(card)}>
                         Login
                       </Button>
