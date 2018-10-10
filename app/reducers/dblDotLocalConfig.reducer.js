@@ -35,6 +35,7 @@ export function dblDotLocalConfig(state = initialState, action) {
           dblDotLocalExecProcess,
           dblDotLocalExecProcessCode,
           processStopped: true,
+          dblBaseUrl: null
         };
       }
       return state;
