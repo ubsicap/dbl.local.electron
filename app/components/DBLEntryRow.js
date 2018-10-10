@@ -231,10 +231,17 @@ class DBLEntryRow extends PureComponent<Props> {
   shouldShowSaveAsNew = () => (this.props.status !== 'DRAFT');
   shouldShowEdit = () => (this.props.status === 'DRAFT' && this.props.license === 'owned');
 
+  isNewDraftEntry = () => {
+    const {
+      status, revision, parent, dblId
+    } = this.props;
+    return status === 'DRAFT' && getRevisionOrParentRevision(dblId, revision, parent) === 0;
+  }
+
   shouldDisableRevise = () => (this.props.isRequestingRevision || this.props.isDownloading)
 
-  shouldDisableUpload = () => this.shouldDisableDraftRevisionOrEdit() ||
-    Object.keys(this.props.formsErrors).length > 0;
+  shouldDisableUpload = () => (this.shouldDisableDraftRevisionOrEdit() ||
+    Object.keys(this.props.formsErrors).length > 0 || (this.isNewDraftEntry() && this.props.resourceCountStored === 0));
 
   shouldDisableDraftRevisionOrEdit = () => {
     const { isUploading = false, task, status } = this.props;
