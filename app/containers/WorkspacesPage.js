@@ -178,19 +178,19 @@ class WorkspacesPage extends PureComponent<Props> {
     const configXmlPath = dblDotLocalService.getConfigXmlFullPath(workspace);
     const configFile = this.readFileOrTemplate(configXmlPath);
     const parser = new xml2js.Parser();
-    parser.parseString(configFile, (errParse, configXmlSettings) => {
-      console.dir(configXmlSettings);
-      const newConfigXml = JSON.parse(JSON.stringify(configXmlSettings));
+    parser.parseString(configFile, (errParse, configXmlSettingsOrig) => {
+      console.dir(configXmlSettingsOrig);
+      const configXmlSettings = JSON.parse(JSON.stringify(configXmlSettingsOrig));
       const builder = new xml2js.Builder({ headless: true });
       // set paths
       const { fullPath } = workspace;
-      newConfigXml.settings.storer[0].bundleRootDir[0] = path.join(fullPath, 'bundles');
-      newConfigXml.settings.storer[0].sessionBundleRootDir[0] = path.join(fullPath, 'sessions');
-      newConfigXml.settings.system[0].logDir[0] = path.join(fullPath, 'log');
-      const xml = builder.buildObject(newConfigXml);
+      configXmlSettings.settings.storer[0].bundleRootDir[0] = path.join(fullPath, 'bundles');
+      configXmlSettings.settings.storer[0].sessionBundleRootDir[0] = path.join(fullPath, 'sessions');
+      configXmlSettings.settings.system[0].logDir[0] = path.join(fullPath, 'log');
+      const xml = builder.buildObject(configXmlSettings);
       fs.writeFileSync(configXmlPath, xml);
       console.log(xml);
-      this.setState({ openEditDialog: workspace });
+      this.setState({ openEditDialog: { workspace, configXmlSettings } });
     });
   }
 
@@ -270,7 +270,9 @@ class WorkspacesPage extends PureComponent<Props> {
                         <Settings className={classes.icon} />
                         Settings
                       </Button>
+                      {this.state.openEditDialog && this.state.openEditDialog.workspace === card &&
                       <WorkspaceEditDialog settings={this.state.openEditDialog} handleClickOk={this.handleClickOkEdit} handleClickCancel={this.handleClickCancelEdit} />
+                      }
                       <Button disabled={!card.isReadyForLogin || isRunningDblDotLocalProcess} variant="contained" size="small" color="primary" onClick={this.handleLogin(card)}>
                         Login
                       </Button>
