@@ -54,10 +54,11 @@ export function gotoWorkspaceLoginPage(workspace) {
       const dblDotLocalExecProcess = await dblDotLocalService.startDblDotLocal(configXmlFile);
       ['error', 'close', 'exit'].forEach(event => {
         dblDotLocalExecProcess.on(event, (dblDotLocalExecProcessCode) => {
+          dispatch(getDblDotLocalExecStatus());
           dispatch({ type: dblDotLocalConfig.STOP_WORKSPACE_PROCESS_DONE, dblDotLocalExecProcess, dblDotLocalExecProcessCode });
         });
       });
-      dispatch(setWorkspaceFullPath(workspaceFullPath, dblDotLocalExecProcess));
+      dispatch(setWorkspaceFullPath(workspaceFullPath, configXmlFile, dblDotLocalExecProcess));
       const loginUrl = utilities.buildRouteUrl(navigationConstants.NAVIGATION_WORKSPACE_LOGIN, { workspaceName });
       history.push(loginUrl);
     } catch (error) {

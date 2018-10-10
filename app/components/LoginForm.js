@@ -4,7 +4,8 @@ import { connect } from 'react-redux';
 import { DebounceInput } from 'react-debounce-input';
 import Tooltip from '@material-ui/core/Tooltip';
 import Button from '@material-ui/core/Button';
-import { userActions, alertActions } from '../actions';
+import { userActions } from '../actions/user.actions';
+import { alertActions } from '../actions/alert.actions';
 import { loadHtmlBaseUrl } from '../actions/dblDotLocalConfig.actions';
 import { utilities } from '../utils/utilities';
 import MenuAppBar from '../components/MenuAppBar';
@@ -22,16 +23,14 @@ function mapStateToProps(state, props) {
 }
 
 const mapDispatchToProps = {
-  logout: userActions.logout,
   login: userActions.login,
-  clear: alertActions.clear,
+  clearAlerts: alertActions.clear,
   loadHtmlBaseUrl
 };
 
 type Props = {
-  logout: () => {},
   login: () => {},
-  clear: () => {},
+  clearAlerts: () => {},
   loadHtmlBaseUrl: () => {},
   loggingIn: boolean,
   alert: {},
@@ -47,8 +46,6 @@ class LoginForm extends React.Component {
   props: Props;
   constructor(props) {
     super(props);
-    // reset login status
-    this.props.logout();
     this.state = {
       username: '',
       password: '',
@@ -80,10 +77,10 @@ class LoginForm extends React.Component {
 
     this.setState({ submitted: true });
     const { username, password } = this.state;
-    const { clear, login, workspaceName } = this.props;
+    const { workspaceName } = this.props;
     if (username && password) {
-      clear();
-      login(username, password, workspaceName);
+      this.props.clearAlerts();
+      this.props.login(username, password, workspaceName);
     }
   }
 

@@ -42,8 +42,8 @@ export function dblDotLocalConfig(state = initialState, action) {
     case dblDotLocalConfigConstants.HTML_BASE_URL_RESPONSE:
     {
       const { dblBaseUrl } = action;
-      // dblDotLocalConfig.HTML_BASE_URL_RESPONSE, dblBaseUrl
       return {
+        ...state,
         dblBaseUrl
       };
     }

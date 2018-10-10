@@ -180,7 +180,7 @@ class WorkspacesPage extends PureComponent<Props> {
     parser.parseString(configFile, (errParse, configXmlSettings) => {
       console.dir(configXmlSettings);
       const newConfigXml = JSON.parse(JSON.stringify(configXmlSettings));
-      const builder = new xml2js.Builder();
+      const builder = new xml2js.Builder({ headless: true });
       // set paths
       const { fullPath } = workspace;
       newConfigXml.settings.storer[0].bundleRootDir[0] = path.join(fullPath, 'bundles');
