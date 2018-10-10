@@ -139,6 +139,7 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
               floatingLabelStyle={{ color: 'rgba(0, 0, 0, 0.54)' }}
               floatingLabelFocusStyle={{ color: '#303f9f' }}
               value={organizationTypeValues}
+              errorText={(organizationTypeValues.length === 0 ? 'Requires ipc or lch (or both)' : '')}
               onChange={this.handleChangeOrganizationType}
               style={{ display: 'flex', marginTop: 20 }}
             >
