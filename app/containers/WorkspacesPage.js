@@ -181,12 +181,12 @@ class WorkspacesPage extends PureComponent<Props> {
     parser.parseString(configFile, (errParse, configXmlSettingsOrig) => {
       console.dir(configXmlSettingsOrig);
       const configXmlSettings = JSON.parse(JSON.stringify(configXmlSettingsOrig));
-      const builder = new xml2js.Builder({ headless: true });
       // set paths
       const { fullPath } = workspace;
       configXmlSettings.settings.storer[0].bundleRootDir[0] = path.join(fullPath, 'bundles');
       configXmlSettings.settings.storer[0].sessionBundleRootDir[0] = path.join(fullPath, 'sessions');
       configXmlSettings.settings.system[0].logDir[0] = path.join(fullPath, 'log');
+      const builder = new xml2js.Builder({ headless: true });
       const xml = builder.buildObject(configXmlSettings);
       fs.writeFileSync(configXmlPath, xml);
       console.log(xml);
@@ -194,8 +194,12 @@ class WorkspacesPage extends PureComponent<Props> {
     });
   }
 
-  handleClickOkEdit = (settings) => (event) => {
-    console.log(settings);
+  handleClickOkEdit = (newSettings) => (event) => {
+    const { workspace, configXmlSettings } = newSettings;
+    const builder = new xml2js.Builder({ headless: true });
+    const xml = builder.buildObject(configXmlSettings);
+    const configXmlPath = dblDotLocalService.getConfigXmlFullPath(workspace);
+    fs.writeFileSync(configXmlPath, xml);
     this.setState({ openEditDialog: null });
   }
 
