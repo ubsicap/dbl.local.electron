@@ -16,9 +16,51 @@ type Props = {
   handleClickCancel: () => {}
 };
 
+function importSettingsToState(settings) {
+  const { configXmlSettings, workspace } = settings;
+  const workspaceName = workspace.name;
+  const { settings: { dbl }} = configXmlSettings;
+  const { accessToken, secretKey, organizationType, downloadOpenAccessEntries } = dbl[0];
+  const settings_dbl_accessToken = accessToken[0];
+  const settings_dbl_secretKey = secretKey[0];
+  const settings_dbl_organizationType = organizationType[0];
+  const settings_dbl_downloadOpenAccessEntries = Boolean(downloadOpenAccessEntries[0]);
+  return { 
+    workspaceName,
+    settings_dbl_accessToken,
+    settings_dbl_secretKey,
+    settings_dbl_organizationType,
+    settings_dbl_downloadOpenAccessEntries
+  };
+}
+
+function exportStateToSettings(state, origSettings) {
+  const { 
+    workspaceName,
+    settings_dbl_accessToken,
+    settings_dbl_secretKey,
+    settings_dbl_organizationType,
+    settings_dbl_downloadOpenAccessEntries
+  } = state;
+  const workspace = { ...origSettings.workspace, name: workspaceName };
+  const configXmlSettings = { 
+    settings: {
+      ...origSettings.configXmlSettings.settings,
+      dbl: [{
+        ...origSettings.configXmlSettings.settings.dbl[0],
+        accessToken: [settings_dbl_accessToken],
+        secretKey: [settings_dbl_secretKey],
+        organizationType: [settings_dbl_organizationType],
+        downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries]
+      }]
+    }
+  }
+  return { workspace, configXmlSettings };
+}
+
 export default class WorkspaceEditDialog extends React.Component<Props> {
   props: Props;
-  state = {};
+  state = importSettingsToState(this.props.settings);
 
   getOrganizationTypeValues = () => this.state.settings_dbl_organizationType || '';
 
@@ -55,6 +97,7 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
           <DialogTitle id="form-dialog-title">Workspace Settings</DialogTitle>
           <DialogContent>
             <DialogContentText>
+              {this.props.settings.workspace.name}
             </DialogContentText>
             <TextField
               required
@@ -117,7 +160,7 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
             <Button onClick={this.props.handleClickCancel} color="primary">
               Cancel
             </Button>
-            <Button onClick={this.props.handleClickOk(this.state)} color="primary">
+            <Button onClick={this.props.handleClickOk(exportStateToSettings(this.state, this.props.settings))} color="primary">
               Save
             </Button>
           </DialogActions>
