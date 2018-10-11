@@ -5,7 +5,6 @@ import fs from 'fs-extra';
 import path from 'path';
 import sort from 'fast-sort';
 import uuidv1 from 'uuid/v1';
-import xml2js from 'xml2js';
 import classNames from 'classnames';
 import Button from '@material-ui/core/Button';
 import { AddCircle, Refresh, Settings } from '@material-ui/icons';
@@ -21,21 +20,6 @@ import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { logout } from '../actions/user.actions';
 import MenuAppBar from '../components/MenuAppBar';
 import WorkspaceEditDialog from '../components/WorkspaceEditDialog';
-
-function updateAndWriteConfigXmlSettings({ configXmlSettings, workspace }) {
-  // set paths
-  const newConfigXmlSettings = JSON.parse(JSON.stringify(configXmlSettings));
-  const { fullPath } = workspace;
-  newConfigXmlSettings.settings.storer[0].bundleRootDir[0] = path.join(fullPath, 'bundles');
-  newConfigXmlSettings.settings.storer[0].sessionBundleRootDir[0] = path.join(fullPath, 'sessions');
-  newConfigXmlSettings.settings.system[0].logDir[0] = path.join(fullPath, 'log');
-  const builder = new xml2js.Builder({ headless: true });
-  const xml = builder.buildObject(newConfigXmlSettings);
-  const configXmlPath = dblDotLocalService.getConfigXmlFullPath(workspace);
-  fs.writeFileSync(configXmlPath, xml);
-  console.log(xml);
-  return { xml, configXmlSettings: newConfigXmlSettings };
-}
 
 type Props = {
   classes: {},
@@ -168,34 +152,10 @@ class WorkspacesPage extends PureComponent<Props> {
     this.updateWorkspaceCards({ name, fullPath, dateModified, stats });
   };
 
-  readFileOrTemplate = (configXmlPath) => {
-    if (!fs.existsSync(configXmlPath)) {
-      // import template.config.xml
-      const templateConfigXml = path.join(dblDotLocalService.getDblDotLocalExecCwd(), 'template.config.xml');
-      if (!fs.existsSync(templateConfigXml)) {
-        // prompt user to import a template
-        dblDotLocalService.importConfigXml(configXmlPath);
-      } else {
-        fs.copySync(templateConfigXml, configXmlPath);
-      }
-      if (!fs.existsSync(configXmlPath)) {
-        console.log(`Missing ${configXmlPath}`);
-        return;
-      }
-    }
-    return fs.readFileSync(configXmlPath);
-  }
-
   handleEdit = (workspace) => (event) => {
     // launch edit dialog
-    const configXmlPath = dblDotLocalService.getConfigXmlFullPath(workspace);
-    const configFile = this.readFileOrTemplate(configXmlPath);
-    const parser = new xml2js.Parser();
-    parser.parseString(configFile, (errParse, configXmlSettings) => {
-      console.dir(configXmlSettings);
-      const { configXmlSettings: newConfigXmlSettings } =
-        updateAndWriteConfigXmlSettings({ workspace, configXmlSettings });
-      this.setState({ openEditDialog: { workspace, configXmlSettings: newConfigXmlSettings } });
+    dblDotLocalService.updateConfigXmlWithNewPaths(workspace, (errParse, configXmlSettings) => {
+      this.setState({ openEditDialog: { workspace, configXmlSettings } });
     });
   }
 
@@ -210,7 +170,7 @@ class WorkspacesPage extends PureComponent<Props> {
         console.log(error);
       }
     }
-    updateAndWriteConfigXmlSettings(newSettings);
+    dblDotLocalService.updateAndWriteConfigXmlSettings(newSettings);
     this.updateWorkspaceCards(newSettings.workspace, oldSettings.workspace);
     this.setState({ openEditDialog: null });
   }

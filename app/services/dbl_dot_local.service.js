@@ -1,6 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import childProcess from 'child_process';
+import xml2js from 'xml2js';
 import log from 'electron-log';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 import { authHeader } from '../helpers';
@@ -19,7 +20,10 @@ export const dblDotLocalService = {
   getDblDotLocalExecCwd,
   getConfigXmlFullPath,
   getDblDotLocalExecStatus,
-  getWorkspacesDir
+  getWorkspacesDir,
+  convertConfigXmlToJson,
+  updateConfigXmlWithNewPaths,
+  updateAndWriteConfigXmlSettings
 };
 export default dblDotLocalService;
 
@@ -245,4 +249,53 @@ function getConfigXmlFullPath(workspace) {
 function getWorkspacesDir() {
   const app = getApp();
   return path.join(app.getPath('userData'), 'workspaces');
+}
+
+function convertConfigXmlToJson(workspace, onConvertedCallback) {
+  const configXmlPath = dblDotLocalService.getConfigXmlFullPath(workspace);
+  const configFile = readFileOrTemplate(configXmlPath);
+  const parser = new xml2js.Parser();
+  parser.parseString(configFile, onConvertedCallback);
+}
+
+function readFileOrTemplate(configXmlPath) {
+  if (!fs.existsSync(configXmlPath)) {
+    // import template.config.xml
+    const templateConfigXml = path.join(dblDotLocalService.getDblDotLocalExecCwd(), 'template.config.xml');
+    if (!fs.existsSync(templateConfigXml)) {
+      // prompt user to import a template
+      dblDotLocalService.importConfigXml(configXmlPath);
+    } else {
+      fs.copySync(templateConfigXml, configXmlPath);
+    }
+    if (!fs.existsSync(configXmlPath)) {
+      console.log(`Missing ${configXmlPath}`);
+      return;
+    }
+  }
+  return fs.readFileSync(configXmlPath);
+}
+
+function updateConfigXmlWithNewPaths(workspace, onUpdatedCallback) {
+  dblDotLocalService.convertConfigXmlToJson(workspace, (errParse, configXmlSettings) => {
+    console.dir(configXmlSettings);
+    const { configXmlSettings: newConfigXmlSettings } =
+      dblDotLocalService.updateAndWriteConfigXmlSettings({ workspace, configXmlSettings });
+    onUpdatedCallback(errParse, { ...newConfigXmlSettings });
+  });
+}
+
+function updateAndWriteConfigXmlSettings({ configXmlSettings, workspace }) {
+  // set paths
+  const newConfigXmlSettings = JSON.parse(JSON.stringify(configXmlSettings));
+  const { fullPath } = workspace;
+  newConfigXmlSettings.settings.storer[0].bundleRootDir[0] = path.join(fullPath, 'bundles');
+  newConfigXmlSettings.settings.storer[0].sessionBundleRootDir[0] = path.join(fullPath, 'sessions');
+  newConfigXmlSettings.settings.system[0].logDir[0] = path.join(fullPath, 'log');
+  const builder = new xml2js.Builder({ headless: true });
+  const xml = builder.buildObject(newConfigXmlSettings);
+  const configXmlPath = dblDotLocalService.getConfigXmlFullPath(workspace);
+  fs.writeFileSync(configXmlPath, xml);
+  console.log(xml);
+  return { xml, configXmlSettings: newConfigXmlSettings };
 }
