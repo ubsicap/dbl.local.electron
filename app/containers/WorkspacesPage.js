@@ -22,8 +22,6 @@ import { logout } from '../actions/user.actions';
 import MenuAppBar from '../components/MenuAppBar';
 import WorkspaceEditDialog from '../components/WorkspaceEditDialog';
 
-const { app } = require('electron').remote;
-
 function updateAndWriteConfigXmlSettings({ configXmlSettings, workspace }) {
   // set paths
   const newConfigXmlSettings = JSON.parse(JSON.stringify(configXmlSettings));
@@ -112,7 +110,7 @@ const styles = theme => ({
   },
 });
 
-const workspacesDir = path.join(app.getPath('userData'), 'workspaces');
+const workspacesDir = dblDotLocalService.getWorkspacesDir();
 
 function createWorkspace(fullPath) {
   const stats = fs.lstatSync(fullPath);
@@ -153,8 +151,8 @@ class WorkspacesPage extends PureComponent<Props> {
     this.setState({ cards: [] }, this.updateAllWorkspaceCards);
   }
 
-  updateWorkspaceCards = (nextWorkspace) => {
-    const cards = [...this.state.cards, nextWorkspace];
+  updateWorkspaceCards = (nextWorkspace, workspaceToRemove) => {
+    const cards = [...this.state.cards.filter(w => w !== workspaceToRemove), nextWorkspace];
     const orderByConfig = [{ desc: 'dateModified' }];
     const sorted = sort(cards).by(orderByConfig);
     this.setState({ cards: sorted });
@@ -201,8 +199,19 @@ class WorkspacesPage extends PureComponent<Props> {
     });
   }
 
-  handleClickOkEdit = (newSettings) => (event) => {
+  handleClickOkEdit = (oldSettings, newSettings) => (event) => {
+    const { workspace: { fullPath: oldWorkspacePath } } = oldSettings;
+    const { workspace: { fullPath: newWorkspacePath } } = newSettings;
+    if (oldWorkspacePath !== newWorkspacePath) {
+      try {
+        console.log(`renaming workspace path to ${newWorkspacePath}`);
+        fs.renameSync(oldWorkspacePath, newWorkspacePath);
+      } catch (error) {
+        console.log(error);
+      }
+    }
     updateAndWriteConfigXmlSettings(newSettings);
+    this.updateWorkspaceCards(newSettings.workspace, oldSettings.workspace);
     this.setState({ openEditDialog: null });
   }
 
@@ -277,8 +286,8 @@ class WorkspacesPage extends PureComponent<Props> {
                         <Settings className={classes.icon} />
                         Settings
                       </Button>
-                      {this.state.openEditDialog && this.state.openEditDialog.workspace === card &&
-                      <WorkspaceEditDialog settings={this.state.openEditDialog} handleClickOk={this.handleClickOkEdit} handleClickCancel={this.handleClickCancelEdit} />
+                      {openEditDialog && openEditDialog.workspace === card &&
+                      <WorkspaceEditDialog settings={openEditDialog} handleClickOk={this.handleClickOkEdit} handleClickCancel={this.handleClickCancelEdit} />
                       }
                       <Button disabled={!card.isReadyForLogin || isRunningDblDotLocalProcess} variant="contained" size="small" color="primary" onClick={this.handleLogin(card)}>
                         Login

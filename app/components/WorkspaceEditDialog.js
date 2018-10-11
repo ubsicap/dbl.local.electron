@@ -9,6 +9,8 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 import SuperSelectField from 'material-ui-superselectfield/es';
+import path from 'path';
+import { dblDotLocalService } from '../services/dbl_dot_local.service';
 
 type Props = {
   settings: ?{},
@@ -16,16 +18,20 @@ type Props = {
   handleClickCancel: () => {}
 };
 
+/* eslint-disable camelcase */
+
 function importSettingsToState(settings) {
   const { configXmlSettings, workspace } = settings;
   const workspaceName = workspace.name;
-  const { settings: { dbl }} = configXmlSettings;
-  const { accessToken, secretKey, organizationType, downloadOpenAccessEntries } = dbl[0];
+  const { settings: { dbl } } = configXmlSettings;
+  const {
+    accessToken, secretKey, organizationType, downloadOpenAccessEntries
+  } = dbl[0];
   const settings_dbl_accessToken = accessToken[0];
   const settings_dbl_secretKey = secretKey[0];
   const settings_dbl_organizationType = organizationType[0];
   const settings_dbl_downloadOpenAccessEntries = Boolean(downloadOpenAccessEntries[0]);
-  return { 
+  return {
     workspaceName,
     settings_dbl_accessToken,
     settings_dbl_secretKey,
@@ -35,15 +41,17 @@ function importSettingsToState(settings) {
 }
 
 function exportStateToSettings(state, origSettings) {
-  const { 
+  const {
     workspaceName,
     settings_dbl_accessToken,
     settings_dbl_secretKey,
     settings_dbl_organizationType,
     settings_dbl_downloadOpenAccessEntries
   } = state;
-  const workspace = { ...origSettings.workspace, name: workspaceName };
-  const configXmlSettings = { 
+  const workspacesDir = dblDotLocalService.getWorkspacesDir();
+  const newFullPath = path.join(workspacesDir, workspaceName);
+  const workspace = { ...origSettings.workspace, name: workspaceName, fullPath: newFullPath };
+  const configXmlSettings = {
     settings: {
       ...origSettings.configXmlSettings.settings,
       dbl: [{
@@ -54,7 +62,7 @@ function exportStateToSettings(state, origSettings) {
         downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries]
       }]
     }
-  }
+  };
   return { workspace, configXmlSettings };
 }
 
@@ -132,7 +140,7 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
               value={this.getInputValue('settings_dbl_secretKey')}
               onChange={this.handleInputChange}
             />
-            <SuperSelectField              
+            <SuperSelectField
               name="settings_dbl_organizationType"
               multiple
               floatingLabel="Organization Type(s) *"
@@ -161,7 +169,7 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
             <Button onClick={this.props.handleClickCancel} color="primary">
               Cancel
             </Button>
-            <Button onClick={this.props.handleClickOk(exportStateToSettings(this.state, this.props.settings))} color="primary">
+            <Button onClick={this.props.handleClickOk(this.props.settings, exportStateToSettings(this.state, this.props.settings))} color="primary">
               Save
             </Button>
           </DialogActions>

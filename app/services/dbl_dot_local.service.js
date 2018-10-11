@@ -18,7 +18,8 @@ export const dblDotLocalService = {
   exportConfigXml,
   getDblDotLocalExecCwd,
   getConfigXmlFullPath,
-  getDblDotLocalExecStatus
+  getDblDotLocalExecStatus,
+  getWorkspacesDir
 };
 export default dblDotLocalService;
 
@@ -239,4 +240,9 @@ function exportConfigXml(sourceFilePath) {
 function getConfigXmlFullPath(workspace) {
   const { fullPath: workspaceFullPath } = workspace;
   return path.join(workspaceFullPath, 'config.xml');
+}
+
+function getWorkspacesDir() {
+  const app = getApp();
+  return path.join(app.getPath('userData'), 'workspaces');
 }
