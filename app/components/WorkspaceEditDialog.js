@@ -78,17 +78,19 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
     this.setState({ [name]: newValue });
   }
 
-  hasError = (name) => {
+  getErrorText = (name) => {
     switch (name) {
       case 'workspaceName': {
         const value = this.state[name];
-        return filenamify(value) !== value;
+        return filenamify(value) !== value ? 'Invalid folder name' : '';
       }
       default: {
-        return false;
+        return '';
       }
     }
   }
+
+  hasError = (name) => Boolean(this.getErrorText(name));
 
   hasAnyErrors = () => Object.keys(this.state).some(name => this.hasError(name));
 
@@ -129,6 +131,7 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
               name="workspaceName"
               error={this.hasError('workspaceName')}
               value={this.getInputValue('workspaceName')}
+              helperText={this.getErrorText('workspaceName')}
               label="Workspace Name"
               fullWidth
               onChange={this.handleInputChange}
@@ -140,6 +143,7 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
               name="settings_dbl_accessToken"
               value={this.getInputValue('settings_dbl_accessToken')}
               error={this.hasError('settings_dbl_accessToken')}
+              helperText={this.getErrorText('settings_dbl_accessToken')}
               label="Access Token"
               fullWidth
               inputProps={{ maxLength: '20' }}
