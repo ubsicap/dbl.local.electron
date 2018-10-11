@@ -171,7 +171,8 @@ class WorkspacesPage extends PureComponent<Props> {
       }
     }
     dblDotLocalService.updateAndWriteConfigXmlSettings(newSettings);
-    this.updateWorkspaceCards(newSettings.workspace, oldSettings.workspace);
+    const newWorkspace = createWorkspace(newWorkspacePath);
+    this.updateWorkspaceCards(newWorkspace, oldSettings.workspace);
     this.setState({ openEditDialog: null });
   }
 
