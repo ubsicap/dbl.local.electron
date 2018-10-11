@@ -84,6 +84,20 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
         const value = this.state[name];
         return filenamify(value) !== value ? 'Invalid folder name' : '';
       }
+      case 'settings_dbl_accessToken': {
+        const value = this.state[name];
+        const regex = RegExp('[0-9A-F]{20}');
+        return regex.test(value) ? '' : 'Requires 20 HEX characters';
+      }
+      case 'settings_dbl_secretKey': {
+        const value = this.state[name];
+        const regex = RegExp('[0-9A-F]{80}');
+        return regex.test(value) ? '' : 'Requires 80 HEX characters';
+      }
+      case 'settings_dbl_organizationType': {
+        const value = this.state[name];
+        return value.length === 0 ? 'Requires ipc or lch (or both)' : '';
+      }
       default: {
         return '';
       }
@@ -156,6 +170,7 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
               name="settings_dbl_secretKey"
               value={this.getInputValue('settings_dbl_secretKey')}
               error={this.hasError('settings_dbl_secretKey')}
+              helperText={this.getErrorText('settings_dbl_secretKey')}
               label="Secret Key"
               fullWidth
               inputProps={{ maxLength: '80' }}
@@ -169,7 +184,7 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
               floatingLabelStyle={{ color: 'rgba(0, 0, 0, 0.54)' }}
               floatingLabelFocusStyle={{ color: '#303f9f' }}
               value={organizationTypeValues}
-              errorText={(organizationTypeValues.length === 0 ? 'Requires ipc or lch (or both)' : '')}
+              errorText={this.getErrorText('settings_dbl_organizationType')}
               onChange={this.handleChangeOrganizationType}
               style={{ display: 'flex', marginTop: 20 }}
             >
