@@ -16,7 +16,8 @@ import { dblDotLocalService } from '../services/dbl_dot_local.service';
 type Props = {
   settings: ?{},
   handleClickOk: () => {},
-  handleClickCancel: () => {}
+  handleClickCancel: () => {},
+  getInitialFormErrors: () => {}
 };
 
 /* eslint-disable camelcase */
@@ -70,6 +71,14 @@ function exportStateToSettings(state, origSettings) {
 export default class WorkspaceEditDialog extends React.Component<Props> {
   props: Props;
   state = importSettingsToState(this.props.settings);
+
+  componentDidMount() {
+    const { getInitialFormErrors } = this.props;
+    if (getInitialFormErrors) {
+      const errors = Object.keys(this.state).map(name => this.getErrorText(name)).filter(v => v.length);
+      getInitialFormErrors(errors);
+    }
+  }
 
   getOrganizationTypeValues = () => this.state.settings_dbl_organizationType || '';
 

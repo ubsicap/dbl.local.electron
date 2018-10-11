@@ -188,6 +188,10 @@ class WorkspacesPage extends PureComponent<Props> {
     this.props.gotoWorkspaceLoginPage(workspace);
   }
 
+  getInitialFormErrors = (card) => (formErrors) => {
+    console.log({ card, formErrors });
+  }
+
   renderWorkspaceCards = () => {
     const { classes, isRunningDblDotLocalProcess } = this.props;
     const { cards, openEditDialog } = this.state;
@@ -248,7 +252,7 @@ class WorkspacesPage extends PureComponent<Props> {
                         Settings
                       </Button>
                       {openEditDialog && openEditDialog.workspace === card &&
-                      <WorkspaceEditDialog settings={openEditDialog} handleClickOk={this.handleClickOkEdit} handleClickCancel={this.handleClickCancelEdit} />
+                      <WorkspaceEditDialog settings={openEditDialog} handleClickOk={this.handleClickOkEdit} handleClickCancel={this.handleClickCancelEdit} getInitialFormErrors={this.getInitialFormErrors(card)} />
                       }
                       <Button disabled={!card.isReadyForLogin || isRunningDblDotLocalProcess} variant="contained" size="small" color="primary" onClick={this.handleLogin(card)}>
                         Login
