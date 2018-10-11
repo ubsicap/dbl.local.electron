@@ -31,7 +31,7 @@ function importSettingsToState(settings) {
   const settings_dbl_accessToken = accessToken[0];
   const settings_dbl_secretKey = secretKey[0];
   const settings_dbl_organizationType = organizationType[0];
-  const settings_dbl_downloadOpenAccessEntries = Boolean(downloadOpenAccessEntries[0]);
+  const settings_dbl_downloadOpenAccessEntries = downloadOpenAccessEntries[0] === 'true';
   return {
     workspaceName,
     settings_dbl_accessToken,
