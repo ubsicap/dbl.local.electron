@@ -10,6 +10,7 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 import SuperSelectField from 'material-ui-superselectfield/es';
 import path from 'path';
+import filenamify from 'filenamify';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 
 type Props = {
@@ -77,6 +78,20 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
     this.setState({ [name]: newValue });
   }
 
+  hasError = (name) => {
+    switch (name) {
+      case 'workspaceName': {
+        const value = this.state[name];
+        return filenamify(value) !== value;
+      }
+      default: {
+        return false;
+      }
+    }
+  }
+
+  hasAnyErrors = () => Object.keys(this.state).some(name => this.hasError(name));
+
   handleInputChange = (event) => {
     const { target } = event;
     const value = target.type === 'checkbox' ? target.checked : target.value;
@@ -112,9 +127,10 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
               autoFocus
               margin="dense"
               name="workspaceName"
+              error={this.hasError('workspaceName')}
+              value={this.getInputValue('workspaceName')}
               label="Workspace Name"
               fullWidth
-              value={this.getInputValue('workspaceName')}
               onChange={this.handleInputChange}
             />
             <TextField
@@ -122,10 +138,11 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
               autoFocus
               margin="dense"
               name="settings_dbl_accessToken"
+              value={this.getInputValue('settings_dbl_accessToken')}
+              error={this.hasError('settings_dbl_accessToken')}
               label="Access Token"
               fullWidth
               inputProps={{ maxLength: '20' }}
-              value={this.getInputValue('settings_dbl_accessToken')}
               onChange={this.handleInputChange}
             />
             <TextField
@@ -133,11 +150,12 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
               autoFocus
               margin="dense"
               name="settings_dbl_secretKey"
+              value={this.getInputValue('settings_dbl_secretKey')}
+              error={this.hasError('settings_dbl_secretKey')}
               label="Secret Key"
               fullWidth
               inputProps={{ maxLength: '80' }}
               type="password"
-              value={this.getInputValue('settings_dbl_secretKey')}
               onChange={this.handleInputChange}
             />
             <SuperSelectField
@@ -169,7 +187,7 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
             <Button onClick={this.props.handleClickCancel} color="primary">
               Cancel
             </Button>
-            <Button onClick={this.props.handleClickOk(this.props.settings, exportStateToSettings(this.state, this.props.settings))} color="primary">
+            <Button disabled={this.hasAnyErrors()} onClick={this.props.handleClickOk(this.props.settings, exportStateToSettings(this.state, this.props.settings))} color="primary">
               Save
             </Button>
           </DialogActions>
