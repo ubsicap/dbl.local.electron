@@ -24,6 +24,21 @@ import WorkspaceEditDialog from '../components/WorkspaceEditDialog';
 
 const { app } = require('electron').remote;
 
+function updateAndWriteConfigXmlSettings({ configXmlSettings, workspace }) {
+  // set paths
+  const newConfigXmlSettings = JSON.parse(JSON.stringify(configXmlSettings));
+  const { fullPath } = workspace;
+  newConfigXmlSettings.settings.storer[0].bundleRootDir[0] = path.join(fullPath, 'bundles');
+  newConfigXmlSettings.settings.storer[0].sessionBundleRootDir[0] = path.join(fullPath, 'sessions');
+  newConfigXmlSettings.settings.system[0].logDir[0] = path.join(fullPath, 'log');
+  const builder = new xml2js.Builder({ headless: true });
+  const xml = builder.buildObject(newConfigXmlSettings);
+  const configXmlPath = dblDotLocalService.getConfigXmlFullPath(workspace);
+  fs.writeFileSync(configXmlPath, xml);
+  console.log(xml);
+  return { xml, configXmlSettings: newConfigXmlSettings };
+}
+
 type Props = {
   classes: {},
   isRunningDblDotLocalProcess: boolean,
@@ -178,28 +193,16 @@ class WorkspacesPage extends PureComponent<Props> {
     const configXmlPath = dblDotLocalService.getConfigXmlFullPath(workspace);
     const configFile = this.readFileOrTemplate(configXmlPath);
     const parser = new xml2js.Parser();
-    parser.parseString(configFile, (errParse, configXmlSettingsOrig) => {
-      console.dir(configXmlSettingsOrig);
-      const configXmlSettings = JSON.parse(JSON.stringify(configXmlSettingsOrig));
-      // set paths
-      const { fullPath } = workspace;
-      configXmlSettings.settings.storer[0].bundleRootDir[0] = path.join(fullPath, 'bundles');
-      configXmlSettings.settings.storer[0].sessionBundleRootDir[0] = path.join(fullPath, 'sessions');
-      configXmlSettings.settings.system[0].logDir[0] = path.join(fullPath, 'log');
-      const builder = new xml2js.Builder({ headless: true });
-      const xml = builder.buildObject(configXmlSettings);
-      fs.writeFileSync(configXmlPath, xml);
-      console.log(xml);
-      this.setState({ openEditDialog: { workspace, configXmlSettings } });
+    parser.parseString(configFile, (errParse, configXmlSettings) => {
+      console.dir(configXmlSettings);
+      const { configXmlSettings: newConfigXmlSettings } =
+        updateAndWriteConfigXmlSettings({ workspace, configXmlSettings });
+      this.setState({ openEditDialog: { workspace, configXmlSettings: newConfigXmlSettings } });
     });
   }
 
   handleClickOkEdit = (newSettings) => (event) => {
-    const { workspace, configXmlSettings } = newSettings;
-    const builder = new xml2js.Builder({ headless: true });
-    const xml = builder.buildObject(configXmlSettings);
-    const configXmlPath = dblDotLocalService.getConfigXmlFullPath(workspace);
-    fs.writeFileSync(configXmlPath, xml);
+    updateAndWriteConfigXmlSettings(newSettings);
     this.setState({ openEditDialog: null });
   }
 
@@ -228,7 +231,7 @@ class WorkspacesPage extends PureComponent<Props> {
                 Workspaces
               </Typography>
               <Typography variant="title" align="center" color="textSecondary" paragraph>
-                A workspace provides a way to associate DBL organization access tokens with their own list of DBL entries.
+                Each workspace associates a DBL organization access token/secret pair with their own list of DBL entries.
                 Users should create a workspace for each organization for which they have DBL roles.
               </Typography>
               <div className={classes.heroButtons}>
