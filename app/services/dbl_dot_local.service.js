@@ -281,7 +281,9 @@ function updateConfigXmlWithNewPaths(workspace, onUpdatedCallback) {
     console.dir(configXmlSettings);
     const { configXmlSettings: newConfigXmlSettings } =
       dblDotLocalService.updateAndWriteConfigXmlSettings({ workspace, configXmlSettings });
-    onUpdatedCallback(errParse, { ...newConfigXmlSettings });
+    if (onUpdatedCallback) {
+      onUpdatedCallback(errParse, { ...newConfigXmlSettings });
+    }
   });
 }
 

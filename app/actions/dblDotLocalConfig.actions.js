@@ -49,23 +49,41 @@ export function gotoWorkspaceLoginPage(workspace) {
         history.push(navigationConstants.NAVIGATION_UNKNOWN_WORKSPACE_LOGIN);
         return;
       }
-      const { fullPath: workspaceFullPath, name: workspaceName } = workspace;
-      const configXmlFile = dblDotLocalService.getConfigXmlFullPath(workspace);
-      const dblDotLocalExecProcess = await dblDotLocalService.startDblDotLocal(configXmlFile);
-      ['error', 'close', 'exit'].forEach(event => {
-        dblDotLocalExecProcess.on(event, (dblDotLocalExecProcessCode) => {
-          dispatch(getDblDotLocalExecStatus());
-          dispatch({ type: dblDotLocalConfig.STOP_WORKSPACE_PROCESS_DONE, dblDotLocalExecProcess, dblDotLocalExecProcessCode });
+      dblDotLocalService.updateConfigXmlWithNewPaths(workspace, async (errParse) => {
+        if (errParse) {
+          throw errParse;
+        }
+        const { fullPath: workspaceFullPath, name: workspaceName } = workspace;
+        const configXmlFile = dblDotLocalService.getConfigXmlFullPath(workspace);
+        const dblDotLocalExecProcess = await dblDotLocalService.startDblDotLocal(configXmlFile);
+        ['error', 'close', 'exit'].forEach(event => {
+          dblDotLocalExecProcess.on(event, (dblDotLocalExecProcessCode) => {
+            dispatch(getDblDotLocalExecStatus());
+            dispatch({
+              type: dblDotLocalConfig.STOP_WORKSPACE_PROCESS_DONE,
+              dblDotLocalExecProcess,
+              dblDotLocalExecProcessCode
+            });
+          });
         });
+        dispatch(setWorkspaceFullPath(workspaceFullPath, configXmlFile, dblDotLocalExecProcess));
+        const loginUrl =
+          utilities.buildRouteUrl(
+            navigationConstants.NAVIGATION_WORKSPACE_LOGIN,
+            { workspaceName }
+          );
+        history.push(loginUrl);
       });
-      dispatch(setWorkspaceFullPath(workspaceFullPath, configXmlFile, dblDotLocalExecProcess));
-      const loginUrl = utilities.buildRouteUrl(navigationConstants.NAVIGATION_WORKSPACE_LOGIN, { workspaceName });
-      history.push(loginUrl);
     } catch (error) {
       console.log(error);
     }
   };
   function setWorkspaceFullPath(fullPath, configXmlFile, dblDotLocalExecProcess) {
-    return { type: dblDotLocalConfig.START_WORKSPACE_PROCESS, fullPath, configXmlFile, dblDotLocalExecProcess };
+    return {
+      type: dblDotLocalConfig.START_WORKSPACE_PROCESS,
+      fullPath,
+      configXmlFile,
+      dblDotLocalExecProcess
+    };
   }
 }
