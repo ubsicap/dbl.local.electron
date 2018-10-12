@@ -49,21 +49,17 @@ export function gotoWorkspaceLoginPage(workspace) {
         history.push(navigationConstants.NAVIGATION_UNKNOWN_WORKSPACE_LOGIN);
         return;
       }
-      dblDotLocalService.updateConfigXmlWithNewPaths(workspace, async (errParse) => {
-        if (errParse) {
-          throw errParse;
-        }
-        const { fullPath: workspaceFullPath, name: workspaceName } = workspace;
-        const configXmlFile = dblDotLocalService.getConfigXmlFullPath(workspace);
-        const dblDotLocalExecProcess = await dblDotLocalService.startDblDotLocal(configXmlFile);
-        ['error', 'close', 'exit'].forEach(event => {
-          dblDotLocalExecProcess.on(event, (dblDotLocalExecProcessCode) => {
-            dispatch(getDblDotLocalExecStatus());
-            dispatch({
-              type: dblDotLocalConfig.STOP_WORKSPACE_PROCESS_DONE,
-              dblDotLocalExecProcess,
-              dblDotLocalExecProcessCode
-            });
+      await dblDotLocalService.updateConfigXmlWithNewPaths(workspace);
+      const { fullPath: workspaceFullPath, name: workspaceName } = workspace;
+      const configXmlFile = dblDotLocalService.getConfigXmlFullPath(workspace);
+      const dblDotLocalExecProcess = await dblDotLocalService.startDblDotLocal(configXmlFile);
+      ['error', 'close', 'exit'].forEach(event => {
+        dblDotLocalExecProcess.on(event, (dblDotLocalExecProcessCode) => {
+          dispatch(getDblDotLocalExecStatus());
+          dispatch({
+            type: dblDotLocalConfig.STOP_WORKSPACE_PROCESS_DONE,
+            dblDotLocalExecProcess,
+            dblDotLocalExecProcessCode
           });
         });
         dispatch(setWorkspaceFullPath(workspaceFullPath, configXmlFile, dblDotLocalExecProcess));

@@ -251,11 +251,23 @@ function getWorkspacesDir() {
   return path.join(app.getPath('userData'), 'workspaces');
 }
 
-function convertConfigXmlToJson(workspace, onConvertedCallback) {
+function parseAsJson(configFile) {
+  return new Promise((resolve, reject) => {
+    const parser = new xml2js.Parser();
+    parser.parseString(configFile, (err, result) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+}
+
+function convertConfigXmlToJson(workspace) {
   const configXmlPath = dblDotLocalService.getConfigXmlFullPath(workspace);
   const configFile = readFileOrTemplate(configXmlPath);
-  const parser = new xml2js.Parser();
-  parser.parseString(configFile, onConvertedCallback);
+  return parseAsJson(configFile);
 }
 
 function readFileOrTemplate(configXmlPath) {
@@ -263,28 +275,19 @@ function readFileOrTemplate(configXmlPath) {
     // import template.config.xml
     const templateConfigXml = path.join(dblDotLocalService.getDblDotLocalExecCwd(), 'template.config.xml');
     if (!fs.existsSync(templateConfigXml)) {
-      // prompt user to import a template
-      dblDotLocalService.importConfigXml(configXmlPath);
-    } else {
-      fs.copySync(templateConfigXml, configXmlPath);
+      console.log(`Missing ${templateConfigXml}`);
+      return null;
     }
-    if (!fs.existsSync(configXmlPath)) {
-      console.log(`Missing ${configXmlPath}`);
-      return;
-    }
+    return fs.readFileSync(templateConfigXml);
   }
   return fs.readFileSync(configXmlPath);
 }
 
-function updateConfigXmlWithNewPaths(workspace, onUpdatedCallback) {
-  dblDotLocalService.convertConfigXmlToJson(workspace, (errParse, configXmlSettings) => {
-    console.dir(configXmlSettings);
-    const { configXmlSettings: newConfigXmlSettings } =
-      dblDotLocalService.updateAndWriteConfigXmlSettings({ workspace, configXmlSettings });
-    if (onUpdatedCallback) {
-      onUpdatedCallback(errParse, { ...newConfigXmlSettings });
-    }
-  });
+async function updateConfigXmlWithNewPaths(workspace) {
+  const configXmlSettings = await dblDotLocalService.convertConfigXmlToJson(workspace);
+  const { configXmlSettings: newConfigXmlSettings } =
+    dblDotLocalService.updateAndWriteConfigXmlSettings({ workspace, configXmlSettings });
+  return { ...newConfigXmlSettings };
 }
 
 function updateAndWriteConfigXmlSettings({ configXmlSettings, workspace }) {

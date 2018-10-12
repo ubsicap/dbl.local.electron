@@ -96,7 +96,7 @@ const styles = theme => ({
 
 const workspacesDir = dblDotLocalService.getWorkspacesDir();
 
-function createWorkspace(fullPath) {
+async function createWorkspace(fullPath) {
   const stats = fs.lstatSync(fullPath);
   if (!stats.isDirectory()) {
     return null;
@@ -105,8 +105,9 @@ function createWorkspace(fullPath) {
   const dateModified = stats.mtime;
   const workspace = { name, fullPath, stats, dateModified };
   const configXmlPath = dblDotLocalService.getConfigXmlFullPath(workspace);
-  const isReadyForLogin = fs.existsSync(configXmlPath);
-  return { ...workspace, isReadyForLogin };
+  const hasConfigXml = fs.existsSync(configXmlPath);
+  const configXmlSettings = await dblDotLocalService.convertConfigXmlToJson(workspace);
+  return { ...workspace, hasConfigXml, configXmlPath, configXmlSettings };
 }
 
 class WorkspacesPage extends PureComponent<Props> {
@@ -122,8 +123,8 @@ class WorkspacesPage extends PureComponent<Props> {
   updateAllWorkspaceCards = async () => {
     await fs.ensureDir(workspacesDir);
     const files = await fs.readdir(workspacesDir);
-    files.map(file => path.join(workspacesDir, file)).forEach(fullPath => {
-      const nextWorkspace = createWorkspace(fullPath);
+    files.map(file => path.join(workspacesDir, file)).forEach(async fullPath => {
+      const nextWorkspace = await createWorkspace(fullPath);
       if (nextWorkspace === null) {
         return;
       }
@@ -152,14 +153,13 @@ class WorkspacesPage extends PureComponent<Props> {
     this.updateWorkspaceCards({ name, fullPath, dateModified, stats });
   };
 
-  handleEdit = (workspace) => (event) => {
+  handleEdit = (workspace) => async (event) => {
     // launch edit dialog
-    dblDotLocalService.updateConfigXmlWithNewPaths(workspace, (errParse, configXmlSettings) => {
-      this.setState({ openEditDialog: { workspace, configXmlSettings } });
-    });
+    const configXmlSettings = await dblDotLocalService.convertConfigXmlToJson(workspace);
+    this.setState({ openEditDialog: { workspace, configXmlSettings } });
   }
 
-  handleClickOkEdit = (oldSettings, newSettings) => (event) => {
+  handleClickOkEdit = (oldSettings, newSettings) => async (event) => {
     const { workspace: { fullPath: oldWorkspacePath } } = oldSettings;
     const { workspace: { fullPath: newWorkspacePath } } = newSettings;
     if (oldWorkspacePath !== newWorkspacePath) {
@@ -171,7 +171,7 @@ class WorkspacesPage extends PureComponent<Props> {
       }
     }
     dblDotLocalService.updateAndWriteConfigXmlSettings(newSettings);
-    const newWorkspace = createWorkspace(newWorkspacePath);
+    const newWorkspace = await createWorkspace(newWorkspacePath);
     this.updateWorkspaceCards(newWorkspace, oldSettings.workspace);
     this.setState({ openEditDialog: null });
   }
@@ -190,6 +190,15 @@ class WorkspacesPage extends PureComponent<Props> {
 
   getInitialFormErrors = (card) => (formErrors) => {
     console.log({ card, formErrors });
+    const { name } = card;
+    this.setState({ configXmlErrors: { ...(this.state.configXmlErrors || {}), [name]: formErrors } }, console.log(this.state.configXmlErrors));
+  }
+
+  shouldDisableLogin = (card) => {
+    const { isRunningDblDotLocalProcess } = this.props;
+    const { configXmlErrors } = this.state;
+    const { name } = card;
+    return isRunningDblDotLocalProcess || !configXmlErrors || !configXmlErrors[name] || Boolean(configXmlErrors[name].length);
   }
 
   renderWorkspaceCards = () => {
@@ -251,10 +260,14 @@ class WorkspacesPage extends PureComponent<Props> {
                         <Settings className={classes.icon} />
                         Settings
                       </Button>
-                      {openEditDialog && openEditDialog.workspace === card &&
-                      <WorkspaceEditDialog settings={openEditDialog} handleClickOk={this.handleClickOkEdit} handleClickCancel={this.handleClickCancelEdit} getInitialFormErrors={this.getInitialFormErrors(card)} />
-                      }
-                      <Button disabled={!card.isReadyForLogin || isRunningDblDotLocalProcess} variant="contained" size="small" color="primary" onClick={this.handleLogin(card)}>
+                      <WorkspaceEditDialog
+                        open={Boolean(openEditDialog && openEditDialog.workspace === card)}
+                        settings={ { workspace: card, configXmlSettings: card.configXmlSettings } }
+                        handleClickOk={this.handleClickOkEdit}
+                        handleClickCancel={this.handleClickCancelEdit}
+                        getInitialFormErrors={this.getInitialFormErrors(card)}
+                      />
+                      <Button disabled={this.shouldDisableLogin(card)} variant="contained" size="small" color="primary" onClick={this.handleLogin(card)}>
                         Login
                       </Button>
                     </CardActions>

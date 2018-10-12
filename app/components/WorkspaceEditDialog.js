@@ -14,6 +14,7 @@ import filenamify from 'filenamify';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 
 type Props = {
+  open: boolean,
   settings: ?{},
   handleClickOk: () => {},
   handleClickCancel: () => {},
@@ -138,7 +139,7 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
     return (
       <div>
         <Dialog
-          open={Boolean(this.props.settings)}
+          open={Boolean(this.props.open)}
           onClose={this.props.handleClickCancel}
           aria-labelledby="form-dialog-title"
         >
