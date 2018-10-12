@@ -7,10 +7,11 @@ const initialState = {
 export function dblDotLocalConfig(state = initialState, action) {
   switch (action.type) {
     case dblDotLocalConfigConstants.DBL_DOT_LOCAL_PROCESS_STATUS: {
-      const { isRunning: isRunningUnknownDblDotLocalProcess } = action;
+      const { isRunningKnownDblLocalProcess } = state;
+      const { isRunning } = action;
       return {
         ...state,
-        isRunningUnknownDblDotLocalProcess
+        isRunningUnknownDblDotLocalProcess: !isRunningKnownDblLocalProcess && isRunning
       };
     }
     case dblDotLocalConfigConstants.START_WORKSPACE_PROCESS: {
@@ -20,7 +21,8 @@ export function dblDotLocalConfig(state = initialState, action) {
           ...state,
           configXmlFile,
           dblDotLocalExecProcess,
-          isRunningKnownDblLocalProcess: true
+          isRunningKnownDblLocalProcess: true,
+          isRunningUnknownDblDotLocalProcess: false
         };
       }
       return state;
@@ -28,7 +30,8 @@ export function dblDotLocalConfig(state = initialState, action) {
     case dblDotLocalConfigConstants.STOP_WORKSPACE_PROCESS_REQUEST: {
       return {
         ...state,
-        isRequestingStopDblDotLocalExecProcess: true
+        isRequestingStopDblDotLocalExecProcess: true,
+        isRunningUnknownDblDotLocalProcess: false
       };
     }
     case dblDotLocalConfigConstants.STOP_WORKSPACE_PROCESS_DONE: {
@@ -42,7 +45,8 @@ export function dblDotLocalConfig(state = initialState, action) {
           dblDotLocalExecProcessCode,
           isRunningKnownDblLocalProcess: false,
           dblBaseUrl: null,
-          isRequestingStopDblDotLocalExecProcess: false
+          isRequestingStopDblDotLocalExecProcess: false,
+          isRunningUnknownDblDotLocalProcess: false
         };
       }
       return state;
