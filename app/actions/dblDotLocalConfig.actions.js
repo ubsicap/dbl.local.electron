@@ -55,12 +55,12 @@ export function gotoWorkspaceLoginPage(workspace) {
       const dblDotLocalExecProcess = await dblDotLocalService.startDblDotLocal(configXmlFile);
       ['error', 'close', 'exit'].forEach(event => {
         dblDotLocalExecProcess.on(event, (dblDotLocalExecProcessCode) => {
-          dispatch(getDblDotLocalExecStatus());
           dispatch({
             type: dblDotLocalConfig.STOP_WORKSPACE_PROCESS_DONE,
             dblDotLocalExecProcess,
             dblDotLocalExecProcessCode
           });
+          dispatch(getDblDotLocalExecStatus());
         });
         dispatch(setWorkspaceFullPath(workspaceFullPath, configXmlFile, dblDotLocalExecProcess));
         const loginUrl =

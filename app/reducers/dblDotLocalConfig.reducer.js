@@ -25,6 +25,12 @@ export function dblDotLocalConfig(state = initialState, action) {
       }
       return state;
     }
+    case dblDotLocalConfigConstants.STOP_WORKSPACE_PROCESS_REQUEST: {
+      return {
+        ...state,
+        isRequestingStopDblDotLocalExecProcess: true
+      };
+    }
     case dblDotLocalConfigConstants.STOP_WORKSPACE_PROCESS_DONE: {
       const { configXmlFile } = state;
       const { dblDotLocalExecProcess, dblDotLocalExecProcessCode } = action;
@@ -35,7 +41,8 @@ export function dblDotLocalConfig(state = initialState, action) {
           dblDotLocalExecProcess,
           dblDotLocalExecProcessCode,
           processStopped: true,
-          dblBaseUrl: null
+          dblBaseUrl: null,
+          isRequestingStopDblDotLocalExecProcess: false
         };
       }
       return state;

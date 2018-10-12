@@ -26,6 +26,7 @@ import ConfirmButton from '../components/ConfirmButton';
 type Props = {
   classes: {},
   isRunningDblDotLocalProcess: boolean,
+  isRequestingStopDblDotLocalExecProcess: boolean,
   getDblDotLocalExecStatus: () => {},
   gotoWorkspaceLoginPage: () => {},
   logout: () => {}
@@ -33,8 +34,12 @@ type Props = {
 
 function mapStateToProps(state) {
   const { dblDotLocalConfig } = state;
-  const { isRunningDblDotLocalProcess = false } = dblDotLocalConfig;
+  const {
+    isRunningDblDotLocalProcess = false,
+    isRequestingStopDblDotLocalExecProcess = false
+  } = dblDotLocalConfig;
   return {
+    isRequestingStopDblDotLocalExecProcess,
     isRunningDblDotLocalProcess
   };
 }
@@ -135,6 +140,7 @@ class WorkspacesPage extends PureComponent<Props> {
   }
 
   refreshAll = () => {
+    this.props.getDblDotLocalExecStatus();
     this.setState({ cards: [] }, this.updateAllWorkspaceCards);
   }
 
@@ -209,7 +215,7 @@ class WorkspacesPage extends PureComponent<Props> {
   }
 
   renderWorkspaceCards = () => {
-    const { classes, isRunningDblDotLocalProcess } = this.props;
+    const { classes, isRunningDblDotLocalProcess, isRequestingStopDblDotLocalExecProcess } = this.props;
     const { cards, openEditDialog } = this.state;
     return (
       <React.Fragment>
@@ -228,7 +234,7 @@ class WorkspacesPage extends PureComponent<Props> {
                 <Grid container spacing={16} justify="center">
                   {isRunningDblDotLocalProcess &&
                   <Grid item>
-                    <Button variant="contained" color="secondary" onClick={this.handleLogin()}>
+                    <Button disabled={isRequestingStopDblDotLocalExecProcess} variant="contained" color="secondary" onClick={this.handleLogin()}>
                       Login to Unknown Workspace
                     </Button>
                   </Grid>}
