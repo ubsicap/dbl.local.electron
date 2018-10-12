@@ -143,14 +143,13 @@ class WorkspacesPage extends PureComponent<Props> {
     this.setState({ cards: sorted });
   }
 
-  handleCreateWorkspace = () => {
+  handleCreateWorkspace = async () => {
     const uuid1 = uuidv1();
     const name = `My Org ${uuid1.substr(0, 5)}`;
     const fullPath = path.join(workspacesDir, name);
     fs.ensureDirSync(fullPath);
-    const stats = fs.lstatSync(fullPath);
-    const dateModified = stats.mtime;
-    this.updateWorkspaceCards({ name, fullPath, dateModified, stats });
+    const workspace = await createWorkspace(fullPath);
+    this.updateWorkspaceCards(workspace);
   };
 
   handleEdit = (workspace) => async (event) => {
