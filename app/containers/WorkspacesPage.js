@@ -260,13 +260,14 @@ class WorkspacesPage extends PureComponent<Props> {
                         <Settings className={classes.icon} />
                         Settings
                       </Button>
+                      {card.configXmlSettings &&
                       <WorkspaceEditDialog
                         open={Boolean(openEditDialog && openEditDialog.workspace === card)}
                         settings={ { workspace: card, configXmlSettings: card.configXmlSettings } }
                         handleClickOk={this.handleClickOkEdit}
                         handleClickCancel={this.handleClickCancelEdit}
                         getInitialFormErrors={this.getInitialFormErrors(card)}
-                      />
+                      />}
                       <Button disabled={this.shouldDisableLogin(card)} variant="contained" size="small" color="primary" onClick={this.handleLogin(card)}>
                         Login
                       </Button>
