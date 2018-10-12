@@ -7,7 +7,7 @@ import sort from 'fast-sort';
 import uuidv1 from 'uuid/v1';
 import classNames from 'classnames';
 import Button from '@material-ui/core/Button';
-import { AddCircle, Refresh, Settings } from '@material-ui/icons';
+import { AddCircle, Refresh, Settings, Delete } from '@material-ui/icons';
 import Card from '@material-ui/core/Card';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
@@ -20,6 +20,7 @@ import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { logout } from '../actions/user.actions';
 import MenuAppBar from '../components/MenuAppBar';
 import WorkspaceEditDialog from '../components/WorkspaceEditDialog';
+import ConfirmButton from '../components/ConfirmButton';
 
 type Props = {
   classes: {},
@@ -137,7 +138,8 @@ class WorkspacesPage extends PureComponent<Props> {
   }
 
   updateWorkspaceCards = (nextWorkspace, workspaceToRemove) => {
-    const cards = [...this.state.cards.filter(w => w !== workspaceToRemove), nextWorkspace];
+    const workspacesToAdd = nextWorkspace ? [nextWorkspace] : [];
+    const cards = [...this.state.cards.filter(w => w !== workspaceToRemove), ...workspacesToAdd];
     const orderByConfig = [{ desc: 'dateModified' }];
     const sorted = sort(cards).by(orderByConfig);
     this.setState({ cards: sorted });
@@ -151,6 +153,11 @@ class WorkspacesPage extends PureComponent<Props> {
     const workspace = await createWorkspace(fullPath);
     this.updateWorkspaceCards(workspace);
   };
+
+  onClickDeleteWorkspace = (workspace) => async () => {
+    fs.removeSync(workspace.fullPath);
+    this.updateWorkspaceCards(null, workspace);
+  }
 
   handleEdit = (workspace) => async (event) => {
     // launch edit dialog
@@ -270,6 +277,15 @@ class WorkspacesPage extends PureComponent<Props> {
                       <Button disabled={this.shouldDisableLogin(card)} variant="contained" size="small" color="primary" onClick={this.handleLogin(card)}>
                         Login
                       </Button>
+                      <div style={{ flex: 1 }} />
+                      <ConfirmButton
+                        classes={classes}
+                        variant="flat"
+                        size="small"
+                        onClick={this.onClickDeleteWorkspace(card)}
+                      >
+                        <Delete className={classNames(classes.leftIcon, classes.iconSmall)} />
+                      </ConfirmButton>
                     </CardActions>
                   </Card>
                 </Grid>
