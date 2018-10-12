@@ -7,10 +7,10 @@ const initialState = {
 export function dblDotLocalConfig(state = initialState, action) {
   switch (action.type) {
     case dblDotLocalConfigConstants.DBL_DOT_LOCAL_PROCESS_STATUS: {
-      const { isRunning: isRunningDblDotLocalProcess } = action;
+      const { isRunning: isRunningUnknownDblDotLocalProcess } = action;
       return {
         ...state,
-        isRunningDblDotLocalProcess
+        isRunningUnknownDblDotLocalProcess
       };
     }
     case dblDotLocalConfigConstants.START_WORKSPACE_PROCESS: {
@@ -20,7 +20,7 @@ export function dblDotLocalConfig(state = initialState, action) {
           ...state,
           configXmlFile,
           dblDotLocalExecProcess,
-          processStarted: true,
+          isRunningKnownDblLocalProcess: true
         };
       }
       return state;
@@ -40,7 +40,7 @@ export function dblDotLocalConfig(state = initialState, action) {
           configXmlFile,
           dblDotLocalExecProcess,
           dblDotLocalExecProcessCode,
-          processStopped: true,
+          isRunningKnownDblLocalProcess: false,
           dblBaseUrl: null,
           isRequestingStopDblDotLocalExecProcess: false
         };

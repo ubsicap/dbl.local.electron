@@ -25,7 +25,7 @@ import ConfirmButton from '../components/ConfirmButton';
 
 type Props = {
   classes: {},
-  isRunningDblDotLocalProcess: boolean,
+  isRunningUnknownDblDotLocalProcess: boolean,
   isRequestingStopDblDotLocalExecProcess: boolean,
   getDblDotLocalExecStatus: () => {},
   gotoWorkspaceLoginPage: () => {},
@@ -35,12 +35,12 @@ type Props = {
 function mapStateToProps(state) {
   const { dblDotLocalConfig } = state;
   const {
-    isRunningDblDotLocalProcess = false,
+    isRunningUnknownDblDotLocalProcess = false,
     isRequestingStopDblDotLocalExecProcess = false
   } = dblDotLocalConfig;
   return {
     isRequestingStopDblDotLocalExecProcess,
-    isRunningDblDotLocalProcess
+    isRunningUnknownDblDotLocalProcess
   };
 }
 
@@ -208,14 +208,14 @@ class WorkspacesPage extends PureComponent<Props> {
   }
 
   shouldDisableLogin = (card) => {
-    const { isRunningDblDotLocalProcess } = this.props;
+    const { isRunningUnknownDblDotLocalProcess } = this.props;
     const { configXmlErrors } = this.state;
     const { name } = card;
-    return isRunningDblDotLocalProcess || !configXmlErrors || !configXmlErrors[name] || Boolean(configXmlErrors[name].length);
+    return isRunningUnknownDblDotLocalProcess || !configXmlErrors || !configXmlErrors[name] || Boolean(configXmlErrors[name].length);
   }
 
   renderWorkspaceCards = () => {
-    const { classes, isRunningDblDotLocalProcess, isRequestingStopDblDotLocalExecProcess } = this.props;
+    const { classes, isRunningUnknownDblDotLocalProcess, isRequestingStopDblDotLocalExecProcess } = this.props;
     const { cards, openEditDialog } = this.state;
     return (
       <React.Fragment>
@@ -232,7 +232,7 @@ class WorkspacesPage extends PureComponent<Props> {
               </Typography>
               <div className={classes.heroButtons}>
                 <Grid container spacing={16} justify="center">
-                  {isRunningDblDotLocalProcess &&
+                  {isRunningUnknownDblDotLocalProcess &&
                   <Grid item>
                     <Button disabled={isRequestingStopDblDotLocalExecProcess} variant="contained" color="secondary" onClick={this.handleLogin()}>
                       Login to Unknown Workspace
