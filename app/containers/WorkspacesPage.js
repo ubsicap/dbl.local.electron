@@ -8,6 +8,7 @@ import uuidv1 from 'uuid/v1';
 import classNames from 'classnames';
 import Button from '@material-ui/core/Button';
 import { AddCircle, Refresh, Settings, Delete } from '@material-ui/icons';
+import Tooltip from '@material-ui/core/Tooltip';
 import Card from '@material-ui/core/Card';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
@@ -284,7 +285,9 @@ class WorkspacesPage extends PureComponent<Props> {
                         size="small"
                         onClick={this.onClickDeleteWorkspace(card)}
                       >
-                        <Delete className={classNames(classes.leftIcon, classes.iconSmall)} />
+                        <Tooltip title="Delete">
+                          <Delete className={classNames(classes.leftIcon, classes.iconSmall)} />
+                        </Tooltip>
                       </ConfirmButton>
                     </CardActions>
                   </Card>
