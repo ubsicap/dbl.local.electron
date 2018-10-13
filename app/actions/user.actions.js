@@ -61,11 +61,16 @@ function login(username, password, _workspaceName) {
 function killSpawnedDblDotLocalExecProcess() {
   return (dispatch, getState) => {
     const { dblDotLocalConfig } = getState();
-    const { dblDotLocalExecProcess = null } = dblDotLocalConfig || {};
+    const {
+      dblDotLocalExecProcess = null, isRunningUnknownDblDotLocalProcess
+    } = dblDotLocalConfig || {};
+    if (isRunningUnknownDblDotLocalProcess) {
+      return;
+    }
     if (dblDotLocalExecProcess) {
       dblDotLocalExecProcess.kill();
+      dispatch({ type: dblDotLocalConstants.STOP_WORKSPACE_PROCESS_REQUEST, dblDotLocalExecProcess });
     }
-    dispatch({ type: dblDotLocalConstants.STOP_WORKSPACE_PROCESS_REQUEST, dblDotLocalExecProcess });
   };
 }
 

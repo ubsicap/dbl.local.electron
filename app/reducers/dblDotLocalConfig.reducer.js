@@ -41,7 +41,7 @@ export function dblDotLocalConfig(state = initialState, action) {
         return {
           ...state,
           configXmlFile,
-          dblDotLocalExecProcess,
+          dblDotLocalExecProcess: null,
           dblDotLocalExecProcessCode,
           isRunningKnownDblLocalProcess: false,
           dblBaseUrl: null,

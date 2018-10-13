@@ -35,7 +35,7 @@ export function updateSearchInput(searchInput) {
         return; // cancel these results
       }
       dispatch(updateSearchResults(searchResults));
-    } else {
+    } else if (trimmedSearchInput !== (bundlesFilter.searchInput || '')) {
       dispatch(clearSearch());
     }
 
