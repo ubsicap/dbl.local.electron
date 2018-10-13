@@ -28,7 +28,7 @@ function importSettingsToState(settings) {
   const workspaceName = workspace.name;
   const { settings: { dbl } } = configXmlSettings;
   const {
-    accessToken, secretKey, organizationType, downloadOpenAccessEntries
+    accessToken, secretKey, organizationType, downloadOpenAccessEntries = [false]
   } = dbl[0];
   const settings_dbl_accessToken = accessToken[0];
   const settings_dbl_secretKey = secretKey[0];
@@ -54,6 +54,7 @@ function exportStateToSettings(state, origSettings) {
   const workspacesDir = dblDotLocalService.getWorkspacesDir();
   const newFullPath = path.join(workspacesDir, workspaceName);
   const workspace = { ...origSettings.workspace, name: workspaceName, fullPath: newFullPath };
+  const downloadOpenAccessEntries = origSettings.configXmlSettings.settings.dbl[0].downloadOpenAccessEntries ? { downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries] } : {};
   const configXmlSettings = {
     settings: {
       ...origSettings.configXmlSettings.settings,
@@ -62,7 +63,8 @@ function exportStateToSettings(state, origSettings) {
         accessToken: [settings_dbl_accessToken],
         secretKey: [settings_dbl_secretKey],
         organizationType: [settings_dbl_organizationType],
-        downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries]
+        ...downloadOpenAccessEntries
+        /* downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries] */
       }]
     }
   };
