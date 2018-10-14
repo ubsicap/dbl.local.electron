@@ -1,6 +1,6 @@
 import React from 'react';
 import { Route, Redirect } from 'react-router-dom';
-import navigationConstants from '../constants/navigation.constants';
+import { navigationConstants } from '../constants/navigation.constants';
 
 type Props = {
     component: React.Node,
