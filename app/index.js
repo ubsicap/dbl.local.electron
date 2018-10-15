@@ -11,25 +11,21 @@ if (process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true')
 }
 
 const store = configureStore();
+render(
+  <AppContainer>
+    <Root store={store} history={history} />
+  </AppContainer>,
+  document.getElementById('root')
+);
 
-renderApp();
-function renderApp() {
-  render(
-    <AppContainer>
-      <Root store={store} history={history} />
-    </AppContainer>,
-    document.getElementById('root')
-  );
-
-  if (module.hot) {
-    module.hot.accept('./containers/Root', () => {
-      const NextRoot = require('./containers/Root'); // eslint-disable-line global-require
-      render(
-        <AppContainer>
-          <NextRoot store={store} history={history} />
-        </AppContainer>,
-        document.getElementById('root')
-      );
-    });
-  }
+if (module.hot) {
+  module.hot.accept('./containers/Root', () => {
+    const NextRoot = require('./containers/Root'); // eslint-disable-line global-require
+    render(
+      <AppContainer>
+        <NextRoot store={store} history={history} />
+      </AppContainer>,
+      document.getElementById('root')
+    );
+  });
 }
