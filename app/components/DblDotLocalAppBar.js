@@ -5,6 +5,7 @@ import { compose } from 'recompose';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
+import ListIcon from '@material-ui/icons/List';
 
 import { updateSearchInput, clearSearch } from '../actions/bundleFilter.actions';
 
@@ -62,6 +63,7 @@ class DblDotLocalAppBar extends React.PureComponent {
     return (
       <AppBar position="sticky" className={classes.appBar}>
         <Toolbar>
+          <ListIcon />
           {isSearchActive &&
           <Typography variant="title" color="inherit" className={classes.textSmall}>
             {entriesMatching.length}/
