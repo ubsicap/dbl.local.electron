@@ -4,6 +4,7 @@ import { withStyles } from '@material-ui/core/styles';
 import { compose } from 'recompose';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
+import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import ListIcon from '@material-ui/icons/List';
 
@@ -63,14 +64,18 @@ class DblDotLocalAppBar extends React.PureComponent {
     return (
       <AppBar position="sticky" className={classes.appBar}>
         <Toolbar>
-          <ListIcon />
-          {isSearchActive &&
-          <Typography variant="title" color="inherit" className={classes.textSmall}>
-            {entriesMatching.length}/
-          </Typography>}
-          <Typography variant="title" color="inherit" className={classes.textSmall}>
-            {entries.length}
-          </Typography>
+          <Tooltip title="Entries">
+            <div>
+              <ListIcon />
+              {isSearchActive &&
+              <Typography variant="title" color="inherit" className={classes.textSmall}>
+                {entriesMatching.length}/
+              </Typography>}
+              <Typography variant="title" color="inherit" className={classes.textSmall}>
+                {entries.length}
+              </Typography>
+            </div>
+          </Tooltip>
         </Toolbar>
       </AppBar>
     );
