@@ -113,7 +113,7 @@ async function createWorkspace(fullPath) {
   const workspace = { name, fullPath, stats, dateModified };
   const configXmlPath = dblDotLocalService.getConfigXmlFullPath(workspace);
   const hasConfigXml = fs.existsSync(configXmlPath);
-  const configXmlSettings = await dblDotLocalService.convertConfigXmlToJson(workspace);
+  const configXmlSettings = hasConfigXml ? await dblDotLocalService.convertConfigXmlToJson(workspace) : null;
   return { ...workspace, hasConfigXml, configXmlPath, configXmlSettings };
 }
 
