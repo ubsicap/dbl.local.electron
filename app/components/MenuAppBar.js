@@ -85,14 +85,6 @@ class MenuAppBar extends React.PureComponent {
     anchorEl: null,
   };
 
-  componentDidMount() {
-    const { clearSearch: clearSearchResults } = this.props;
-    history.listen(() => {
-      // clear search results on location change
-      clearSearchResults();
-    });
-  }
-
   handleChange = (event, checked) => {
   };
 
