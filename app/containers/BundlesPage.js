@@ -9,6 +9,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Tooltip from '@material-ui/core/Tooltip';
 import Bundles from '../components/Bundles';
 import MenuAppBar from '../components/MenuAppBar';
+import DblDotLocalAppBar from '../components/DblDotLocalAppBar';
 import { ux } from '../utils/ux';
 import { loadHtmlBaseUrl } from '../actions/dblDotLocalConfig.actions';
 import { createNewBundle } from '../actions/bundle.actions';
@@ -95,6 +96,7 @@ class BundlesPage extends PureComponent<Props> {
             </MenuItem>
           ))}
         </Menu>
+        <DblDotLocalAppBar />
       </div>
     );
   }
