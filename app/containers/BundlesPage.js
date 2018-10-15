@@ -32,7 +32,7 @@ function mapStateToProps(state) {
 const materialStyles = () => ({
   fab: {
     position: 'fixed',
-    bottom: '10px',
+    bottom: '100px',
     right: '20px'
   },
 });
@@ -71,6 +71,7 @@ class BundlesPage extends PureComponent<Props> {
       <div data-tid="container">
         <MenuAppBar showSearch />
         <Bundles />
+        <div style={{ paddingBottom: '100px' }} />
         <Tooltip title="Create new...">
           <Button
             aria-owns={anchorEl ? 'simple-menu' : null}

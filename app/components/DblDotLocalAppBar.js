@@ -1,37 +1,23 @@
 import React from 'react';
-import Button from '@material-ui/core/Button';
-import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import { compose } from 'recompose';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
-import IconButton from '@material-ui/core/IconButton';
-import MenuIcon from '@material-ui/icons/Menu';
-import AccountCircle from '@material-ui/icons/AccountCircle';
-import MenuItem from '@material-ui/core/MenuItem';
-import Menu from '@material-ui/core/Menu';
-import { history } from '../store/configureStore';
-import { navigationConstants } from '../constants/navigation.constants';
 
 import { updateSearchInput, clearSearch } from '../actions/bundleFilter.actions';
 
 
-function mapStateToProps(state, props) {
-  const { bundlesFilter, authentication } = state;
-  const { isLoading: isLoadingSearch } = bundlesFilter;
-  const { isSearchActive } = bundlesFilter;
-  const { searchInputRaw } = bundlesFilter;
-  const { loggedIn, whoami, workspaceName = props.workspaceName } = authentication;
-  const { display_name: userName = 'DEMO USER' } = whoami || {};
+function mapStateToProps(state) {
+  const { bundlesFilter, bundles } = state;
+  const { isSearchActive, searchResults } = bundlesFilter;
+  const entriesMatching = (isSearchActive && searchResults) ? Object.keys(searchResults.bundlesMatching) : [];
+  const entries = bundles.items;
   return {
-    loggedIn,
-    userName,
-    isLoadingSearch,
+    entries,
+    entriesMatching,
     isSearchActive,
-    searchInputRaw,
-    workspaceName
   };
 }
 
@@ -42,110 +28,47 @@ const mapDispatchToProps = {
 
 type Props = {
     classes: {},
-    loggedIn: boolean,
-    userName: string,
-    isSearchActive: boolean,
-    searchInputRaw: ?string,
-    workspaceName: ?string,
-    showSearch: boolean,
-    updateSearchInput: () => {},
-    clearSearch: () => {}
+    entries: [],
+    entriesMatching: [],
+    isSearchActive: boolean
 };
 
 const styles = theme => ({
-  button: {
-    margin: theme.spacing.unit,
+  appBar: {
+    top: 'auto',
+    bottom: 0,
+    position: 'fixed',
+    backgroundColor: 'black'
   },
-  leftIcon: {
-    marginRight: theme.spacing.unit,
-  },
-  rightIcon: {
-    marginLeft: theme.spacing.unit,
-  },
-  iconSmall: {
-    fontSize: 20,
+  textSmall: {
+    fontSize: 16,
+    fontFamily: 'monospace'
   },
   root: {
     flexGrow: 1,
   },
   flex: {
     flex: 1,
-  },
-  menuButton: {
-    marginLeft: -12,
-    marginRight: 20,
-  },
+  }
 });
 
-class MenuAppBar extends React.PureComponent {
+class DblDotLocalAppBar extends React.PureComponent {
   props: Props;
-  state = {
-    anchorEl: null,
-  };
-
-  handleChange = (event, checked) => {
-  };
-
-  handleMenu = event => {
-    this.setState({ anchorEl: event.currentTarget });
-  };
-
-  handleClose = () => {
-    this.setState({ anchorEl: null });
-  };
-
-  onChangeSearchInput = (event) => {
-    const inputValue = event.target.value;
-    this.props.updateSearchInput(inputValue);
-  }
-
-  searchInputValue = () => {
-    const { isSearchActive, searchInputRaw } = this.props;
-    return isSearchActive ? searchInputRaw : '';
-  }
-
-  handleBackToWorkspaces = () => {
-    history.push(navigationConstants.NAVIGATION_WORKSPACES);
-  }
 
   render() {
-    const { classes, loggedIn, userName, workspaceName } = this.props;
-    const { anchorEl } = this.state;
-    const open = Boolean(anchorEl);
-
+    const {
+      classes, entries, entriesMatching, isSearchActive
+    } = this.props;
     return (
-      <AppBar position="sticky" color="inherit">
+      <AppBar position="sticky" className={classes.appBar}>
         <Toolbar>
-          <IconButton className={classes.menuButton} color="inherit" aria-label="Menu">
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="title" color="inherit" className={classes.flex}>
-            nathanael
+          {isSearchActive &&
+          <Typography variant="title" color="inherit" className={classes.textSmall}>
+            {entriesMatching.length}/
+          </Typography>}
+          <Typography variant="title" color="inherit" className={classes.textSmall}>
+            {entries.length}
           </Typography>
-          {workspaceName && (
-            <div>
-              <Button color="inherit" onClick={this.handleMenu}>
-                { workspaceName } / {loggedIn ? userName : 'Login' }
-                <AccountCircle className={classNames(classes.rightIcon, classes.iconSmall)} />
-              </Button>
-              <Menu
-                id="menu-appbar"
-                anchorEl={anchorEl}
-                anchorOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-                open={open}
-                onClose={this.handleClose}
-              >
-                <MenuItem onClick={this.handleBackToWorkspaces}>Logout (Workspaces)</MenuItem>
-              </Menu>
-            </div>
-          )}
         </Toolbar>
       </AppBar>
     );
@@ -153,9 +76,9 @@ class MenuAppBar extends React.PureComponent {
 }
 
 export default compose(
-  withStyles(styles, { name: 'MenuAppBar' }),
+  withStyles(styles, { name: 'DblDotLocalAppBar' }),
   connect(
     mapStateToProps,
     mapDispatchToProps
   ),
-)(MenuAppBar);
+)(DblDotLocalAppBar);
