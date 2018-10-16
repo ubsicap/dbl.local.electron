@@ -214,6 +214,9 @@ class WorkspacesPage extends PureComponent<Props> {
     return isRunningUnknownDblDotLocalProcess || !configXmlErrors || !configXmlErrors[name] || Boolean(configXmlErrors[name].length);
   }
 
+  shouldOpenEditDialog = (card) =>
+    (this.state.openEditDialog && this.state.openEditDialog.workspace === card);
+
   renderWorkspaceCards = () => {
     const { classes, isRunningUnknownDblDotLocalProcess, isRequestingStopDblDotLocalExecProcess } = this.props;
     const { cards, openEditDialog } = this.state;
@@ -273,10 +276,10 @@ class WorkspacesPage extends PureComponent<Props> {
                         <Settings className={classes.icon} />
                         Settings
                       </Button>
-                      {card.configXmlSettings &&
+                      {(card.configXmlSettings || this.shouldOpenEditDialog(card)) &&
                       <WorkspaceEditDialog
-                        open={Boolean(openEditDialog && openEditDialog.workspace === card)}
-                        settings={ { workspace: card, configXmlSettings: card.configXmlSettings } }
+                        open={Boolean(this.shouldOpenEditDialog(card))}
+                        settings={{ workspace: card, configXmlSettings: card.configXmlSettings || openEditDialog.configXmlSettings }}
                         handleClickOk={this.handleClickOkEdit}
                         handleClickCancel={this.handleClickCancelEdit}
                         getInitialFormErrors={this.getInitialFormErrors(card)}
