@@ -7,12 +7,13 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import ListIcon from '@material-ui/icons/List';
+import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
 
-import { updateSearchInput, clearSearch } from '../actions/bundleFilter.actions';
-
+import { fetchDownloadQueueCounts } from '../actions/bundle.actions';
 
 function mapStateToProps(state) {
   const { bundlesFilter, bundles } = state;
+  const { downloadQueue = { nSpecs: 0, nAtoms: 0 } } = bundles;
   const { isSearchActive, searchResults } = bundlesFilter;
   const entriesMatching = (isSearchActive && searchResults) ? Object.keys(searchResults.bundlesMatching) : [];
   const entries = bundles.items;
@@ -20,19 +21,21 @@ function mapStateToProps(state) {
     entries,
     entriesMatching,
     isSearchActive,
+    downloadQueue
   };
 }
 
 const mapDispatchToProps = {
-  updateSearchInput,
-  clearSearch
+  fetchDownloadQueueCounts
 };
 
 type Props = {
     classes: {},
     entries: [],
     entriesMatching: [],
-    isSearchActive: boolean
+    isSearchActive: boolean,
+    downloadQueue: {},
+    fetchDownloadQueueCounts: () => {}
 };
 
 const styles = theme => ({
@@ -57,14 +60,18 @@ const styles = theme => ({
 class DblDotLocalAppBar extends React.PureComponent {
   props: Props;
 
+  componentDidMount() {
+    this.props.fetchDownloadQueueCounts();
+  }
+
   render() {
     const {
-      classes, entries, entriesMatching, isSearchActive
+      classes, entries, entriesMatching, isSearchActive, downloadQueue
     } = this.props;
     return (
       <AppBar position="sticky" className={classes.appBar}>
         <Toolbar>
-          <Tooltip title="Entries">
+          <Tooltip title="Entries (Matching/Total)">
             <div>
               <ListIcon />
               {isSearchActive &&
@@ -73,6 +80,17 @@ class DblDotLocalAppBar extends React.PureComponent {
               </Typography>}
               <Typography variant="title" color="inherit" className={classes.textSmall}>
                 {entries.length}
+              </Typography>
+            </div>
+          </Tooltip>
+          <Tooltip title="Downloads (Entries/Atoms)">
+            <div>
+              <ArrowDownwardIcon />
+              <Typography variant="title" color="inherit" className={classes.textSmall}>
+                {downloadQueue.nSpecs}/
+              </Typography>
+              <Typography variant="title" color="inherit" className={classes.textSmall}>
+                {downloadQueue.nAtoms}
               </Typography>
             </div>
           </Tooltip>

@@ -4,7 +4,7 @@ import path from 'path';
 import rp from 'request-promise-native';
 import uuidv1 from 'uuid/v1';
 import { authHeader } from '../helpers';
-import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
+import dblDotLocalConfigConstants from '../constants/dblDotLocal.constants';
 import download from './download-with-fetch.flow';
 
 const { app } = require('electron').remote;
@@ -45,7 +45,8 @@ export const bundleService = {
   checkAllFields,
   updatePublications,
   getPublicationsInstances,
-  getSubSectionInstances
+  getSubSectionInstances,
+  getSubsystemDownloadQueue
 };
 export default bundleService;
 
@@ -59,6 +60,7 @@ const FORM_BUNDLE_API_DELETE = `${FORM_API}/delete`;
 const MANIFEST_API = 'manifest';
 const MANIFEST_DETAILS = 'details';
 const PUBLICATION_API = 'publication';
+const SUBSYSTEM_API = 'subsystem';
 
 /*
 {
@@ -121,7 +123,7 @@ async function fetchAll() {
     headers: authHeader()
   };
   const response = await fetch(
-    `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API_LIST}`,
+    `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API_LIST}`,
     requestOptions
   );
   const apiBundles = await handleResponse(response);
@@ -223,7 +225,7 @@ async function fetchById(id) {
     headers: authHeader()
   };
   const response = await fetch(
-    `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${id}`,
+    `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${id}`,
     requestOptions
   );
   return handleResponse(response, (r) => r);
@@ -237,7 +239,7 @@ function create(bundle) {
   };
 
   return fetch(
-    `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/create`,
+    `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/create`,
     requestOptions
   ).then(handleResponse);
 }
@@ -272,7 +274,7 @@ function getManifestResourcePaths(bundleId) {
     method: 'GET',
     headers: authHeader()
   };
-  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${MANIFEST_API}/${bundleId}`;
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${MANIFEST_API}/${bundleId}`;
   return fetch(url, requestOptions).then(handleResponse);
 }
 
@@ -281,7 +283,7 @@ function getManifestResourceDetails(bundleId) {
     method: 'GET',
     headers: authHeader()
   };
-  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${MANIFEST_API}/${bundleId}/${MANIFEST_DETAILS}`;
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${MANIFEST_API}/${bundleId}/${MANIFEST_DETAILS}`;
   return fetch(url, requestOptions).then(handleResponse);
 }
 
@@ -291,6 +293,16 @@ function getManifestResourceDetails(bundleId) {
 function downloadResources(bundleId, uris = []) {
   const urisXml = uris.map(uri => `<resource uri="${uri}"/>`).join('') || '';
   return bundleAddTasks(bundleId, `<downloadResources>${urisXml}</downloadResources>`);
+}
+
+/* /subsystem/download/queue */
+function getSubsystemDownloadQueue() {
+  const requestOptions = {
+    method: 'GET',
+    headers: authHeader()
+  };
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${SUBSYSTEM_API}/download/queue`;
+  return fetch(url, requestOptions).then(handleResponse);
 }
 
 function removeResources(bundleId) {
@@ -307,7 +319,7 @@ function bundleAddTasks(bundleId, innerTasks) {
     headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `xml=<tasks> ${encodeURIComponent(innerTasks)} </tasks>`
   };
-  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/add-tasks`;
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/add-tasks`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }
 
@@ -316,7 +328,7 @@ function getResourcePaths(bundleId) {
     method: 'GET',
     headers: authHeader()
   };
-  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${RESOURCE_API_LIST}`;
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${RESOURCE_API_LIST}`;
   return fetch(url, requestOptions).then(handleResponse);
 }
 
@@ -339,7 +351,7 @@ async function saveMetadataToTempFolder(bundleId) {
  *  'envy-code-r.zip', (bytes, percent) => console.log(`Downloaded ${bytes} (${percent})`));
  */
 function requestSaveResourceTo(selectedFolder, bundleId, resourcePath, progressCallback) {
-  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${RESOURCE_API}/${resourcePath}`;
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${RESOURCE_API}/${resourcePath}`;
   const targetPath = path.join(selectedFolder, resourcePath);
   return download(url, targetPath, progressCallback, authHeader());
 }
@@ -349,7 +361,7 @@ function getFormBundleTree(bundleId) {
     method: 'GET',
     headers: authHeader()
   };
-  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${FORM_BUNDLE_API}/${bundleId}`;
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${FORM_BUNDLE_API}/${bundleId}`;
   return fetch(url, requestOptions).then(handleResponse);
 }
 
@@ -358,7 +370,7 @@ function getFormFields(bundleId, formKey) {
     method: 'GET',
     headers: authHeader()
   };
-  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${FORM_API}/${bundleId}${formKey}`;
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${FORM_API}/${bundleId}${formKey}`;
   return fetch(url, requestOptions).then(handleResponse);
 }
 /*
@@ -385,7 +397,7 @@ function postFormFields({
   };
   const newKeyPath = `/${keyField}`;
   const newInstanceKey = keyField && !formKey.endsWith(newKeyPath) ? newKeyPath : '';
-  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${FORM_API}/${bundleId}${formKey}${newInstanceKey}`;
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${FORM_API}/${bundleId}${formKey}${newInstanceKey}`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }
 
@@ -394,7 +406,7 @@ function checkAllFields(bundleId) {
     method: 'GET',
     headers: authHeader()
   };
-  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${FORM_API}/check-metadata/${bundleId}`;
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${FORM_API}/check-metadata/${bundleId}`;
   return fetch(url, requestOptions).then(handleResponse);
 }
 
@@ -407,7 +419,7 @@ function deleteForm(bundleId, formKey) {
     method: 'POST',
     headers: { ...authHeader() }
   };
-  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${FORM_BUNDLE_API_DELETE}/${bundleId}${formKey}`;
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${FORM_BUNDLE_API_DELETE}/${bundleId}${formKey}`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }
 
@@ -456,13 +468,13 @@ function stopCreateContent(bundleId, mode = 'success') {
     method: 'POST',
     headers: { ...authHeader() }
   };
-  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/creation/stop/${mode}`;
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/creation/stop/${mode}`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }
 
 function postResource(bundleId, filePath, bundlePath) {
   const filename = path.basename(filePath);
-  const uri = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/resource/${bundlePath}`;
+  const uri = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/resource/${bundlePath}`;
   const options = {
     method: 'POST',
     uri,
@@ -489,7 +501,7 @@ function updateManifestResource(bundleId, bundlePath) {
     method: 'POST',
     headers: { ...authHeader() },
   };
-  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${MANIFEST_API}/${bundleId}/update/${bundlePath}`;
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${MANIFEST_API}/${bundleId}/update/${bundlePath}`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }
 
@@ -499,7 +511,7 @@ async function getPublicationWizards() {
     headers: authHeader()
   };
   const response = await fetch(
-    `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${PUBLICATION_API}/wizard`,
+    `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${PUBLICATION_API}/wizard`,
     requestOptions
   );
   return handleResponse(response, (r) => r);
@@ -511,7 +523,7 @@ async function testPublicationWizards(bundleId, pubId) {
     headers: authHeader()
   };
   const response = await fetch(
-    `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${PUBLICATION_API}/wizard/${bundleId}/${pubId}`,
+    `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${PUBLICATION_API}/wizard/${bundleId}/${pubId}`,
     requestOptions
   );
   return handleResponse(response, (r) => r);
@@ -522,7 +534,7 @@ function runPublicationWizard(bundleId, pubId, wizardId, containerUri) {
     method: 'POST',
     headers: { ...authHeader() },
   };
-  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${PUBLICATION_API}/wizard/${bundleId}/${pubId}/${wizardId}/${containerUri}`;
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${PUBLICATION_API}/wizard/${bundleId}/${pubId}/${wizardId}/${containerUri}`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }
 

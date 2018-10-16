@@ -20,7 +20,8 @@ export const bundleActions = {
   requestSaveBundleTo,
   removeResources,
   toggleSelectEntry,
-  uploadBundle
+  uploadBundle,
+  fetchDownloadQueueCounts
 };
 
 export default bundleActions;
@@ -206,6 +207,7 @@ export function setupBundlesEventSource(authentication) {
       'downloader/receiver': listenDownloaderReceiver,
       'downloader/status': (e) => listenDownloaderSpecStatus(e, dispatch, getState),
       'downloader/spec_status': (e) => listenDownloaderSpecStatus(e, dispatch, getState),
+      'downloader/global_status': (e) => dispatch(listenDownloaderGlobalStatus(e)),
       'storer/delete_resource': (e) => listenStorerDeleteResource(e, dispatch, getState),
       'storer/update_from_download': (e) => listenStorerUpdateFromDownload(e, dispatch, getState),
       'storer/delete_bundle': (e) => listenStorerDeleteBundle(e, dispatch, getState),
@@ -225,6 +227,15 @@ export function setupBundlesEventSource(authentication) {
       };
     }
   };
+
+  /* 
+   * data:{"args": [1, 11], "component": "downloader", "type": "global_status"}
+   */
+  function listenDownloaderGlobalStatus(e) {
+    const data = JSON.parse(e.data);
+    const [nSpecs, nAtoms] = data.args;
+    return updateDownloadQueue(nSpecs, nAtoms);
+  }
 
   function listenStorerExecuteTaskDownloadResources() {
     // console.log(e);
@@ -432,6 +443,25 @@ function removeExcessBundles() {
     bundleIdsToRemove.forEach((idBundleToRemove) => {
       dispatch(removeBundle(idBundleToRemove));
     });
+  };
+}
+
+function updateDownloadQueue(nSpecs, nAtoms) {
+  return (dispatch) => {
+    dispatch({ type: bundleConstants.UPDATE_DOWNLOAD_QUEUE, nSpecs, nAtoms });
+  };
+}
+
+export function fetchDownloadQueueCounts() {
+  return async dispatch => {
+    try {
+      const downloadQueueList = await bundleService.getSubsystemDownloadQueue();
+      const nSpecs = Object.keys(downloadQueueList).length;
+      const nAtoms = downloadQueueList.reduce((acc, spec) => acc + spec.n_atoms, 0);
+      return dispatch(updateDownloadQueue(nSpecs, nAtoms));
+    } catch (error) {
+      log.error(error);
+    }
   };
 }
 
