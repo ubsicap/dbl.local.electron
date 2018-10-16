@@ -54,6 +54,9 @@ const styles = theme => ({
   },
   flex: {
     flex: 1,
+  },
+  dblDotLocalBarItem: {
+    marginRight: '20px'
   }
 });
 
@@ -71,26 +74,24 @@ class DblDotLocalAppBar extends React.PureComponent {
     return (
       <AppBar position="sticky" className={classes.appBar}>
         <Toolbar>
-          <Tooltip title="Entries (Matching/Total)">
-            <div>
+          <Tooltip title={`Entries${isSearchActive ? ' (Matching/Total)' : ''}`}>
+            <div className={classes.dblDotLocalBarItem}>
               <ListIcon />
-              {isSearchActive &&
-              <Typography variant="title" color="inherit" className={classes.textSmall}>
-                {entriesMatching.length}/
-              </Typography>}
-              <Typography variant="title" color="inherit" className={classes.textSmall}>
-                {entries.length}
-              </Typography>
+              {isSearchActive ?
+                <Typography variant="title" color="inherit" className={classes.textSmall}>
+                  {entriesMatching.length}/{entries.length}
+                </Typography>
+                :
+                <Typography variant="title" color="inherit" className={classes.textSmall}>
+                  {entries.length}
+                </Typography>}
             </div>
           </Tooltip>
           <Tooltip title="Downloads (Entries/Atoms)">
-            <div>
+            <div className={classes.dblDotLocalBarItem}>
               <ArrowDownwardIcon />
               <Typography variant="title" color="inherit" className={classes.textSmall}>
-                {downloadQueue.nSpecs}/
-              </Typography>
-              <Typography variant="title" color="inherit" className={classes.textSmall}>
-                {downloadQueue.nAtoms}
+                {downloadQueue.nSpecs}/{downloadQueue.nAtoms}
               </Typography>
             </div>
           </Tooltip>
