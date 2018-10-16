@@ -177,7 +177,7 @@ class WorkspacesPage extends PureComponent<Props> {
     const { workspace: { fullPath: newWorkspacePath } } = newSettings;
     if (oldWorkspacePath !== newWorkspacePath) {
       try {
-        console.log(`renaming workspace path to ${newWorkspacePath}`);
+        // console.log(`renaming workspace path to ${newWorkspacePath}`);
         fs.renameSync(oldWorkspacePath, newWorkspacePath);
       } catch (error) {
         console.log(error);
@@ -202,9 +202,10 @@ class WorkspacesPage extends PureComponent<Props> {
   }
 
   getInitialFormErrors = (card) => (formErrors) => {
-    console.log({ card, formErrors });
+    // console.log({ card, formErrors });
     const { name } = card;
-    this.setState({ configXmlErrors: { ...(this.state.configXmlErrors || {}), [name]: formErrors } }, console.log(this.state.configXmlErrors));
+    this.setState({ configXmlErrors: { ...(this.state.configXmlErrors || {}), [name]: formErrors } });
+    // , console.log(this.state.configXmlErrors)
   }
 
   shouldDisableLogin = (card) => {
