@@ -87,6 +87,7 @@ class DblDotLocalAppBar extends React.PureComponent {
                 </Typography>}
             </div>
           </Tooltip>
+          <div className={classes.flex} />
           <Tooltip title="Downloads (Entries/Atoms)">
             <div className={classes.dblDotLocalBarItem}>
               <ArrowDownwardIcon />
