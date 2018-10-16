@@ -548,6 +548,10 @@ async function updatePublications(bundleId, publicationIds) {
       { hits: [], misses: [] }
     );
     const { wizard, uri } = bestWizard;
+    if (!wizard) {
+      console.log(wizardTestResults);
+      return;
+    }
     await bundleService.runPublicationWizard(bundleId, pubId, wizard, uri);
   }
 }

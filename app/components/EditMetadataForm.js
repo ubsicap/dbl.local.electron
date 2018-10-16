@@ -110,7 +110,7 @@ class EditMetadataForm extends React.PureComponent<Props> {
 
   handleChangeMulti = (selectedValues, name) => {
     const { formKey } = this.props;
-    this.props.editActiveFormInput(formKey, name, selectedValues.map(selected => selected.value));
+    this.props.editActiveFormInput(formKey, name, selectedValues.map(selected => selected.value).filter(v => v));
   };
 
   getErrorInField = (field) => {
