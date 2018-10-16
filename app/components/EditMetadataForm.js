@@ -162,6 +162,8 @@ class EditMetadataForm extends React.PureComponent<Props> {
           multiple
           floatingLabel={field.label}
           hintText={helperText}
+          floatingLabelStyle={{ color: 'rgba(0, 0, 0, 0.54)' }}
+          floatingLabelFocusStyle={{ color: '#303f9f' }}
           onChange={this.handleChangeMulti}
           value={value}
           /* elementHeight={58} */

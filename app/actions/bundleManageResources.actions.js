@@ -92,14 +92,23 @@ export function checkPublicationsHealth(_bundleId) {
     const pubsMissingCanonSpecs = publicationInstanceIds.filter(pubId =>
       !(publicationInstances[pubId].contains.find(section => section.id === 'canonSpec').present));
     if (pubsMissingCanonSpecs.length > 0) {
-      const p1 = pubsMissingCanonSpecs[0];
-      return dispatch({
-        type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR,
-        error: 'MISSING_CANON_SPECS',
-        publications: pubsMissingCanonSpecs,
-        errorMessage: `To add a resource, first add Canon Specification (Canon Type AND ESPECIALLY Canon Components) to the following publications: ${pubsMissingCanonSpecs}`,
-        goFix: () => dispatch(openEditMetadata(_bundleId, { formKey: `/publications/publication/${p1}/canonSpec` }))
-      });
+      return dispatch(updateMissingCanonSpecs(dispatch, pubsMissingCanonSpecs));
+    }
+    /* eslint-disable no-restricted-syntax */
+    /* eslint-disable no-await-in-loop */
+    const pubsMissingCanonComponentsIds = [];
+    for (const pubId of publicationInstanceIds) {
+      // now check that at least components are added.
+      const pubFormKey = `/publications/publication/${pubId}/canonSpec`;
+      const pubForm = await bundleService.getFormFields(_bundleId, pubFormKey);
+      const [componentField] = pubForm.fields.filter(f => f.name === 'component');
+      const [firstDefault] = componentField.default || [];
+      if (!firstDefault) {
+        pubsMissingCanonComponentsIds.push(pubId);
+      }
+    }
+    if (pubsMissingCanonComponentsIds.length > 0) {
+      return dispatch(updateMissingCanonSpecs(dispatch, pubsMissingCanonComponentsIds));
     }
     // now get the publication structure for each publication
     dispatch({
@@ -107,6 +116,17 @@ export function checkPublicationsHealth(_bundleId) {
       publications: publicationInstanceIds
     });
   };
+
+  function updateMissingCanonSpecs(dispatch, pubsMissingCanonSpecs) {
+    const [p1] = pubsMissingCanonSpecs;
+    return {
+      type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR,
+      error: 'MISSING_CANON_SPECS',
+      publications: pubsMissingCanonSpecs,
+      errorMessage: `To add a resource, first add Canon Specification (ESPECIALLY Canon Components) to the following publications: ${pubsMissingCanonSpecs}`,
+      goFix: () => dispatch(openEditMetadata(_bundleId, { formKey: `/publications/publication/${p1}/canonSpec` }))
+    };
+  }
 }
 
 export function addManifestResources(_bundleId, _fileToContainerPaths) {
