@@ -325,7 +325,7 @@ class _EditMetadataStepper extends React.Component<Props> {
 
   handleSave = () => this.props.saveFieldValuesForActiveForm();
 
-  handleForceSave = () => this.props.saveFieldValuesForActiveForm({ forceSave: true });
+  handleSaveAndReloadStructure = () => this.props.saveFieldValuesForActiveForm({ forceSave: true });
 
   handleUndo = stepIndex => () => {
     const { bundleId } = this.props;
@@ -441,6 +441,7 @@ class _EditMetadataStepper extends React.Component<Props> {
       this.getActiveFormFields().some(f => f.default && f.default.length) : false;
     const step = this.getStep(stepIndex);
     const { contains, isInstance = false, present } = step;
+    const isNotYetPresent = present !== undefined && !present;
     // if form has errors but there are no changes, it's possible that
     // we just need to clear the errors. However, it is possible
     // that the original metadata has errors, in which case, the errors should still
@@ -462,7 +463,7 @@ class _EditMetadataStepper extends React.Component<Props> {
             variant="contained"
             color="primary"
             className={classes.button}
-            onClick={this.handleSave}
+            onClick={isNotYetPresent ? this.handleSaveAndReloadStructure : this.handleSave}
           >
             <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
             Save
@@ -481,7 +482,7 @@ class _EditMetadataStepper extends React.Component<Props> {
           <NavigateBefore className={classNames(classes.rightIcon, classes.iconSmall)} />
         </Button>
         {(isInstance /* || (present !== undefined && present ) */) && this.renderDeleteButton(step)}
-        {!hasFormChanged && hasFieldContent && (present !== undefined && !present) && this.renderAddButton(step)}
+        {!hasFormChanged && hasFieldContent && isNotYetPresent && this.renderAddButton(step)}
         <Button
           variant="outlined"
           color="default"
@@ -530,7 +531,7 @@ class _EditMetadataStepper extends React.Component<Props> {
     const { classes } = this.props;
     const addBtn = (
       <Button
-        onClick={this.handleForceSave}
+        onClick={this.handleSaveAndReloadStructure}
         variant="contained"
         color="secondary"
         className={classes.button}

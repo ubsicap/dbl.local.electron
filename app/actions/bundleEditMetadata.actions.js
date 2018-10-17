@@ -373,7 +373,7 @@ export function saveMetadata({
       return [...acc, { type, name, ...valueObj }];
     }, []);
     dispatch(saveMetadataRequest({
-      bundleId, fields, moveNextStep, forceSaveState
+      bundleId, fields, moveNextStep, forceSave: forceSaveState
     }));
     let postFormArgs = null;
     try {
