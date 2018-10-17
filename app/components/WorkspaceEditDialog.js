@@ -11,6 +11,11 @@ import Switch from '@material-ui/core/Switch';
 import SuperSelectField from 'material-ui-superselectfield/es';
 import path from 'path';
 import filenamify from 'filenamify';
+import Select from '@material-ui/core/Select';
+import FormControl from '@material-ui/core/FormControl';
+import InputLabel from '@material-ui/core/InputLabel';
+import Input from '@material-ui/core/Input';
+import MenuItem from '@material-ui/core/MenuItem';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 
 type Props = {
@@ -21,6 +26,8 @@ type Props = {
   getInitialFormErrors: () => {}
 };
 
+const hostOptions = ['api.thedigitalbiblelibrary.org', 'api-demo.thedigitalbiblelibrary.org'];
+
 /* eslint-disable camelcase */
 
 function importSettingsToState(settings) {
@@ -28,14 +35,17 @@ function importSettingsToState(settings) {
   const workspaceName = workspace.name;
   const { settings: { dbl } } = configXmlSettings;
   const {
-    accessToken, secretKey, organizationType, downloadOpenAccessEntries = [false]
+    accessToken, secretKey, organizationType, downloadOpenAccessEntries = [false],
+    host
   } = dbl[0];
+  const settings_dbl_host = host[0];
   const settings_dbl_accessToken = accessToken[0];
   const settings_dbl_secretKey = secretKey[0];
   const settings_dbl_organizationType = organizationType[0];
   const settings_dbl_downloadOpenAccessEntries = downloadOpenAccessEntries[0] === 'true';
   return {
     workspaceName,
+    settings_dbl_host,
     settings_dbl_accessToken,
     settings_dbl_secretKey,
     settings_dbl_organizationType,
@@ -46,6 +56,7 @@ function importSettingsToState(settings) {
 function exportStateToSettings(state, origSettings) {
   const {
     workspaceName,
+    settings_dbl_host,
     settings_dbl_accessToken,
     settings_dbl_secretKey,
     settings_dbl_organizationType,
@@ -60,6 +71,7 @@ function exportStateToSettings(state, origSettings) {
       ...origSettings.configXmlSettings.settings,
       dbl: [{
         ...origSettings.configXmlSettings.settings.dbl[0],
+        host: [settings_dbl_host],
         accessToken: [settings_dbl_accessToken],
         secretKey: [settings_dbl_secretKey],
         organizationType: [settings_dbl_organizationType],
@@ -83,6 +95,8 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
     }
   }
 
+  renderHostMenuItems = () => hostOptions.map(option => (<MenuItem value={option}>{option}</MenuItem>));
+
   getOrganizationTypeValues = () => this.state.settings_dbl_organizationType || '';
 
   handleChangeOrganizationType = (selectedValues, name) => {
@@ -91,23 +105,23 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
   }
 
   getErrorText = (name) => {
+    const value = this.state[name];
     switch (name) {
       case 'workspaceName': {
-        const value = this.state[name];
         return filenamify(value) !== value ? 'Invalid folder name' : '';
       }
+      case 'host': {
+        return hostOptions.includes(value);
+      }
       case 'settings_dbl_accessToken': {
-        const value = this.state[name];
         const regex = RegExp('[0-9A-F]{20}');
         return regex.test(value) ? '' : 'Requires 20 HEX characters';
       }
       case 'settings_dbl_secretKey': {
-        const value = this.state[name];
         const regex = RegExp('[0-9A-F]{80}');
         return regex.test(value) ? '' : 'Requires 80 HEX characters';
       }
       case 'settings_dbl_organizationType': {
-        const value = this.state[name];
         return value.length === 0 ? 'Requires ipc or lch (or both)' : '';
       }
       default: {
@@ -150,6 +164,16 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
             <DialogContentText>
               {this.props.settings.workspace.name}
             </DialogContentText>
+            <FormControl>
+              <InputLabel htmlFor="host">Host</InputLabel>
+              <Select
+                value={this.getInputValue('settings_dbl_host')}
+                onChange={this.handleInputChange}
+                input={<Input name="settings_dbl_host" id="host" />}
+              >
+                {this.renderHostMenuItems()}
+              </Select>
+            </FormControl>
             <TextField
               required
               autoFocus
