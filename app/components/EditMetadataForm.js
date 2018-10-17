@@ -108,9 +108,15 @@ class EditMetadataForm extends React.PureComponent<Props> {
     this.props.editActiveFormInput(formKey, name, event.target.value);
   };
 
-  handleChangeMulti = (selectedValues, name) => {
+  handleChangeMulti = (field) => (selectedValues, name) => {
     const { formKey } = this.props;
-    this.props.editActiveFormInput(formKey, name, selectedValues.map(selected => selected.value).filter(v => v));
+    const newValues = selectedValues.map(selected => selected.value).filter(v => v);
+    const origValue = this.getValue(field);
+    const newValue = `${newValues}`;
+    if (newValue === origValue) {
+      return; // nothing changed.
+    }
+    this.props.editActiveFormInput(formKey, name, newValue);
   };
 
   getErrorInField = (field) => {
@@ -147,13 +153,18 @@ class EditMetadataForm extends React.PureComponent<Props> {
   renderTextOrSelectField = (formKey, field, classes) => {
     const id = `${formKey}/${field.name}`;
     const helperText = this.helperOrErrorText(field);
+    const hasError = this.hasError(field);
     if (editMetadataService.getIsMulti(field)) {
-      const value = this.getMultiValues(field).map(val => ({ value: val }));
+      const value = this.getMultiValues(field).filter(v => v).map(val => ({ value: val }));
       const options = (field.options && field.options.map(option => (
         <div key={`${formKey}/${field.name}/${option}`} value={option} >
           {option}
         </div>
       )));
+      const greyish = 'rgba(0, 0, 0, 0.54)';
+      const floatingLabelStyle = { color: greyish };
+      const errorStyle = hasError ? {} : { errorStyle: floatingLabelStyle };
+      const underlineStyle = hasError ? {} : { underlineStyle: { borderBottomColor: greyish }, underlineFocusStyle: { borderBottomColor: greyish, borderBottomWidth: 'thick' } };
       return (
         <SuperSelectField
           key={id}
@@ -161,14 +172,17 @@ class EditMetadataForm extends React.PureComponent<Props> {
           name={field.name}
           multiple
           floatingLabel={field.label}
-          hintText={helperText}
-          floatingLabelStyle={{ color: 'rgba(0, 0, 0, 0.54)' }}
+          errorText={helperText}
+          {...errorStyle}
+          {...underlineStyle}
+          floatingLabelStyle={floatingLabelStyle}
           floatingLabelFocusStyle={{ color: '#303f9f' }}
-          onChange={this.handleChangeMulti}
+          onChange={this.handleChangeMulti(field)}
+          useLayerForClickAway
           value={value}
           /* elementHeight={58} */
           /* selectionsRenderer={this.handleCustomDisplaySelections('state31')} */
-          style={{ width: 300, marginTop: 20, marginRight: 40 }}
+          style={{ width: 300, marginTop: 29, marginRight: 40 }}
         >
           {options}
         </SuperSelectField>
@@ -182,7 +196,7 @@ class EditMetadataForm extends React.PureComponent<Props> {
         className={field.type === 'xml' ? classes.xmlField : classes.textField}
         select={Boolean(field.options) || (field.type === 'boolean')}
         multiline
-        error={this.hasError(field)}
+        error={hasError}
         /* fullWidth={field.type === 'xml'} */
         /* defaultValue={field.default} */
         value={this.getValue(field)}

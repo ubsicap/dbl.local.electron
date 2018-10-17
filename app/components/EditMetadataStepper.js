@@ -291,6 +291,10 @@ class _EditMetadataStepper extends React.Component<Props> {
     } else if (nextMoveNextFormKey) {
       this.trySetActiveStepToMoveNextFormKey(nextSteps, nextMoveNextFormKey);
     } else if (!utilities.areEqualObjectsDeep(nextActiveFormEdits, this.props.activeFormEdits)) {
+      const activeStep = this.getStep(this.state.activeStepIndex);
+      if (!activeStep) {
+        return; // step was closed
+      }
       const hasNextFormChanged = this.computeHasActiveFormChanged(nextActiveFormEdits);
       if (!hasNextFormChanged) {
         const hasLastFormChanged = this.computeHasActiveFormChanged(this.props.activeFormEdits);
@@ -416,8 +420,9 @@ class _EditMetadataStepper extends React.Component<Props> {
   getHasFormChanged = (stepIndex) => {
     const { activeFormEdits } = this.props;
     const isActiveForm = this.getIsActiveIndex(stepIndex);
-    if (!isActiveForm)
+    if (!isActiveForm) {
       return false;
+    }
     const hasFormChanged = this.computeHasActiveFormChanged(activeFormEdits);
     return hasFormChanged;
   }
