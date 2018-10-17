@@ -3,6 +3,7 @@ import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
 import { utilities } from '../utils/utilities';
+import { alertActions } from '../actions/alert.actions';
 
 export const dblDotLocalConfigActions = {
   getDblDotLocalExecStatus,
@@ -53,6 +54,13 @@ export function gotoWorkspaceLoginPage(workspace) {
       const { fullPath: workspaceFullPath, name: workspaceName } = workspace;
       const configXmlFile = dblDotLocalService.getConfigXmlFullPath(workspace);
       const dblDotLocalExecProcess = await dblDotLocalService.startDblDotLocal(configXmlFile);
+      dblDotLocalExecProcess.stderr.on('data', (data) => {
+        // log.error(data);
+        const [, errorMessage] = `${data}`.split('dbl_dot_local.dbl_app.DblAppException:');
+        if (errorMessage) {
+          dispatch(alertActions.error({ message: errorMessage }));
+        }
+      });
       ['error', 'close', 'exit'].forEach(event => {
         dblDotLocalExecProcess.on(event, (dblDotLocalExecProcessCode) => {
           dispatch({
