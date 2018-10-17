@@ -154,6 +154,7 @@ class EditMetadataForm extends React.PureComponent<Props> {
     const id = `${formKey}/${field.name}`;
     const helperText = this.helperOrErrorText(field);
     const hasError = this.hasError(field);
+    const isRequired = editMetadataService.getIsRequired(field);
     if (editMetadataService.getIsMulti(field)) {
       const value = this.getMultiValues(field).filter(v => v).map(val => ({ value: val }));
       const options = (field.options && field.options.map(option => (
@@ -171,7 +172,7 @@ class EditMetadataForm extends React.PureComponent<Props> {
           id={id}
           name={field.name}
           multiple
-          floatingLabel={field.label}
+          floatingLabel={`${field.label}${isRequired ? ' *' : ''}`}
           errorText={helperText}
           {...errorStyle}
           {...underlineStyle}
@@ -203,7 +204,7 @@ class EditMetadataForm extends React.PureComponent<Props> {
         /* placeholder="Placeholder" */
         /* autoComplete={field.default} */
         helperText={helperText}
-        required={editMetadataService.getIsRequired(field)}
+        required={isRequired}
         disabled={this.getIsDisabled(field)}
         onChange={this.handleChange(field.name)}
         SelectProps={{

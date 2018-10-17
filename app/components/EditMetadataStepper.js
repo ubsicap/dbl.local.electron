@@ -177,8 +177,12 @@ function getStepFormKey(stepId, structurePath) {
   return (stepId !== detailsStep.id ? `${structurePath}/${stepId}` : structurePath);
 }
 
+function isRequired(arity) {
+  return !(['?', '*'].includes(arity));
+}
+
 function shouldDisableDelete(step) {
-  return step.instances && step.arity && !(['?', '*'].includes(step.arity)) && step.instances.length === 1;
+  return step.instances && step.arity && isRequired(step.arity) && step.instances.length === 1;
 }
 
 type Props = {
@@ -560,7 +564,7 @@ class _EditMetadataStepper extends React.Component<Props> {
                   error={this.hasErrorsInStepsOrForms(step)}
                   /* icon={<StepIcon icon={<Build />} className={classNames(classes.root, classes.error)} error={this.hasErrorsInStepsOrForms(step)} />} */
                 >
-                  {step.label}
+                  {step.label}{getDecorateRequired(step)}
                 </StepLabel>
                 <StepContent>
                   {this.getStepContent(index)}
@@ -574,6 +578,15 @@ class _EditMetadataStepper extends React.Component<Props> {
       </div>
     );
   }
+}
+
+function getDecorateRequired(step) {
+  if (!step.arity) {
+    return '';
+  }
+  const showAsRequired = (!step.instances && isRequired(step.arity)) ||
+    (step.instances && shouldDisableDelete(step));
+  return showAsRequired ? ' *' : '';
 }
 
 const EditMetadataStepperComposed = compose(
