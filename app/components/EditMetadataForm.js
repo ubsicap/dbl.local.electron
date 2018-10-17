@@ -165,7 +165,8 @@ class EditMetadataForm extends React.PureComponent<Props> {
       const greyish = 'rgba(0, 0, 0, 0.54)';
       const floatingLabelStyle = { color: greyish };
       const errorStyle = hasError ? {} : { errorStyle: floatingLabelStyle };
-      const underlineStyle = hasError ? {} : { underlineStyle: { borderBottomColor: greyish }, underlineFocusStyle: { borderBottomColor: greyish, borderBottomWidth: 'thick' } };
+      const underlineStyle = hasError ? { underlineStyle: { borderBottomColor: 'red' } }
+        : { underlineStyle: { borderBottomColor: greyish }, underlineFocusStyle: { borderBottomColor: greyish, borderBottomWidth: 'thick' } };
       return (
         <SuperSelectField
           key={id}
