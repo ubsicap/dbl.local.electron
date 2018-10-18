@@ -133,7 +133,7 @@ class EditMetadataForm extends React.PureComponent<Props> {
     return fieldValues;
   }
 
-  getIsDisabled = (field) => {
+  getIsReadonly = (field) => {
     if (field.isOverridden) {
       return true;
     }
@@ -147,8 +147,23 @@ class EditMetadataForm extends React.PureComponent<Props> {
     return formKey.endsWith(`/${field.default}`);
   }
 
+  formatError = (field) => {
+    const fieldError = this.getErrorInField(field);
+    if (!getHasError(fieldError)) {
+      return null;
+    }
+    const { rule, value: valueOrig } = fieldError;
+    const isReadOnly = this.getIsReadonly(field);
+    if (isReadOnly) {
+      return `${rule}, but the read-only value "${this.getValue(field)}" will be stored on Save`;
+    } else if (valueOrig !== null) {
+      return `${rule}: '${valueOrig}'`;
+    }
+    return rule;
+  }
+
   hasError = (field) => getHasError(this.getErrorInField(field));
-  helperOrErrorText = (field) => formatError(this.getErrorInField(field)) || field.help;
+  helperOrErrorText = (field) => this.formatError(field) || field.help;
 
   renderTextOrSelectField = (formKey, field, classes) => {
     const id = `${formKey}/${field.name}`;
@@ -206,7 +221,7 @@ class EditMetadataForm extends React.PureComponent<Props> {
         /* autoComplete={field.default} */
         helperText={helperText}
         required={isRequired}
-        disabled={this.getIsDisabled(field)}
+        disabled={this.getIsReadonly(field)}
         onChange={this.handleChange(field.name)}
         SelectProps={{
           MenuProps: {
@@ -243,17 +258,6 @@ class EditMetadataForm extends React.PureComponent<Props> {
 
 function getHasError(fieldError) {
   return Boolean(Object.keys(fieldError).length > 0);
-}
-
-function formatError(fieldError) {
-  if (!getHasError(fieldError)) {
-    return null;
-  }
-  const { rule, value } = fieldError;
-  if (value !== null) {
-    return `${rule}: '${value}'`;
-  }
-  return rule;
 }
 
 export default compose(
