@@ -95,7 +95,7 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
     }
   }
 
-  renderHostMenuItems = () => hostOptions.map(option => (<MenuItem value={option}>{option}</MenuItem>));
+  renderHostMenuItems = () => hostOptions.map((option) => (<MenuItem key={option} value={option}>{option}</MenuItem>));
 
   getOrganizationTypeValues = () => this.state.settings_dbl_organizationType || '';
 
