@@ -53,6 +53,13 @@ function importSettingsToState(settings) {
   };
 }
 
+function selectHtmlSetting(host) {
+  if (host === 'api-demo.thedigitalbiblelibrary.org') {
+    return 'https://demo.thedigitalbiblelibrary.org';
+  }
+  return 'thedigitalbiblelibrary.org';
+}
+
 function exportStateToSettings(state, origSettings) {
   const {
     workspaceName,
@@ -72,6 +79,7 @@ function exportStateToSettings(state, origSettings) {
       dbl: [{
         ...origSettings.configXmlSettings.settings.dbl[0],
         host: [settings_dbl_host],
+        html: [selectHtmlSetting(settings_dbl_host)],
         accessToken: [settings_dbl_accessToken],
         secretKey: [settings_dbl_secretKey],
         organizationType: [settings_dbl_organizationType],
