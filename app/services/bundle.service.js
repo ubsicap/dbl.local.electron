@@ -557,10 +557,12 @@ async function updatePublications(bundleId, publicationIds) {
     );
     const { wizard, uri } = bestWizard;
     if (!wizard) {
-      console.log(`Publication ${pubId} not updated. No publication wizard hits were found:`);
+      console.log(`Publication ${pubId} not updated. No publication wizard hits were found in these tests:`);
       console.log(wizardTestResults);
     } else {
       await bundleService.runPublicationWizard(bundleId, pubId, wizard, uri);
+      console.log(`Publication ${pubId} was updated by wizard ${wizard} for uri ${uri}`);
+      console.log(bestWizard);
     }
   }
 }
