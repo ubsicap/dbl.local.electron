@@ -539,6 +539,14 @@ function runPublicationWizard(bundleId, pubId, wizardId, containerUri) {
 }
 
 async function updatePublications(bundleId, publicationIds) {
+  const wizards = await getPublicationWizards();
+  const bundleRaw = await fetchById(bundleId);
+  const { dbl: { medium } } = bundleRaw;
+  const applicableWizards = Object.values(wizards).filter(w => w.medium === medium);
+  if (applicableWizards.length === 0) {
+    console.log(`Publications not updated. No publication wizards were found for medium ${medium}`);
+    return;
+  }
   /* eslint-disable no-restricted-syntax */
   /* eslint-disable no-await-in-loop */
   for (const pubId of publicationIds) {
@@ -549,10 +557,11 @@ async function updatePublications(bundleId, publicationIds) {
     );
     const { wizard, uri } = bestWizard;
     if (!wizard) {
+      console.log(`Publication ${pubId} not updated. No publication wizard hits were found:`);
       console.log(wizardTestResults);
-      return;
+    } else {
+      await bundleService.runPublicationWizard(bundleId, pubId, wizard, uri);
     }
-    await bundleService.runPublicationWizard(bundleId, pubId, wizard, uri);
   }
 }
 
