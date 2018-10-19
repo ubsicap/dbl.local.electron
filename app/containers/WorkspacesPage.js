@@ -281,15 +281,14 @@ class WorkspacesPage extends PureComponent<Props> {
                       {card.configXmlSettings &&
                       <div>
                         <Typography variant="subheading" align="center">
-                          <b>Access:</b>
+                          <b>{card.configXmlSettings.settings.dbl[0].organizationType[0].toUpperCase()}</b>
                         </Typography>
                         <Typography variant="body" align="center" paragraph>
-                          {card.configXmlSettings.settings.dbl[0].organizationType[0]}
-                          {card.configXmlSettings.settings.dbl[0].downloadOpenAccessEntries[0] === 'true' ? 
-                            '( with open-access entries )' : ' ( without open-access entries )'}
+                          {card.configXmlSettings.settings.dbl[0].downloadOpenAccessEntries[0] === 'true' ?
+                            'download open-access entries is ENABLED' : 'download open-access entries is DISABLED'}
                         </Typography>
                         <Typography variant="subheading" align="center">
-                          <b>Token:</b>
+                          <b>Access Token:</b>
                         </Typography>
                         <Typography align="center" paragraph>
                           {card.configXmlSettings.settings.dbl[0].accessToken[0]}
