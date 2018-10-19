@@ -23,6 +23,7 @@ import { logout } from '../actions/user.actions';
 import MenuAppBar from '../components/MenuAppBar';
 import WorkspaceEditDialog from '../components/WorkspaceEditDialog';
 import ConfirmButton from '../components/ConfirmButton';
+import { utilities } from '../utils/utilities';
 
 type Props = {
   classes: {},
@@ -269,20 +270,36 @@ class WorkspacesPage extends PureComponent<Props> {
                       <Typography gutterBottom variant="headline" component="h2">
                         <div>
                           {card.name}
-                          {card.configXmlSettings &&
-                          <span style={{ marginLeft: '5px' }}>
-                          ({card.configXmlSettings.settings.dbl[0].organizationType[0]})
-                          </span>
-                          }
                         </div>
                       </Typography>
-                      <Typography>
+                      <Typography variant="caption">
+                        <b>Last Accessed:</b>
+                      </Typography>
+                      <Typography variant="caption">
                         {card.dateModified.toLocaleString()}
                       </Typography>
                       {card.configXmlSettings &&
-                      <Button variant="text">
-                        <Link /><span>{card.configXmlSettings.settings.dbl[0].html[0]}</span>
-                      </Button>}
+                      <div>
+                        <Typography variant="subheading" align="center">
+                          <b>Access:</b>
+                        </Typography>
+                        <Typography variant="body" align="center" paragraph>
+                          {card.configXmlSettings.settings.dbl[0].organizationType[0]}
+                          {card.configXmlSettings.settings.dbl[0].downloadOpenAccessEntries[0] === 'true' ? 
+                            '( with open-access entries )' : ' ( without open-access entries )'}
+                        </Typography>
+                        <Typography variant="subheading" align="center">
+                          <b>Token:</b>
+                        </Typography>
+                        <Typography align="center" paragraph>
+                          {card.configXmlSettings.settings.dbl[0].accessToken[0]}
+                        </Typography>
+                        <Typography align="center">
+                          <Button variant="text" onClick={utilities.onOpenLink(getDblWebsiteUrl(card))}>
+                            <Link className={classes.icon} /><span style={{ color: 'blue' }}>{getDblWebsiteUrl(card)}</span>
+                          </Button>
+                        </Typography>
+                      </div>}
                     </CardContent>
                     <CardActions>
                       <Button size="small" color="primary" onClick={this.handleEdit(card)}>
@@ -347,3 +364,7 @@ export default compose(
     mapDispatchToProps
   ),
 )(WorkspacesPage);
+
+function getDblWebsiteUrl(workspace) {
+  return workspace.configXmlSettings.settings.dbl[0].html[0];
+}
