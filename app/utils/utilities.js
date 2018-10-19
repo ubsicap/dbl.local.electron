@@ -5,11 +5,13 @@ const { shell } = require('electron');
 export const utilities = {
   areEqualArrays,
   areEqualArraysDeep,
+  areEqualObjectsDeep,
   areEqualCollections,
   onOpenLink,
   sleep,
   union,
-  difference
+  difference,
+  buildRouteUrl
 };
 export default utilities;
 
@@ -41,6 +43,12 @@ export function areEqualArraysDeep(a1, a2) {
   return a1 === a2 || (a1.length === a2.length && JSON.stringify(a1) === JSON.stringify(a2));
 }
 
+export function areEqualObjectsDeep(o1, o2) {
+  return o1 === o2 ||
+  (areEqualArraysDeep(Object.keys(o1), Object.keys(o2)) &&
+   areEqualArraysDeep(Object.values(o1), Object.values(o2)));
+}
+
 export function areEqualCollections(c1, c2) {
   return areEqualArrays(c1, c2, (c) => sort(c).asc());
 }
@@ -55,4 +63,12 @@ function onOpenLink(url) {
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function buildRouteUrl(routeUrl, params) {
+  const url = Object.entries(params).reduce(
+    (acc, [key, value]) => (acc.replace(`:${key}`, value)),
+    routeUrl
+  );
+  return url;
 }

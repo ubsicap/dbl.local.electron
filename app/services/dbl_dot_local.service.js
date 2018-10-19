@@ -1,9 +1,12 @@
 import fs from 'fs-extra';
 import path from 'path';
 import childProcess from 'child_process';
+import xml2js from 'xml2js';
 import log from 'electron-log';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 import { authHeader } from '../helpers';
+// import { history } from '../store/configureStore';
+// import { navigationConstants } from '../constants/navigation.constants';
 
 export const dblDotLocalService = {
   health,
@@ -11,10 +14,16 @@ export const dblDotLocalService = {
   newBundleMedia,
   sessionAddTasks,
   createNewBundle,
-  ensureDblDotLocal,
-  getDblDotLocalConfigFilePath,
+  startDblDotLocal,
   importConfigXml,
-  exportConfigXml
+  exportConfigXml,
+  getDblDotLocalExecCwd,
+  getConfigXmlFullPath,
+  getDblDotLocalExecStatus,
+  getWorkspacesDir,
+  convertConfigXmlToJson,
+  updateConfigXmlWithNewPaths,
+  updateAndWriteConfigXmlSettings
 };
 export default dblDotLocalService;
 
@@ -85,50 +94,59 @@ function handlResponseAsReadable(response) {
   return response;
 }
 
-async function ensureDblDotLocal() {
+async function getDblDotLocalExecStatus() {
   try {
-    return await dblDotLocalService.health();
-  } catch (error) {
-    if (error.message === 'Failed to fetch') {
-      const configXmlFile = dblDotLocalService.getDblDotLocalConfigFilePath();
-      const doesConfigExists = await fs.exists(configXmlFile);
-      if (!doesConfigExists) {
-        const browserWindow = getCurrentWindow();
-        importConfigXml(browserWindow);
-        const doesConfigExistsAgain = await fs.exists(configXmlFile);
-        if (!doesConfigExistsAgain) {
-          browserWindow.close();
-          return;
-        }
-      }
-      startDblDotLocalSubProcess();
+    const isRunning = await dblDotLocalService.health();
+    if (isRunning) {
+      return { isRunning: true };
     }
+  } catch (error) {
+    return { isRunning: false, error };
   }
 }
 
-function startDblDotLocalSubProcess() {
+async function startDblDotLocal(configXmlFile) {
+  try {
+    const { isRunning } = await getDblDotLocalExecStatus();
+    if (isRunning) {
+      return null;
+    }
+    const doesConfigExist = await fs.exists(configXmlFile);
+    if (!doesConfigExist) {
+      // history.push(navigationConstants.NAVIGATION_WORKSPACES);
+      throw new Error(`Could not find config.xml: ${configXmlFile}`);
+    }
+    return startDblDotLocalSubProcess(configXmlFile);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+function startDblDotLocalSubProcess(configXmlFile) {
   // try to start local dbl_dot_local.exe process if it exists.
   const dblDotLocalExecPath = getDblDotLocalExecPath();
   console.log(dblDotLocalExecPath);
-  if (fs.exists(dblDotLocalExecPath)) {
-    const cwd = getDblDotLocalExecCwd();
-    const subProcess = childProcess.spawn(dblDotLocalExecPath, {
-      cwd,
-      stdio: [ 'ignore', 'ignore', 'pipe' ],
-      detached: false
-    });
-    subProcess.stderr.on('data', (data) => {
-      // log.error(data);
-      console.log(`dbl_dot_local.exe: ${data}`);
-    });
-    ['error', 'close', 'exit'].forEach(event => {
-      subProcess.on(event, (code) => {
-        const msg = `dbl_dot_local.exe (${event}): ${code}`;
-        log.error(msg);
-        console.log(msg);
-      });
-    });
+  if (!fs.exists(dblDotLocalExecPath)) {
+    throw new Error(`Not found: ${dblDotLocalExecPath}`);
   }
+  const cwd = getDblDotLocalExecCwd();
+  const subProcess = childProcess.spawn(dblDotLocalExecPath, [configXmlFile], {
+    cwd,
+    stdio: [ 'ignore', 'ignore', 'pipe' ],
+    detached: false
+  });
+  subProcess.stderr.on('data', (data) => {
+    // log.error(data);
+    console.log(`dbl_dot_local.exe: ${data}`);
+  });
+  ['error', 'close', 'exit'].forEach(event => {
+    subProcess.on(event, (code) => {
+      const msg = `dbl_dot_local.exe (${event}): ${code}`;
+      log.error(msg);
+      console.log(msg);
+    });
+  });
+  return subProcess;
 }
 
 function getDblDotLocalExecCwd() {
@@ -164,10 +182,6 @@ function getDialog() {
   return dialog;
 }
 
-function getDblDotLocalConfigFilePath() {
-  return path.join(getDblDotLocalExecCwd(), 'config.xml');
-}
-
 function getDblDotLocalExecPath() {
   return path.join(getDblDotLocalExecCwd(), 'dbl_dot_local.exe');
 }
@@ -179,13 +193,14 @@ function getConfigXmlDefaultFolder() {
   return defaultPath;
 }
 
-function importConfigXml(browserWindow) {
+function importConfigXml(destination) {
+  const browserWindow = getCurrentWindow();
   const defaultPath = getConfigXmlDefaultFolder();
   const dialog = getDialog();
   const filePaths = dialog.showOpenDialog(
     browserWindow,
     {
-      title: 'Select config.xml for dbl_dot_local',
+      title: 'Select template config.xml',
       defaultPath,
       filters: [
         { name: 'XML files', extensions: ['xml'] },
@@ -198,17 +213,12 @@ function importConfigXml(browserWindow) {
     return;
   }
   const [newSourceFilePath] = filePaths;
-  const destination = dblDotLocalService.getDblDotLocalConfigFilePath();
   const newConfigFile = fs.readFileSync(newSourceFilePath);
   fs.writeFileSync(destination, newConfigFile);
-  dialog.showMessageBox(
-    browserWindow,
-    { message: `Imported ${newSourceFilePath}\n\nPlease restart.` }
-  );
-  browserWindow.close();
 }
 
-function exportConfigXml(browserWindow) {
+function exportConfigXml(sourceFilePath) {
+  const browserWindow = getCurrentWindow();
   const defaultPath = getConfigXmlDefaultFolder();
   const dialog = getDialog();
   const destinationFileName = dialog.showSaveDialog(
@@ -225,9 +235,72 @@ function exportConfigXml(browserWindow) {
   if (!destinationFileName) {
     return;
   }
-  const sourceFilePath = dblDotLocalService.getDblDotLocalConfigFilePath();
   const activeConfigFile = fs.readFileSync(sourceFilePath);
   fs.writeFileSync(destinationFileName, activeConfigFile);
   const { shell } = electron;
   shell.showItemInFolder(destinationFileName);
+}
+
+function getConfigXmlFullPath(workspace) {
+  const { fullPath: workspaceFullPath } = workspace;
+  return path.join(workspaceFullPath, 'config.xml');
+}
+
+function getWorkspacesDir() {
+  const app = getApp();
+  return path.join(app.getPath('userData'), 'workspaces');
+}
+
+function parseAsJson(configFile) {
+  return new Promise((resolve, reject) => {
+    const parser = new xml2js.Parser();
+    parser.parseString(configFile, (err, result) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+}
+
+function convertConfigXmlToJson(workspace) {
+  const configXmlPath = dblDotLocalService.getConfigXmlFullPath(workspace);
+  const configFile = readFileOrTemplate(configXmlPath);
+  return parseAsJson(configFile);
+}
+
+function readFileOrTemplate(configXmlPath) {
+  if (!fs.existsSync(configXmlPath)) {
+    // import template.config.xml
+    const templateConfigXml = path.join(dblDotLocalService.getDblDotLocalExecCwd(), 'template.config.xml');
+    if (!fs.existsSync(templateConfigXml)) {
+      console.log(`Missing ${templateConfigXml}`);
+      return null;
+    }
+    return fs.readFileSync(templateConfigXml);
+  }
+  return fs.readFileSync(configXmlPath);
+}
+
+async function updateConfigXmlWithNewPaths(workspace) {
+  const configXmlSettings = await dblDotLocalService.convertConfigXmlToJson(workspace);
+  const { configXmlSettings: newConfigXmlSettings } =
+    dblDotLocalService.updateAndWriteConfigXmlSettings({ workspace, configXmlSettings });
+  return { ...newConfigXmlSettings };
+}
+
+function updateAndWriteConfigXmlSettings({ configXmlSettings, workspace }) {
+  // set paths
+  const newConfigXmlSettings = JSON.parse(JSON.stringify(configXmlSettings));
+  const { fullPath } = workspace;
+  newConfigXmlSettings.settings.storer[0].bundleRootDir[0] = path.join(fullPath, 'bundles');
+  newConfigXmlSettings.settings.storer[0].sessionBundleRootDir[0] = path.join(fullPath, 'sessions');
+  newConfigXmlSettings.settings.system[0].logDir[0] = path.join(fullPath, 'log');
+  const builder = new xml2js.Builder({ headless: true });
+  const xml = builder.buildObject(newConfigXmlSettings);
+  const configXmlPath = dblDotLocalService.getConfigXmlFullPath(workspace);
+  fs.writeFileSync(configXmlPath, xml);
+  console.log(xml);
+  return { xml, configXmlSettings: newConfigXmlSettings };
 }

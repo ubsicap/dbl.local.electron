@@ -13,23 +13,27 @@ import MenuIcon from '@material-ui/icons/Menu';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
+import NavigateBefore from '@material-ui/icons/NavigateBefore';
 import { history } from '../store/configureStore';
+import { navigationConstants } from '../constants/navigation.constants';
+
 import { updateSearchInput, clearSearch } from '../actions/bundleFilter.actions';
 
 
-function mapStateToProps(state) {
+function mapStateToProps(state, props) {
   const { bundlesFilter, authentication } = state;
   const { isLoading: isLoadingSearch } = bundlesFilter;
   const { isSearchActive } = bundlesFilter;
   const { searchInputRaw } = bundlesFilter;
-  const { loggedIn, whoami } = authentication;
+  const { loggedIn, whoami, workspaceName = props.workspaceName } = authentication;
   const { display_name: userName = 'DEMO USER' } = whoami || {};
   return {
     loggedIn,
     userName,
     isLoadingSearch,
     isSearchActive,
-    searchInputRaw
+    searchInputRaw,
+    workspaceName
   };
 }
 
@@ -44,6 +48,8 @@ type Props = {
     userName: string,
     isSearchActive: boolean,
     searchInputRaw: ?string,
+    workspaceName: ?string,
+    showSearch: boolean,
     updateSearchInput: () => {},
     clearSearch: () => {}
 };
@@ -79,14 +85,6 @@ class MenuAppBar extends React.PureComponent {
     anchorEl: null,
   };
 
-  componentDidMount() {
-    const { clearSearch: clearSearchResults } = this.props;
-    history.listen(() => {
-      // clear search results on location change
-      clearSearchResults();
-    });
-  }
-
   handleChange = (event, checked) => {
   };
 
@@ -108,8 +106,12 @@ class MenuAppBar extends React.PureComponent {
     return isSearchActive ? searchInputRaw : '';
   }
 
+  handleBackToWorkspaces = () => {
+    history.push(navigationConstants.NAVIGATION_WORKSPACES);
+  }
+
   render() {
-    const { classes, loggedIn, userName } = this.props;
+    const { classes, loggedIn, userName, workspaceName, showSearch } = this.props;
     const { anchorEl } = this.state;
     const open = Boolean(anchorEl);
 
@@ -122,6 +124,7 @@ class MenuAppBar extends React.PureComponent {
           <Typography variant="title" color="inherit" className={classes.flex}>
             nathanael
           </Typography>
+          {showSearch &&
           <div>
             <DebounceInput
               debounceTimeout={300}
@@ -130,11 +133,11 @@ class MenuAppBar extends React.PureComponent {
               placeholder="Search"
               onChange={(event) => this.onChangeSearchInput(event, event.target.value)}
             />
-          </div>
-          {loggedIn && (
+          </div>}
+          {workspaceName && (
             <div>
-              <Button color="inherit">
-                {userName}
+              <Button color="inherit" onClick={this.handleMenu}>
+                { workspaceName } / {loggedIn ? userName : 'Login' }
                 <AccountCircle className={classNames(classes.rightIcon, classes.iconSmall)} />
               </Button>
               <Menu
@@ -151,8 +154,7 @@ class MenuAppBar extends React.PureComponent {
                 open={open}
                 onClose={this.handleClose}
               >
-                <MenuItem onClick={this.handleClose}>Profile</MenuItem>
-                <MenuItem onClick={this.handleClose}>My account</MenuItem>
+                <MenuItem onClick={this.handleBackToWorkspaces}>Logout (Workspaces)</MenuItem>
               </Menu>
             </div>
           )}

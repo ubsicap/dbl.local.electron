@@ -11,6 +11,8 @@ import { dblDotLocalService } from '../services/dbl_dot_local.service';
 export const bundleActions = {
   fetchAll,
   createNewBundle,
+  forkIntoNewBundle,
+  createDraftRevision,
   updateBundle,
   removeBundle,
   setupBundlesEventSource,
@@ -18,7 +20,8 @@ export const bundleActions = {
   requestSaveBundleTo,
   removeResources,
   toggleSelectEntry,
-  uploadBundle
+  uploadBundle,
+  fetchDownloadQueueCounts
 };
 
 export default bundleActions;
@@ -51,8 +54,8 @@ function tryAddNewEntry(bundleId) {
     if (!bundleService.apiBundleHasMetadata(rawBundle)) {
       return; // hasn't downloaded metadata yet. (don't expect to be in our list)
     }
-    const { dbl: { parent } } = rawBundle;
-    if (parent) {
+    const { dbl: { parent, id: dblId } } = rawBundle;
+    if (parent && parent.dblId === dblId) {
       return;
     }
     dispatch(updateOrAddBundle(rawBundle));
@@ -62,7 +65,16 @@ function tryAddNewEntry(bundleId) {
 function updateOrAddBundle(rawBundle) {
   return async (dispatch, getState) => {
     const { local_id: bundleId } = rawBundle;
-    const bundle = await bundleService.convertApiBundleToNathanaelBundle(rawBundle);
+    const hasStoredResources = bundleService.getHasStoredResources(rawBundle);
+    const manifestResources = hasStoredResources ?
+      await bundleService.getManifestResourcePaths(bundleId) : 0;
+    const { status } = bundleService.getInitialTaskAndStatus(rawBundle);
+    const formsErrorStatus = status === 'DRAFT' ? await bundleService.checkAllFields(bundleId) : {};
+    const resourceCountManifest = (manifestResources || []).length;
+    const bundle = await bundleService.convertApiBundleToNathanaelBundle(
+      rawBundle,
+      { resourceCountManifest, formsErrorStatus }
+    );
     const addedBundle = getAddedBundle(getState, bundleId);
     if (addedBundle) {
       dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle, rawBundle });
@@ -74,6 +86,24 @@ function updateOrAddBundle(rawBundle) {
       }
     } else {
       dispatch(addBundle(bundle, rawBundle));
+    }
+  };
+}
+
+export function createDraftRevision(_bundleId) {
+  return async (dispatch, getState) => {
+    const { bundles } = getState();
+    const { addedByBundleIds } = bundles;
+    const bundleIdToEdit = _bundleId;
+    const bundleToEdit = _bundleId ? addedByBundleIds[bundleIdToEdit] : {};
+    if (bundleToEdit.mode === 'create' || bundleToEdit.status === 'DRAFT') {
+      return;
+    }
+    try {
+      await bundleService.startCreateContent(_bundleId, 'createDraftRevision');
+    } catch (errorReadable) {
+      const error = await errorReadable.text();
+      log.error(`error creating draft revision: ${error}`);
     }
   };
 }
@@ -110,6 +140,28 @@ export function fetchAll() {
     return { type: bundleConstants.FETCH_FAILURE, error };
   }
 }
+
+export function forkIntoNewBundle(_bundleId, _medium) {
+  return async dispatch => {
+    try {
+      dispatch(request(_bundleId, _medium));
+      await bundleService.forkBundle(_bundleId, _medium);
+      dispatch(success(_bundleId, _medium));
+    } catch (error) {
+      dispatch(failure(error));
+    }
+  };
+  function request(bundleId, medium) {
+    return { type: bundleConstants.CREATE_REQUEST, medium, bundleId };
+  }
+  function success(bundleId, medium) {
+    return { type: bundleConstants.CREATE_SUCCESS, medium, bundleId };
+  }
+  function failure(error) {
+    return { type: bundleConstants.CREATE_FAILURE, error };
+  }
+}
+
 
 export function createNewBundle(_medium) {
   return async dispatch => {
@@ -155,6 +207,7 @@ export function setupBundlesEventSource(authentication) {
       'downloader/receiver': listenDownloaderReceiver,
       'downloader/status': (e) => listenDownloaderSpecStatus(e, dispatch, getState),
       'downloader/spec_status': (e) => listenDownloaderSpecStatus(e, dispatch, getState),
+      'downloader/global_status': (e) => dispatch(listenDownloaderGlobalStatus(e)),
       'storer/delete_resource': (e) => listenStorerDeleteResource(e, dispatch, getState),
       'storer/update_from_download': (e) => listenStorerUpdateFromDownload(e, dispatch, getState),
       'storer/delete_bundle': (e) => listenStorerDeleteBundle(e, dispatch, getState),
@@ -174,6 +227,15 @@ export function setupBundlesEventSource(authentication) {
       };
     }
   };
+
+  /* 
+   * data:{"args": [1, 11], "component": "downloader", "type": "global_status"}
+   */
+  function listenDownloaderGlobalStatus(e) {
+    const data = JSON.parse(e.data);
+    const [nSpecs, nAtoms] = data.args;
+    return updateDownloadQueue(nSpecs, nAtoms);
+  }
 
   function listenStorerExecuteTaskDownloadResources() {
     // console.log(e);
@@ -381,6 +443,25 @@ function removeExcessBundles() {
     bundleIdsToRemove.forEach((idBundleToRemove) => {
       dispatch(removeBundle(idBundleToRemove));
     });
+  };
+}
+
+function updateDownloadQueue(nSpecs, nAtoms) {
+  return (dispatch) => {
+    dispatch({ type: bundleConstants.UPDATE_DOWNLOAD_QUEUE, nSpecs, nAtoms });
+  };
+}
+
+export function fetchDownloadQueueCounts() {
+  return async dispatch => {
+    try {
+      const downloadQueueList = await bundleService.getSubsystemDownloadQueue();
+      const nSpecs = Object.keys(downloadQueueList).length;
+      const nAtoms = downloadQueueList.reduce((acc, spec) => acc + spec.n_atoms, 0);
+      return dispatch(updateDownloadQueue(nSpecs, nAtoms));
+    } catch (error) {
+      log.error(error);
+    }
   };
 }
 

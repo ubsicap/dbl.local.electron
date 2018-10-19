@@ -1,9 +1,9 @@
-import traverse from 'traverse';
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
 import { bundleService } from '../services/bundle.service';
 import { utilities } from '../utils/utilities';
+import { openEditMetadata } from './bundleEditMetadata.actions';
 
 export const bundleManageResourceActions = {
   openResourceManager,
@@ -12,14 +12,6 @@ export const bundleManageResourceActions = {
   addManifestResources,
   checkPublicationsHealth
 };
-
-function buildBundleArgUrl(routeUrl, args) {
-  const url = Object.entries(args).reduce(
-    (acc, [key, value]) => (acc.replace(`:${key}`, value)),
-    routeUrl
-  );
-  return url;
-}
 
 export function openResourceManager(_bundleId, _mode = 'download') {
   return async dispatch => {
@@ -34,7 +26,7 @@ export function openResourceManager(_bundleId, _mode = 'download') {
   }
   function navigate(bundleId, mode) {
     const manageResourcesUrl =
-      buildBundleArgUrl(navigationConstants.NAVIGATION_BUNDLE_MANAGE_RESOURCES, { bundleId, mode });
+      utilities.buildRouteUrl(navigationConstants.NAVIGATION_BUNDLE_MANAGE_RESOURCES, { bundleId, mode });
     history.push(manageResourcesUrl);
     return success(bundleId, mode);
   }
@@ -54,22 +46,13 @@ export function closeResourceManager(_bundleId) {
   }
 }
 
-function addFileInfo(acc, fileInfoNode) {
-  if (fileInfoNode.is_dir || this.isRoot || fileInfoNode.size === undefined) {
-    return acc;
-  }
-  const { path } = this;
-  const fullKey = path.join('/');
-  return { ...acc, [fullKey]: fileInfoNode };
-}
-
 export function getManifestResources(_bundleId) {
   return async dispatch => {
     try {
       dispatch(request(_bundleId));
       const manifestResources = await bundleService.getManifestResourceDetails(_bundleId);
       const rawBundle = await bundleService.fetchById(_bundleId);
-      const storedFiles = traverse(rawBundle.store.file_info).reduce(addFileInfo, {});
+      const storedFiles = bundleService.getFlatFileInfo(rawBundle);
       dispatch(success(_bundleId, manifestResources, storedFiles));
     } catch (error) {
       dispatch(failure(_bundleId, error));
@@ -95,34 +78,37 @@ export function getManifestResources(_bundleId) {
 export function checkPublicationsHealth(_bundleId) {
   return async dispatch => {
     const sections = await bundleService.getFormBundleTree(_bundleId);
-    const publicationsStructure = sections.find(section => section.id === 'publications');
-    const { contains: publicationsContains } = publicationsStructure;
-    const publicationStructure = publicationsContains.find(section => section.id === 'publication');
-    const { instances: publicationInstances } = publicationStructure;
+    const publicationInstances = bundleService.getPublicationsInstances(sections);
     const publicationInstanceIds = Object.keys(publicationInstances);
-    const editMetadataPageWithBundleId = buildBundleArgUrl(
-      navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_SECTION,
-      { bundleId: _bundleId, section: 'publications' }
-    );
     if (publicationInstanceIds.length === 0) {
       return dispatch({
         type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR,
         error: 'NO_PUBLICATION_INSTANCE',
         publications: [],
         errorMessage: 'To add a resource, first add a publication to Publications',
-        navigation: editMetadataPageWithBundleId
+        goFix: () => dispatch(openEditMetadata(_bundleId, { formKey: '/publications/publication' }))
       });
     }
     const pubsMissingCanonSpecs = publicationInstanceIds.filter(pubId =>
       !(publicationInstances[pubId].contains.find(section => section.id === 'canonSpec').present));
     if (pubsMissingCanonSpecs.length > 0) {
-      return dispatch({
-        type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR,
-        error: 'MISSING_CANON_SPECS',
-        publications: pubsMissingCanonSpecs,
-        errorMessage: `To add a resource, first add Canon Specification to the following publications: ${pubsMissingCanonSpecs}`,
-        navigation: editMetadataPageWithBundleId
-      });
+      return dispatch(updateMissingCanonSpecs(dispatch, pubsMissingCanonSpecs));
+    }
+    /* eslint-disable no-restricted-syntax */
+    /* eslint-disable no-await-in-loop */
+    const pubsMissingCanonComponentsIds = [];
+    for (const pubId of publicationInstanceIds) {
+      // now check that at least components are added.
+      const pubFormKey = `/publications/publication/${pubId}/canonSpec`;
+      const pubForm = await bundleService.getFormFields(_bundleId, pubFormKey);
+      const [componentField] = pubForm.fields.filter(f => f.name === 'component');
+      const [firstDefault] = componentField.default || [];
+      if (!firstDefault) {
+        pubsMissingCanonComponentsIds.push(pubId);
+      }
+    }
+    if (pubsMissingCanonComponentsIds.length > 0) {
+      return dispatch(updateMissingCanonSpecs(dispatch, pubsMissingCanonComponentsIds));
     }
     // now get the publication structure for each publication
     dispatch({
@@ -130,6 +116,17 @@ export function checkPublicationsHealth(_bundleId) {
       publications: publicationInstanceIds
     });
   };
+
+  function updateMissingCanonSpecs(dispatch, pubsMissingCanonSpecs) {
+    const [p1] = pubsMissingCanonSpecs;
+    return {
+      type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR,
+      error: 'MISSING_CANON_SPECS',
+      publications: pubsMissingCanonSpecs,
+      errorMessage: `To add a resource, first add Canon Specification (ESPECIALLY Canon Components) to the following publications: ${pubsMissingCanonSpecs}`,
+      goFix: () => dispatch(openEditMetadata(_bundleId, { formKey: `/publications/publication/${p1}/canonSpec` }))
+    };
+  }
 }
 
 export function addManifestResources(_bundleId, _fileToContainerPaths) {
@@ -139,23 +136,12 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
     /* eslint-disable no-await-in-loop */
     for (const [filePath, containerPath] of Object.entries(_fileToContainerPaths)) {
       try {
-        await utilities.sleep(50); // avoid hang?
         await bundleService.postResource(_bundleId, filePath, containerPath);
-        await utilities.sleep(250); // avoid hang?
         await bundleService.updateManifestResource(_bundleId, containerPath);
-        await utilities.sleep(50); // avoid hang?
         const { bundleManageResources } = getState();
         const { publicationsHealth } = bundleManageResources;
         const { publications } = publicationsHealth;
-        for (const pubId of publications) {
-          const wizardTestResults = await bundleService.testPublicationWizards(_bundleId, pubId);
-          const bestWizard = wizardTestResults.reduce(
-            (acc, r) => (r.hits.length > acc.hits.length ? r : acc),
-            { hits: [], misses: [] }
-          );
-          const { wizard, uri } = bestWizard;
-          await bundleService.runPublicationWizard(_bundleId, pubId, wizard, uri);
-        }
+        await bundleService.updatePublications(_bundleId, publications);
         dispatch(success(_bundleId, filePath, containerPath));
       } catch (error) {
         dispatch(failure(_bundleId, error));

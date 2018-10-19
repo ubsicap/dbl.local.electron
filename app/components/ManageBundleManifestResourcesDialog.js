@@ -22,7 +22,6 @@ import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
 import path from 'path';
 import { findChunks } from 'highlight-words-core';
-import { history } from '../store/configureStore';
 import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth
 } from '../actions/bundleManageResources.actions';
@@ -50,7 +49,7 @@ type Props = {
   columnConfig: [],
   isOkToAddFiles: boolean,
   publicationsHealthMessage: ?string,
-  publicationsHealthMessageLink: ?string,
+  goFixPublications: ?() => {},
   closeResourceManager: () => {},
   openMetadataFile: () => {},
   getManifestResources: () => {},
@@ -171,7 +170,7 @@ function mapStateToProps(state, props) {
   const { publicationsHealth, progress = 100, loading = false } = bundleManageResources;
   const {
     errorMessage: publicationsHealthMessage,
-    navigation: publicationsHealthMessageLink
+    goFix: goFixPublications
   } = publicationsHealth || {};
   const { bundleId, mode } = props.match.params;
   const { showMetadataFile } = bundleEditMetadata;
@@ -191,7 +190,7 @@ function mapStateToProps(state, props) {
     columnConfig,
     isOkToAddFiles: !publicationsHealthMessage,
     publicationsHealthMessage,
-    publicationsHealthMessageLink
+    goFixPublications
   };
 }
 
@@ -309,7 +308,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   handleGoFixError = () => {
-    history.push(this.props.publicationsHealthMessageLink);
+    this.props.goFixPublications();
   }
 
   onSelectedIds = (selectedIds) => {
@@ -401,7 +400,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       return;
     }
     const parentDir = path.resolve(folderPaths[0], '..');
-    const knownUnwantedFiles = ['desktop.ini', 'thumbs.db', '.DS_Store', ignoreHiddenFunc];
+    const knownUnwantedFiles = ['metadata.xml', 'desktop.ini', 'thumbs.db', '.DS_Store', ignoreHiddenFunc];
     const readAllDirs = folderPaths.map(folder => recursiveReadDir(folder, knownUnwantedFiles)
       .then(fullPaths => ({
         folder,

@@ -20,9 +20,22 @@ function sortAndFilterBundlesAsEntries(allBundles) {
     b => b.displayAs.languageAndCountry,
     b => b.displayAs.name,
   ]);
-  const addedByBundleIds = sortedBundles.reduce((acc, bundle) => ({ ...acc, [bundle.id]: bundle }), {});
-  const byBundleDblIds = items.reduce((acc, bundle) => ({ ...acc, [bundle.dblId]: bundle }), {});
+  const addedByBundleIds = indexBy(sortedBundles, 'id');
+  const byBundleDblIds = indexBy(items, 'dblId');
   return { items, addedByBundleIds, byBundleDblIds };
+}
+
+/* consider converting indexBy to extension method:
+  Object.defineProperty(String.prototype, "SayHi", {
+      value: function SayHi() {
+          return "Hi " + this + "!";
+      },
+      writable: true,
+      configurable: true
+  });
+*/
+function indexBy(items, byField) {
+  return items.reduce((acc, item) => ({ ...acc, [item[byField]]: item }), {});
 }
 
 function getSelectedState(state, bundleToToggle, bundleIdToRemove, newItemsByDblIds) {
@@ -133,6 +146,13 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
         addedByBundleIds,
         selectedBundle,
         selectedDBLEntryId
+      };
+    }
+    case bundleConstants.UPDATE_DOWNLOAD_QUEUE: {
+      const { nSpecs, nAtoms } = action;
+      return {
+        ...state,
+        downloadQueue: { nSpecs, nAtoms }
       };
     }
     case bundleConstants.DOWNLOAD_RESOURCES_REQUEST: {
@@ -291,8 +311,11 @@ function formatRevisionDisplayAs(bundle) {
     return 'Update';
   }
   if (parent || revision === '0') {
-    const { revision: parentRevision = 0 } = parent || {};
-    return `> Rev ${parentRevision}`;
+    const { revision: parentRevision = null } = parent || {};
+    if (parentRevision && parent.dblId === bundle.dblId) {
+      return `> Rev ${parentRevision}`;
+    }
+    return 'Rev 1 (New)';
   }
   return `Rev ${revision}`;
 }
@@ -303,6 +326,8 @@ function formatDisplayAs(bundle) {
     displayAs: {
       languageAndCountry: formatLanguageAndCountry(bundle),
       name: bundle.name,
+      rightsHolders: bundle.rightsHolders,
+      license: ['owned', 'open-access'].includes(bundle.license) ? bundle.license : `#${bundle.license}`,
       revision: (bundle.dblId ? revision : 'New'),
       status: formatStatus(bundle)
     }
@@ -317,7 +342,7 @@ function formatLanguageAndCountry(bundle) {
 function formatStatus(bundle) {
   const formattedProgress = formatProgress(bundle);
   const stored = (bundle.resourceCountStored === bundle.resourceCountManifest) ?
-    bundle.resourceCountManifest : `${bundle.resourceCountStored}/${bundle.resourceCountManifest}`;
+    bundle.resourceCountManifest : `${bundle.resourceCountStored}/${bundle.resourceCountManifest || '...'}`;
   let newStatusDisplayAs;
   if (bundle.isUploading) {
     const uploadingMessage = (!bundle.resourceCountStored || bundle.resourceCountStored === 0) ? 'metadata' : formattedProgress;

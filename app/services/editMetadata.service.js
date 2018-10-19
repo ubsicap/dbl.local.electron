@@ -1,3 +1,5 @@
+import { createSelector } from 'reselect';
+
 const editMetadataService = {
   getHasFormFieldsChanged,
   getFieldValues,
@@ -5,7 +7,9 @@ const editMetadataService = {
   getKeyField,
   getIsRequired,
   getFormInputsWithOverrides,
-  getIsMulti
+  getIsMulti,
+  makeGetFormsErrors,
+  getFormsErrors
 };
 
 export default editMetadataService;
@@ -76,4 +80,23 @@ function getFormInputsWithOverrides(formKey, inputs, metadataOverrides) {
     return overridenField;
   });
   return { ...inputs, fields: overriddenFields };
+}
+
+const getPropsFormsErrorStatus = (state, props) => props.formsErrorStatus;
+
+function makeGetFormsErrors() {
+  return createSelector(
+    [getPropsFormsErrorStatus],
+    getFormsErrors
+  );
+}
+
+function getFormsErrors(formsErrorStatus) {
+  const formsErrors = Object.entries(formsErrorStatus).reduce((acc, [formKey, errorStatus]) => {
+    if (errorStatus.field_issues.length === 0 && errorStatus.document_issues.length === 0) {
+      return acc;
+    }
+    return { ...acc, [`/${formKey}`]: { ...errorStatus } };
+  }, {});
+  return formsErrors;
 }

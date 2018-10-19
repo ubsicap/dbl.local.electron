@@ -3,35 +3,39 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { DebounceInput } from 'react-debounce-input';
 import Tooltip from '@material-ui/core/Tooltip';
-import { userActions, alertActions } from '../actions';
+import Button from '@material-ui/core/Button';
+import { userActions } from '../actions/user.actions';
+import { alertActions } from '../actions/alert.actions';
 import { loadHtmlBaseUrl } from '../actions/dblDotLocalConfig.actions';
 import { utilities } from '../utils/utilities';
+import MenuAppBar from '../components/MenuAppBar';
 
-function mapStateToProps(state) {
+function mapStateToProps(state, props) {
+  const { workspaceName } = props.match.params;
   const { authentication, alert, dblDotLocalConfig } = state;
   const loggingIn = Boolean(authentication.loggingIn);
   return {
+    workspaceName: workspaceName || '(Unknown Workspace)',
     loggingIn,
     alert,
-    dblBaseUrl: dblDotLocalConfig.dblBaseUrl
+    dblBaseUrl: dblDotLocalConfig.dblBaseUrl,
   };
 }
 
 const mapDispatchToProps = {
-  logout: userActions.logout,
   login: userActions.login,
-  clear: alertActions.clear,
+  clearAlerts: alertActions.clear,
   loadHtmlBaseUrl
 };
 
 type Props = {
-  logout: () => {},
   login: () => {},
-  clear: () => {},
+  clearAlerts: () => {},
   loadHtmlBaseUrl: () => {},
   loggingIn: boolean,
   alert: {},
-  dblBaseUrl: ?string
+  dblBaseUrl: ?string,
+  workspaceName: string
 };
 
 /*
@@ -42,8 +46,6 @@ class LoginForm extends React.Component {
   props: Props;
   constructor(props) {
     super(props);
-    // reset login status
-    this.props.logout();
     this.state = {
       username: '',
       password: '',
@@ -75,10 +77,10 @@ class LoginForm extends React.Component {
 
     this.setState({ submitted: true });
     const { username, password } = this.state;
-    const { clear, login } = this.props;
+    const { workspaceName } = this.props;
     if (username && password) {
-      clear();
-      login(username, password);
+      this.props.clearAlerts();
+      this.props.login(username, password, workspaceName);
     }
   }
 
@@ -93,7 +95,7 @@ class LoginForm extends React.Component {
       </Tooltip>);
   }
 
-  render() {
+  renderLoginForm = () => {
     const { loggingIn, alert } = this.props;
     const { username, password, submitted } = this.state;
     return (
@@ -137,9 +139,10 @@ class LoginForm extends React.Component {
                                   }
                       </div>
                       <div className="text-center">
-                        <button className="btn btn-primary btn-block center-block">Login
+                        <Button type="submit" color="primary" variant="contained" onClick={this.handleSubmit} fullWidth>
+                          Login
                           <img hidden={!loggingIn} style={{ paddingLeft: '5px' }} src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==" alt="loading..." />
-                        </button>
+                        </Button>
                       </div>
                     </form>
                   </div>
@@ -149,6 +152,16 @@ class LoginForm extends React.Component {
           </div>
         </div>
       </div>
+    );
+  }
+
+  render() {
+    const { workspaceName } = this.props;
+    return (
+      <React.Fragment>
+        <MenuAppBar showSearch={false} workspaceName={workspaceName} />
+        {this.renderLoginForm()}
+      </React.Fragment>
     );
   }
 }

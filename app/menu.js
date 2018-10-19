@@ -143,28 +143,9 @@ export default class MenuBuilder {
       {
         label: '&File',
         submenu: [{
-          label: loginLabel,
-          accelerator: 'Ctrl+L',
-          click: () => {
-            this.navigate(navigationConstants.NAVIGATION_LOGIN);
-          }
-        },
-        {
-          label: '&Import config.xml',
-          accelerator: 'Ctrl+I',
-          click: () => dblDotLocalService.importConfigXml(this.mainWindow)
-        },
-        {
-          label: '&Export config.xml',
-          accelerator: 'Ctrl+E',
-          click: () => dblDotLocalService.exportConfigXml(this.mainWindow)
-        },
-        {
-          label: 'Bundles (Demo)',
-          accelerator: 'Ctrl+B',
-          click: () => {
-            this.navigate(navigationConstants.NAVIGATION_BUNDLES_DEMO);
-          }
+          label: 'Switch Wor&kspace',
+          accelerator: 'Ctrl+K',
+          click: () => (this.navigate(navigationConstants.NAVIGATION_WORKSPACES))
         },
         {
           label: 'E&xit',

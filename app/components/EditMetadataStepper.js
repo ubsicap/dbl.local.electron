@@ -6,13 +6,13 @@ import { createSelector } from 'reselect';
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
+import StepIcon from '@material-ui/core/StepIcon';
 import StepContent from '@material-ui/core/StepContent';
 import Button from '@material-ui/core/Button';
-import Paper from '@material-ui/core/Paper';
-import Typography from '@material-ui/core/Typography';
 import Save from '@material-ui/icons/Save';
 import Undo from '@material-ui/icons/Undo';
 import Delete from '@material-ui/icons/Delete';
+import Build from '@material-ui/icons/Build';
 import Tooltip from '@material-ui/core/Tooltip';
 import Warning from '@material-ui/icons/Warning';
 import NavigateNext from '@material-ui/icons/NavigateNext';
@@ -22,9 +22,10 @@ import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import classNames from 'classnames';
 import { fetchFormStructure, saveMetadataSuccess, setArchivistStatusOverrides,
   saveFieldValuesForActiveForm, fetchActiveFormInputs,
-  promptConfirmDeleteInstanceForm, deleteInstanceForm } from '../actions/bundleEditMetadata.actions';
+  promptConfirmDeleteInstanceForm, deleteInstanceForm, updateFormFieldIssues } from '../actions/bundleEditMetadata.actions';
 import EditMetadataForm from './EditMetadataForm';
 import editMetadataService from '../services/editMetadata.service';
+import { utilities } from '../utils/utilities';
 
 const materialStyles = theme => ({
   root: {
@@ -168,15 +169,20 @@ const mapDispatchToProps = {
   saveFieldValuesForActiveForm,
   fetchActiveFormInputs,
   promptConfirmDeleteInstanceForm,
-  deleteInstanceForm
+  deleteInstanceForm,
+  updateFormFieldIssues
 };
 
 function getStepFormKey(stepId, structurePath) {
   return (stepId !== detailsStep.id ? `${structurePath}/${stepId}` : structurePath);
 }
 
+function isRequired(arity) {
+  return !(['?', '*'].includes(arity));
+}
+
 function shouldDisableDelete(step) {
-  return step.instances && step.arity && !(['?', '*'].includes(step.arity)) && step.instances.length === 1;
+  return step.instances && step.arity && isRequired(step.arity) && step.instances.length === 1;
 }
 
 type Props = {
@@ -188,6 +194,7 @@ type Props = {
     promptConfirmDeleteInstanceForm: () => {},
     deleteInstanceForm: () => {},
     setArchivistStatusOverrides: () => {},
+    updateFormFieldIssues: () => {},
     bundleId: string,
     formStructure: [],
     steps: [],
@@ -200,12 +207,6 @@ type Props = {
     moveNext: ?{},
     activeFormConfirmingDelete: ?boolean
 };
-
-
-function initializeActiveStepIndex(props) {
-  const { showSection, steps } = props;
-  return showSection ? steps.findIndex((s) => s.id === showSection) : 0;
-}
 
 function getIsFactory(section) {
   return section.name.includes('{0}');
@@ -229,12 +230,35 @@ function formatSectionNameAffixed(section, prefix, postfix) {
   return (prefix || '') + formatStepLabel(section) + (postfix || '');
 }
 
+function findFormKeyStepIndex(steps, formKey) {
+  return steps.reduce((acc, step, stepIdx) => {
+    const { formKey: lastFormKey = '' } = acc;
+    if ((step.formKey === formKey || formKey.includes(`${step.formKey}/`)) &&
+      step.formKey.length > lastFormKey.length) {
+      return { newActiveStepIndex: stepIdx, formKey: step.formKey };
+    }
+    return acc;
+  }, { newActiveStepIndex: -1, formKey: '' });
+}
+
 class _EditMetadataStepper extends React.Component<Props> {
   props: Props;
-  state = {
-    activeStepIndex: 0,
-    completed: {}
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      activeStepIndex: -1,
+      completed: {}
+    };
+    const { moveNext } = this.props;
+    const { formKey: moveNextFormKey = null } = moveNext || {};
+    if (!moveNextFormKey) {
+      this.state.activeStepIndex = 0;
+    } else {
+      const { steps } = this.props;
+      const { newActiveStepIndex } = findFormKeyStepIndex(steps, moveNextFormKey);
+      this.state.activeStepIndex = newActiveStepIndex !== -1 ? newActiveStepIndex : 0;
+    }
+  }
 
   componentDidMount() {
     if (this.props.formStructure.length === 0 && this.props.myStructurePath.length === 0) {
@@ -244,29 +268,52 @@ class _EditMetadataStepper extends React.Component<Props> {
   }
 
   componentWillReceiveProps(nextProps) {
-    const { requestingSaveMetadata, wasMetadataSaved, moveNext, steps } = nextProps;
-    const { steps: currentSteps } = this.props;
-    if (currentSteps.length === 0 && steps.length !== currentSteps.length) {
-      const showIndex = initializeActiveStepIndex(nextProps);
-      if (this.state.activeStepIndex !== showIndex) {
-        this.setState({ activeStepIndex: showIndex });
-      }
-    }
+    const {
+      bundleId,
+      requestingSaveMetadata, wasMetadataSaved,
+      moveNext: nextMoveNext,
+      steps: nextSteps,
+      activeFormEdits: nextActiveFormEdits
+    } = nextProps;
+    const { formKey: nextMoveNextFormKey = null } = nextMoveNext || {};
     if (requestingSaveMetadata && !this.props.requestingSaveMetadata) {
       const activeStep = this.getStep(this.state.activeStepIndex);
       if (!activeStep) {
         this.props.saveMetadataSuccess(); // nothing to save
       }
-    } else if (wasMetadataSaved && moveNext &&
+    } else if (wasMetadataSaved &&
+      nextMoveNext && nextMoveNext.newStepIndex !== null && nextMoveNext.newStepIndex >= 0 &&
       !requestingSaveMetadata && this.props.requestingSaveMetadata) {
-      const step = this.getStep(moveNext.newStepIndex);
-      if (step && step.formKey === moveNext.formKey && step.id === moveNext.id) {
-        const nextStepIndex = (moveNext.newStepIndex !==
-          this.state.activeStepIndex ? moveNext.newStepIndex : null);
+      const step = this.getStep(nextMoveNext.newStepIndex);
+      if (step && step.formKey === nextMoveNext.formKey && step.id === nextMoveNext.id) {
+        const nextStepIndex = (nextMoveNext.newStepIndex !==
+          this.state.activeStepIndex ? nextMoveNext.newStepIndex : null);
         this.setState({ activeStepIndex: nextStepIndex });
-      } else if (this.props.myStructurePath === moveNext.formKey) {
+      } else if (this.props.myStructurePath === nextMoveNext.formKey) {
         this.setState({ activeStepIndex: this.props.steps.length });
       }
+    } else if (nextMoveNextFormKey) {
+      this.trySetActiveStepToMoveNextFormKey(nextSteps, nextMoveNextFormKey);
+    } else if (!utilities.areEqualObjectsDeep(nextActiveFormEdits, this.props.activeFormEdits)) {
+      const activeStep = this.getStep(this.state.activeStepIndex);
+      if (!activeStep) {
+        return; // step was closed
+      }
+      const hasNextFormChanged = this.computeHasActiveFormChanged(nextActiveFormEdits);
+      if (!hasNextFormChanged) {
+        const hasLastFormChanged = this.computeHasActiveFormChanged(this.props.activeFormEdits);
+        if (hasLastFormChanged) {
+          // user has effectively undone their changes manually. so reset the state of the errors.
+          this.props.updateFormFieldIssues(bundleId);
+        }
+      }
+    }
+  }
+
+  trySetActiveStepToMoveNextFormKey = (steps, nextMoveNextFormKey) => {
+    const { newActiveStepIndex } = findFormKeyStepIndex(steps, nextMoveNextFormKey);
+    if (newActiveStepIndex !== -1 && this.state.activeStepIndex !== newActiveStepIndex) {
+      this.setState({ activeStepIndex: newActiveStepIndex });
     }
   }
 
@@ -282,13 +329,13 @@ class _EditMetadataStepper extends React.Component<Props> {
 
   handleSave = () => this.props.saveFieldValuesForActiveForm();
 
-  handleForceSave = () => this.props.saveFieldValuesForActiveForm({ forceSave: true });
+  handleSaveAndReloadStructure = () => this.props.saveFieldValuesForActiveForm({ forceSave: true });
 
   handleUndo = stepIndex => () => {
     const { bundleId } = this.props;
     const step = this.getStep(stepIndex);
     const { formKey } = step;
-    this.props.fetchActiveFormInputs(bundleId, formKey);
+    this.props.fetchActiveFormInputs(bundleId, formKey, true);
   };
 
   handleDeleteForm = step => () => {
@@ -377,9 +424,16 @@ class _EditMetadataStepper extends React.Component<Props> {
   getHasFormChanged = (stepIndex) => {
     const { activeFormEdits } = this.props;
     const isActiveForm = this.getIsActiveIndex(stepIndex);
-    const fields = isActiveForm ? this.getActiveFormFields() : [];
-    const hasFormChanged = isActiveForm ?
-      editMetadataService.getHasFormFieldsChanged(fields, activeFormEdits) : false;
+    if (!isActiveForm) {
+      return false;
+    }
+    const hasFormChanged = this.computeHasActiveFormChanged(activeFormEdits);
+    return hasFormChanged;
+  }
+
+  computeHasActiveFormChanged = (activeFormEdits) => {
+    const fields = this.getActiveFormFields();
+    const hasFormChanged = editMetadataService.getHasFormFieldsChanged(fields, activeFormEdits);
     return hasFormChanged;
   }
 
@@ -391,14 +445,15 @@ class _EditMetadataStepper extends React.Component<Props> {
       this.getActiveFormFields().some(f => f.default && f.default.length) : false;
     const step = this.getStep(stepIndex);
     const { contains, isInstance = false, present } = step;
+    const isNotYetPresent = present !== undefined && !present;
     // if form has errors but there are no changes, it's possible that
     // we just need to clear the errors. However, it is possible
     // that the original metadata has errors, in which case, the errors should still
     // be reported. So, just present the Save button to all the user to reload the form
     // and clear recent errors (or continue to show the original errors.)
-    const hasFormErrors = this.hasStepFormErrors(step);
+    // const hasFormErrors = this.hasStepFormErrors(step);
     const isLastStep = this.isLastStep(activeStepIndex, steps);
-    if ((hasFormChanged || hasFormErrors) && !contains) {
+    if ((hasFormChanged /* ||  hasFormErrors */) && !contains) {
       return (
         <div>
           <Button
@@ -412,7 +467,7 @@ class _EditMetadataStepper extends React.Component<Props> {
             variant="contained"
             color="primary"
             className={classes.button}
-            onClick={this.handleSave}
+            onClick={isNotYetPresent ? this.handleSaveAndReloadStructure : this.handleSave}
           >
             <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
             Save
@@ -431,7 +486,7 @@ class _EditMetadataStepper extends React.Component<Props> {
           <NavigateBefore className={classNames(classes.rightIcon, classes.iconSmall)} />
         </Button>
         {(isInstance /* || (present !== undefined && present ) */) && this.renderDeleteButton(step)}
-        {!hasFormChanged && hasFieldContent && (present !== undefined && !present) && this.renderAddButton(step)}
+        {!hasFormChanged && hasFieldContent && isNotYetPresent && this.renderAddButton(step)}
         <Button
           variant="outlined"
           color="default"
@@ -480,7 +535,7 @@ class _EditMetadataStepper extends React.Component<Props> {
     const { classes } = this.props;
     const addBtn = (
       <Button
-        onClick={this.handleForceSave}
+        onClick={this.handleSaveAndReloadStructure}
         variant="contained"
         color="secondary"
         className={classes.button}
@@ -507,8 +562,9 @@ class _EditMetadataStepper extends React.Component<Props> {
                   onClick={this.handleStep(index)}
                   completed={this.state.completed[index]}
                   error={this.hasErrorsInStepsOrForms(step)}
+                  /* icon={<StepIcon icon={<Build />} className={classNames(classes.root, classes.error)} error={this.hasErrorsInStepsOrForms(step)} />} */
                 >
-                  {step.label}
+                  {step.label}{getDecorateRequired(step)}
                 </StepLabel>
                 <StepContent>
                   {this.getStepContent(index)}
@@ -519,17 +575,18 @@ class _EditMetadataStepper extends React.Component<Props> {
               </Step>
             ))}
         </Stepper>
-        {activeStepIndex === steps.length && (
-          <Paper square elevation={0} className={classes.resetContainer}>
-            <Typography>All steps completed - you&quot;re finished</Typography>
-            <Button onClick={this.handleReset} className={classes.button}>
-              Reset
-            </Button>
-          </Paper>
-        )}
       </div>
     );
   }
+}
+
+function getDecorateRequired(step) {
+  if (!step.arity) {
+    return '';
+  }
+  const showAsRequired = (!step.instances && isRequired(step.arity)) ||
+    (step.instances && shouldDisableDelete(step));
+  return showAsRequired ? ' *' : '';
 }
 
 const EditMetadataStepperComposed = compose(

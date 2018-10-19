@@ -1,3 +1,30 @@
+### Version 0.12.0
+#### Features
+- DBL dot local handles downloads for licensed and open access entries
+- DBL dot local can be fed parameter for where to locate the config.xml
+- Added Workspaces (so access tokens can have their own set of bundles, esp helpful for users who have roles on multiple organizations)
+- Don't offer workspace login button until user has saved Settings
+- Provide a button to Login to Unknown workspace if DBL dot local service is already running
+- Added a workspace Settings form to configure config.xml (host, access tokens, organization type, open access)
+- For entries list, added bottom status bar showing download queue and number of entries vs. filtered
+- Display rightsholders and license info in columns
+- Blue colored drafts indicate a new entry, red colored indicate revision.
+- Added "Save as (New)" Button to copy metadata into another entry
+- Rename former "Save As" button to "Export To"
+- Link in the Resources dialog for users to Go Fix canon spec components now opens the relevant section in metadata to edit
+- Auto-run best publication wizard whenever user changes the canon spec components 
+- Added asterick (*) labels to help identify which sections in metadata are required
+- display error message if "DblAppException" happens in context of login
+- DBL dot local now shows all its activity in the log
+- Added badge for Edit button to show errors that need to be fixed in metadata
+- Show all errors in metadata
+- Allow user to step through metadata sections with errors
+- Added more human readable errors
+- Kill spawned dbl_dot_local process on logout
+
+#### Fixes
+- DBL dot local no longer hangs (e.g. when adding resources)
+
 ### Version 0.10.0
 #### Features
 - Create new bundles (audio, video, print, text, braille)

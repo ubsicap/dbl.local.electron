@@ -47,16 +47,20 @@ export default class ConfirmButton extends Component<Props> {
     const {
       classes, ...rest
     } = this.props;
+    const buttonLabel = this.props.children[1];
+    const renderButton = () => (
+      <Button
+        {...rest}
+        color="secondary"
+        onClick={this.onClick}
+      >
+        <Warning key="btnConfirm" className={classNames(classes.leftIcon, classes.iconSmall)} />
+        {buttonLabel ? 'Confirm' : ''}
+      </Button>
+    );
     return (
-      <Tooltip title={this.props.children[1]} placement="right">
-        <Button
-          {...rest}
-          color="secondary"
-          onClick={this.onClick}
-        >
-          <Warning key="btnConfirm" className={classNames(classes.leftIcon, classes.iconSmall)} />
-          Confirm
-        </Button>
+      <Tooltip title={`Click again to confirm ${buttonLabel || ''}`}>
+        {renderButton()}
       </Tooltip>
     );
   }

@@ -9,6 +9,8 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Tooltip from '@material-ui/core/Tooltip';
 import Bundles from '../components/Bundles';
 import MenuAppBar from '../components/MenuAppBar';
+import DblDotLocalAppBar from '../components/DblDotLocalAppBar';
+import { ux } from '../utils/ux';
 import { loadHtmlBaseUrl } from '../actions/dblDotLocalConfig.actions';
 import { createNewBundle } from '../actions/bundle.actions';
 
@@ -27,10 +29,10 @@ function mapStateToProps(state) {
   };
 }
 
-const materialStyles = theme => ({
+const materialStyles = () => ({
   fab: {
     position: 'fixed',
-    bottom: '10px',
+    bottom: '100px',
     right: '20px'
   },
 });
@@ -67,8 +69,9 @@ class BundlesPage extends PureComponent<Props> {
     const { anchorEl } = this.state;
     return (
       <div data-tid="container">
-        <MenuAppBar />
+        <MenuAppBar showSearch />
         <Bundles />
+        <div style={{ paddingBottom: '100px' }} />
         <Tooltip title="Create new...">
           <Button
             aria-owns={anchorEl ? 'simple-menu' : null}
@@ -89,9 +92,12 @@ class BundlesPage extends PureComponent<Props> {
           onClose={this.handleCloseMenu}
         >
           {newMediaTypes.map(medium => (
-            <MenuItem key={medium} onClick={this.handleCreateNew(medium)}>{medium}</MenuItem>
+            <MenuItem key={medium} onClick={this.handleCreateNew(medium)}>
+              { ux.getMediumIcon(medium) }{medium}
+            </MenuItem>
           ))}
         </Menu>
+        <DblDotLocalAppBar />
       </div>
     );
   }
