@@ -116,7 +116,7 @@ class EditMetadataForm extends React.PureComponent<Props> {
     if (newValue === origValue) {
       return; // nothing changed.
     }
-    this.props.editActiveFormInput(formKey, name, newValue);
+    this.props.editActiveFormInput(formKey, name, newValues);
   };
 
   getErrorInField = (field) => {
