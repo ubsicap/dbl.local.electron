@@ -266,7 +266,14 @@ class WorkspacesPage extends PureComponent<Props> {
                   <Card className={classes.card}>
                     <CardContent className={classes.cardContent}>
                       <Typography gutterBottom variant="headline" component="h2">
-                        {card.name}
+                        <div>
+                          {card.name}
+                          {card.configXmlSettings &&
+                          <span style={{ marginLeft: '5px' }}>
+                          ({card.configXmlSettings.settings.dbl[0].organizationType[0]})
+                          </span>
+                          }
+                        </div>
                       </Typography>
                       <Typography>
                         {card.dateModified.toLocaleString()}
