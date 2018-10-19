@@ -195,11 +195,8 @@ class WorkspacesPage extends PureComponent<Props> {
     this.setState({ openEditDialog: null });
   }
 
-  handleImportConfigXml = (card) => (event) => {
-
-  }
-
   handleLogin = (workspace) => (event) => {
+    updateWorkspaceLastAccess(workspace);
     this.props.gotoWorkspaceLoginPage(workspace);
   }
 
@@ -283,7 +280,7 @@ class WorkspacesPage extends PureComponent<Props> {
                         <Typography variant="subheading" align="center">
                           <b>{card.configXmlSettings.settings.dbl[0].organizationType[0].toUpperCase()}</b>
                         </Typography>
-                        <Typography variant="body" align="center" paragraph>
+                        <Typography variant="body1" align="center" paragraph>
                           {card.configXmlSettings.settings.dbl[0].downloadOpenAccessEntries[0] === 'true' ?
                             'download open-access entries is ENABLED' : 'download open-access entries is DISABLED'}
                         </Typography>
@@ -366,4 +363,10 @@ export default compose(
 
 function getDblWebsiteUrl(workspace) {
   return workspace.configXmlSettings.settings.dbl[0].html[0];
+}
+
+function updateWorkspaceLastAccess(workspace) {
+  const lastAccessedTokenPath = path.join(workspace.fullPath, '.lastAccessed');
+  fs.ensureFileSync(lastAccessedTokenPath);
+  fs.removeSync(lastAccessedTokenPath);
 }
