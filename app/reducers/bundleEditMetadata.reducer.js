@@ -47,7 +47,7 @@ export function bundleEditMetadata(state = initialState, action) {
         formFieldIssues, errorTree
       } = getFormErrorData(bundleToEdit);
       const [currentFormWithErrors, nextFormWithErrors] = Object.keys(formFieldIssues);
-      const moveNext = currentFormWithErrors ? { formKey: currentFormWithErrors } : action.moveNextStep;
+      const moveNext = action.moveNextStep || (currentFormWithErrors ? { formKey: currentFormWithErrors } : null);
       return {
         ...state,
         requestingRevision: null,
