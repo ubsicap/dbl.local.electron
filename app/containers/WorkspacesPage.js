@@ -9,6 +9,7 @@ import classNames from 'classnames';
 import Button from '@material-ui/core/Button';
 import { AddCircle, Refresh, Settings, Delete } from '@material-ui/icons';
 import Tooltip from '@material-ui/core/Tooltip';
+import Link from '@material-ui/icons/Link';
 import Card from '@material-ui/core/Card';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
@@ -278,6 +279,10 @@ class WorkspacesPage extends PureComponent<Props> {
                       <Typography>
                         {card.dateModified.toLocaleString()}
                       </Typography>
+                      {card.configXmlSettings &&
+                      <Button variant="text">
+                        <Link /><span>{card.configXmlSettings.settings.dbl[0].html[0]}</span>
+                      </Button>}
                     </CardContent>
                     <CardActions>
                       <Button size="small" color="primary" onClick={this.handleEdit(card)}>
