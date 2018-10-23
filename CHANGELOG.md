@@ -1,3 +1,7 @@
+### Version 0.12.1
+#### Fixes
+- Fix "Login to Unknown Workspace" button
+
 ### Version 0.12.0
 #### Features
 - DBL dot local handles downloads for licensed and open access entries

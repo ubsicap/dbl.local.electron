@@ -366,6 +366,10 @@ function getDblWebsiteUrl(workspace) {
 }
 
 function updateWorkspaceLastAccess(workspace) {
+  if (!workspace || !workspace.fullPath) {
+    // unknown workspace
+    return;
+  }
   const lastAccessedTokenPath = path.join(workspace.fullPath, '.lastAccessed');
   fs.ensureFileSync(lastAccessedTokenPath);
   fs.removeSync(lastAccessedTokenPath);
