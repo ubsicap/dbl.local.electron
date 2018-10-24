@@ -37,7 +37,7 @@ export function updateBundle(bundleId) {
       if (!bundleService.apiBundleHasMetadata(rawBundle)) {
         return; // hasn't downloaded metadata yet. (don't expect to be in our list)
       }
-      dispatch(updateOrAddBundle(rawBundle));
+      dispatch(updateOrAddBundle(rawBundle, 'updateBundle'));
     } catch (error) {
       if (error.status === 404) {
         // this has been deleted.
@@ -48,21 +48,17 @@ export function updateBundle(bundleId) {
   };
 }
 
-function tryAddNewEntry(bundleId) {
-  return async (dispatch) => {
-    const rawBundle = await bundleService.fetchById(bundleId);
-    if (!bundleService.apiBundleHasMetadata(rawBundle)) {
-      return; // hasn't downloaded metadata yet. (don't expect to be in our list)
-    }
+function tryAddNewEntry(rawBundle) {
+  return (dispatch) => {
     const { dbl: { parent, id: dblId } } = rawBundle;
     if (parent && parent.dblId === dblId) {
       return;
     }
-    dispatch(updateOrAddBundle(rawBundle));
+    dispatch(updateOrAddBundle(rawBundle, 'tryAddNewEntry'));
   };
 }
 
-function updateOrAddBundle(rawBundle) {
+function updateOrAddBundle(rawBundle, context) {
   return async (dispatch, getState) => {
     const { local_id: bundleId } = rawBundle;
     const hasStoredResources = bundleService.getHasStoredResources(rawBundle);
@@ -77,6 +73,7 @@ function updateOrAddBundle(rawBundle) {
     );
     const addedBundle = getAddedBundle(getState, bundleId);
     if (addedBundle) {
+      console.log(`Updated bundle ${bundleId} from ${context}`);
       dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle, rawBundle });
       const { id, uploadJob } = bundle;
       if (uploadJob) {
@@ -86,6 +83,7 @@ function updateOrAddBundle(rawBundle) {
       }
     } else {
       dispatch(addBundle(bundle, rawBundle));
+      console.log(`Added bundle ${bundleId} from ${context}`);
     }
   };
 }
@@ -251,7 +249,7 @@ export function setupBundlesEventSource(authentication) {
   }
 
   function listenStorerWriteResource(event) {
-    return (dispatch) => {
+    return async (dispatch) => {
       /*
       {'event': 'storer/write_resource',
        'data': {'args': ('50501698-e832-4db5-8973-f85340dc2e39', 'metadata.xml'),
@@ -262,7 +260,11 @@ export function setupBundlesEventSource(authentication) {
       if (fileName !== 'metadata.xml') {
         return;
       }
-      dispatch(tryAddNewEntry(bundleId));
+      const rawBundle = await bundleService.fetchById(bundleId);
+      if (rawBundle.dbl.origin !== 'template') {
+        return; // wait until change_mode === store
+      }
+      dispatch(tryAddNewEntry(rawBundle));
     };
   }
 
@@ -413,7 +415,11 @@ function isInDraftMode(bundle) {
 
 function removeExcessBundles() {
   return (dispatch, getState) => {
-    const { bundles } = getState();
+    const { bundles, downloadQueue: { nSpecs = 0 } = {} } = getState();
+    if (nSpecs >= 10) {
+      // don't auto-remove when processing a lot of downloads (i.e. of metadata for new bundles)
+      return;
+    }
     const { addedByBundleIds, items } = bundles;
     const itemsByBundleIds = items.reduce((acc, bundle) => ({ ...acc, [bundle.id]: bundle }), {});
     const itemsByParentIds = items.filter(b => b.parent).reduce((acc, bundle) =>
