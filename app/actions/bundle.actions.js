@@ -206,7 +206,6 @@ export function setupBundlesEventSource(authentication) {
       'downloader/spec_status': (e) => dispatch(listenDownloaderSpecStatus(e)),
       'downloader/global_status': (e) => dispatch(listenDownloaderGlobalStatus(e)),
       'storer/delete_resource': (e) => listenStorerDeleteResource(e, dispatch, getState),
-      'storer/update_from_download': (e) => listenStorerUpdateFromDownload(e, dispatch, getState),
       'storer/delete_bundle': (e) => listenStorerDeleteBundle(e, dispatch, getState),
       'storer/write_resource': (e) => dispatch(listenStorerWriteResource(e))
     };
@@ -393,6 +392,7 @@ export function setupBundlesEventSource(authentication) {
       // we just downloaded metadata.xml
       const bundle = await bundleService.convertApiBundleToNathanaelBundle(rawBundle);
       dispatch(addBundle(bundle, rawBundle));
+      console.log(`Added bundle ${bundleId} from listenStorerUpdateFromDownload`);
     }
   }
 }
