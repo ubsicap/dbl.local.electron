@@ -57,7 +57,7 @@ function getSelectedState(state, bundleToToggle, bundleIdToRemove, newItems) {
   }
   if (bundleIdToRemove && bundleIdToRemove === origSelectedBundleId) {
     const newBundleToSelect = origSelectedBundleId === bundleIdToRemove ?
-      newItemsByDblIds[origSelectedBundleDblId] : [];
+      newItems.find(b => b.dblId === origSelectedBundleDblId) : null;
     return {
       selectedBundle: newBundleToSelect,
       selectedDBLEntryId: (newBundleToSelect ? newBundleToSelect.dblId : null)
