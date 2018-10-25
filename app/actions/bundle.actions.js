@@ -37,7 +37,7 @@ export function updateBundle(bundleId) {
       if (!bundleService.apiBundleHasMetadata(rawBundle)) {
         return; // hasn't downloaded metadata yet. (don't expect to be in our list)
       }
-      dispatch(updateOrAddBundle(rawBundle, 'updateBundle'));
+      dispatch(updateOrAddBundle(rawBundle));
     } catch (error) {
       if (error.status === 404) {
         // this has been deleted.
@@ -54,11 +54,11 @@ function tryAddNewEntry(rawBundle) {
     if (parent && parent.dblId === dblId) {
       return;
     }
-    dispatch(updateOrAddBundle(rawBundle, 'tryAddNewEntry'));
+    dispatch(updateOrAddBundle(rawBundle));
   };
 }
 
-function updateOrAddBundle(rawBundle, context) {
+function updateOrAddBundle(rawBundle) {
   return async (dispatch, getState) => {
     const { local_id: bundleId } = rawBundle;
     const hasStoredResources = bundleService.getHasStoredResources(rawBundle);
@@ -73,7 +73,7 @@ function updateOrAddBundle(rawBundle, context) {
     );
     const addedBundle = getAddedBundle(getState, bundleId);
     if (addedBundle) {
-      console.log(`Updated bundle ${bundleId} from ${context}`);
+      // console.log(`Updated bundle ${bundleId} from ${context}`);
       dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle, rawBundle });
       const { id, uploadJob } = bundle;
       if (uploadJob) {
@@ -83,7 +83,7 @@ function updateOrAddBundle(rawBundle, context) {
       }
     } else if (rawBundle.mode === 'store') {
       dispatch(addBundle(bundle, rawBundle));
-      console.log(`Added bundle ${bundleId} from ${context}`);
+      // console.log(`Added bundle ${bundleId} from ${context}`);
     }
   };
 }
@@ -392,7 +392,7 @@ export function setupBundlesEventSource(authentication) {
       // we just downloaded metadata.xml
       const bundle = await bundleService.convertApiBundleToNathanaelBundle(rawBundle);
       dispatch(addBundle(bundle, rawBundle));
-      console.log(`Added bundle ${bundleId} from listenStorerUpdateFromDownload`);
+      // console.log(`Added bundle ${bundleId} from listenStorerUpdateFromDownload`);
     }
   }
 }
