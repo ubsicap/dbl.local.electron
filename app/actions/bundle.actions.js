@@ -81,7 +81,7 @@ function updateOrAddBundle(rawBundle, context) {
       } else {
         dispatch(updateUploadJobs(id, null, id));
       }
-    } else {
+    } else if (rawBundle.mode === 'store') {
       dispatch(addBundle(bundle, rawBundle));
       console.log(`Added bundle ${bundleId} from ${context}`);
     }
