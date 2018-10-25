@@ -402,7 +402,10 @@ function addBundle(bundle, rawBundle) {
     dispatch({
       type: bundleConstants.ADD_BUNDLE,
       bundle,
-      rawBundle
+      rawBundle,
+      meta: {
+        throttle: true
+      }
     });
     dispatch(updateSearchResultsForBundleId(bundle.id));
     dispatch(removeExcessBundles());
@@ -414,7 +417,7 @@ function isInDraftMode(bundle) {
 }
 
 function removeExcessBundles() {
-  return (dispatch, getState) => {
+  const thunk = (dispatch, getState) => {
     const { bundles, downloadQueue: { nSpecs = 0 } = {} } = getState();
     if (nSpecs >= 10) {
       // don't auto-remove when processing a lot of downloads (i.e. of metadata for new bundles)
@@ -455,6 +458,13 @@ function removeExcessBundles() {
       dispatch(removeBundle(idBundleToRemove));
     });
   };
+  thunk.meta = {
+    debounce: {
+      time: 2500,
+      key: 'BUNDLES_REMOVE_EXCESS_BUNDLES'
+    }
+  };
+  return thunk;
 }
 
 function updateDownloadQueue(nSpecs, nAtoms) {
