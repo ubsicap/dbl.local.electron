@@ -260,7 +260,7 @@ export function setupBundlesEventSource(authentication) {
         return;
       }
       const rawBundle = await bundleService.fetchById(bundleId);
-      if (rawBundle.dbl.origin !== 'template') {
+      if (!['template', 'fork'].includes(rawBundle.dbl.origin)) {
         return; // wait until change_mode === store
       }
       dispatch(tryAddNewEntry(rawBundle));
