@@ -1,3 +1,7 @@
+### Version 0.12.2
+#### Fixes
+- Fix multiple performance issues
+
 ### Version 0.12.1
 #### Fixes
 - Fix "Login to Unknown Workspace" button
