@@ -65,8 +65,14 @@ function getAllSearchResults(searchableBundles, searchKeywords) {
 
 export function updateSearchResultsForBundleId(bundleId) {
   return (dispatch, getState) => {
+    const { bundlesFilter } = getState();
+    const { isSearchActive } = bundlesFilter;
+    if (!isSearchActive) {
+      return;
+    }
     const { bundles } = getState();
-    const searchableBundle = bundles.items.find(bundle => bundle.id === bundleId);
+    const { addedByBundleIds } = bundles;
+    const searchableBundle = addedByBundleIds[bundleId];
     if (!searchableBundle) {
       return;
     }

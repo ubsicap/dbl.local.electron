@@ -48,12 +48,8 @@ export function updateBundle(bundleId) {
   };
 }
 
-function tryAddNewEntry(bundleId) {
-  return async (dispatch) => {
-    const rawBundle = await bundleService.fetchById(bundleId);
-    if (!bundleService.apiBundleHasMetadata(rawBundle)) {
-      return; // hasn't downloaded metadata yet. (don't expect to be in our list)
-    }
+function tryAddNewEntry(rawBundle) {
+  return (dispatch) => {
     const { dbl: { parent, id: dblId } } = rawBundle;
     if (parent && parent.dblId === dblId) {
       return;
@@ -77,6 +73,7 @@ function updateOrAddBundle(rawBundle) {
     );
     const addedBundle = getAddedBundle(getState, bundleId);
     if (addedBundle) {
+      // console.log(`Updated bundle ${bundleId} from ${context}`);
       dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle, rawBundle });
       const { id, uploadJob } = bundle;
       if (uploadJob) {
@@ -84,8 +81,9 @@ function updateOrAddBundle(rawBundle) {
       } else {
         dispatch(updateUploadJobs(id, null, id));
       }
-    } else {
+    } else if (rawBundle.mode === 'store') {
       dispatch(addBundle(bundle, rawBundle));
+      // console.log(`Added bundle ${bundleId} from ${context}`);
     }
   };
 }
@@ -205,13 +203,11 @@ export function setupBundlesEventSource(authentication) {
       'uploader/job': (e) => listenUploaderJob(e, dispatch, getState().bundles.uploadJobs),
       'uploader/createJob': (e) => listenUploaderCreateJob(e, dispatch),
       'downloader/receiver': listenDownloaderReceiver,
-      'downloader/status': (e) => listenDownloaderSpecStatus(e, dispatch, getState),
-      'downloader/spec_status': (e) => listenDownloaderSpecStatus(e, dispatch, getState),
+      'downloader/spec_status': (e) => dispatch(listenDownloaderSpecStatus(e)),
       'downloader/global_status': (e) => dispatch(listenDownloaderGlobalStatus(e)),
       'storer/delete_resource': (e) => listenStorerDeleteResource(e, dispatch, getState),
-      'storer/update_from_download': (e) => listenStorerUpdateFromDownload(e, dispatch, getState),
       'storer/delete_bundle': (e) => listenStorerDeleteBundle(e, dispatch, getState),
-      'storer/write_resource': listenStorerWriteResource(dispatch, getState)
+      'storer/write_resource': (e) => dispatch(listenStorerWriteResource(e))
     };
     Object.keys(listeners).forEach((evType) => {
       const handler = listeners[evType];
@@ -251,8 +247,8 @@ export function setupBundlesEventSource(authentication) {
     dispatch(updateBundle(bundleId));
   }
 
-  function listenStorerWriteResource(dispatch) {
-    return (event) => {
+  function listenStorerWriteResource(event) {
+    return async (dispatch) => {
       /*
       {'event': 'storer/write_resource',
        'data': {'args': ('50501698-e832-4db5-8973-f85340dc2e39', 'metadata.xml'),
@@ -263,7 +259,11 @@ export function setupBundlesEventSource(authentication) {
       if (fileName !== 'metadata.xml') {
         return;
       }
-      dispatch(tryAddNewEntry(bundleId));
+      const rawBundle = await bundleService.fetchById(bundleId);
+      if (!['template', 'fork'].includes(rawBundle.dbl.origin)) {
+        return; // wait until change_mode === store
+      }
+      dispatch(tryAddNewEntry(rawBundle));
     };
   }
 
@@ -328,17 +328,23 @@ export function setupBundlesEventSource(authentication) {
    * 'data': {'args': ('48a8e8fe-76ac-45d6-9b3a-d7d99ead7224', 4, 8),
    *          'component': 'downloader', 'type': 'status'}}
    */
-  function listenDownloaderSpecStatus(e, dispatch) {
-    // console.log(e);
-    const data = JSON.parse(e.data);
-    if (data.args.length !== 3) {
-      return;
-    }
-    const bundleId = data.args[0];
-    const resourcesDownloaded = data.args[1];
-    const resourcesToDownload = data.args[2];
-    dispatch(updateDownloadStatus(bundleId, resourcesDownloaded, resourcesToDownload));
-    dispatch(updateSearchResultsForBundleId(bundleId));
+  function listenDownloaderSpecStatus(e) {
+    return (dispatch, getState) => {
+      // console.log(e);
+      const data = JSON.parse(e.data);
+      if (data.args.length !== 3) {
+        return;
+      }
+      const bundleId = data.args[0];
+      const resourcesDownloaded = data.args[1];
+      const resourcesToDownload = data.args[2];
+      const addedBundle = getAddedBundle(getState, bundleId);
+      if (!addedBundle) {
+        return; // hasn't been added yet, so doesn't need to be updated.
+      }
+      dispatch(updateDownloadStatus(bundleId, resourcesDownloaded, resourcesToDownload));
+      dispatch(updateSearchResultsForBundleId(bundleId));
+    };
   }
 
   function updateDownloadStatus(_id, resourcesDownloaded, resourcesToDownload) {
@@ -386,6 +392,7 @@ export function setupBundlesEventSource(authentication) {
       // we just downloaded metadata.xml
       const bundle = await bundleService.convertApiBundleToNathanaelBundle(rawBundle);
       dispatch(addBundle(bundle, rawBundle));
+      // console.log(`Added bundle ${bundleId} from listenStorerUpdateFromDownload`);
     }
   }
 }
@@ -395,7 +402,10 @@ function addBundle(bundle, rawBundle) {
     dispatch({
       type: bundleConstants.ADD_BUNDLE,
       bundle,
-      rawBundle
+      rawBundle,
+      meta: {
+        throttle: true
+      }
     });
     dispatch(updateSearchResultsForBundleId(bundle.id));
     dispatch(removeExcessBundles());
@@ -407,8 +417,12 @@ function isInDraftMode(bundle) {
 }
 
 function removeExcessBundles() {
-  return (dispatch, getState) => {
-    const { bundles } = getState();
+  const thunk = (dispatch, getState) => {
+    const { bundles, downloadQueue: { nSpecs = 0 } = {} } = getState();
+    if (nSpecs >= 10) {
+      // don't auto-remove when processing a lot of downloads (i.e. of metadata for new bundles)
+      return;
+    }
     const { addedByBundleIds, items } = bundles;
     const itemsByBundleIds = items.reduce((acc, bundle) => ({ ...acc, [bundle.id]: bundle }), {});
     const itemsByParentIds = items.filter(b => b.parent).reduce((acc, bundle) =>
@@ -444,6 +458,13 @@ function removeExcessBundles() {
       dispatch(removeBundle(idBundleToRemove));
     });
   };
+  thunk.meta = {
+    debounce: {
+      time: 2500,
+      key: 'BUNDLES_REMOVE_EXCESS_BUNDLES'
+    }
+  };
+  return thunk;
 }
 
 function updateDownloadQueue(nSpecs, nAtoms) {

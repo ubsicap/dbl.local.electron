@@ -3,6 +3,8 @@ import thunk from 'redux-thunk';
 import { createHashHistory } from 'history';
 import { routerMiddleware, routerActions } from 'react-router-redux';
 import { createLogger } from 'redux-logger';
+import throttleActions from 'redux-throttle';
+import createDebounce from 'redux-debounced';
 import rootReducer from '../reducers';
 import * as counterActions from '../actions/counter';
 import type { counterStateType } from '../reducers/counter';
@@ -13,6 +15,15 @@ const configureStore = (initialState?: counterStateType) => {
   // Redux Configuration
   const middleware = [];
   const enhancers = [];
+
+  const defaultWait = 300;
+  const defaultThrottleOption = { // https://lodash.com/docs#throttle
+    leading: true,
+    trailing: true
+  };
+  const throttleMiddleWare = throttleActions(defaultWait, defaultThrottleOption);
+  middleware.push(throttleMiddleWare);
+  middleware.push(createDebounce());
 
   // Thunk Middleware
   middleware.push(thunk);
