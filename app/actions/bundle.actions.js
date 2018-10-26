@@ -1,5 +1,6 @@
 import traverse from 'traverse';
 import log from 'electron-log';
+import { List, Map } from 'immutable';
 import { bundleConstants } from '../constants/bundle.constants';
 import { bundleService } from '../services/bundle.service';
 import { updateSearchResultsForBundleId } from '../actions/bundleFilter.actions';
@@ -35,6 +36,7 @@ export function updateBundle(bundleId) {
     try {
       const rawBundle = await bundleService.fetchById(bundleId);
       if (!bundleService.apiBundleHasMetadata(rawBundle)) {
+        console.log(`Skipping updateBundle for ${bundleId}`);
         return; // hasn't downloaded metadata yet. (don't expect to be in our list)
       }
       dispatch(updateOrAddBundle(rawBundle));
@@ -83,7 +85,9 @@ function updateOrAddBundle(rawBundle) {
       }
     } else if (rawBundle.mode === 'store') {
       dispatch(addBundle(bundle, rawBundle));
-      // console.log(`Added bundle ${bundleId} from ${context}`);
+      console.log(`Added bundle ${bundleId} from listenStorerChangeMode`);
+    } else {
+      console.log(`Skipped bundle ${bundleId} with mode ${rawBundle.mode}`);
     }
   };
 }
@@ -402,10 +406,7 @@ function addBundle(bundle, rawBundle) {
     dispatch({
       type: bundleConstants.ADD_BUNDLE,
       bundle,
-      rawBundle,
-      meta: {
-        throttle: true
-      }
+      rawBundle
     });
     dispatch(updateSearchResultsForBundleId(bundle.id));
     dispatch(removeExcessBundles());
@@ -423,13 +424,14 @@ function removeExcessBundles() {
       // don't auto-remove when processing a lot of downloads (i.e. of metadata for new bundles)
       return;
     }
+    console.log('remove excess bundles');
     const { addedByBundleIds, items } = bundles;
-    const itemsByBundleIds = items.reduce((acc, bundle) => ({ ...acc, [bundle.id]: bundle }), {});
-    const itemsByParentIds = items.filter(b => b.parent).reduce((acc, bundle) =>
-      ({ ...acc, [bundle.parent.bundleId]: bundle }), {});
+    const itemsByBundleIds = List(items).map(bundle => bundle.id).toSet();
+    const itemsByParentIds = List(items).filter(b => b.parent).reduce((acc, bundle) =>
+      acc.set(bundle.parent.bundleId, bundle), Map());
     const itemsByDblId = items.reduce((acc, bundle) => ({ ...acc, [bundle.dblId]: bundle }), {});
     const bundleIdsToRemove = Object.keys(addedByBundleIds).filter(addedId => {
-      if (addedId in itemsByBundleIds) {
+      if (itemsByBundleIds.includes(addedId)) {
         return false;
       }
       const addedBundle = addedByBundleIds[addedId];
@@ -448,7 +450,7 @@ function removeExcessBundles() {
         }
       }
       // don't delete if is parent of item in draft mode
-      const itemDisplayed = itemsByParentIds[addedId];
+      const itemDisplayed = itemsByParentIds.get(addedId);
       if (itemDisplayed && isInDraftMode(itemDisplayed)) {
         return false;
       }
@@ -460,7 +462,7 @@ function removeExcessBundles() {
   };
   thunk.meta = {
     debounce: {
-      time: 2500,
+      time: 10500,
       key: 'BUNDLES_REMOVE_EXCESS_BUNDLES'
     }
   };
