@@ -1,23 +1,24 @@
 import sort from 'fast-sort';
+import { List, Set } from 'immutable';
 import { bundleConstants } from '../constants/bundle.constants';
 import { bundleService } from '../services/bundle.service';
 
-const [idKey, idDblKey] = ['id', 'dblId'];
+const [idKey] = ['id'];
 
 function sortAndFilterBundlesAsEntries(allBundles, shouldIndexByIds = true) {
   const sortedBundles = sort(allBundles).asc([
     b => b.dblId,
     b => (b.revision === '0' || !b.revision ? ~10000000 : ~b.revision) // eslint-disable-line no-bitwise
   ]);
-  const reducedBundles = sortedBundles.reduce((acc, b) => {
-    if (b.dblId in acc.visitedDblIds) {
+  const reducedBundles = List(sortedBundles).reduce((acc, b) => {
+    if (acc.visitedDblIds.includes(b.dblId)) {
       return acc;
     }
-    const visitedDblIds = { ...acc.visitedDblIds, [b.dblId]: b };
-    const items = [...acc.items, b];
+    const visitedDblIds = acc.visitedDblIds.add(b.dblId);
+    const items = acc.items.push(b);
     return { visitedDblIds, items };
-  }, { visitedDblIds: {}, items: [] });
-  const { items: reducedUnsorted } = reducedBundles;
+  }, { visitedDblIds: Set(), items: List() });
+  const reducedUnsorted = reducedBundles.items.toArray();
   const items = sort(reducedUnsorted).asc([
     b => b.displayAs.languageAndCountry,
     b => b.displayAs.name,

@@ -1,3 +1,8 @@
+### Version 0.12.3
+#### Fixes
+- Fix add bundles (don't throw any any dispatches during throttle)
+- Improve performance (via immutable js) for code that may be run often
+
 ### Version 0.12.2
 #### Fixes
 - Fix multiple performance issues
