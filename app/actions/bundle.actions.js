@@ -1,6 +1,7 @@
 import traverse from 'traverse';
 import log from 'electron-log';
 import { List, Map } from 'immutable';
+import throttledQueue from 'throttled-queue';
 import { bundleConstants } from '../constants/bundle.constants';
 import { bundleService } from '../services/bundle.service';
 import { updateSearchResultsForBundleId } from '../actions/bundleFilter.actions';
@@ -203,7 +204,7 @@ export function setupBundlesEventSource(authentication) {
     };
     const listeners = {
       'storer/execute_task': listenStorerExecuteTaskDownloadResources,
-      'storer/change_mode': (e) => listenStorerChangeMode(e, dispatch, getState),
+      'storer/change_mode': (e) => dispatch(listenStorerChangeMode(e)),
       'uploader/job': (e) => listenUploaderJob(e, dispatch, getState().bundles.uploadJobs),
       'uploader/createJob': (e) => listenUploaderCreateJob(e, dispatch),
       'downloader/receiver': listenDownloaderReceiver,
@@ -241,14 +242,16 @@ export function setupBundlesEventSource(authentication) {
     // console.log(e);
   }
 
-  function listenStorerChangeMode(e, dispatch) {
-    // console.log(e);
-    const data = JSON.parse(e.data);
-    const bundleId = data.args[0];
-    if (bundleId.startsWith('session')) {
-      return; // skip session change modes
-    }
-    dispatch(updateBundle(bundleId));
+  function listenStorerChangeMode(e) {
+    return dispatch => {
+      // console.log(e);
+      const data = JSON.parse(e.data);
+      const bundleId = data.args[0];
+      if (bundleId.startsWith('session')) {
+        return; // skip session change modes
+      }
+      dispatch(updateBundle(bundleId));
+    };
   }
 
   function listenStorerWriteResource(event) {
@@ -401,8 +404,10 @@ export function setupBundlesEventSource(authentication) {
   }
 }
 
+const throttleAddBundle = throttledQueue(4, 1000, true);
+
 function addBundle(bundle, rawBundle) {
-  return dispatch => {
+  return dispatch => throttleAddBundle(() => {
     dispatch({
       type: bundleConstants.ADD_BUNDLE,
       bundle,
@@ -410,7 +415,7 @@ function addBundle(bundle, rawBundle) {
     });
     dispatch(updateSearchResultsForBundleId(bundle.id));
     dispatch(removeExcessBundles());
-  };
+  });
 }
 
 function isInDraftMode(bundle) {
