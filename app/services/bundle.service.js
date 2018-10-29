@@ -534,7 +534,8 @@ function runPublicationWizard(bundleId, pubId, wizardId, containerUri) {
     method: 'POST',
     headers: { ...authHeader() },
   };
-  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${PUBLICATION_API}/wizard/${bundleId}/${pubId}/${wizardId}/${containerUri}`;
+  const parameterizedPath = [bundleId, pubId, wizardId, containerUri].filter(Boolean).join('/');
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${PUBLICATION_API}/wizard/${parameterizedPath}`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }
 
