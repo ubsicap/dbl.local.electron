@@ -116,7 +116,8 @@ async function createWorkspace(fullPath) {
   const configXmlPath = dblDotLocalService.getConfigXmlFullPath(workspace);
   const hasConfigXml = fs.existsSync(configXmlPath);
   const configXmlSettings = hasConfigXml ? await dblDotLocalService.convertConfigXmlToJson(workspace) : null;
-  return { ...workspace, hasConfigXml, configXmlPath, configXmlSettings };
+  const key = `${name}/${configXmlSettings ? JSON.stringify(configXmlSettings) : ''}`;
+  return { ...workspace, hasConfigXml, configXmlPath, configXmlSettings, key };
 }
 
 class WorkspacesPage extends PureComponent<Props> {
@@ -261,7 +262,7 @@ class WorkspacesPage extends PureComponent<Props> {
             {/* End hero unit */}
             <Grid container spacing={40}>
               {cards.map(card => (
-                <Grid item key={card.name} sm={12} md={12} lg={12}>
+                <Grid item key={card.key} sm={12} md={12} lg={12}>
                   <Card className={classes.card}>
                     <CardContent className={classes.cardContent}>
                       <Typography gutterBottom variant="headline" component="h2">
