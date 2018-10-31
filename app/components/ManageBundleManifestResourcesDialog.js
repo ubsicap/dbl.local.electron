@@ -550,11 +550,11 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
     return Object.entries(wizardsResults).map(([wizardName, results]) =>
       (
-        <React.Fragment>
+        <React.Fragment key="frag">
           <Typography key={`${wizardName}-description`} variant="subheading" color="inherit" paragraph>
             • <b>{results.description}</b> ({wizardName}):
           </Typography>
-          <Typography style={{ marginLeft: '20px' }} key={`${wizardName}-documentation`} variant="subheading" color="inherit" paragraph>
+          <Typography key={`${wizardName}-documentation`} variant="subheading" color="inherit" style={{ marginLeft: '20px' }} paragraph>
             {results.documentation}
           </Typography>
         </React.Fragment>
@@ -620,7 +620,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           {!loading && this.isAddFilesMode() && publicationsHealthSuccessMessage &&
             <Card className={classes.successBar} raised>
               <CardContent>
-                <Typography variant="subheading" color="inherit" gutterBottom>
+                <Typography key="pubhealthSuccessMessage" variant="subheading" color="inherit" gutterBottom>
                   {publicationsHealthSuccessMessage}
                 </Typography>
                 {this.renderWizardsResults()}
