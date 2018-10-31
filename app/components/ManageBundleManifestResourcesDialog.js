@@ -49,6 +49,8 @@ type Props = {
   columnConfig: [],
   isOkToAddFiles: boolean,
   publicationsHealthMessage: ?string,
+  publicationsHealthSuccessMessage: ?string,
+  wizardsResults: ?{},
   goFixPublications: ?() => {},
   closeResourceManager: () => {},
   openMetadataFile: () => {},
@@ -170,7 +172,9 @@ function mapStateToProps(state, props) {
   const { publicationsHealth, progress = 100, loading = false } = bundleManageResources;
   const {
     errorMessage: publicationsHealthMessage,
-    goFix: goFixPublications
+    goFix: goFixPublications,
+    message: publicationsHealthSuccessMessage,
+    wizardsResults,
   } = publicationsHealth || {};
   const { bundleId, mode } = props.match.params;
   const { showMetadataFile } = bundleEditMetadata;
@@ -190,7 +194,9 @@ function mapStateToProps(state, props) {
     columnConfig,
     isOkToAddFiles: !publicationsHealthMessage,
     publicationsHealthMessage,
-    goFixPublications
+    goFixPublications,
+    publicationsHealthSuccessMessage,
+    wizardsResults
   };
 }
 
@@ -209,6 +215,9 @@ const materialStyles = theme => ({
   },
   errorBar: {
     color: theme.palette.secondary.light,
+  },
+  successBar: {
+    color: theme.palette.primary.light,
   },
   toolBar: {
     paddingLeft: '0px',
@@ -535,7 +544,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   render() {
     const {
       classes, open, selectedBundle = {}, columnConfig, manifestResources,
-      publicationsHealthMessage = '', loading, progress
+      publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading, progress
     } = this.props;
     const { selectAll, totalResources = manifestResources } = this.state;
     const { displayAs = {} } = selectedBundle;
@@ -586,6 +595,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                 onClick={this.handleGoFixError}
               >Go Fix
               </Button>
+            </Toolbar>
+          }
+          {this.isAddFilesMode() && publicationsHealthSuccessMessage &&
+            <Toolbar className={classes.successBar}>
+              <Typography variant="subheading" color="inherit">
+                {publicationsHealthSuccessMessage}
+              </Typography>
+              <div style={{ paddingLeft: '10px' }} />
             </Toolbar>
           }
           <EnhancedTable

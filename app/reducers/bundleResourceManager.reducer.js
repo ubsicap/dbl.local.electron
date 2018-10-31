@@ -81,10 +81,10 @@ export function bundleManageResources(state = initialState, action) {
       };
     }
     case bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_SUCCESS: {
-      const { publications } = action;
+      const { publications, medium, message, wizardsResults } = action;
       return {
         ...state,
-        publicationsHealth: { publications }
+        publicationsHealth: { publications, medium, message, wizardsResults }
       };
     }
     default: {

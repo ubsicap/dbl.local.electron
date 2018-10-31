@@ -39,6 +39,8 @@ export const bundleService = {
   postResource,
   forkBundle,
   updateManifestResource,
+  getApplicableWizards,
+  getBestWizards,
   getPublicationWizards,
   testPublicationWizards,
   runPublicationWizard,
@@ -539,27 +541,48 @@ function runPublicationWizard(bundleId, pubId, wizardId, containerUri) {
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }
 
-async function updatePublications(bundleId, publicationIds) {
+async function getApplicableWizards(bundleId, medium) {
   const wizards = await getPublicationWizards();
+  const applicableWizards = Object.values(wizards).filter(w => w.medium === medium);
+  return applicableWizards;
+}
+
+async function getBestWizards(bundleId, publicationIds) {
+  const bestWizards = [];
+  /* eslint-disable no-restricted-syntax */
+  /* eslint-disable no-await-in-loop */
+  for (const pubId of publicationIds) {
+    const wizardTestResults = await bundleService.testPublicationWizards(bundleId, pubId);
+    const bestWizard = wizardTestResults.reduce(
+      (acc, r) => (r.hits.length >= acc.hits.length ? r : acc),
+      { hits: [], misses: [] }
+    );
+    const { wizard, uri } = bestWizard;
+    bestWizards.push({
+      bundleId, pubId, wizard, uri, testResults: bestWizard
+    });
+  }
+  return bestWizards;
+}
+
+async function updatePublications(bundleId, publicationIds) {
   const bundleRaw = await fetchById(bundleId);
   const { dbl: { medium } } = bundleRaw;
-  const applicableWizards = Object.values(wizards).filter(w => w.medium === medium);
+  const applicableWizards = getApplicableWizards(bundleId, medium);
   if (applicableWizards.length === 0) {
     console.log(`Publications not updated. No publication wizards were found for medium ${medium}`);
     return;
   }
   /* eslint-disable no-restricted-syntax */
   /* eslint-disable no-await-in-loop */
-  for (const pubId of publicationIds) {
-    const wizardTestResults = await bundleService.testPublicationWizards(bundleId, pubId);
-    const bestWizard = wizardTestResults.reduce(
-      (acc, r) => (r.hits.length > acc.hits.length ? r : acc),
-      { hits: [], misses: [] }
-    );
-    const { wizard, uri } = bestWizard;
+  const bestWizards = getBestWizards(bundleId, publicationIds);
+  for (const bestWizard of bestWizards) {
+    const {
+      wizard, uri, pubId, testResults
+    } = bestWizard;
     if (!wizard) {
       console.log(`Publication ${pubId} not updated. No publication wizard hits were found in these tests:`);
-      console.log(wizardTestResults);
+      console.log(testResults);
     } else {
       await bundleService.runPublicationWizard(bundleId, pubId, wizard, uri);
       console.log(`Publication ${pubId} was updated by wizard ${wizard} for uri ${uri}`);
