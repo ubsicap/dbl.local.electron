@@ -76,7 +76,18 @@ export function getManifestResources(_bundleId) {
 }
 
 export function checkPublicationsHealth(_bundleId) {
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    const { bundles: { addedByBundleIds } } = getState();
+    const bundleId = _bundleId;
+    const { medium } = addedByBundleIds[bundleId];
+    const applicableWizards = await bundleService.getApplicableWizards(_bundleId, medium);
+    if (applicableWizards.length === 0) {
+      return dispatch({
+        type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_SUCCESS,
+        medium,
+        message: `There are no publication wizards available for this ${medium} bundle.`
+      });
+    }
     const sections = await bundleService.getFormBundleTree(_bundleId);
     const publicationInstances = bundleService.getPublicationsInstances(sections);
     const publicationInstanceIds = Object.keys(publicationInstances);
@@ -110,10 +121,22 @@ export function checkPublicationsHealth(_bundleId) {
     if (pubsMissingCanonComponentsIds.length > 0) {
       return dispatch(updateMissingCanonSpecs(dispatch, pubsMissingCanonComponentsIds));
     }
-    // now get the publication structure for each publication
+    const bestPubWizards = await bundleService.getBestWizards(_bundleId, publicationInstanceIds);
+    const message = 'The following publication structure wizards will be applied. After adding resources, please click the Review button above to make sure you have the expected publication(s)';
+    const { wizardsResults } = bestPubWizards.reduce((acc, bestPubWizard) => {
+      const { wizard: wizardName } = bestPubWizard;
+      const { description, documentation } = applicableWizards.find(w => w.name === wizardName);
+      const { wizardsResults: prevWizardsResults = {} } = acc;
+      return { wizardsResults: { ...prevWizardsResults, [wizardName]: { ...bestPubWizard, description, documentation } } };
+    }, { wizardsResults: {} });
     dispatch({
       type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_SUCCESS,
-      publications: publicationInstanceIds
+      medium,
+      publications: publicationInstanceIds,
+      applicableWizards,
+      bestPubWizards,
+      message,
+      wizardsResults
     });
   };
 
@@ -147,6 +170,7 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
         dispatch(failure(_bundleId, error));
       }
     }
+    dispatch(done(_bundleId));
     /*
     await Promise.all(Object.entries(_fileToContainerPaths)
       .map(async ([filePath, containerPath]) => {
@@ -170,8 +194,15 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
   function success(bundleId, filePath, containerPath) {
     return {
       type: bundleResourceManagerConstants.UPDATE_MANIFEST_RESOURCE_RESPONSE,
+      bundleId,
       filePath,
       containerPath
+    };
+  }
+  function done(bundleId) {
+    return {
+      type: bundleResourceManagerConstants.UPDATE_MANIFEST_RESOURCE_DONE,
+      bundleId
     };
   }
   function failure(bundleId, error) {

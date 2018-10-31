@@ -123,7 +123,7 @@ async function startDblDotLocal(configXmlFile) {
 }
 
 function startDblDotLocalSubProcess(configXmlFile) {
-  // try to start local dbl_dot_local.exe process if it exists.
+  // try to start local dbl_dot_local_app process if it exists.
   const dblDotLocalExecPath = getDblDotLocalExecPath();
   console.log(dblDotLocalExecPath);
   if (!fs.exists(dblDotLocalExecPath)) {
@@ -132,16 +132,16 @@ function startDblDotLocalSubProcess(configXmlFile) {
   const cwd = getDblDotLocalExecCwd();
   const subProcess = childProcess.spawn(dblDotLocalExecPath, [configXmlFile], {
     cwd,
-    stdio: [ 'ignore', 'ignore', 'pipe' ],
+    stdio: ['ignore', 'ignore', 'pipe'],
     detached: false
   });
   subProcess.stderr.on('data', (data) => {
     // log.error(data);
-    console.log(`dbl_dot_local.exe: ${data}`);
+    console.log(`dbl_dot_local_app: ${data}`);
   });
   ['error', 'close', 'exit'].forEach(event => {
     subProcess.on(event, (code) => {
-      const msg = `dbl_dot_local.exe (${event}): ${code}`;
+      const msg = `dbl_dot_local_app (${event}): ${code}`;
       log.error(msg);
       console.log(msg);
     });
@@ -156,9 +156,10 @@ function getDblDotLocalExecCwd() {
   const resourcesPath = path.resolve(app.getAppPath(), '../');
   const anotherParentDirectory = isMainProcess ? '..' : '';
   // console.log(resourcesPath);
+  const extaFilesPath = ['extraFiles', 'dbl_dot_local_app'];
   const cwd = (process.env.NODE_ENV === 'production' ?
-    path.join(resourcesPath, 'extraFiles', 'dbl_dot_local') :
-    path.join(__dirname, anotherParentDirectory, '..', 'resources', 'extraFiles', 'dbl_dot_local'));
+    path.join(resourcesPath, ...extaFilesPath) :
+    path.join(__dirname, anotherParentDirectory, '..', 'resources', ...extaFilesPath));
   // console.log(cwd);
   return cwd;
 }
@@ -183,7 +184,8 @@ function getDialog() {
 }
 
 function getDblDotLocalExecPath() {
-  return path.join(getDblDotLocalExecCwd(), 'dbl_dot_local.exe');
+  const execName = `dbl_dot_local_app${(process.platform === 'win32' ? '.exe' : '')}`;
+  return path.join(getDblDotLocalExecCwd(), execName);
 }
 
 function getConfigXmlDefaultFolder() {
@@ -272,8 +274,8 @@ function convertConfigXmlToJson(workspace) {
 
 function readFileOrTemplate(configXmlPath) {
   if (!fs.existsSync(configXmlPath)) {
-    // import template.config.xml
-    const templateConfigXml = path.join(dblDotLocalService.getDblDotLocalExecCwd(), 'template.config.xml');
+    // import config.xml.template
+    const templateConfigXml = path.join(dblDotLocalService.getDblDotLocalExecCwd(), 'config.xml.template');
     if (!fs.existsSync(templateConfigXml)) {
       console.log(`Missing ${templateConfigXml}`);
       return null;
