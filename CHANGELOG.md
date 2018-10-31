@@ -1,3 +1,14 @@
+### Version 0.13.0
+#### Features
+- login page now waits until dbl_dot_local_app ready before enabling Login button
+- Add resource dialog shows applicable wizard documentation
+- Add file count to Add/Download button for resource dialogs
+#### Fixes
+- enable login when user saves workspace Settings
+- rename config.xml.template and dbl_dot_local_app.exe (Conditionally append .exe for windows only for compatibility with linux/macOs installations)
+- when adding resources, dbl_dot_local_app expires locks after 5 seconds to avoid hang (eternal red circle)
+- fix braille wizard endpoint (ignore empty uri path)
+
 ### Version 0.12.3
 #### Fixes
 - Fix add bundles (don't throw any any dispatches during throttle)
