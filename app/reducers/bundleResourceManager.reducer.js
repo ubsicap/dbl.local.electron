@@ -52,7 +52,7 @@ export function bundleManageResources(state = initialState, action) {
       const filesDone = filesCompleted.length;
       const filesTotal = Object.keys(fileToContainerPaths).length;
       const progress = Math.floor((filesDone / filesTotal) * 100);
-      const loading = filesDone < filesTotal;
+      const loading = state.loading && filesDone < filesTotal;
       return {
         ...state,
         loading,
@@ -61,6 +61,12 @@ export function bundleManageResources(state = initialState, action) {
           ...state.updatingManifest,
           filesCompleted
         }
+      };
+    }
+    case bundleResourceManagerConstants.UPDATE_MANIFEST_RESOURCE_DONE: {
+      return {
+        ...state,
+        loading: false
       };
     }
     case bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR: {
@@ -75,10 +81,10 @@ export function bundleManageResources(state = initialState, action) {
       };
     }
     case bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_SUCCESS: {
-      const { publications } = action;
+      const { publications, medium, message, wizardsResults } = action;
       return {
         ...state,
-        publicationsHealth: { publications }
+        publicationsHealth: { publications, medium, message, wizardsResults }
       };
     }
     default: {

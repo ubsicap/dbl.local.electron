@@ -8,6 +8,8 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
+import Card from '@material-ui/core/Card';
+import CardContent from '@material-ui/core/CardContent';
 import Button from '@material-ui/core/Button';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -49,6 +51,8 @@ type Props = {
   columnConfig: [],
   isOkToAddFiles: boolean,
   publicationsHealthMessage: ?string,
+  publicationsHealthSuccessMessage: ?string,
+  wizardsResults: ?{},
   goFixPublications: ?() => {},
   closeResourceManager: () => {},
   openMetadataFile: () => {},
@@ -170,7 +174,9 @@ function mapStateToProps(state, props) {
   const { publicationsHealth, progress = 100, loading = false } = bundleManageResources;
   const {
     errorMessage: publicationsHealthMessage,
-    goFix: goFixPublications
+    goFix: goFixPublications,
+    message: publicationsHealthSuccessMessage,
+    wizardsResults,
   } = publicationsHealth || {};
   const { bundleId, mode } = props.match.params;
   const { showMetadataFile } = bundleEditMetadata;
@@ -190,7 +196,9 @@ function mapStateToProps(state, props) {
     columnConfig,
     isOkToAddFiles: !publicationsHealthMessage,
     publicationsHealthMessage,
-    goFixPublications
+    goFixPublications,
+    publicationsHealthSuccessMessage,
+    wizardsResults
   };
 }
 
@@ -209,6 +217,9 @@ const materialStyles = theme => ({
   },
   errorBar: {
     color: theme.palette.secondary.light,
+  },
+  successBar: {
+    color: theme.palette.primary.light,
   },
   toolBar: {
     paddingLeft: '0px',
@@ -313,6 +324,17 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   onSelectedIds = (selectedIds) => {
     this.setState({ selectedIds, selectAll: false });
+  }
+
+  getSelectedCountMessage = (shouldDisableOk) => {
+    const { selectedIds = [], selectAll } = this.state;
+    if (shouldDisableOk()) {
+      return '';
+    }
+    if (selectAll) {
+      return ' (All)';
+    }
+    return ` (${selectedIds.length})`;
   }
 
   shouldDisableDownload = () => {
@@ -439,7 +461,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           appBar:
           {
             title: 'Download resources',
-            OkButtonLabel: 'Download',
+            OkButtonLabel: `Download${this.getSelectedCountMessage(this.shouldDisableDownload)}`,
             OkButtonIcon: <FileDownload className={classNames(classes.leftIcon)} />,
             OkButtonDisable: this.shouldDisableDownload
           }
@@ -449,7 +471,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           mode,
           appBar: {
             title: 'Add resources',
-            OkButtonLabel: 'Add',
+            OkButtonLabel: `Add${this.getSelectedCountMessage(this.shouldDisableAddFiles)}`,
             OkButtonIcon: <CheckIcon className={classNames(classes.leftIcon)} />,
             OkButtonDisable: this.shouldDisableAddFiles
           }
@@ -521,10 +543,28 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.updateSelectedResourcesContainersSetState(newValue.trim());
   }
 
+  renderWizardsResults = () => {
+    const { wizardsResults } = this.props;
+    if (!wizardsResults) {
+      return (null);
+    }
+    return Object.entries(wizardsResults).map(([wizardName, results]) =>
+      (
+        <React.Fragment key="frag">
+          <Typography key={`${wizardName}-description`} variant="subheading" color="inherit" paragraph>
+            • <b>{results.description}</b> ({wizardName}):
+          </Typography>
+          <Typography key={`${wizardName}-documentation`} variant="subheading" color="inherit" style={{ marginLeft: '20px' }} paragraph>
+            {results.documentation}
+          </Typography>
+        </React.Fragment>
+      ));
+  }
+
   render() {
     const {
       classes, open, selectedBundle = {}, columnConfig, manifestResources,
-      publicationsHealthMessage = '', loading, progress
+      publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading, progress
     } = this.props;
     const { selectAll, totalResources = manifestResources } = this.state;
     const { displayAs = {} } = selectedBundle;
@@ -576,6 +616,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               >Go Fix
               </Button>
             </Toolbar>
+          }
+          {!loading && this.isAddFilesMode() && publicationsHealthSuccessMessage &&
+            <Card className={classes.successBar} raised>
+              <CardContent>
+                <Typography key="pubhealthSuccessMessage" variant="subheading" color="inherit" gutterBottom>
+                  {publicationsHealthSuccessMessage}
+                </Typography>
+                {this.renderWizardsResults()}
+              </CardContent>
+            </Card>
           }
           <EnhancedTable
             data={totalResources}
