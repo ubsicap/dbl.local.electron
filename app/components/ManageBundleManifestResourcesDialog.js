@@ -8,6 +8,8 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
+import Card from '@material-ui/core/Card';
+import CardContent from '@material-ui/core/CardContent';
 import Button from '@material-ui/core/Button';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -541,6 +543,24 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.updateSelectedResourcesContainersSetState(newValue.trim());
   }
 
+  renderWizardsResults = () => {
+    const { wizardsResults } = this.props;
+    if (!wizardsResults) {
+      return (null);
+    }
+    return Object.entries(wizardsResults).map(([wizardName, results]) =>
+      (
+        <React.Fragment>
+          <Typography key={`${wizardName}-description`} variant="subheading" color="inherit" paragraph>
+            • <b>{results.description}</b> ({wizardName}):
+          </Typography>
+          <Typography style={{ marginLeft: '20px' }} key={`${wizardName}-documentation`} variant="subheading" color="inherit" paragraph>
+            {results.documentation}
+          </Typography>
+        </React.Fragment>
+      ));
+  }
+
   render() {
     const {
       classes, open, selectedBundle = {}, columnConfig, manifestResources,
@@ -597,13 +617,15 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               </Button>
             </Toolbar>
           }
-          {this.isAddFilesMode() && publicationsHealthSuccessMessage &&
-            <Toolbar className={classes.successBar}>
-              <Typography variant="subheading" color="inherit">
-                {publicationsHealthSuccessMessage}
-              </Typography>
-              <div style={{ paddingLeft: '10px' }} />
-            </Toolbar>
+          {!loading && this.isAddFilesMode() && publicationsHealthSuccessMessage &&
+            <Card className={classes.successBar} raised>
+              <CardContent>
+                <Typography variant="subheading" color="inherit" gutterBottom>
+                  {publicationsHealthSuccessMessage}
+                </Typography>
+                {this.renderWizardsResults()}
+              </CardContent>
+            </Card>
           }
           <EnhancedTable
             data={totalResources}

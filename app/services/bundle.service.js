@@ -568,14 +568,14 @@ async function getBestWizards(bundleId, publicationIds) {
 async function updatePublications(bundleId, publicationIds) {
   const bundleRaw = await fetchById(bundleId);
   const { dbl: { medium } } = bundleRaw;
-  const applicableWizards = getApplicableWizards(bundleId, medium);
+  const applicableWizards = await getApplicableWizards(bundleId, medium);
   if (applicableWizards.length === 0) {
     console.log(`Publications not updated. No publication wizards were found for medium ${medium}`);
     return;
   }
   /* eslint-disable no-restricted-syntax */
   /* eslint-disable no-await-in-loop */
-  const bestWizards = getBestWizards(bundleId, publicationIds);
+  const bestWizards = await getBestWizards(bundleId, publicationIds);
   for (const bestWizard of bestWizards) {
     const {
       wizard, uri, pubId, testResults

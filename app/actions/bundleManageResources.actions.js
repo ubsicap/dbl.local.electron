@@ -122,7 +122,7 @@ export function checkPublicationsHealth(_bundleId) {
       return dispatch(updateMissingCanonSpecs(dispatch, pubsMissingCanonComponentsIds));
     }
     const bestPubWizards = await bundleService.getBestWizards(_bundleId, publicationInstanceIds);
-    const message = 'The following wizards will be applied to any added manifest resources to create publication structure: ';
+    const message = 'The following publication structure wizards will be applied. After adding resources, please click the Review button above to make sure you have the expected publication(s)';
     const { wizardsResults } = bestPubWizards.reduce((acc, bestPubWizard) => {
       const { wizard: wizardName } = bestPubWizard;
       const { description, documentation } = applicableWizards.find(w => w.name === wizardName);
