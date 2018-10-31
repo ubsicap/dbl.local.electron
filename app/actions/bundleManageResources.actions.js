@@ -147,6 +147,7 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
         dispatch(failure(_bundleId, error));
       }
     }
+    dispatch(done(_bundleId));
     /*
     await Promise.all(Object.entries(_fileToContainerPaths)
       .map(async ([filePath, containerPath]) => {
@@ -170,8 +171,15 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
   function success(bundleId, filePath, containerPath) {
     return {
       type: bundleResourceManagerConstants.UPDATE_MANIFEST_RESOURCE_RESPONSE,
+      bundleId,
       filePath,
       containerPath
+    };
+  }
+  function done(bundleId) {
+    return {
+      type: bundleResourceManagerConstants.UPDATE_MANIFEST_RESOURCE_DONE,
+      bundleId
     };
   }
   function failure(bundleId, error) {
