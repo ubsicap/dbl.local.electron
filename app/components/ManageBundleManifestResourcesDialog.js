@@ -315,6 +315,17 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.setState({ selectedIds, selectAll: false });
   }
 
+  getSelectedCountMessage = (shouldDisableOk) => {
+    const { selectedIds = [], selectAll } = this.state;
+    if (shouldDisableOk()) {
+      return '';
+    }
+    if (selectAll) {
+      return ' (All)';
+    }
+    return ` (${selectedIds.length})`;
+  }
+
   shouldDisableDownload = () => {
     const { selectedIds = [], selectAll } = this.state;
     return !selectAll && selectedIds.length === 0;
@@ -439,7 +450,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           appBar:
           {
             title: 'Download resources',
-            OkButtonLabel: 'Download',
+            OkButtonLabel: `Download${this.getSelectedCountMessage(this.shouldDisableDownload)}`,
             OkButtonIcon: <FileDownload className={classNames(classes.leftIcon)} />,
             OkButtonDisable: this.shouldDisableDownload
           }
@@ -449,7 +460,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           mode,
           appBar: {
             title: 'Add resources',
-            OkButtonLabel: 'Add',
+            OkButtonLabel: `Add${this.getSelectedCountMessage(this.shouldDisableAddFiles)}`,
             OkButtonIcon: <CheckIcon className={classNames(classes.leftIcon)} />,
             OkButtonDisable: this.shouldDisableAddFiles
           }
