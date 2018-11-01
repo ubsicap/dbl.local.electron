@@ -1,4 +1,5 @@
 import log from 'electron-log';
+import waitUntil from 'wait-until';
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
@@ -164,12 +165,15 @@ function getIsDemoMode() {
   return history.location.pathname.includes('/demo');
 }
 
+function getBundleToEdit(getState, bundleId) {
+  const { bundles } = getState();
+  const { addedByBundleIds } = bundles;
+  return bundleId ? addedByBundleIds[bundleId] : null;
+}
+
 export function openEditMetadata(_bundleId, _moveNextStep) {
   return async (dispatch, getState) => {
-    const { bundles } = getState();
-    const { addedByBundleIds } = bundles;
-    const bundleIdToEdit = _bundleId;
-    const bundleToEdit = _bundleId ? addedByBundleIds[bundleIdToEdit] : {};
+    const bundleToEdit = getBundleToEdit(getState, _bundleId);
     dispatch(request(bundleToEdit, _moveNextStep));
     const isDemoMode = getIsDemoMode();
     if (isDemoMode) {
@@ -187,10 +191,17 @@ export function openEditMetadata(_bundleId, _moveNextStep) {
     }
     try {
       await bundleService.startCreateContent(_bundleId, '');
-      if (isDraft) {
-        // ideally we'd wait/listen for the 'create' mode change event.
-        dispatch(navigate(bundleToEdit, _moveNextStep));
-      }
+      waitUntil(500, 10000, (cb) => {
+        const bundle = getBundleToEdit(getState, _bundleId);
+        const isInCreateMode = bundle.mode === 'create';
+        if (isInCreateMode) {
+          dispatch(navigate(bundle, _moveNextStep));
+        }
+        cb(isInCreateMode);
+      }, () => {
+        // handle timeout
+        dispatch(failure(_bundleId, 'timeout (10 sec) while waiting for create mode', _moveNextStep));
+      });
     } catch (errorReadable) {
       const error = await errorReadable.text();
       dispatch(failure(_bundleId, error, _moveNextStep));
