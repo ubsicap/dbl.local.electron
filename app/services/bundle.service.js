@@ -4,6 +4,7 @@ import path from 'path';
 import rp from 'request-promise-native';
 import uuidv1 from 'uuid/v1';
 import wait from 'wait-promise';
+import waitUntil from 'async-wait-until';
 import { authHeader } from '../helpers';
 import dblDotLocalConfigConstants from '../constants/dblDotLocal.constants';
 import download from './download-with-fetch.flow';
@@ -454,19 +455,22 @@ function startCreateContent(bundleId, label) {
 
 async function bundleIsInCreateMode(bundleId) {
   const rawBundleInfo = await bundleService.fetchById(bundleId);
-  return rawBundleInfo.mode === 'create';
+  const isBundleInCreateMode = rawBundleInfo.mode === 'create';
+  console.log(`bundeIsInCreateMode ${isBundleInCreateMode}`);
+  return isBundleInCreateMode;
 }
 
 function getCurrentBundleState(getState, bundleId) {
   const { bundles } = getState();
   const { addedByBundleIds } = bundles;
+  console.log('getCurrentBundleState');
   return bundleId ? addedByBundleIds[bundleId] : null;
 }
 
 async function waitStartCreateMode(bundleId) {
-  if (await !bundleIsInCreateMode(bundleId)) {
+  if (!(await bundleIsInCreateMode(bundleId))) {
     await startCreateContent(bundleId);
-    await wait.every(500).until(async () => (bundleIsInCreateMode(bundleId)));
+    await waitUntil(async () => bundleIsInCreateMode(bundleId), 60000, 500);
   }
 }
 
@@ -474,7 +478,7 @@ async function waitStopCreateMode(bundleId) {
   if (await bundleIsInCreateMode(bundleId)) {
     // unblock block tasks like 'Delete'
     await stopCreateContent(bundleId);
-    await wait.every(500).until(async () => !(await bundleIsInCreateMode(bundleId)));
+    await waitUntil(async () => !(await bundleIsInCreateMode(bundleId)), 60000, 500);
   }
 }
 

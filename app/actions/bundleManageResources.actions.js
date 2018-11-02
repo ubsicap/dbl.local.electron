@@ -14,7 +14,7 @@ export const bundleManageResourceActions = {
 };
 
 export function openResourceManager(_bundleId, _mode = 'download') {
-  return async (dispatch, getState) => {
+  return async (dispatch) => {
     const isInCreateMode = await bundleService.bundleIsInCreateMode(_bundleId);
     if (isInCreateMode || _mode === 'download') {
       return dispatch(navigate(_bundleId, _mode));
