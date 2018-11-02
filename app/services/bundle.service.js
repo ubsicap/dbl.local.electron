@@ -456,14 +456,12 @@ function startCreateContent(bundleId, label) {
 async function bundleIsInCreateMode(bundleId) {
   const rawBundleInfo = await bundleService.fetchById(bundleId);
   const isBundleInCreateMode = rawBundleInfo.mode === 'create';
-  console.log(`bundeIsInCreateMode ${isBundleInCreateMode}`);
   return isBundleInCreateMode;
 }
 
 function getCurrentBundleState(getState, bundleId) {
   const { bundles } = getState();
   const { addedByBundleIds } = bundles;
-  console.log('getCurrentBundleState');
   return bundleId ? addedByBundleIds[bundleId] : null;
 }
 
