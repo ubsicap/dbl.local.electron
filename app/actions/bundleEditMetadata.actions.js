@@ -1,5 +1,5 @@
 import log from 'electron-log';
-import waitUntil from 'wait-until';
+import wait from 'wait-promise';
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
@@ -191,17 +191,19 @@ export function openEditMetadata(_bundleId, _moveNextStep) {
     }
     try {
       await bundleService.startCreateContent(_bundleId, '');
-      waitUntil(500, 10000, (cb) => {
-        const bundle = getBundleToEdit(getState, _bundleId);
-        const isInCreateMode = bundle.mode === 'create';
-        if (isInCreateMode) {
-          dispatch(navigate(bundle, _moveNextStep));
-        }
-        cb(isInCreateMode);
-      }, () => {
-        // handle timeout
+      try {
+        const bundleReady = await wait.before(10000).every(500).until(() => {
+          const bundle = getBundleToEdit(getState, _bundleId);
+          const isInCreateMode = bundle.mode === 'create';
+          if (isInCreateMode) {
+            return bundle;
+          }
+          return false;
+        });
+        dispatch(navigate(bundleReady, _moveNextStep));
+      } catch (error) {
         dispatch(failure(_bundleId, 'timeout (10 sec) while waiting for create mode', _moveNextStep));
-      });
+      }
     } catch (errorReadable) {
       const error = await errorReadable.text();
       dispatch(failure(_bundleId, error, _moveNextStep));
