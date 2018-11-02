@@ -1,4 +1,3 @@
-import wait from 'wait-promise';
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
@@ -20,20 +19,7 @@ export function openResourceManager(_bundleId, _mode = 'download') {
     if (isInCreateMode || _mode === 'download') {
       return dispatch(navigate(_bundleId, _mode));
     }
-    if (!isInCreateMode) {
-      await bundleService.startCreateContent(_bundleId);
-    }
-    await wait.before(10000).every(500).until(() => {
-      const bundle = bundleService.getCurrentBundleState(getState, _bundleId);
-      if (_mode === 'download') {
-        return bundle;
-      }
-      const isNowInCreateMode = bundle.mode === 'create';
-      if (isNowInCreateMode) {
-        return bundle;
-      }
-      return false;
-    });
+    await bundleService.waitStartCreateMode(_bundleId);
     dispatch(navigate(_bundleId, _mode));
   };
   function success(bundleId, mode) {
@@ -48,14 +34,14 @@ export function openResourceManager(_bundleId, _mode = 'download') {
 }
 
 export function closeResourceManager(_bundleId) {
-  return dispatch => {
+  return async dispatch => {
+    await bundleService.waitStopCreateMode(_bundleId);
     dispatch(navigate(_bundleId));
   };
   function success(bundleId) {
     return { type: bundleResourceManagerConstants.CLOSE_RESOURCE_MANAGER, bundleId };
   }
   function navigate(bundleId) {
-    bundleService.unlockCreateMode(bundleId);
     history.push(navigationConstants.NAVIGATION_BUNDLES);
     return success(bundleId);
   }

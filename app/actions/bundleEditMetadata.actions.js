@@ -1,5 +1,4 @@
 import log from 'electron-log';
-import wait from 'wait-promise';
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
@@ -169,11 +168,6 @@ export function openEditMetadata(_bundleId, _moveNextStep) {
   return async (dispatch, getState) => {
     const bundleToEdit = bundleService.getCurrentBundleState(getState, _bundleId);
     dispatch(request(bundleToEdit, _moveNextStep));
-    const isDemoMode = getIsDemoMode();
-    if (isDemoMode) {
-      dispatch(navigate(bundleToEdit, _moveNextStep));
-      return;
-    }
     if (bundleToEdit.mode === 'create') {
       dispatch(navigate(bundleToEdit, _moveNextStep));
       return;
@@ -184,19 +178,12 @@ export function openEditMetadata(_bundleId, _moveNextStep) {
       return;
     }
     try {
-      await bundleService.startCreateContent(_bundleId, '');
       try {
-        const bundleReady = await wait.before(10000).every(500).until(() => {
-          const bundle = bundleService.getCurrentBundleState(getState, _bundleId);
-          const isNowInCreateMode = bundle.mode === 'create';
-          if (isNowInCreateMode) {
-            return bundle;
-          }
-          return false;
-        });
+        await bundleService.waitStartCreateMode(_bundleId);
+        const bundleReady = bundleService.getCurrentBundleState(getState, _bundleId);
         dispatch(navigate(bundleReady, _moveNextStep));
       } catch (error) {
-        dispatch(failure(_bundleId, 'timeout (10 sec) while waiting for create mode', _moveNextStep));
+        dispatch(failure(_bundleId, `error ${error} while waiting for create mode`, _moveNextStep));
       }
     } catch (errorReadable) {
       const error = await errorReadable.text();
@@ -240,13 +227,8 @@ export function openEditMetadata(_bundleId, _moveNextStep) {
 
 export function closeEditMetadata(bundleId) {
   return async dispatch => {
-    const isDemoMode = getIsDemoMode();
-    if (!isDemoMode) {
-      bundleService.unlockCreateMode(bundleId);
-    }
-    // ideally we'd wait for change mode to 'store' to complete
+    await bundleService.waitStopCreateMode(bundleId);
     dispatch({ type: bundleEditMetadataConstants.CLOSE_EDIT_METADATA, bundleId });
-    await utilities.sleep(1);
     dispatch(switchBackToBundlesPage);
   };
 }

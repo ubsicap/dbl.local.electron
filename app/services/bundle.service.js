@@ -3,6 +3,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import rp from 'request-promise-native';
 import uuidv1 from 'uuid/v1';
+import wait from 'wait-promise';
 import { authHeader } from '../helpers';
 import dblDotLocalConfigConstants from '../constants/dblDotLocal.constants';
 import download from './download-with-fetch.flow';
@@ -36,7 +37,8 @@ export const bundleService = {
   startCreateContent,
   stopCreateContent,
   bundleIsInCreateMode,
-  unlockCreateMode,
+  waitStartCreateMode,
+  waitStopCreateMode,
   postResource,
   forkBundle,
   updateManifestResource,
@@ -461,10 +463,18 @@ function getCurrentBundleState(getState, bundleId) {
   return bundleId ? addedByBundleIds[bundleId] : null;
 }
 
-async function unlockCreateMode(bundleId) {
-  if (await bundleService.bundleIsInCreateMode(bundleId)) {
+async function waitStartCreateMode(bundleId) {
+  if (await !bundleIsInCreateMode(bundleId)) {
+    await startCreateContent(bundleId);
+    await wait.every(500).until(async () => (bundleIsInCreateMode(bundleId)));
+  }
+}
+
+async function waitStopCreateMode(bundleId) {
+  if (await bundleIsInCreateMode(bundleId)) {
     // unblock block tasks like 'Delete'
-    await bundleService.stopCreateContent(bundleId);
+    await stopCreateContent(bundleId);
+    await wait.every(500).until(async () => !(await bundleIsInCreateMode(bundleId)));
   }
 }
 

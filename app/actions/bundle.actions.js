@@ -504,7 +504,7 @@ function getAddedBundle(getState, bundleId) {
 export function uploadBundle(id) {
   return async dispatch => {
     try {
-      bundleService.unlockCreateMode(id);
+      await bundleService.waitStopCreateMode(id);
       dispatch(request(id));
       await bundleService.startUploadBundle(id);
     } catch (errorReadable) {
@@ -564,7 +564,7 @@ export function removeBundle(id) {
   return async dispatch => {
     dispatch(request(id));
     try {
-      bundleService.unlockCreateMode(id);
+      await bundleService.waitStopCreateMode(id);
       await bundleService.removeBundle(id);
     } catch (error) {
       dispatch(failure(id, error));
