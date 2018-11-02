@@ -188,8 +188,8 @@ export function openEditMetadata(_bundleId, _moveNextStep) {
       try {
         const bundleReady = await wait.before(10000).every(500).until(() => {
           const bundle = bundleService.getCurrentBundleState(getState, _bundleId);
-          const isInCreateMode = bundle.mode === 'create';
-          if (isInCreateMode) {
+          const isNowInCreateMode = bundle.mode === 'create';
+          if (isNowInCreateMode) {
             return bundle;
           }
           return false;

@@ -17,18 +17,23 @@ export const bundleManageResourceActions = {
 export function openResourceManager(_bundleId, _mode = 'download') {
   return async (dispatch, getState) => {
     const isInCreateMode = await bundleService.bundleIsInCreateMode(_bundleId);
-    if (!isInCreateMode && _mode !== 'download') {
-      await bundleService.startCreateContent(_bundleId);
-      await wait.before(10000).every(500).until(() => {
-        const bundle = bundleService.getCurrentBundleState(getState, _bundleId);
-        const isNowInCreateMode = bundle.mode === 'create';
-        if (isNowInCreateMode) {
-          return bundle;
-        }
-        return false;
-      });
-      dispatch(navigate(_bundleId, _mode));
+    if (isInCreateMode || _mode === 'download') {
+      return dispatch(navigate(_bundleId, _mode));
     }
+    if (!isInCreateMode) {
+      await bundleService.startCreateContent(_bundleId);
+    }
+    await wait.before(10000).every(500).until(() => {
+      const bundle = bundleService.getCurrentBundleState(getState, _bundleId);
+      if (_mode === 'download') {
+        return bundle;
+      }
+      const isNowInCreateMode = bundle.mode === 'create';
+      if (isNowInCreateMode) {
+        return bundle;
+      }
+      return false;
+    });
     dispatch(navigate(_bundleId, _mode));
   };
   function success(bundleId, mode) {
