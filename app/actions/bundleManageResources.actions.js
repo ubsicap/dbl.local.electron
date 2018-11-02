@@ -1,3 +1,4 @@
+import wait from 'wait-promise';
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
@@ -14,10 +15,19 @@ export const bundleManageResourceActions = {
 };
 
 export function openResourceManager(_bundleId, _mode = 'download') {
-  return async dispatch => {
+  return async (dispatch, getState) => {
     const isInCreateMode = await bundleService.bundleIsInCreateMode(_bundleId);
     if (!isInCreateMode && _mode !== 'download') {
       await bundleService.startCreateContent(_bundleId);
+      await wait.before(10000).every(500).until(() => {
+        const bundle = bundleService.getCurrentBundleState(getState, _bundleId);
+        const isNowInCreateMode = bundle.mode === 'create';
+        if (isNowInCreateMode) {
+          return bundle;
+        }
+        return false;
+      });
+      dispatch(navigate(_bundleId, _mode));
     }
     dispatch(navigate(_bundleId, _mode));
   };

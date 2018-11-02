@@ -13,6 +13,7 @@ export const bundleService = {
   create,
   fetchAll,
   fetchById,
+  getCurrentBundleState,
   getFlatFileInfo,
   getHasStoredResources,
   update,
@@ -452,6 +453,12 @@ function startCreateContent(bundleId, label) {
 async function bundleIsInCreateMode(bundleId) {
   const rawBundleInfo = await bundleService.fetchById(bundleId);
   return rawBundleInfo.mode === 'create';
+}
+
+function getCurrentBundleState(getState, bundleId) {
+  const { bundles } = getState();
+  const { addedByBundleIds } = bundles;
+  return bundleId ? addedByBundleIds[bundleId] : null;
 }
 
 async function unlockCreateMode(bundleId) {

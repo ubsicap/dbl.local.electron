@@ -165,15 +165,9 @@ function getIsDemoMode() {
   return history.location.pathname.includes('/demo');
 }
 
-function getBundleToEdit(getState, bundleId) {
-  const { bundles } = getState();
-  const { addedByBundleIds } = bundles;
-  return bundleId ? addedByBundleIds[bundleId] : null;
-}
-
 export function openEditMetadata(_bundleId, _moveNextStep) {
   return async (dispatch, getState) => {
-    const bundleToEdit = getBundleToEdit(getState, _bundleId);
+    const bundleToEdit = bundleService.getCurrentBundleState(getState, _bundleId);
     dispatch(request(bundleToEdit, _moveNextStep));
     const isDemoMode = getIsDemoMode();
     if (isDemoMode) {
@@ -193,7 +187,7 @@ export function openEditMetadata(_bundleId, _moveNextStep) {
       await bundleService.startCreateContent(_bundleId, '');
       try {
         const bundleReady = await wait.before(10000).every(500).until(() => {
-          const bundle = getBundleToEdit(getState, _bundleId);
+          const bundle = bundleService.getCurrentBundleState(getState, _bundleId);
           const isInCreateMode = bundle.mode === 'create';
           if (isInCreateMode) {
             return bundle;
