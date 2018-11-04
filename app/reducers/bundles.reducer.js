@@ -259,16 +259,6 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
         selectedDBLEntryId
       };
     }
-    case bundleConstants.SESSION_EVENTS_CONNECTED: {
-      if (state.eventSource && state.eventSource.readyState !== 2) {
-        state.eventSource.close();
-        console.log('session EventSource closed');
-      }
-      return {
-        ...state,
-        eventSource: action.eventSource
-      };
-    }
     default:
       return state;
   }

@@ -3,10 +3,33 @@ import path from 'path';
 import childProcess from 'child_process';
 import xml2js from 'xml2js';
 import log from 'electron-log';
-import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
+import dblDotLocalConstants from '../constants/dblDotLocal.constants';
 import { authHeader } from '../helpers';
 // import { history } from '../store/configureStore';
 // import { navigationConstants } from '../constants/navigation.constants';
+
+let eventSource: EventSource;
+const eventSourceStore = () => {
+  return {
+    startEventSource(authToken) {
+      eventSource = new EventSource(`${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/events/${authToken}`);
+      eventSource.onmessage = (event) => {
+        console.log(event);
+      };
+      eventSource.onopen = () => {
+        console.log('Connection to event source opened.');
+      };
+      eventSource.onerror = (error) => {
+        console.log('EventSource error.');
+        console.log(error);
+        log.error(JSON.stringify(error.data));
+      };
+    },
+    addEventListener(evType, handler) {
+      eventSource.addEventListener(evType, handler);
+    }
+  };
+};
 
 export const dblDotLocalService = {
   health,
@@ -23,7 +46,8 @@ export const dblDotLocalService = {
   getWorkspacesDir,
   convertConfigXmlToJson,
   updateConfigXmlWithNewPaths,
-  updateAndWriteConfigXmlSettings
+  updateAndWriteConfigXmlSettings,
+  eventSourceStore
 };
 export default dblDotLocalService;
 
@@ -35,7 +59,7 @@ function health(method = 'GET') {
     method,
     headers: { 'Content-Type': 'application/json' }
   };
-  return fetch(`${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/health`, requestOptions);
+  return fetch(`${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/health`, requestOptions);
 }
 
 async function htmlBaseUrl() {
@@ -44,7 +68,7 @@ async function htmlBaseUrl() {
     headers: { 'Content-Type': 'application/json' }
   };
   try {
-    const response = await fetch(`${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${UX_API}/html-base-url`, requestOptions);
+    const response = await fetch(`${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/${UX_API}/html-base-url`, requestOptions);
     return handlResponseAsReadable(response);
   } catch (error) {
     return handlResponseAsReadable(error);
@@ -57,7 +81,7 @@ async function newBundleMedia() {
     headers: { 'Content-Type': 'application/json' }
   };
   try {
-    const response = await fetch(`${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${UX_API}/new-bundle-media`, requestOptions);
+    const response = await fetch(`${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/${UX_API}/new-bundle-media`, requestOptions);
     return handlResponseAsReadable(response).json();
   } catch (error) {
     return handlResponseAsReadable(error);
@@ -70,7 +94,7 @@ async function sessionAddTasks(innerTasks) {
     headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `xml=<tasks> ${encodeURIComponent(innerTasks)} </tasks>`
   };
-  const url = `${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/${SESSION_API}/add-tasks`;
+  const url = `${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/${SESSION_API}/add-tasks`;
   try {
     const response = await fetch(url, requestOptions);
     return handlResponseAsReadable(response).text();

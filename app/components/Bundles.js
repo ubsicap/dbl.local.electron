@@ -9,7 +9,6 @@ type Props = {
   setupBundlesEventSource: () => {},
   isLoadingBundles: boolean,
   isSearchLoading: boolean,
-  eventSource: ?{},
   bundleItems: [],
   selectedDBLEntryId: ?string,
   authentication: {}
@@ -22,7 +21,6 @@ function mapStateToProps(state) {
     isLoadingBundles: bundles.loading || false,
     isSearchLoading: bundlesFilter.isLoading || false,
     bundleItems: bundles.items,
-    eventSource: bundles.eventSource,
     selectedDBLEntryId: bundles.selectedDBLEntryId,
     authentication
   };
@@ -37,19 +35,9 @@ class Bundles extends PureComponent<Props> {
   props: Props;
   componentDidMount() {
     this.props.fetchAll();
-    console.log('Bundles did mount');
     const { authentication } = this.props;
     if (authentication.user) {
-      this.props.setupBundlesEventSource(authentication);
-    }
-  }
-
-  componentWillUnmount() {
-    const { eventSource } = this.props;
-    console.log('Bundles did unmount');
-    if (eventSource) {
-      eventSource.close();
-      console.log('bundles EventSource closed');
+      this.props.setupBundlesEventSource();
     }
   }
 
