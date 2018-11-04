@@ -34,10 +34,9 @@ const mapDispatchToProps = {
 class Bundles extends PureComponent<Props> {
   props: Props;
   componentDidMount() {
-    this.props.fetchAll();
-    const { authentication } = this.props;
-    if (authentication.user) {
+    if (this.props.bundleItems.length === 0) {
       this.props.setupBundlesEventSource();
+      this.props.fetchAll();
     }
   }
 
