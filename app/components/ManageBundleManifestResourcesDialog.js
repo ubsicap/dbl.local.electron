@@ -359,7 +359,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       const stats = await fs.stat(filePath);
       const { size: sizeRaw } = stats;
       const size = formatBytesByKbs(sizeRaw);
-      const checksum = await md5File(filePath);
+      const checksum = size < 268435456 ? await md5File(filePath) : '(too expensive)';
       const totalResources = this.getUpdatedTotalResources(filePath, { size, checksum });
       this.setState({ totalResources });
     });

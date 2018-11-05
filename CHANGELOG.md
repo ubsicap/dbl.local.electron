@@ -1,3 +1,7 @@
+### Version 0.13.2
+- Update dbl_dot_local_app to latest (11-02-2018)
+- Skip calculating checksums for files over 250MB
+
 ### Version 0.13.1
 #### Fixes
 - don't get stuck in Uploading mode if something goes wrong (return to store mode)
