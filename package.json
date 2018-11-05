@@ -192,8 +192,8 @@
     "webpack-merge": "^4.1.1"
   },
   "dependencies": {
-    "@material-ui/core": "^1.4.3",
-    "@material-ui/icons": "^2.0.2",
+    "@material-ui/core": "^3.4.0",
+    "@material-ui/icons": "^3.0.1",
     "async-wait-until": "^1.2.4",
     "bootstrap": "4.0.0",
     "devtron": "^1.4.0",
@@ -211,7 +211,7 @@
     "material-ui": "^0.20.0",
     "material-ui-superselectfield": "^1.9.8",
     "md5-file": "^4.0.0",
-    "mui-table": "^2.1.4",
+    "mui-table": "^2.2.0",
     "popper.js": "^1.14.2",
     "react": "^16.3.0",
     "react-addons-shallow-compare": "^15.6.2",
