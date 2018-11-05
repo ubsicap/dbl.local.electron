@@ -197,6 +197,7 @@ export function setupBundlesEventSource() {
       'downloader/receiver': listenDownloaderReceiver,
       'downloader/spec_status': (e) => dispatch(listenDownloaderSpecStatus(e)),
       'downloader/global_status': (e) => dispatch(listenDownloaderGlobalStatus(e)),
+      'uploader/global_status': (e) => dispatch(listenUploaderGlobalStatus(e)),
       'storer/delete_resource': (e) => listenStorerDeleteResource(e, dispatch, getState),
       'storer/delete_bundle': (e) => listenStorerDeleteBundle(e, dispatch, getState),
       'storer/write_resource': (e) => dispatch(listenStorerWriteResource(e))
@@ -214,6 +215,15 @@ export function setupBundlesEventSource() {
     const data = JSON.parse(e.data);
     const [nSpecs, nAtoms] = data.args;
     return updateDownloadQueue(nSpecs, nAtoms);
+  }
+
+  /* 
+   * data:{"args": [1, 11], "component": "uploader", "type": "global_status"}
+   */
+  function listenUploaderGlobalStatus(e) {
+    const data = JSON.parse(e.data);
+    const [nAtoms] = data.args;
+    return updateUploadQueue(1, nAtoms);
   }
 
   function listenStorerExecuteTaskDownloadResources() {
@@ -458,6 +468,12 @@ function updateDownloadQueue(nSpecs, nAtoms) {
   };
 }
 
+function updateUploadQueue(nSpecs, nAtoms) {
+  return (dispatch) => {
+    dispatch({ type: bundleConstants.UPDATE_UPLOAD_QUEUE, nSpecs, nAtoms });
+  };
+}
+
 export function fetchDownloadQueueCounts() {
   return async dispatch => {
     try {
@@ -465,6 +481,19 @@ export function fetchDownloadQueueCounts() {
       const nSpecs = Object.keys(downloadQueueList).length;
       const nAtoms = downloadQueueList.reduce((acc, spec) => acc + spec.n_atoms, 0);
       return dispatch(updateDownloadQueue(nSpecs, nAtoms));
+    } catch (error) {
+      log.error(error);
+    }
+  };
+}
+
+export function fetchUploadQueueCounts() {
+  return async dispatch => {
+    try {
+      const uploadQueueList = await bundleService.getSubsystemUploadQueue();
+      const nSpecs = Object.keys(uploadQueueList).length;
+      const nAtoms = uploadQueueList.reduce((acc, spec) => acc + spec.n_atoms, 0);
+      return dispatch(updateUploadQueue(nSpecs, nAtoms));
     } catch (error) {
       log.error(error);
     }

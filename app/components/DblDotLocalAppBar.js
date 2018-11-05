@@ -8,12 +8,16 @@ import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import ListIcon from '@material-ui/icons/List';
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
+import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 
-import { fetchDownloadQueueCounts } from '../actions/bundle.actions';
+import { fetchDownloadQueueCounts, fetchUploadQueueCounts } from '../actions/bundle.actions';
 
 function mapStateToProps(state) {
   const { bundlesFilter, bundles } = state;
-  const { downloadQueue = { nSpecs: 0, nAtoms: 0 } } = bundles;
+  const {
+    downloadQueue = { nSpecs: 0, nAtoms: 0 },
+    uploadQueue = { nSpecs: 0, nAtoms: 0 }
+  } = bundles;
   const { isSearchActive, searchResults } = bundlesFilter;
   const entriesMatching = (isSearchActive && searchResults) ? Object.keys(searchResults.bundlesMatching) : [];
   const entries = bundles.items;
@@ -21,12 +25,14 @@ function mapStateToProps(state) {
     entries,
     entriesMatching,
     isSearchActive,
-    downloadQueue
+    downloadQueue,
+    uploadQueue
   };
 }
 
 const mapDispatchToProps = {
-  fetchDownloadQueueCounts
+  fetchDownloadQueueCounts,
+  fetchUploadQueueCounts
 };
 
 type Props = {
@@ -35,7 +41,9 @@ type Props = {
     entriesMatching: [],
     isSearchActive: boolean,
     downloadQueue: {},
-    fetchDownloadQueueCounts: () => {}
+    uploadQueue: {},
+    fetchDownloadQueueCounts: () => {},
+    fetchUploadQueueCounts: () => {}
 };
 
 const styles = theme => ({
@@ -65,11 +73,12 @@ class DblDotLocalAppBar extends React.PureComponent {
 
   componentDidMount() {
     this.props.fetchDownloadQueueCounts();
+    this.props.fetchUploadQueueCounts();
   }
 
   render() {
     const {
-      classes, entries, entriesMatching, isSearchActive, downloadQueue
+      classes, entries, entriesMatching, isSearchActive, downloadQueue, uploadQueue
     } = this.props;
     return (
       <AppBar position="sticky" className={classes.appBar}>
@@ -88,6 +97,14 @@ class DblDotLocalAppBar extends React.PureComponent {
             </div>
           </Tooltip>
           <div className={classes.flex} />
+          <Tooltip title="Uploads (Entries/Atoms)">
+            <div className={classes.dblDotLocalBarItem}>
+              <ArrowUpwardIcon />
+              <Typography variant="title" color="inherit" className={classes.textSmall}>
+                {uploadQueue.nSpecs}/{uploadQueue.nAtoms}
+              </Typography>
+            </div>
+          </Tooltip>
           <Tooltip title="Downloads (Entries/Resources)">
             <div className={classes.dblDotLocalBarItem}>
               <ArrowDownwardIcon />

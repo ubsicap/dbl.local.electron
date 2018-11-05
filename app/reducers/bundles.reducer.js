@@ -164,6 +164,13 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
         downloadQueue: { nSpecs, nAtoms }
       };
     }
+    case bundleConstants.UPDATE_UPLOAD_QUEUE: {
+      const { nSpecs, nAtoms } = action;
+      return {
+        ...state,
+        uploadQueue: { nSpecs, nAtoms }
+      };
+    }
     case bundleConstants.DOWNLOAD_RESOURCES_REQUEST: {
       return updateTaskStatusProgress(action.id, 'DOWNLOAD', 'IN_PROGRESS', 0);
     }
