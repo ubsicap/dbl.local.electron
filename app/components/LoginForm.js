@@ -2,7 +2,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { DebounceInput } from 'react-debounce-input';
-import waitUntil from 'wait-until';
+import wait from 'wait-promise';
 import Tooltip from '@material-ui/core/Tooltip';
 import Button from '@material-ui/core/Button';
 import { userActions } from '../actions/user.actions';
@@ -61,17 +61,12 @@ class LoginForm extends React.Component {
     this.startWaitUntil();
   }
 
-  startWaitUntil() {
-    waitUntil(3000, Infinity, (cb) => {
-      const { dblBaseUrl } = this.props;
-      if (!dblBaseUrl) {
-        this.ensureLoadHtmlBaseUrl();
-      }
-      cb(dblBaseUrl);
-    }, () => {
-      // result
-    });
+
+  async startWaitUntil() {
+    await wait.every(3000).and(this.ensureLoadHtmlBaseUrl).until(this.isDblBaseUrlReady);
   }
+
+  isDblBaseUrlReady = () => Boolean(this.props.dblBaseUrl);
 
   ensureLoadHtmlBaseUrl = () => {
     if (!this.props.dblBaseUrl) {

@@ -1,3 +1,9 @@
+### Version 0.13.1
+#### Fixes
+- don't get stuck in Uploading mode if something goes wrong (return to store mode)
+- waitUntil in create mode before opening/closing Edit and Add Resources dialogs
+- Fix SSE to happen at login time, don't ever disconnect SSE, (and don't refresh all items if already loaded)
+
 ### Version 0.13.0
 #### Features
 - login page now waits until dbl_dot_local_app ready before enabling Login button

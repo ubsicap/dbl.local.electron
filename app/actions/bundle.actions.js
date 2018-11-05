@@ -187,21 +187,8 @@ export function createNewBundle(_medium) {
   }
 }
 
-export function setupBundlesEventSource(authentication) {
+export function setupBundlesEventSource() {
   return (dispatch, getState) => {
-    console.log('SSE connect to Bundles');
-    const eventSource = new EventSource(`${dblDotLocalConfig.getHttpDblDotLocalBaseUrl()}/events/${authentication.user.auth_token}`);
-    eventSource.onmessage = (event) => {
-      console.log(event);
-    };
-    eventSource.onopen = () => {
-      console.log('Connection to event source opened.');
-    };
-    eventSource.onerror = (error) => {
-      console.log('EventSource error.');
-      console.log(error);
-      log.error(JSON.stringify(error.data));
-    };
     const listeners = {
       'storer/execute_task': listenStorerExecuteTaskDownloadResources,
       'storer/change_mode': (e) => dispatch(listenStorerChangeMode(e)),
@@ -216,17 +203,8 @@ export function setupBundlesEventSource(authentication) {
     };
     Object.keys(listeners).forEach((evType) => {
       const handler = listeners[evType];
-      eventSource.addEventListener(evType, handler);
+      dblDotLocalService.eventSourceStore().addEventListener(evType, handler);
     });
-    dispatch(connectedToSessionEvents(eventSource, authentication));
-
-    function connectedToSessionEvents(_eventSource, _authentication) {
-      return {
-        type: bundleConstants.SESSION_EVENTS_CONNECTED,
-        eventSource: _eventSource,
-        authentication: _authentication
-      };
-    }
   };
 
   /* 
@@ -504,7 +482,7 @@ function getAddedBundle(getState, bundleId) {
 export function uploadBundle(id) {
   return async dispatch => {
     try {
-      bundleService.unlockCreateMode(id);
+      await bundleService.waitStopCreateMode(id);
       dispatch(request(id));
       await bundleService.startUploadBundle(id);
     } catch (errorReadable) {
@@ -564,7 +542,7 @@ export function removeBundle(id) {
   return async dispatch => {
     dispatch(request(id));
     try {
-      bundleService.unlockCreateMode(id);
+      await bundleService.waitStopCreateMode(id);
       await bundleService.removeBundle(id);
     } catch (error) {
       dispatch(failure(id, error));

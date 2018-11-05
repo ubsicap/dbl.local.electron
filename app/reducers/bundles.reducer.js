@@ -240,13 +240,15 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
       return updateTaskStatusProgress(action.id, null, action.status, progress);
     }
     case bundleConstants.UPDATE_BUNDLE: {
-      const { bundle } = action;
+      const { bundle, rawBundle } = action;
       return updateTaskStatusProgress(bundle.id, null, null, null, (bState) => {
         const updatedBundle = { ...bState, ...bundle };
-        if (bState.isUploading) {
+        if (bState.isUploading && rawBundle.mode === 'upload') {
           return updateBundleItem(updatedBundle, 'UPLOAD', 'IN_PROGRESS', bState.progress);
         }
-        return updateBundleItem(updatedBundle, bundle.task, bundle.status, bundle.progress);
+        return updateBundleItem(updatedBundle, bundle.task, bundle.status, bundle.progress, () => ({
+          isUploading: false
+        }));
       });
     }
     case bundleConstants.TOGGLE_SELECT: {
@@ -255,16 +257,6 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
         ...state,
         selectedBundle,
         selectedDBLEntryId
-      };
-    }
-    case bundleConstants.SESSION_EVENTS_CONNECTED: {
-      if (state.eventSource && state.eventSource.readyState !== 2) {
-        state.eventSource.close();
-        console.log('session EventSource closed');
-      }
-      return {
-        ...state,
-        eventSource: action.eventSource
       };
     }
     default:

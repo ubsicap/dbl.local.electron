@@ -609,6 +609,10 @@ async-limiter@~1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/async-limiter/-/async-limiter-1.0.0.tgz#78faed8c3d074ab81f22b4e985d79e8738f720f8"
 
+async-wait-until@^1.2.4:
+  version "1.2.4"
+  resolved "https://registry.yarnpkg.com/async-wait-until/-/async-wait-until-1.2.4.tgz#55a6c29145b8037742a629b0ae0b69b5e2988404"
+
 async@^1.4.0, async@^1.5.2:
   version "1.5.2"
   resolved "https://registry.yarnpkg.com/async/-/async-1.5.2.tgz#ec6a61ae56480c0c3cb241c95618e20892f9672a"
@@ -11164,9 +11168,9 @@ w3c-hr-time@^1.0.1:
   dependencies:
     browser-process-hrtime "^0.1.2"
 
-wait-until@^0.0.2:
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/wait-until/-/wait-until-0.0.2.tgz#7a8abaef5590d970fd44697d436b5761e3eaedbe"
+wait-promise@^0.4.1:
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/wait-promise/-/wait-promise-0.4.1.tgz#1ead8f82d291a25010c0b1eef8d4711323cc4dab"
 
 walker@~1.0.5:
   version "1.0.7"

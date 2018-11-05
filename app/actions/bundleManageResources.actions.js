@@ -14,11 +14,12 @@ export const bundleManageResourceActions = {
 };
 
 export function openResourceManager(_bundleId, _mode = 'download') {
-  return async dispatch => {
+  return async (dispatch) => {
     const isInCreateMode = await bundleService.bundleIsInCreateMode(_bundleId);
-    if (!isInCreateMode && _mode !== 'download') {
-      await bundleService.startCreateContent(_bundleId);
+    if (isInCreateMode || _mode === 'download') {
+      return dispatch(navigate(_bundleId, _mode));
     }
+    await bundleService.waitStartCreateMode(_bundleId);
     dispatch(navigate(_bundleId, _mode));
   };
   function success(bundleId, mode) {
@@ -33,14 +34,14 @@ export function openResourceManager(_bundleId, _mode = 'download') {
 }
 
 export function closeResourceManager(_bundleId) {
-  return dispatch => {
+  return async dispatch => {
+    await bundleService.waitStopCreateMode(_bundleId);
     dispatch(navigate(_bundleId));
   };
   function success(bundleId) {
     return { type: bundleResourceManagerConstants.CLOSE_RESOURCE_MANAGER, bundleId };
   }
   function navigate(bundleId) {
-    bundleService.unlockCreateMode(bundleId);
     history.push(navigationConstants.NAVIGATION_BUNDLES);
     return success(bundleId);
   }

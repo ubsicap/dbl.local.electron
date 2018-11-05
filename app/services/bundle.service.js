@@ -3,6 +3,8 @@ import fs from 'fs-extra';
 import path from 'path';
 import rp from 'request-promise-native';
 import uuidv1 from 'uuid/v1';
+import wait from 'wait-promise';
+import waitUntil from 'async-wait-until';
 import { authHeader } from '../helpers';
 import dblDotLocalConfigConstants from '../constants/dblDotLocal.constants';
 import download from './download-with-fetch.flow';
@@ -13,6 +15,7 @@ export const bundleService = {
   create,
   fetchAll,
   fetchById,
+  getCurrentBundleState,
   getFlatFileInfo,
   getHasStoredResources,
   update,
@@ -35,7 +38,8 @@ export const bundleService = {
   startCreateContent,
   stopCreateContent,
   bundleIsInCreateMode,
-  unlockCreateMode,
+  waitStartCreateMode,
+  waitStopCreateMode,
   postResource,
   forkBundle,
   updateManifestResource,
@@ -451,13 +455,28 @@ function startCreateContent(bundleId, label) {
 
 async function bundleIsInCreateMode(bundleId) {
   const rawBundleInfo = await bundleService.fetchById(bundleId);
-  return rawBundleInfo.mode === 'create';
+  const isBundleInCreateMode = rawBundleInfo.mode === 'create';
+  return isBundleInCreateMode;
 }
 
-async function unlockCreateMode(bundleId) {
-  if (await bundleService.bundleIsInCreateMode(bundleId)) {
+function getCurrentBundleState(getState, bundleId) {
+  const { bundles } = getState();
+  const { addedByBundleIds } = bundles;
+  return bundleId ? addedByBundleIds[bundleId] : null;
+}
+
+async function waitStartCreateMode(bundleId) {
+  if (!(await bundleIsInCreateMode(bundleId))) {
+    await startCreateContent(bundleId);
+    await waitUntil(async () => bundleIsInCreateMode(bundleId), 60000, 500);
+  }
+}
+
+async function waitStopCreateMode(bundleId) {
+  if (await bundleIsInCreateMode(bundleId)) {
     // unblock block tasks like 'Delete'
-    await bundleService.stopCreateContent(bundleId);
+    await stopCreateContent(bundleId);
+    await waitUntil(async () => !(await bundleIsInCreateMode(bundleId)), 60000, 500);
   }
 }
 

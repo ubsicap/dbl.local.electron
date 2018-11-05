@@ -166,16 +166,8 @@ function getIsDemoMode() {
 
 export function openEditMetadata(_bundleId, _moveNextStep) {
   return async (dispatch, getState) => {
-    const { bundles } = getState();
-    const { addedByBundleIds } = bundles;
-    const bundleIdToEdit = _bundleId;
-    const bundleToEdit = _bundleId ? addedByBundleIds[bundleIdToEdit] : {};
+    const bundleToEdit = bundleService.getCurrentBundleState(getState, _bundleId);
     dispatch(request(bundleToEdit, _moveNextStep));
-    const isDemoMode = getIsDemoMode();
-    if (isDemoMode) {
-      dispatch(navigate(bundleToEdit, _moveNextStep));
-      return;
-    }
     if (bundleToEdit.mode === 'create') {
       dispatch(navigate(bundleToEdit, _moveNextStep));
       return;
@@ -186,10 +178,12 @@ export function openEditMetadata(_bundleId, _moveNextStep) {
       return;
     }
     try {
-      await bundleService.startCreateContent(_bundleId, '');
-      if (isDraft) {
-        // ideally we'd wait/listen for the 'create' mode change event.
-        dispatch(navigate(bundleToEdit, _moveNextStep));
+      try {
+        await bundleService.waitStartCreateMode(_bundleId);
+        const bundleReady = bundleService.getCurrentBundleState(getState, _bundleId);
+        dispatch(navigate(bundleReady, _moveNextStep));
+      } catch (error) {
+        dispatch(failure(_bundleId, `error ${error} while waiting for create mode`, _moveNextStep));
       }
     } catch (errorReadable) {
       const error = await errorReadable.text();
@@ -233,13 +227,8 @@ export function openEditMetadata(_bundleId, _moveNextStep) {
 
 export function closeEditMetadata(bundleId) {
   return async dispatch => {
-    const isDemoMode = getIsDemoMode();
-    if (!isDemoMode) {
-      bundleService.unlockCreateMode(bundleId);
-    }
-    // ideally we'd wait for change mode to 'store' to complete
+    await bundleService.waitStopCreateMode(bundleId);
     dispatch({ type: bundleEditMetadataConstants.CLOSE_EDIT_METADATA, bundleId });
-    await utilities.sleep(1);
     dispatch(switchBackToBundlesPage);
   };
 }

@@ -1,8 +1,10 @@
+import log from 'electron-log';
 import { userConstants } from '../constants';
 import { userService } from '../services';
 import { alertActions } from './';
 import { history } from '../store/configureStore';
 import dblDotLocalConstants from '../constants/dblDotLocal.constants';
+import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { navigationConstants } from '../constants/navigation.constants';
 
 export const userActions = {
@@ -38,6 +40,7 @@ function login(username, password, _workspaceName) {
       const user = await userService.login(username, password);
       const whoami = await userService.whoami();
       dispatch(success(user, whoami, _workspaceName));
+      dispatch(connectSSE(user.auth_token));
       history.push(navigationConstants.NAVIGATION_BUNDLES);
     } catch (error) {
       dispatch(failure(error));
@@ -55,6 +58,12 @@ function login(username, password, _workspaceName) {
   }
   function failure(error) {
     return { type: userConstants.LOGIN_FAILURE, error };
+  }
+  function connectSSE(authToken) {
+    return () => {
+      console.log(`SSE connect to Bundles: ${authToken}`);
+      dblDotLocalService.eventSourceStore().startEventSource(authToken);
+    };
   }
 }
 
