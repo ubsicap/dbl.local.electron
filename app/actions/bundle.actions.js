@@ -481,7 +481,7 @@ export function fetchDownloadQueueCounts() {
     try {
       const downloadQueueList = await bundleService.getSubsystemDownloadQueue();
       const nSpecs = Object.keys(downloadQueueList).length;
-      const nAtoms = downloadQueueList.reduce((acc, spec) => acc + spec.n_atoms, 0);
+      const nAtoms = downloadQueueList.reduce((acc, spec) => acc + (spec.n_atoms - spec.n_downloaded), 0);
       return dispatch(updateDownloadQueue(nSpecs, nAtoms));
     } catch (error) {
       log.error(error);
