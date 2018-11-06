@@ -60,9 +60,10 @@ function login(username, password, _workspaceName) {
     return { type: userConstants.LOGIN_FAILURE, error };
   }
   function connectSSE(authToken) {
-    return () => {
+    return dispatch => {
       console.log(`SSE connect to Bundles: ${authToken}`);
-      dblDotLocalService.eventSourceStore().startEventSource(authToken);
+      const eventSource = dblDotLocalService.startEventSource(authToken);
+      dispatch({ type: userConstants.SERVER_SENT_EVENTS_SOURCE_CREATED, eventSource });
     };
   }
 }

@@ -5,7 +5,6 @@ import throttledQueue from 'throttled-queue';
 import { bundleConstants } from '../constants/bundle.constants';
 import { bundleService } from '../services/bundle.service';
 import { updateSearchResultsForBundleId } from '../actions/bundleFilter.actions';
-import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
@@ -189,6 +188,11 @@ export function createNewBundle(_medium) {
 
 export function setupBundlesEventSource() {
   return (dispatch, getState) => {
+    const { authentication: { eventSource } } = getState();
+    if (!eventSource) {
+      console.error('EventSource undefined');
+      return;
+    }
     const listeners = {
       'storer/execute_task': listenStorerExecuteTaskDownloadResources,
       'storer/change_mode': (e) => dispatch(listenStorerChangeMode(e)),
@@ -204,7 +208,7 @@ export function setupBundlesEventSource() {
     };
     Object.keys(listeners).forEach((evType) => {
       const handler = listeners[evType];
-      dblDotLocalService.eventSourceStore().addEventListener(evType, handler);
+      eventSource.addEventListener(evType, handler);
     });
   };
 
@@ -218,12 +222,10 @@ export function setupBundlesEventSource() {
   }
 
   /* 
-   * data:{"args": [1, 11], "component": "uploader", "type": "global_status"}
+   * data:{"args": [11], "component": "uploader", "type": "global_status"}
    */
-  function listenUploaderGlobalStatus(e) {
-    const data = JSON.parse(e.data);
-    const [nAtoms] = data.args;
-    return updateUploadQueue(1, nAtoms);
+  function listenUploaderGlobalStatus() {
+    return fetchUploadQueueCounts();
   }
 
   function listenStorerExecuteTaskDownloadResources() {

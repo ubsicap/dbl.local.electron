@@ -1,7 +1,8 @@
 import { userConstants } from '../constants';
 
 const user = JSON.parse(localStorage.getItem('user'));
-const initialState = user ? { loggedIn: true, user } : { loggedIn: false };
+const initialState = user ?
+  { loggedIn: true, user } : { loggedIn: false };
 
 export function authentication(state = initialState, action) {
   switch (action.type) {
@@ -36,6 +37,12 @@ export function authentication(state = initialState, action) {
         loggedOut: true,
         error: action.error
       };
+    case userConstants.SERVER_SENT_EVENTS_SOURCE_CREATED: {
+      return {
+        ...state,
+        eventSource: action.eventSource
+      };
+    }
     default:
       return state;
   }
