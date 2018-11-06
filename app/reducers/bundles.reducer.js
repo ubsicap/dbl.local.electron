@@ -285,11 +285,12 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
   }
 
   function updateBundleItem(bundle, task, status, progress, updateDecorators) {
+    const newProgress = (typeof progress === 'number' ? progress : bundle.progress); // could be 'COMPLETED'
     return addBundleDecorators({
       ...bundle,
       task: (task || bundle.task),
       status: (status || bundle.status),
-      progress: typeof progress === 'number' ? progress : bundle.progress // could be 'COMPLETED'
+      progress: newProgress
     }, updateDecorators);
   }
 

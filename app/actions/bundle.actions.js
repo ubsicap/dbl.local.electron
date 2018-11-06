@@ -284,7 +284,9 @@ export function setupBundlesEventSource() {
       const [entryId, jobId, payload] = nextArgs;
       const bundleId = uploadJobs[jobId];
       const [resourceCountToUpload, resourceCountUploaded] = [payload[0], payload[5]];
-      return dispatch(updateUploadProgress(bundleId, entryId, jobId, resourceCountUploaded, resourceCountToUpload));
+      dispatch(updateUploadProgress(bundleId, entryId, jobId, resourceCountUploaded, resourceCountToUpload));
+      dispatch(fetchUploadQueueCounts());
+      return;
     }
     if (type === 'state' || type === 'status') {
       const [jobId, payload] = nextArgs;
@@ -341,6 +343,7 @@ export function setupBundlesEventSource() {
       }
       dispatch(updateDownloadStatus(bundleId, resourcesDownloaded, resourcesToDownload));
       dispatch(updateSearchResultsForBundleId(bundleId));
+      dispatch(fetchDownloadQueueCounts());
     };
   }
 
