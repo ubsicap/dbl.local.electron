@@ -62,7 +62,7 @@ class LoginForm extends React.Component {
   }
 
 
-  async startWaitUntil() {
+  startWaitUntil = async () => {
     await wait.every(3000).and(this.ensureLoadHtmlBaseUrl).until(this.isDblBaseUrlReady);
   }
 
