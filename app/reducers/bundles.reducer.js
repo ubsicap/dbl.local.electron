@@ -2,6 +2,7 @@ import sort from 'fast-sort';
 import { List, Set } from 'immutable';
 import { bundleConstants } from '../constants/bundle.constants';
 import { bundleService } from '../services/bundle.service';
+import { utilities } from '../utils/utilities';
 
 const [idKey] = ['id'];
 
@@ -175,7 +176,7 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
       return updateTaskStatusProgress(action.id, 'DOWNLOAD', 'IN_PROGRESS', 0);
     }
     case bundleConstants.DOWNLOAD_RESOURCES_UPDATED: {
-      const progress = Math.floor((action.resourcesDownloaded / action.resourcesToDownload) * 100);
+      const progress = utilities.calculatePercentage(action.resourcesDownloaded, action.resourcesToDownload);
       const status = progress === 100 ? 'COMPLETED' : 'IN_PROGRESS';
       return updateTaskStatusProgress(action.id, 'DOWNLOAD', status, progress);
     }
@@ -186,7 +187,7 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
     }
     case bundleConstants.UPLOAD_RESOURCES_UPDATE_PROGRESS: {
       const percentage = action.resourceCountToUpload > 0 ?
-        Math.floor((action.resourceCountUploaded / action.resourceCountToUpload) * 100) :
+        utilities.calculatePercentage(action.resourceCountUploaded, action.resourceCountToUpload) :
         100/* metadata only */;
       return updateTaskStatusProgress(action.bundleId, 'UPLOAD', 'IN_PROGRESS', percentage, () => ({
         isUploading: true
@@ -202,7 +203,7 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
       return updateTaskStatusProgress(action.id, 'SAVETO', 'IN_PROGRESS', 0);
     }
     case bundleConstants.SAVETO_UPDATED: {
-      const progress = calcProgress(action.bundleBytesSaved, action.bundleBytesToSave);
+      const progress = utilities.calculatePercentage(action.bundleBytesSaved, action.bundleBytesToSave);
       const status = progress === 100 ? 'COMPLETED' : 'IN_PROGRESS';
       const { apiBundle } = action;
       if (status === 'COMPLETED') {
@@ -229,7 +230,7 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
         const resourcesRemoved = originalResourceRemoved.includes(resourceToRemove) ?
           resourcesRemoved : [...originalResourceRemoved, resourceToRemove];
         const resourcesToRemove = bundle.resourcesToRemove || [...resourcesRemoved, 'unknown'];
-        const progress = calcProgress(resourcesRemoved.length, resourcesToRemove.length);
+        const progress = utilities.calculatePercentage(resourcesRemoved.length, resourcesToRemove.length);
         const hasCompletedRemovingResources = progress === 100;
         const task = hasCompletedRemovingResources ? 'DOWNLOAD' : bundle.task;
         const status = hasCompletedRemovingResources ? 'NOT_STARTED' : bundle.status;
@@ -270,10 +271,6 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
       return state;
   }
 
-  function calcProgress(itemsDone, itemsToDo) {
-    return Math.floor((itemsDone / itemsToDo) * 100);
-  }
-
   function updateTaskStatusProgress(bundleId, task, status, progress, updateDecorators) {
     const allBundles = updateBundleItems(bundleId, task, status, progress, updateDecorators);
     const { items } = sortAndFilterBundlesAsEntries(allBundles, false);
@@ -292,7 +289,7 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
       ...bundle,
       task: (task || bundle.task),
       status: (status || bundle.status),
-      progress: Number.isInteger(progress) ? progress : bundle.progress
+      progress: typeof progress === 'number' ? progress : bundle.progress // could be 'COMPLETED'
     }, updateDecorators);
   }
 
