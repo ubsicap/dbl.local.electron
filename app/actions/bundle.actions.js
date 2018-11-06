@@ -494,7 +494,7 @@ export function fetchUploadQueueCounts() {
     try {
       const uploadQueueList = await bundleService.getSubsystemUploadQueue();
       const nSpecs = Object.keys(uploadQueueList).length;
-      const nAtoms = uploadQueueList.reduce((acc, spec) => acc + spec.n_atoms, 0);
+      const nAtoms = uploadQueueList.reduce((acc, spec) => acc + (spec.n_atoms - spec.n_uploaded), 0);
       return dispatch(updateUploadQueue(nSpecs, nAtoms));
     } catch (error) {
       log.error(error);
