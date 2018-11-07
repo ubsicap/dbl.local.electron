@@ -310,6 +310,7 @@ function updateAndWriteConfigXmlSettings({ configXmlSettings, workspace }) {
 
 function startEventSource(authToken) {
   const eventSource = new EventSource(`${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/events/${authToken}`);
+  console.log(`SSE connected: ${authToken}`);
   eventSource.onmessage = (event) => {
     console.log(event);
   };
@@ -319,7 +320,11 @@ function startEventSource(authToken) {
   eventSource.onerror = (error) => {
     console.log('EventSource error.');
     console.log(error);
-    log.error(JSON.stringify(error.data));
+    const evtSource = error.currentTarget;
+    if (evtSource.readyState !== 2) {
+      evtSource.close();
+      console.log('session EventSource closed');
+    }
   };
   return eventSource;
 }

@@ -61,7 +61,6 @@ function login(username, password, _workspaceName) {
   }
   function connectSSE(authToken) {
     return dispatch => {
-      console.log(`SSE connect to Bundles: ${authToken}`);
       const eventSource = dblDotLocalService.startEventSource(authToken);
       dispatch({ type: userConstants.SERVER_SENT_EVENTS_SOURCE_CREATED, eventSource });
     };
