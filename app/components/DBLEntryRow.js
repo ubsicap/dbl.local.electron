@@ -473,7 +473,7 @@ class DBLEntryRow extends PureComponent<Props> {
             className="row"
             style={{ marginLeft: '20px', marginRight: '20px', paddingBottom: '10px' }}
           >
-            <LinearProgress mode="determinate" value={progress} />
+            <LinearProgress style={{ height: '8px' }} mode="determinate" value={progress} />
           </div>
         )}
         {isSelected && (

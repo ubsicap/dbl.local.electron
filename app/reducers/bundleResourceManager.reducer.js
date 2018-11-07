@@ -1,4 +1,5 @@
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
+import { utilities } from '../utils/utilities';
 
 const initialState = {
   bundleId: null,
@@ -51,7 +52,7 @@ export function bundleManageResources(state = initialState, action) {
       const filesCompleted = [...filesCompletedPrev, filePath];
       const filesDone = filesCompleted.length;
       const filesTotal = Object.keys(fileToContainerPaths).length;
-      const progress = Math.floor((filesDone / filesTotal) * 100);
+      const progress = utilities.calculatePercentage(filesDone, filesTotal);
       const loading = state.loading && filesDone < filesTotal;
       return {
         ...state,

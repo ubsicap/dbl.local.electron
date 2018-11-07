@@ -52,7 +52,8 @@ export const bundleService = {
   updatePublications,
   getPublicationsInstances,
   getSubSectionInstances,
-  getSubsystemDownloadQueue
+  getSubsystemDownloadQueue,
+  getSubsystemUploadQueue
 };
 export default bundleService;
 
@@ -308,6 +309,16 @@ function getSubsystemDownloadQueue() {
     headers: authHeader()
   };
   const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${SUBSYSTEM_API}/download/queue`;
+  return fetch(url, requestOptions).then(handleResponse);
+}
+
+/* /subsystem/download/queue */
+function getSubsystemUploadQueue() {
+  const requestOptions = {
+    method: 'GET',
+    headers: authHeader()
+  };
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${SUBSYSTEM_API}/upload/queue`;
   return fetch(url, requestOptions).then(handleResponse);
 }
 

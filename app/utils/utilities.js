@@ -11,7 +11,8 @@ export const utilities = {
   sleep,
   union,
   difference,
-  buildRouteUrl
+  buildRouteUrl,
+  calculatePercentage
 };
 export default utilities;
 
@@ -71,4 +72,8 @@ function buildRouteUrl(routeUrl, params) {
     routeUrl
   );
   return url;
+}
+
+function calculatePercentage(completed, total) {
+  return parseFloat(((completed / total) * 100).toFixed(2));
 }

@@ -8,29 +8,6 @@ import { authHeader } from '../helpers';
 // import { history } from '../store/configureStore';
 // import { navigationConstants } from '../constants/navigation.constants';
 
-let eventSource: EventSource;
-const eventSourceStore = () => {
-  return {
-    startEventSource(authToken) {
-      eventSource = new EventSource(`${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/events/${authToken}`);
-      eventSource.onmessage = (event) => {
-        console.log(event);
-      };
-      eventSource.onopen = () => {
-        console.log('Connection to event source opened.');
-      };
-      eventSource.onerror = (error) => {
-        console.log('EventSource error.');
-        console.log(error);
-        log.error(JSON.stringify(error.data));
-      };
-    },
-    addEventListener(evType, handler) {
-      eventSource.addEventListener(evType, handler);
-    }
-  };
-};
-
 export const dblDotLocalService = {
   health,
   htmlBaseUrl,
@@ -47,7 +24,7 @@ export const dblDotLocalService = {
   convertConfigXmlToJson,
   updateConfigXmlWithNewPaths,
   updateAndWriteConfigXmlSettings,
-  eventSourceStore
+  startEventSource
 };
 export default dblDotLocalService;
 
@@ -329,4 +306,25 @@ function updateAndWriteConfigXmlSettings({ configXmlSettings, workspace }) {
   fs.writeFileSync(configXmlPath, xml);
   console.log(xml);
   return { xml, configXmlSettings: newConfigXmlSettings };
+}
+
+function startEventSource(authToken) {
+  const eventSource = new EventSource(`${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/events/${authToken}`);
+  console.log(`SSE connected: ${authToken}`);
+  eventSource.onmessage = (event) => {
+    console.log(event);
+  };
+  eventSource.onopen = () => {
+    console.log('Connection to event source opened.');
+  };
+  eventSource.onerror = (error) => {
+    console.log('EventSource error.');
+    console.log(error);
+    const evtSource = error.currentTarget;
+    if (evtSource.readyState !== 2) {
+      evtSource.close();
+      console.log('session EventSource closed');
+    }
+  };
+  return eventSource;
 }

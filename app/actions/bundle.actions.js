@@ -5,7 +5,6 @@ import throttledQueue from 'throttled-queue';
 import { bundleConstants } from '../constants/bundle.constants';
 import { bundleService } from '../services/bundle.service';
 import { updateSearchResultsForBundleId } from '../actions/bundleFilter.actions';
-import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
@@ -189,6 +188,11 @@ export function createNewBundle(_medium) {
 
 export function setupBundlesEventSource() {
   return (dispatch, getState) => {
+    const { authentication: { eventSource } } = getState();
+    if (!eventSource) {
+      console.error('EventSource undefined');
+      return;
+    }
     const listeners = {
       'storer/execute_task': listenStorerExecuteTaskDownloadResources,
       'storer/change_mode': (e) => dispatch(listenStorerChangeMode(e)),
@@ -197,13 +201,14 @@ export function setupBundlesEventSource() {
       'downloader/receiver': listenDownloaderReceiver,
       'downloader/spec_status': (e) => dispatch(listenDownloaderSpecStatus(e)),
       'downloader/global_status': (e) => dispatch(listenDownloaderGlobalStatus(e)),
+      'uploader/global_status': (e) => dispatch(listenUploaderGlobalStatus(e)),
       'storer/delete_resource': (e) => listenStorerDeleteResource(e, dispatch, getState),
       'storer/delete_bundle': (e) => listenStorerDeleteBundle(e, dispatch, getState),
       'storer/write_resource': (e) => dispatch(listenStorerWriteResource(e))
     };
     Object.keys(listeners).forEach((evType) => {
       const handler = listeners[evType];
-      dblDotLocalService.eventSourceStore().addEventListener(evType, handler);
+      eventSource.addEventListener(evType, handler);
     });
   };
 
@@ -214,6 +219,13 @@ export function setupBundlesEventSource() {
     const data = JSON.parse(e.data);
     const [nSpecs, nAtoms] = data.args;
     return updateDownloadQueue(nSpecs, nAtoms);
+  }
+
+  /* 
+   * data:{"args": [11], "component": "uploader", "type": "global_status"}
+   */
+  function listenUploaderGlobalStatus() {
+    return fetchUploadQueueCounts();
   }
 
   function listenStorerExecuteTaskDownloadResources() {
@@ -272,7 +284,9 @@ export function setupBundlesEventSource() {
       const [entryId, jobId, payload] = nextArgs;
       const bundleId = uploadJobs[jobId];
       const [resourceCountToUpload, resourceCountUploaded] = [payload[0], payload[5]];
-      return dispatch(updateUploadProgress(bundleId, entryId, jobId, resourceCountUploaded, resourceCountToUpload));
+      dispatch(updateUploadProgress(bundleId, entryId, jobId, resourceCountUploaded, resourceCountToUpload));
+      dispatch(fetchUploadQueueCounts());
+      return;
     }
     if (type === 'state' || type === 'status') {
       const [jobId, payload] = nextArgs;
@@ -329,6 +343,7 @@ export function setupBundlesEventSource() {
       }
       dispatch(updateDownloadStatus(bundleId, resourcesDownloaded, resourcesToDownload));
       dispatch(updateSearchResultsForBundleId(bundleId));
+      dispatch(fetchDownloadQueueCounts());
     };
   }
 
@@ -458,13 +473,32 @@ function updateDownloadQueue(nSpecs, nAtoms) {
   };
 }
 
+function updateUploadQueue(nSpecs, nAtoms) {
+  return (dispatch) => {
+    dispatch({ type: bundleConstants.UPDATE_UPLOAD_QUEUE, nSpecs, nAtoms });
+  };
+}
+
 export function fetchDownloadQueueCounts() {
   return async dispatch => {
     try {
       const downloadQueueList = await bundleService.getSubsystemDownloadQueue();
       const nSpecs = Object.keys(downloadQueueList).length;
-      const nAtoms = downloadQueueList.reduce((acc, spec) => acc + spec.n_atoms, 0);
+      const nAtoms = downloadQueueList.reduce((acc, spec) => acc + (spec.n_atoms - spec.n_downloaded), 0);
       return dispatch(updateDownloadQueue(nSpecs, nAtoms));
+    } catch (error) {
+      log.error(error);
+    }
+  };
+}
+
+export function fetchUploadQueueCounts() {
+  return async dispatch => {
+    try {
+      const uploadQueueList = await bundleService.getSubsystemUploadQueue();
+      const nSpecs = Object.keys(uploadQueueList).length;
+      const nAtoms = uploadQueueList.reduce((acc, spec) => acc + (spec.n_atoms - spec.n_uploaded), 0);
+      return dispatch(updateUploadQueue(nSpecs, nAtoms));
     } catch (error) {
       log.error(error);
     }

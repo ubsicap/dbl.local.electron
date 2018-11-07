@@ -1,7 +1,7 @@
 {
   "name": "nathanael",
   "productName": "nathanael",
-  "version": "0.13.2",
+  "version": "0.14.0",
   "description": "Electron frontend to DBL dot Local",
   "main": "./main.prod.js",
   "author": {
