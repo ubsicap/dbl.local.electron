@@ -1,3 +1,15 @@
+### Version 0.14.0
+#### Features
+- increase height of progress bar
+- added upload queue status
+- update download/upload queue status whenever file transfers
+- show demimals for upload/download progress
+#### Fixes
+- rename Atoms to Resources in download queue tooltip
+- fix eventSource to shutdown after killing dbl_dot_local_app process
+- Show files remaining to download in initial download queue status
+- try keep (revision 0) bundles sorted in a more stable order
+
 ### Version 0.13.2
 - Update dbl_dot_local_app to latest (11-02-2018)
 - Skip calculating checksums for files over 250MB
