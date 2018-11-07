@@ -5,6 +5,7 @@
 - update download/upload queue status whenever file transfers
 - show demimals for upload/download progress
 #### Fixes
+- dbl_dot_local_app video and audio templates
 - rename Atoms to Resources in download queue tooltip
 - fix eventSource to shutdown after killing dbl_dot_local_app process
 - Show files remaining to download in initial download queue status
