@@ -1,3 +1,9 @@
+### Version 0.14.1
+#### Fixes
+- don't shut down SSE channel on first error (detect when dbl_dot_local_app has really shutdown)
+- sort by medium before revision
+
+
 ### Version 0.14.0
 #### Features
 - increase height of progress bar
