@@ -60,8 +60,8 @@ function login(username, password, _workspaceName) {
     return { type: userConstants.LOGIN_FAILURE, error };
   }
   function connectSSE(authToken) {
-    return dispatch => {
-      const eventSource = dblDotLocalService.startEventSource(authToken);
+    return (dispatch, getState) => {
+      const eventSource = dblDotLocalService.startEventSource(authToken, getState);
       dispatch({ type: userConstants.SERVER_SENT_EVENTS_SOURCE_CREATED, eventSource });
     };
   }

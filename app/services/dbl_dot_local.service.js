@@ -308,7 +308,7 @@ function updateAndWriteConfigXmlSettings({ configXmlSettings, workspace }) {
   return { xml, configXmlSettings: newConfigXmlSettings };
 }
 
-function startEventSource(authToken) {
+function startEventSource(authToken, getState) {
   const eventSource = new EventSource(`${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/events/${authToken}`);
   console.log(`SSE connected: ${authToken}`);
   eventSource.onmessage = (event) => {
@@ -321,7 +321,9 @@ function startEventSource(authToken) {
     console.log('EventSource error.');
     console.log(error);
     const evtSource = error.currentTarget;
-    if (evtSource.readyState !== 2) {
+    const IS_CLOSED = 2;
+    const { dblDotLocalConfig: { dblDotLocalExecProcess } } = getState();
+    if (!dblDotLocalExecProcess && evtSource.readyState !== IS_CLOSED) {
       evtSource.close();
       console.log('session EventSource closed');
     }
