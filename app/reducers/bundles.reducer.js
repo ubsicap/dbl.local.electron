@@ -23,6 +23,7 @@ function sortAndFilterBundlesAsEntries(allBundles, shouldIndexByIds = true) {
   const items = sort(reducedUnsorted).asc([
     b => b.displayAs.languageAndCountry,
     b => b.displayAs.name,
+    b => b.medium,
     b => b.displayAs.revision,
     b => b.displayAs.status
   ]);
