@@ -304,7 +304,7 @@ function updateAndWriteConfigXmlSettings({ configXmlSettings, workspace }) {
   const xml = builder.buildObject(newConfigXmlSettings);
   const configXmlPath = dblDotLocalService.getConfigXmlFullPath(workspace);
   fs.writeFileSync(configXmlPath, xml);
-  console.log(xml);
+  // console.log(xml); /* security issue for passwords */
   return { xml, configXmlSettings: newConfigXmlSettings };
 }
 
