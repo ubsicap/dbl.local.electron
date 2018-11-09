@@ -1,6 +1,7 @@
 import log from 'electron-log';
 import path from 'path';
 import { autoUpdater } from 'electron-updater';
+import { dialog } from 'electron';
 
 export const autoUpdaterServices = {
   setupAutoUpdater
@@ -111,7 +112,17 @@ function setupAutoUpdater(browserWindow) {
   });
   autoUpdater.on('update-downloaded', () => {
     sendStatusToWindow('Update downloaded');
+    dialog.showMessageBox({
+      title: 'Install Updates?',
+      message: 'Updates downloaded. Quit now to apply updates?',
+      buttons: ['Yes (apply updates)', 'No (I will quit later)']
+    }, (buttonIndex) => {
+      if (buttonIndex === 0) {
+        setImmediate(() => autoUpdater.quitAndInstall());
+      }
+    });
   });
+
   /*
   app.on('ready', () => {
   // Create the Menu
