@@ -1,5 +1,4 @@
 import log from 'electron-log';
-import path from 'path';
 import { autoUpdater } from 'electron-updater';
 import { dialog } from 'electron';
 
@@ -23,22 +22,8 @@ function setupAutoUpdater(browserWindow) {
   // This logging setup is not required for auto-updates to work,
   // but it sure makes debugging easier :)
   //-------------------------------------------------------------------
-  /*
-   * from https://github.com/megahertz/electron-log
-   * on Linux: ~/.config/<app name>/log.log
-   * on OS X: ~/Library/Logs/<app name>/log.log
-   * on Windows: %USERPROFILE%\AppData\Roaming\<app name>\log.log
-   */
   autoUpdater.logger = log;
   autoUpdater.allowPrerelease = true;
-  if (process.env.NODE_ENV === 'development') {
-    log.transports.file.level = 'debug';
-    log.transports.file.file = path.join(__dirname, 'log-dev.txt');
-  } else {
-    log.transports.file.level = 'info';
-  }
-  log.info('App starting...');
-  log.info(`Log file: ${log.transports.file.file}`);
 
   //-------------------------------------------------------------------
   // Define the menu

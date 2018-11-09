@@ -12,11 +12,27 @@
  */
 import { app, BrowserWindow, /* session */} from 'electron';
 import log from 'electron-log';
+import path from 'path';
 import MenuBuilder from './menu';
 import { autoUpdaterServices } from './main-process/autoUpdater.services';
 import { navigationConstants } from './constants/navigation.constants';
 
 let mainWindow = null;
+
+/*
+   * from https://github.com/megahertz/electron-log
+   * on Linux: ~/.config/<app name>/log.log
+   * on OS X: ~/Library/Logs/<app name>/log.log
+   * on Windows: %USERPROFILE%\AppData\Roaming\<app name>\log.log
+   */
+if (process.env.NODE_ENV === 'development') {
+  log.transports.file.level = 'debug';
+  log.transports.file.file = path.join(__dirname, 'log-dev.txt');
+} else {
+  log.transports.file.level = 'info';
+}
+log.info('App starting...');
+log.info(`Log file: ${log.transports.file.file}`);
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -25,7 +41,6 @@ if (process.env.NODE_ENV === 'production') {
 
 if (process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true') {
   require('electron-debug')();
-  const path = require('path');
   const p = path.join(__dirname, '..', 'app', 'node_modules');
   require('module').globalPaths.push(p);
 }
