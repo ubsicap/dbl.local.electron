@@ -317,7 +317,7 @@ class WorkspacesPage extends PureComponent<Props> {
                       <div style={{ flex: 1 }} />
                       <ConfirmButton
                         classes={classes}
-                        variant="flat"
+                        variant="text"
                         size="small"
                         onClick={this.onClickDeleteWorkspace(card)}
                       >

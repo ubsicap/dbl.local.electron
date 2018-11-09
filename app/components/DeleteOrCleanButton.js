@@ -38,7 +38,7 @@ class DeleteOrCleanButton extends Component<Props> {
     const { status, classes, shouldDisableCleanResources } = this.props;
     if (status === 'DRAFT') {
       return (
-        <ConfirmButton classes={classes} variant="flat" size="small" className={classes.button}
+        <ConfirmButton classes={classes} variant="text" size="small" className={classes.button}
           onKeyPress={this.onClickDeleteBundle}
           onClick={this.onClickDeleteBundle}
         >
@@ -48,7 +48,7 @@ class DeleteOrCleanButton extends Component<Props> {
       );
     }
     return (
-      <ConfirmButton classes={classes} variant="flat" size="small" className={classes.button}
+      <ConfirmButton classes={classes} variant="text" size="small" className={classes.button}
         disabled={shouldDisableCleanResources}
         onKeyPress={this.onClickRemoveResources}
         onClick={this.onClickRemoveResources}
