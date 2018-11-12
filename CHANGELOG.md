@@ -1,8 +1,14 @@
+### Version 0.15.1
+#### Features
+- add dialog "Install Updates?" after updates are downloaded
+- add mimeType for mp4
+#### Fixes
+- don't show config.xml file in log
+
 ### Version 0.14.1
 #### Fixes
 - don't shut down SSE channel on first error (detect when dbl_dot_local_app has really shutdown)
 - sort by medium before revision
-
 
 ### Version 0.14.0
 #### Features
