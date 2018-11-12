@@ -417,7 +417,7 @@ class DBLEntryRow extends PureComponent<Props> {
           </div>
           <div className={styles.bundleRowTopMiddle}>
             <Tooltip title={this.props.entryPageUrl} placement="right">
-              <Button variant="flat" size="small" className={classes.button}
+              <Button variant="text" size="small" className={classes.button}
                 disabled={dblId === undefined}
                 onKeyPress={this.onOpenDBLEntryLink}
                 onClick={this.onOpenDBLEntryLink}
@@ -445,7 +445,7 @@ class DBLEntryRow extends PureComponent<Props> {
           </div>
           <div className={styles.bundleRowTopRightSide}>
             {this.showStoredButton() && (
-              <Button variant="flat" size="small" className={classes.button}
+              <Button variant="text" size="small" className={classes.button}
                 onClick={this.onClickManageResources(resourceManagerMode)}
               >
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
@@ -458,7 +458,7 @@ class DBLEntryRow extends PureComponent<Props> {
               </div>
             )}
             {this.showDownloadButton() && (
-              <Button variant="flat" size="small" className={classes.button}
+              <Button variant="text" size="small" className={classes.button}
                 onKeyPress={this.onClickManageResources('download')}
                 onClick={this.onClickManageResources('download')}
               >
@@ -481,7 +481,7 @@ class DBLEntryRow extends PureComponent<Props> {
             {this.shouldShowEdit() &&
             <Button
               disabled={this.shouldDisableDraftRevisionOrEdit()}
-              variant="flat" size="small" className={classes.button}
+              variant="text" size="small" className={classes.button}
               onKeyPress={this.onClickEditMetadata}
               onClick={this.onClickEditMetadata}
             >
@@ -540,7 +540,7 @@ class DBLEntryRow extends PureComponent<Props> {
                 ))}
               </Menu>
             </div>}
-            <Button variant="flat" size="small" className={classes.button}
+            <Button variant="text" size="small" className={classes.button}
               disabled={this.shouldDisableSaveTo()}
               onKeyPress={this.startSaveBundleTo}
               onClick={this.startSaveBundleTo}>
@@ -549,7 +549,7 @@ class DBLEntryRow extends PureComponent<Props> {
             </Button>
             <DeleteOrCleanButton {...this.props} shouldDisableCleanResources={this.shouldDisableCleanResources()} />
             {this.shouldShowUpload() &&
-              <ConfirmButton classes={classes} variant="flat" size="small" className={classes.button}
+              <ConfirmButton classes={classes} variant="text" size="small" className={classes.button}
                 disabled={this.shouldDisableUpload()}
                 onKeyPress={this.onClickUploadBundle}
                 onClick={this.onClickUploadBundle}

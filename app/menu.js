@@ -1,30 +1,25 @@
 // @flow
-import { app, Menu, shell, BrowserWindow, ipcMain } from 'electron';
+import { app, Menu, shell, BrowserWindow } from 'electron';
+import log from 'electron-log';
 import { ipcRendererConstants } from './constants/ipcRenderer.constants';
 import { navigationConstants } from './constants/navigation.constants';
-import { dblDotLocalService } from './services/dbl_dot_local.service';
 
 
 export default class MenuBuilder {
   mainWindow: BrowserWindow;
-  autoUpdater;
   initializedMenu = false;
-  constructor(mainWindow: BrowserWindow, autoUpdater) {
+  constructor(mainWindow: BrowserWindow) {
     this.mainWindow = mainWindow;
-    this.autoUpdater = autoUpdater;
-    ipcMain.on(ipcRendererConstants.KEY_IPC_USER_AUTHENTICATION, (event, authentication) => {
-      this.buildMenu(authentication);
-    });
   }
 
-  buildMenu(authentication) {
+  buildMenu() {
     if (!this.initializedMenu && (process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true')) {
       this.setupDevelopmentEnvironment();
     }
 
     const template = process.platform === 'darwin'
       ? this.buildDarwinTemplate()
-      : this.buildDefaultTemplate(authentication);
+      : this.buildDefaultTemplate();
 
     const menu = Menu.buildFromTemplate(template);
     Menu.setApplicationMenu(menu);
@@ -130,13 +125,8 @@ export default class MenuBuilder {
     }
   }
 
-  buildDefaultTemplate(authentication) {
-    let loginLabel = '&Login';
-    if (authentication && authentication.loggedIn) {
-      const username = (authentication.user ? authentication.user.username : null) || '';
-      loginLabel = `&Logout ${username}`;
-    }
-    const logFile = this.autoUpdater.logger.transports.file.file;
+  buildDefaultTemplate() {
+    const logFile = log.transports.file.file;
     // console.log('menu/buildDefaultTemplate');
     // console.log(loginLabel);
     const templateDefault = [
