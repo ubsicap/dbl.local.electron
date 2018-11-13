@@ -33,6 +33,7 @@ type Props = {
   defaultOrderBy: string,
   secondarySorts: [],
   selectAll: boolean,
+  multiSelections?: boolean,
   onSelectedRowIds: () => {},
   handleAddByFile?: () => {},
   handleAddByFolder?: () => {},
@@ -63,7 +64,7 @@ class EnhancedTable extends Component<Props> {
 
   componentWillReceiveProps(nextProps) {
     // You don't have to do this check first, but it can help prevent an unneeded render
-    if (nextProps.selectAll && nextProps.data.length &&
+    if (nextProps.multiSelections && nextProps.selectAll && nextProps.data.length &&
       (this.props.data !== nextProps.data ||
       this.state.selectedRowIds.length === 0 ||
       nextProps.selectAll !== this.props.selectAll)) {
@@ -111,13 +112,6 @@ class EnhancedTable extends Component<Props> {
     const { columnConfig } = this.props;
     const checkboxColumn = {
       name: 'checkbox',
-      header: (
-        <Checkbox
-          checked={this.areAnyChecked()}
-          onChange={this.onChangeCheckBoxHeader}
-          {...this.headerCheckBoxProps()}
-        />
-      ),
       cell: rowData => (
         !rowData.disabled ?
           <Checkbox
@@ -129,6 +123,15 @@ class EnhancedTable extends Component<Props> {
       width: 72,
       onHeaderClick: false
     };
+    if (this.props.multiSelections) {
+      const header = (
+        <Checkbox
+          checked={this.areAnyChecked()}
+          onChange={this.onChangeCheckBoxHeader}
+          {...this.headerCheckBoxProps()}
+        />);
+      checkboxColumn.header = header;
+    }
     const stringCellProps = { style: { paddingRight: 0 } };
     const numericCellProps = { numeric: true };
     const columns = columnConfig.map(c => ({
@@ -161,9 +164,15 @@ class EnhancedTable extends Component<Props> {
           selectedRowIds: prevState.selectedRowIds.filter(id => id !== rowData.id)
         };
       }
+      if (this.props.multiSelections) {
+        return {
+          selectedRowIds: [...prevState.selectedRowIds, rowData.id]
+        };
+      }
       return {
-        selectedRowIds: [...prevState.selectedRowIds, rowData.id]
+        selectedRowIds: [rowData.id]
       };
+
     }, this.reportSelectedRowIds);
   }
 
@@ -224,10 +233,11 @@ class EnhancedTable extends Component<Props> {
 }
 
 EnhancedTable.defaultProps = {
-  handleAddByFile: null,
-  handleAddByFolder: null,
-  getSuggestions: null,
-  onAutosuggestInputChanged: null
+  multiSelections: false,
+  handleAddByFile: undefined,
+  handleAddByFolder: undefined,
+  getSuggestions: undefined,
+  onAutosuggestInputChanged: undefined
 };
 
 export default withStyles(styles)(EnhancedTable);

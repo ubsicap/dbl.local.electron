@@ -345,10 +345,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     if (this.isNothingSelected()) {
       return '';
     }
-    const { selectedIds = [], selectAll } = this.state;
-    if (selectAll) {
-      return ' (All)';
-    }
+    const { selectedIds = [] } = this.state;
     return ` (${selectedIds.length})`;
   }
 
@@ -601,6 +598,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           secondarySorts={secondarySorts}
           defaultOrderBy="container"
           onSelectedRowIds={this.onSelectedIds}
+          multiSelections
           selectAll={selectAll}
         />);
       }
@@ -621,6 +619,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           secondarySorts={secondarySorts}
           defaultOrderBy="container"
           onSelectedRowIds={this.onSelectedIds}
+          multiSelections
           selectAll={selectAll}
           handleAddByFile={this.getHandleAddByFile()}
           handleAddByFolder={this.getHandleAddByFolder()}
