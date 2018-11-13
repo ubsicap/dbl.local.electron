@@ -152,7 +152,16 @@ function getLabel(columnName) {
 
 const secondarySorts = ['container', 'name', 'status'];
 
-function createColumnConfig() {
+function createColumnConfig(mode) {
+  if (mode === 'revisions') {
+    return [
+      { name: 'revision', type: 'numeric', label: 'Rev #' },
+      { name: 'stored', type: 'numeric', label: '# Stored' },
+      { name: 'manifest', type: 'numeric', label: '# Manifest' },
+      { name: 'archivedBy', type: 'string', label: 'Archived By' },
+      { name: 'comments', type: 'string', label: 'Comments' },
+    ];
+  }
   const { id, uri, disabled, ...columns } = createResourceData({}, {}, 'ignore');
   return Object.keys(columns)
     .map(c => ({ name: c, type: isNumeric(c) ? 'numeric' : 'string', label: getLabel(c) }));
@@ -181,7 +190,7 @@ function mapStateToProps(state, props) {
   const { bundleId, mode } = props.match.params;
   const { showMetadataFile } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
-  const columnConfig = createColumnConfig();
+  const columnConfig = createColumnConfig(mode);
   const getManifestResourceData = makeGetManifestResourcesData();
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
   return {
@@ -342,11 +351,12 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   getRevisionsOkButtonLabel = () => {
+    const label = 'Select';
     if (this.isNothingSelected()) {
-      return '';
+      return `${label}`;
     }
-    const { selectedIds = [] } = this.state;
-    return ` (${selectedIds.length})`;
+    const [selected] = this.getSelectedResources();
+    return `${label} (Rev ${selected.revision})`;
   }
 
   isNothingSelected = () => {

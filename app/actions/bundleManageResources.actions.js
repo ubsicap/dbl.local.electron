@@ -13,7 +13,7 @@ export const bundleManageResourceActions = {
   checkPublicationsHealth
 };
 
-export function openResourceManager(_bundleId, _mode = 'download') {
+export function openResourceManager(_bundleId, _mode) {
   return async (dispatch) => {
     const isInCreateMode = await bundleService.bundleIsInCreateMode(_bundleId);
     if (isInCreateMode || _mode === 'download') {
