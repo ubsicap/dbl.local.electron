@@ -337,10 +337,27 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return ` (${selectedIds.length})`;
   }
 
-  shouldDisableDownload = () => {
+  shouldDisableRevisionsOkButton = () => {
+
+  }
+
+  getRevisionsOkButtonLabel = () => {
+    if (this.isNothingSelected()) {
+      return '';
+    }
+    const { selectedIds = [], selectAll } = this.state;
+    if (selectAll) {
+      return ' (All)';
+    }
+    return ` (${selectedIds.length})`;
+  }
+
+  isNothingSelected = () => {
     const { selectedIds = [], selectAll } = this.state;
     return !selectAll && selectedIds.length === 0;
   }
+
+  shouldDisableDownload = () => this.isNothingSelected();
 
   shouldDisableAddFiles = () => {
     const { selectedIds = [] } = this.state;
@@ -474,6 +491,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             OkButtonLabel: `Add${this.getSelectedCountMessage(this.shouldDisableAddFiles)}`,
             OkButtonIcon: <CheckIcon className={classNames(classes.leftIcon)} />,
             OkButtonDisable: this.shouldDisableAddFiles
+          }
+        };
+      case 'revisions':
+        return {
+          mode,
+          appBar: {
+            title: 'Revisions',
+            OkButtonLabel: `${this.getRevisionsOkButtonLabel()}`,
+            OkButtonIcon: <CheckIcon className={classNames(classes.leftIcon)} />,
+            OkButtonDisable: this.isNothingSelected
           }
         };
       default:
