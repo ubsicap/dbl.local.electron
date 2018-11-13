@@ -33,11 +33,11 @@ type Props = {
   defaultOrderBy: string,
   secondarySorts: [],
   selectAll: boolean,
-  handleAddByFile: ?() => {},
-  handleAddByFolder: ?() => {},
-  getSuggestions: ?() => {},
   onSelectedRowIds: () => {},
-  onAutosuggestInputChanged: ?() => {}
+  handleAddByFile?: () => {},
+  handleAddByFolder?: () => {},
+  getSuggestions?: () => {},
+  onAutosuggestInputChanged?: () => {}
 };
 
 function getDataRowIds(data) {
@@ -222,5 +222,12 @@ class EnhancedTable extends Component<Props> {
     );
   }
 }
+
+EnhancedTable.defaultProps = {
+  handleAddByFile: null,
+  handleAddByFolder: null,
+  getSuggestions: null,
+  onAutosuggestInputChanged: null
+};
 
 export default withStyles(styles)(EnhancedTable);

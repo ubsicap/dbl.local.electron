@@ -275,7 +275,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       this.props.getManifestResources(bundleId);
     }
     if (nextProps.manifestResources.length !== this.props.manifestResources) {
-      this.setState({ totalResources: nextProps.manifestResources });
+      this.setState({ tableData: nextProps.manifestResources });
     }
   }
 
@@ -350,8 +350,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   getUpdatedTotalResources(filePath, update) {
-    const { totalResources } = this.state;
-    return createUpdatedTotalResources(totalResources, filePath, () => update);
+    const { tableData } = this.state;
+    return createUpdatedTotalResources(tableData, filePath, () => update);
   }
 
   updateAddedResourcesWithFileStats = (newlyAddedFilePaths) => () => {
@@ -360,14 +360,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       const { size: sizeRaw } = stats;
       const size = formatBytesByKbs(sizeRaw);
       const checksum = size < 268435456 ? await md5File(filePath) : '(too expensive)';
-      const totalResources = this.getUpdatedTotalResources(filePath, { size, checksum });
-      this.setState({ totalResources });
+      const tableData = this.getUpdatedTotalResources(filePath, { size, checksum });
+      this.setState({ tableData });
     });
   }
 
   getUpdateSelectedResourcesContainers = (newContainer) => {
-    const { totalResources: origTotalResources, selectedIds } = this.state;
-    const totalResources = selectedIds.reduce((acc, filePath) => {
+    const { tableData: origTotalResources, selectedIds } = this.state;
+    const tableData = selectedIds.reduce((acc, filePath) => {
       const container = formatContainer(newContainer);
       const updatedTotalResources = createUpdatedTotalResources(
         acc,
@@ -380,12 +380,12 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       );
       return updatedTotalResources;
     }, origTotalResources);
-    return totalResources;
+    return tableData;
   }
 
   updateSelectedResourcesContainersSetState = (newContainer) => {
-    const totalResources = this.getUpdateSelectedResourcesContainers(newContainer);
-    this.setState({ totalResources });
+    const tableData = this.getUpdateSelectedResourcesContainers(newContainer);
+    this.setState({ tableData });
   }
 
   handleAddByFile = () => {
@@ -440,11 +440,11 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   updateTotalResources = (newAddedFilePaths, fullToRelativePaths) => () => {
     const { manifestResources } = this.props;
-    const { totalResources = manifestResources } = this.state;
-    const otherResources = totalResources.filter(r => !newAddedFilePaths.includes(r.id));
+    const { tableData = manifestResources } = this.state;
+    const otherResources = tableData.filter(r => !newAddedFilePaths.includes(r.id));
     const newlyAddedResources = newAddedFilePaths.map(createAddedResource(fullToRelativePaths));
     this.setState(
-      { totalResources: [...otherResources, ...newlyAddedResources] },
+      { tableData: [...otherResources, ...newlyAddedResources] },
       this.updateAddedResourcesWithFileStats(newAddedFilePaths)
     );
   }
@@ -489,12 +489,12 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     (!this.props.loading && this.isAddFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFolder : null
   )
 
-  getAllSuggestions = (totalResources) => {
+  getAllSuggestions = (tableData) => {
     const { mode } = this.props;
     if (mode !== 'addFiles') {
       return null;
     }
-    return mapSuggestions(sort(utilities.union(totalResources
+    return mapSuggestions(sort(utilities.union(tableData
       .filter(r => r.container !== NEED_CONTAINER)
       .map(r => r.container), ['/'])).asc());
   }
@@ -519,17 +519,17 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   getSelectedResources = () => {
     const { manifestResources } = this.props;
-    const { totalResources = manifestResources, selectedIds } = this.state;
+    const { tableData = manifestResources, selectedIds } = this.state;
     const selectedIdSet = new Set(selectedIds);
-    return totalResources.filter(r => selectedIdSet.has(r.id));
+    return tableData.filter(r => selectedIdSet.has(r.id));
   }
 
   hasAnySelectedUnassignedContainers = () => {
     const { manifestResources } = this.props;
-    const { totalResources = manifestResources, selectedIds } = this.state;
+    const { tableData = manifestResources, selectedIds } = this.state;
     const selectedIdSet = new Set(selectedIds);
     const resourcesWithUnassignedContainers =
-      totalResources
+      tableData
         .filter(r => (r.container === NEED_CONTAINER));
     return resourcesWithUnassignedContainers
       .some(r => selectedIdSet.has(r.id));
@@ -561,15 +561,64 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       ));
   }
 
+  renderTable = () => {
+    const {
+      columnConfig, manifestResources, mode
+    } = this.props;
+    const { selectAll, tableData = manifestResources } = this.state;
+    switch (mode) {
+      case 'download': {
+        return (<EnhancedTable
+          data={tableData}
+          columnConfig={columnConfig}
+          secondarySorts={secondarySorts}
+          defaultOrderBy="container"
+          onSelectedRowIds={this.onSelectedIds}
+          selectAll={selectAll}
+        />);
+      }
+      case 'revisions': {
+        return (<EnhancedTable
+          data={tableData}
+          columnConfig={columnConfig}
+          secondarySorts={secondarySorts}
+          defaultOrderBy="container"
+          onSelectedRowIds={this.onSelectedIds}
+          selectAll={selectAll}
+        />);
+      }
+      case 'addFiles': {
+        return (<EnhancedTable
+          data={tableData}
+          columnConfig={columnConfig}
+          secondarySorts={secondarySorts}
+          defaultOrderBy="container"
+          onSelectedRowIds={this.onSelectedIds}
+          selectAll={selectAll}
+          handleAddByFile={this.getHandleAddByFile()}
+          handleAddByFolder={this.getHandleAddByFolder()}
+          getSuggestions={this.getSuggestions}
+          onAutosuggestInputChanged={this.handleAutosuggestInputChanged}
+        />);
+      }
+      default: {
+        return (<EnhancedTable
+          data={tableData}
+          columnConfig={columnConfig}
+        />);
+      }
+    }
+  }
+
   render() {
     const {
-      classes, open, selectedBundle = {}, columnConfig, manifestResources,
+      classes, open, selectedBundle = {},
       publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading, progress
     } = this.props;
-    const { selectAll, totalResources = manifestResources } = this.state;
     const { displayAs = {} } = selectedBundle;
     const { languageAndCountry, name } = displayAs;
     const modeUi = this.modeUi();
+    const isAddFilesMode = this.isAddFilesMode();
     return (
       <Zoom in={open}>
         <div>
@@ -602,7 +651,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               </Button>
             </Toolbar>
           </AppBar>
-          {this.isAddFilesMode() && publicationsHealthMessage &&
+          {isAddFilesMode && publicationsHealthMessage &&
             <Toolbar className={classes.errorBar}>
               <Typography variant="subheading" color="inherit">
                 {publicationsHealthMessage}
@@ -617,7 +666,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               </Button>
             </Toolbar>
           }
-          {!loading && this.isAddFilesMode() && publicationsHealthSuccessMessage &&
+          {!loading && isAddFilesMode && publicationsHealthSuccessMessage &&
             <Card className={classes.successBar} raised>
               <CardContent>
                 <Typography key="pubhealthSuccessMessage" variant="subheading" color="inherit" gutterBottom>
@@ -627,18 +676,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               </CardContent>
             </Card>
           }
-          <EnhancedTable
-            data={totalResources}
-            columnConfig={columnConfig}
-            secondarySorts={secondarySorts}
-            defaultOrderBy="container"
-            onSelectedRowIds={this.onSelectedIds}
-            selectAll={selectAll}
-            handleAddByFile={this.getHandleAddByFile()}
-            handleAddByFolder={this.getHandleAddByFolder()}
-            getSuggestions={this.getSuggestions}
-            onAutosuggestInputChanged={this.handleAutosuggestInputChanged}
-          />
+          {this.renderTable()}
         </div>
       </Zoom>
     );
