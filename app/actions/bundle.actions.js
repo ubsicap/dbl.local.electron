@@ -5,8 +5,6 @@ import throttledQueue from 'throttled-queue';
 import { bundleConstants } from '../constants/bundle.constants';
 import { bundleService } from '../services/bundle.service';
 import { updateSearchResultsForBundleId } from '../actions/bundleFilter.actions';
-import { history } from '../store/configureStore';
-import { navigationConstants } from '../constants/navigation.constants';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 
 export const bundleActions = {
@@ -29,10 +27,6 @@ export default bundleActions;
 
 export function updateBundle(bundleId) {
   return async (dispatch) => {
-    const isDemoMode = history.location.pathname.includes('/demo');
-    if (isDemoMode) {
-      return;
-    }
     try {
       const rawBundle = await bundleService.fetchById(bundleId);
       if (!bundleService.apiBundleHasMetadata(rawBundle)) {
@@ -111,24 +105,20 @@ export function createDraftRevision(_bundleId) {
 }
 
 function updateUploadJobs(bundleId, uploadJob, removeJobOrBundle) {
-  return { type: bundleConstants.UPDATE_UPLOAD_JOBS, bundleId, uploadJob, removeJobOrBundle };
+  return {
+    type: bundleConstants.UPDATE_UPLOAD_JOBS, bundleId, uploadJob, removeJobOrBundle
+  };
 }
 
 export function fetchAll() {
   return async dispatch => {
     dispatch(request());
-    const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO;
-    if (isDemoMode) {
-      const mockBundles = getMockBundles();
-      dispatch(success(mockBundles));
-    } else {
-      try {
-        const newMediaTypes = await dblDotLocalService.newBundleMedia();
-        const { bundles } = await bundleService.fetchAll();
-        dispatch(success(bundles, newMediaTypes));
-      } catch (error) {
-        dispatch(failure(error));
-      }
+    try {
+      const newMediaTypes = await dblDotLocalService.newBundleMedia();
+      const { bundles } = await bundleService.fetchAll();
+      dispatch(success(bundles, newMediaTypes));
+    } catch (error) {
+      dispatch(failure(error));
     }
   };
 
@@ -212,7 +202,7 @@ export function setupBundlesEventSource() {
     });
   };
 
-  /* 
+  /*
    * data:{"args": [1, 11], "component": "downloader", "type": "global_status"}
    */
   function listenDownloaderGlobalStatus(e) {
@@ -221,7 +211,7 @@ export function setupBundlesEventSource() {
     return updateDownloadQueue(nSpecs, nAtoms);
   }
 
-  /* 
+  /*
    * data:{"args": [11], "component": "uploader", "type": "global_status"}
    */
   function listenUploaderGlobalStatus() {
@@ -686,141 +676,4 @@ export function toggleSelectEntry(selectedBundle) {
     selectedBundle,
     selectedDBLEntryId: selectedBundle.dblId
   };
-}
-
-function getMockBundles() {
-  const bundles = [
-    {
-      id: 'bundle01',
-      dblId: 'dblId1',
-      revision: '3',
-      parent: null,
-      medium: 'print',
-      name: 'Test Bundle #1',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'UPLOAD',
-      status: 'COMPLETED',
-      resourceCountStored: 2,
-      resourceCountManifest: 2
-    },
-    {
-      id: 'bundle03',
-      dblId: 'dblId3',
-      revision: '52',
-      parent: null,
-      medium: 'audio',
-      name: 'Audio Bundle',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'DOWNLOAD',
-      status: 'IN_PROGRESS',
-      progress: 12,
-      resourceCountStored: 1,
-      resourceCountManifest: 2
-    },
-    {
-      id: 'bundle04',
-      dblId: 'dblId4',
-      revision: '0',
-      medium: 'audio',
-      name: 'Unfinished Bundle',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'UPLOAD',
-      status: 'DRAFT',
-      parent: { revision: '32' },
-      resourceCountStored: 1,
-      resourceCountManifest: 2
-    },
-    {
-      id: 'bundle05',
-      dblId: 'dblId5',
-      revision: '0',
-      medium: 'video',
-      name: 'Unfinished Video Bundle',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'UPLOAD',
-      status: 'DRAFT',
-      parent: { revision: '42' },
-      resourceCountStored: 1,
-      resourceCountManifest: 2
-    },
-    {
-      id: 'bundle06',
-      dblId: 'dblId6',
-      parent: null,
-      revision: '3',
-      medium: 'text',
-      name: 'DBL Bundle',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'DOWNLOAD',
-      status: 'NOT_STARTED',
-      resourceCountStored: 0,
-      resourceCountManifest: 2
-    },
-    {
-      id: 'bundle07',
-      dblId: 'dblId7',
-      revision: '4',
-      parent: null,
-      medium: 'text',
-      name: 'DBL Bundle',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'DOWNLOAD',
-      status: 'NOT_STARTED',
-      resourceCountStored: 0,
-      resourceCountManifest: 2
-    },
-    {
-      id: 'bundle08',
-      dblId: 'dblId8',
-      revision: '40',
-      parent: null,
-      medium: 'audio',
-      name: 'Audio Bundle #2',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'DOWNLOAD',
-      status: 'COMPLETED',
-      resourceCountStored: 2,
-      resourceCountManifest: 2
-    },
-    {
-      id: 'bundle09',
-      dblId: 'dblId9',
-      revision: '5',
-      parent: null,
-      medium: 'audio',
-      name: 'Audio Bundle #3',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'SAVETO',
-      status: 'IN_PROGRESS',
-      progress: 0,
-      resourceCountStored: 2,
-      resourceCountManifest: 2
-    },
-    {
-      id: 'bundle10',
-      dblId: 'dblId10',
-      revision: '4',
-      parent: null,
-      medium: 'audio',
-      name: 'Audio Bundle #4',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'SAVETO',
-      status: 'IN_PROGRESS',
-      progress: 66,
-      resourceCountStored: 2,
-      resourceCountManifest: 2
-    }
-  ];
-  // const taskOrder = ['UPLOAD', 'DOWNLOAD', 'SAVETO'];
-  // const statusOrder = ['IN_PROGRESS', 'DRAFT', 'COMPLETED', 'NOT_STARTED'];
-  return bundles;
 }
