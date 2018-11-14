@@ -270,6 +270,16 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
         selectedDBLEntryId
       };
     }
+    case bundleConstants.GET_ENTRY_REVISIONS_RESPONSE: {
+      const { allEntryRevisions: allEntryRevisionsOrig = {} } = state;
+      const { dblId, entryRevisions } = action;
+      // const localEntryBundles = Object.values(addedByBundleIds).filter(b => b.dblId === dblId);
+      const allEntryRevisions = { ...allEntryRevisionsOrig, [dblId]: entryRevisions };
+      return {
+        ...state,
+        allEntryRevisions
+      };
+    }
     default:
       return state;
   }

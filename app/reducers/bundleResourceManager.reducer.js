@@ -21,11 +21,13 @@ export function bundleManageResources(state = initialState, action) {
       return initialState;
     }
     case bundleResourceManagerConstants.GET_MANIFEST_RESOURCES_RESPONSE: {
-      const { manifestResources: rawManifestResources, storedFiles } = action;
+      const { manifestResources: rawManifestResources, storedFiles, bundleId } = action;
+      const { manifestResources: manifestResourcesOrig = {} } = state;
+      const bundleManifestResources = { rawManifestResources, storedFiles };
+      const manifestResources = { ...manifestResourcesOrig, [bundleId]: bundleManifestResources };
       return {
         ...state,
-        rawManifestResources,
-        storedFiles
+        manifestResources
       };
     }
     case bundleResourceManagerConstants.UPDATE_MANIFEST_RESOURCES_REQUEST: {

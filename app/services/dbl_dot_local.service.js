@@ -24,7 +24,8 @@ export const dblDotLocalService = {
   convertConfigXmlToJson,
   updateConfigXmlWithNewPaths,
   updateAndWriteConfigXmlSettings,
-  startEventSource
+  startEventSource,
+  getEntryRevisions
 };
 export default dblDotLocalService;
 
@@ -59,6 +60,19 @@ async function newBundleMedia() {
   };
   try {
     const response = await fetch(`${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/${UX_API}/new-bundle-media`, requestOptions);
+    return handlResponseAsReadable(response).json();
+  } catch (error) {
+    return handlResponseAsReadable(error);
+  }
+}
+
+async function getEntryRevisions(dblId) {
+  const requestOptions = {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' }
+  };
+  try {
+    const response = await fetch(`${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/dbl/entry-revisions/${dblId}`, requestOptions);
     return handlResponseAsReadable(response).json();
   } catch (error) {
     return handlResponseAsReadable(error);

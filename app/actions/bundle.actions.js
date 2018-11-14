@@ -397,7 +397,7 @@ function addBundle(bundle, rawBundle) {
       rawBundle
     });
     dispatch(updateSearchResultsForBundleId(bundle.id));
-    dispatch(removeExcessBundles());
+    dispatch(removeExcessBundles()); // debounced
   });
 }
 
@@ -675,5 +675,19 @@ export function toggleSelectEntry(selectedBundle) {
     type: bundleConstants.TOGGLE_SELECT,
     selectedBundle,
     selectedDBLEntryId: selectedBundle.dblId
+  };
+}
+
+export function getEntryRevisions(bundleId) {
+  return async (dispatch, getState) => {
+    const { bundles: { addedByBundleIds } } = getState();
+    const bundle = addedByBundleIds[bundleId];
+    const { dblId } = bundle;
+    const entryRevisions = await dblDotLocalService.getEntryRevisions(dblId);
+    dispatch({
+      type: bundleConstants.GET_ENTRY_REVISIONS_RESPONSE,
+      dblId,
+      entryRevisions
+    });
   };
 }

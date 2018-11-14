@@ -27,7 +27,7 @@ import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth
 } from '../actions/bundleManageResources.actions';
-import { downloadResources } from '../actions/bundle.actions';
+import { downloadResources, getEntryRevisions } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
 import EnhancedTable from './EnhancedTable';
@@ -44,6 +44,7 @@ type Props = {
   loading: boolean,
   progress: number,
   bundleId: ?string,
+  bundlesById: ?{},
   selectedBundle: {},
   mode: string,
   showMetadataFile: ?string,
@@ -57,6 +58,7 @@ type Props = {
   closeResourceManager: () => {},
   openMetadataFile: () => {},
   getManifestResources: () => {},
+  getEntryRevisions: () => {},
   downloadResources: () => {},
   addManifestResources: () => {},
   checkPublicationsHealth: () => {}
@@ -152,30 +154,104 @@ function getLabel(columnName) {
 
 const secondarySorts = ['container', 'name', 'status'];
 
-function createColumnConfig(mode) {
-  if (mode === 'revisions') {
-    return [
-      { name: 'revision', type: 'numeric', label: 'Rev #' },
-      { name: 'stored', type: 'numeric', label: '# Stored' },
-      { name: 'manifest', type: 'numeric', label: '# Manifest' },
-      { name: 'archivedBy', type: 'string', label: 'Archived By' },
-      { name: 'comments', type: 'string', label: 'Comments' },
-    ];
-  }
-  const { id, uri, disabled, ...columns } = createResourceData({}, {}, 'ignore');
+function mapColumns(columns) {
   return Object.keys(columns)
     .map(c => ({ name: c, type: isNumeric(c) ? 'numeric' : 'string', label: getLabel(c) }));
 }
 
-const getRawManifestResources = (state) => state.bundleManageResources.rawManifestResources || {};
-const getStoredFiles = (state) => state.bundleManageResources.storedFiles;
+function createColumnConfig(mode) {
+  if (mode === 'revisions') {
+    const { id, href, ...columns } = createRevisionData();
+    return mapColumns(columns);
+  }
+  const { id, uri, disabled, ...columns } = createResourceData({}, {}, 'ignore');
+  return mapColumns(columns);
+}
+
+const getAllManifestResources = (state) => state.bundleManageResources.manifestResources || {};
 const getMode = (state) => state.bundleManageResources.mode;
+const getBundleId = (state, props) => props.match.params.bundleId;
+const getAllEntryRevisions = (state) => state.bundles.allEntryRevisions || {};
+const getBundlesById = (state) => state.bundles.addedByBundleIds || {};
+
+function getOrDefault(obj, prop, defaultValue) {
+  if (!obj) {
+    return defaultValue;
+  }
+  return obj[prop] || defaultValue;
+}
+
+const emptyBundleManifestResources = { rawManifestResources: {}, storedFiles: {} };
 
 const makeGetManifestResourcesData = () => createSelector(
-  [getRawManifestResources, getStoredFiles, getMode],
-  (rawManifestResources, storedFiles, mode) =>
-    Object.values(rawManifestResources)
-      .map(r => createResourceData(r, storedFiles[r.uri], mode))
+  [getAllManifestResources, getMode, getBundleId],
+  (manifestResources, mode, bundleId) => {
+    const bundleManifestResources = getOrDefault(
+      manifestResources,
+      bundleId,
+      emptyBundleManifestResources
+    );
+    const { rawManifestResources, storedFiles } = bundleManifestResources;
+    return Object.values(rawManifestResources)
+      .map(r => createResourceData(r, storedFiles[r.uri], mode));
+  }
+);
+
+/*
+  {
+  "archivist": "B68BB7E4F225974EC823",
+  "comments": "Small bundle to test uploading",
+  "created_on": "Mon, 12 Nov 2018 16:30:26 GMT",
+  "href": "http://api-demo.thedigitalbiblelibrary.org/api/entries/2881c78491b2f8cf/revisions/13",
+  "revision": 13,
+  "version": "2.1"
+  },
+      { name: 'created_on', type: 'date', label: 'Created' },
+      { name: 'revision', type: 'numeric', label: 'Rev #' },
+      { name: 'stored', type: 'numeric', label: '# Stored' },
+      { name: 'manifest', type: 'numeric', label: '# Manifest' },
+      { name: 'archivist', type: 'string', label: 'Archivist' },
+      { name: 'comments', type: 'string', label: 'Comments' }
+ */
+function createRevisionData(entryRevision, localEntryBundle, bundleManifestResources) {
+  /* eslint-disable camelcase */
+  const {
+    created_on = '',
+    revision = 0,
+    version = '',
+    archivist = '',
+    comments = '',
+    href = '',
+  } = entryRevision || {};
+  const id = href;
+  const is_on_disk = Boolean(Object.keys(localEntryBundle || {}));
+  const { storedFiles = {}, rawManifestResources = {} } = bundleManifestResources || {};
+  const stored = Object.values(storedFiles).length;
+  const manifest = Object.values(rawManifestResources).length;
+  return {
+    id, href, created_on, revision, version, archivist, comments, is_on_disk, stored, manifest
+  };
+}
+
+function findLocalEntryBundles(bundlesById, dblId) {
+  return Object.values(bundlesById).filter(b => b.dblId === dblId);
+}
+
+const makeGetEntryRevisionsData = () => createSelector(
+  [getAllEntryRevisions, getAllManifestResources, getBundlesById, getBundleId],
+  (allEntryRevisions, manifestResources, bundlesById, bundleId) => {
+    const bundle = bundlesById[bundleId];
+    const { dblId } = bundle;
+    const localEntryBundles = findLocalEntryBundles(bundlesById, dblId);
+    const entryRevisions = allEntryRevisions[dblId] || {};
+    return Object.values(entryRevisions)
+      .map(entryRevision => {
+        const [localEntryBundle] = localEntryBundles.find(b => b.revision === entryRevision.revision);
+        const { id: localBundleId } = localEntryBundle || {};
+        const { [localBundleId]: bundleManifestResources = [] } = manifestResources;
+        return createRevisionData(entryRevision, localEntryBundle, bundleManifestResources);
+      });
+  }
 );
 
 function mapStateToProps(state, props) {
@@ -192,16 +268,19 @@ function mapStateToProps(state, props) {
   const { addedByBundleIds } = bundles;
   const columnConfig = createColumnConfig(mode);
   const getManifestResourceData = makeGetManifestResourcesData();
+  const getEntryRevisionsData = makeGetEntryRevisionsData();
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
   return {
     open: Boolean(bundleId),
     loading,
     progress,
     bundleId,
+    bundlesById: getBundlesById(state),
     selectedBundle,
     mode,
     showMetadataFile,
-    manifestResources: getManifestResourceData(state),
+    manifestResources: getManifestResourceData(state, props),
+    entryRevisions: mode === 'revisions' ? getEntryRevisionsData(state, props) : [],
     columnConfig,
     isOkToAddFiles: !publicationsHealthMessage,
     publicationsHealthMessage,
@@ -215,6 +294,7 @@ const mapDispatchToProps = {
   closeResourceManager,
   openMetadataFile,
   getManifestResources,
+  getEntryRevisions,
   downloadResources,
   addManifestResources,
   checkPublicationsHealth
@@ -267,11 +347,22 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   state = {
     selectedIds: [],
     addedFilePaths: [],
-    selectAll: true
+    selectAll: this.props.mode !== 'revisions'
   }
 
   componentDidMount() {
-    const { bundleId } = this.props;
+    const { bundleId, mode } = this.props;
+    if (mode === 'revisions') {
+      this.props.getEntryRevisions(bundleId);
+      const { bundlesById } = this.props;
+      const { [bundleId]: bundle } = bundlesById;
+      const { dblId } = bundle;
+      const localEntryBundles = findLocalEntryBundles(bundlesById, dblId);
+      localEntryBundles.forEach(localBundle => {
+        this.props.getManifestResources(localBundle.id);
+      });
+      return;
+    }
     this.props.getManifestResources(bundleId);
     if (this.isAddFilesMode()) {
       this.props.checkPublicationsHealth(bundleId);
@@ -616,10 +707,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         return (<EnhancedTable
           data={tableData}
           columnConfig={columnConfig}
-          secondarySorts={secondarySorts}
-          defaultOrderBy="container"
+          secondarySorts={['created_on']}
+          defaultOrderBy="created_on"
           onSelectedRowIds={this.onSelectedIds}
-          selectAll={selectAll}
+          selectAll={false}
         />);
       }
       case 'addFiles': {
