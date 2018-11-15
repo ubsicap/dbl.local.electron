@@ -162,7 +162,7 @@ function mapColumns(columns) {
 
 function createColumnConfig(mode) {
   if (mode === 'revisions') {
-    const { id, href, ...columns } = createRevisionData();
+    const { id, href, localBundle, ...columns } = createRevisionData();
     return mapColumns(columns);
   }
   const { id, uri, disabled, ...columns } = createResourceData({}, {}, 'ignore');
@@ -226,11 +226,12 @@ function createRevisionData(entryRevision, localEntryBundle, bundleManifestResou
   } = entryRevision || {};
   const id = href;
   const is_on_disk = Boolean(Object.keys(localEntryBundle || {}).length);
+  const localBundle = localEntryBundle || null;
   const { storedFiles = {}, rawManifestResources = {} } = bundleManifestResources || {};
   const stored = is_on_disk ? Object.values(storedFiles).length : '';
   const manifest = is_on_disk ? Object.values(rawManifestResources).length : '';
   return {
-    id, href, created_on, revision, version, archivist, comments, stored, manifest
+    id, href, localBundle, created_on, revision, version, archivist, comments, stored, manifest
   };
 }
 
@@ -393,25 +394,24 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.setState({ tableData });
   }
 
-  handleClickOk = () => {
-    if (this.isDownloadMode()) {
-      this.handleDownload();
-      this.handleClose();
-    } else if (this.isAddFilesMode()) {
-      this.handleAddFiles();
-      // this.handleClose(); // seems to hang with too many requests
-    }
-  }
-
   handleDownload = () => {
     const { selectedIds = [] } = this.state;
     const { bundleId } = this.props;
     this.props.downloadResources(bundleId, selectedIds);
+    this.handleClose();
+  }
+
+  handleDownloadRevision = () => {
+
+  }
+
+  handleSwitchRevision = () => {
+
   }
 
   handleAddFiles = () => {
     const { bundleId } = this.props;
-    const selectedResources = this.getSelectedResources();
+    const selectedResources = this.getSelectedRowData();
     const filesToContainers = selectedResources.reduce((acc, selectedResource) =>
       ({ ...acc, [selectedResource.id]: formatUriForApi(selectedResource) }), {});
     this.props.addManifestResources(bundleId, filesToContainers);
@@ -445,17 +445,25 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return ` (${selectedIds.length})`;
   }
 
-  shouldDisableRevisionsOkButton = () => {
-
-  }
+  getSelectedLocalBundle = () => {
+    if (this.isNothingSelected()) {
+      return false;
+    }
+    const [selected] = this.getSelectedRowData();
+    const { localBundle } = selected;
+    return { selected, localBundle };
+  };
 
   getRevisionsOkButtonLabel = () => {
-    const label = 'Select';
+    const label = 'Switch to';
     if (this.isNothingSelected()) {
       return `${label}`;
     }
-    const [selected] = this.getSelectedResources();
-    return `${label} (Rev ${selected.revision})`;
+    const { selected, localBundle } = this.getSelectedLocalBundle();
+    if (localBundle) {
+      return `${label} (Rev ${selected.revision})`;
+    }
+    return `Fetch (Rev ${selected.revision})`;
   }
 
   isNothingSelected = () => {
@@ -584,9 +592,13 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           appBar:
           {
             title: 'Download resources',
+            OkButtonProps: {
+              color: 'inherit',
+              onClick: this.handleDownload,
+              disabled: this.shouldDisableDownload()
+            },
             OkButtonLabel: `Download${this.getSelectedCountMessage(this.shouldDisableDownload)}`,
             OkButtonIcon: <FileDownload className={classNames(classes.leftIcon)} />,
-            OkButtonDisable: this.shouldDisableDownload
           }
         };
       case 'addFiles':
@@ -594,32 +606,44 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           mode,
           appBar: {
             title: 'Add resources',
+            OkButtonProps: {
+              color: 'secondary',
+              variant: 'contained',
+              onClick: this.handleAddFiles,
+              disabled: this.shouldDisableAddFiles()
+            },
             OkButtonLabel: `Add${this.getSelectedCountMessage(this.shouldDisableAddFiles)}`,
-            OkButtonIcon: <CheckIcon className={classNames(classes.leftIcon)} />,
-            OkButtonDisable: this.shouldDisableAddFiles
+            OkButtonIcon: <CheckIcon className={classNames(classes.leftIcon)} />
           }
         };
-      case 'revisions':
+      case 'revisions': {
+        const selectedLocalBundle = this.getSelectedLocalBundle();
         return {
           mode,
           appBar: {
             title: 'Revisions',
+            OkButtonProps: {
+              color: selectedLocalBundle.localBundle ? 'inherit' : 'secondary',
+              variant: selectedLocalBundle.localBundle ? 'text' : 'contained',
+              onClick: this.handleDownloadRevision,
+              disabled: this.isNothingSelected()
+            },
             OkButtonLabel: `${this.getRevisionsOkButtonLabel()}`,
             OkButtonIcon: <CheckIcon className={classNames(classes.leftIcon)} />,
-            OkButtonDisable: this.isNothingSelected
           }
         };
+      }
       default:
         return { appBar: { title: '', OkButtonLabel: '', OkButtonIcon: (null) } };
     }
   }
 
   getHandleAddByFile = () => (
-    (!this.props.loading && this.isAddFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFile : null
+    (!this.props.loading && this.isAddFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFile : undefined
   )
 
   getHandleAddByFolder = () => (
-    (!this.props.loading && this.isAddFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFolder : null
+    (!this.props.loading && this.isAddFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFolder : undefined
   )
 
   getAllSuggestions = (tableData) => {
@@ -650,7 +674,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     });
   }
 
-  getSelectedResources = () => {
+  getSelectedRowData = () => {
     const { manifestResources } = this.props;
     const { tableData = manifestResources, selectedIds } = this.state;
     const selectedIdSet = new Set(selectedIds);
@@ -771,8 +795,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                 Review
               </Button>
               <Button
-                key="btnOk" color="inherit" onClick={this.handleClickOk}
-                disabled={modeUi.appBar.OkButtonDisable()}
+                key="btnOk"
+                {...modeUi.appBar.OkButtonProps}
               >
                 {modeUi.appBar.OkButtonIcon}
                 {modeUi.appBar.OkButtonLabel}
