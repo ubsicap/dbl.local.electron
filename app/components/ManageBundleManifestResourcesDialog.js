@@ -163,7 +163,7 @@ function mapColumns(columns) {
 
 function createColumnConfig(mode) {
   if (mode === 'revisions') {
-    const { id, href, localBundle, ...columns } = createRevisionData();
+    const { id, href, localBundle, disabled, ...columns } = createRevisionData();
     return mapColumns(columns);
   }
   const { id, uri, disabled, ...columns } = createResourceData({}, {}, 'ignore');
@@ -215,7 +215,7 @@ const makeGetManifestResourcesData = () => createSelector(
       { name: 'archivist', type: 'string', label: 'Archivist' },
       { name: 'comments', type: 'string', label: 'Comments' }
  */
-function createRevisionData(entryRevision, localEntryBundle, bundleManifestResources) {
+function createRevisionData(entryRevision, localEntryBundle, bundleManifestResources, disabled) {
   /* eslint-disable camelcase */
   const {
     created_on = '',
@@ -232,7 +232,7 @@ function createRevisionData(entryRevision, localEntryBundle, bundleManifestResou
   const stored = is_on_disk ? Object.values(storedFiles).length : '';
   const manifest = is_on_disk ? Object.values(rawManifestResources).length : '';
   return {
-    id, href, localBundle, created_on, revision, version, archivist, comments, stored, manifest
+    disabled, id, href, localBundle, created_on, revision, version, archivist, comments, stored, manifest
   };
 }
 
@@ -253,7 +253,7 @@ const makeGetEntryRevisionsData = () => createSelector(
         const localEntryBundle = localEntryBundles.find(b => b.revision === revision);
         const { id: localBundleId } = localEntryBundle || {};
         const { [localBundleId]: bundleManifestResources = [] } = manifestResources;
-        return createRevisionData(entryRevision, localEntryBundle, bundleManifestResources);
+        return createRevisionData(entryRevision, localEntryBundle, bundleManifestResources, bundleId === localBundleId);
       });
   }
 );
