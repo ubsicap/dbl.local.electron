@@ -94,9 +94,7 @@ class EnhancedTableToolbar extends Component<Props> {
               {numSelected} selected
             </Typography>
           ) : (
-            <Typography variant="title" id="tableTitle">
-              Manifest Resources
-            </Typography>
+            <Typography variant="title" id="tableTitle" />
           )}
         </div>
         <div className={classes.spacer} />
