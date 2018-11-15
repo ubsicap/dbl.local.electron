@@ -29,6 +29,7 @@ const styles = theme => ({
 type Props = {
   classes: {},
   data: [],
+  orderDirection?: string,
   columnConfig: [],
   defaultOrderBy: string,
   secondarySorts: [],
@@ -57,7 +58,7 @@ function getAllSelectableRowIds(data) {
 class EnhancedTable extends Component<Props> {
   props: Props;
   state = {
-    order: 'asc',
+    order: this.props.orderDirection,
     orderBy: this.props.defaultOrderBy || this.props.columnConfig[0].name,
     selectedRowIds: []
   };
@@ -233,6 +234,7 @@ class EnhancedTable extends Component<Props> {
 }
 
 EnhancedTable.defaultProps = {
+  orderDirection: 'asc',
   multiSelections: false,
   handleAddByFile: undefined,
   handleAddByFolder: undefined,

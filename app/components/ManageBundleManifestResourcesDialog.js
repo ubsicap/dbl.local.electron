@@ -146,7 +146,7 @@ function createAddedResource(fullToRelativePaths) {
 }
 
 function isNumeric(columnName) {
-  return ['size'].includes(columnName);
+  return ['size', 'revision', 'stored', 'manifest'].includes(columnName);
 }
 
 function getLabel(columnName) {
@@ -225,7 +225,7 @@ function createRevisionData(entryRevision, localEntryBundle, bundleManifestResou
     href = '',
   } = entryRevision || {};
   const id = href;
-  const is_on_disk = Boolean(Object.keys(localEntryBundle || {}));
+  const is_on_disk = Object.keys(localEntryBundle || {}) ? 'Y' : 'N';
   const { storedFiles = {}, rawManifestResources = {} } = bundleManifestResources || {};
   const stored = Object.values(storedFiles).length;
   const manifest = Object.values(rawManifestResources).length;
@@ -717,6 +717,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           columnConfig={columnConfig}
           secondarySorts={['revision']}
           defaultOrderBy="revision"
+          orderDirection="desc"
           onSelectedRowIds={this.onSelectedIds}
           selectAll={false}
         />);
