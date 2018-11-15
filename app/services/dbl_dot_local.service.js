@@ -14,6 +14,7 @@ export const dblDotLocalService = {
   newBundleMedia,
   sessionAddTasks,
   createNewBundle,
+  downloadMetadata,
   startDblDotLocal,
   importConfigXml,
   exportConfigXml,
@@ -96,6 +97,10 @@ async function sessionAddTasks(innerTasks) {
 
 function createNewBundle(medium) {
   return sessionAddTasks(`<createNewBundle><medium>${medium}</medium></createNewBundle>`);
+}
+
+function downloadMetadata(dblId, revision) {
+  return sessionAddTasks(`<downloadMetadata> <entry>${dblId}</entry> <revision>${revision}</revision> </downloadMetadata>`);
 }
 
 function handlResponseAsReadable(response) {

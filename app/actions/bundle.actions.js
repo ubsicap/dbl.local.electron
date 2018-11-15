@@ -10,6 +10,7 @@ import { dblDotLocalService } from '../services/dbl_dot_local.service';
 export const bundleActions = {
   fetchAll,
   createNewBundle,
+  createBundleFromDBL,
   forkIntoNewBundle,
   createDraftRevision,
   updateBundle,
@@ -173,6 +174,27 @@ export function createNewBundle(_medium) {
   }
   function failure(error) {
     return { type: bundleConstants.CREATE_FAILURE, error };
+  }
+}
+
+export function createBundleFromDBL(dblId, revision) {
+  return async dispatch => {
+    try {
+      dispatch(request(dblId, revision));
+      await dblDotLocalService.downloadMetadata(dblId, revision);
+      dispatch(success(dblId, revision));
+    } catch (error) {
+      dispatch(failure(error));
+    }
+  };
+  function request() {
+    return { type: bundleConstants.CREATE_FROM_DBL_REQUEST, dblId, revision };
+  }
+  function success() {
+    return { type: bundleConstants.CREATE_FROM_DBL_SUCCESS, dblId, revision };
+  }
+  function failure(error) {
+    return { type: bundleConstants.CREATE_FROM_DBL_FAILURE, error };
   }
 }
 

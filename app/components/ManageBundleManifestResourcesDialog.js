@@ -27,7 +27,7 @@ import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth
 } from '../actions/bundleManageResources.actions';
-import { downloadResources, getEntryRevisions } from '../actions/bundle.actions';
+import { downloadResources, getEntryRevisions, createBundleFromDBL } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
 import EnhancedTable from './EnhancedTable';
@@ -62,7 +62,8 @@ type Props = {
   getEntryRevisions: () => {},
   downloadResources: () => {},
   addManifestResources: () => {},
-  checkPublicationsHealth: () => {}
+  checkPublicationsHealth: () => {},
+  createBundleFromDBL: () => {}
 };
 
 function createUpdatedTotalResources(origTotalResources, filePath, updateFunc) {
@@ -258,7 +259,7 @@ const makeGetEntryRevisionsData = () => createSelector(
 );
 
 function mapStateToProps(state, props) {
-  const { bundles, bundleEditMetadata, bundleManageResources } = state;
+  const { bundleEditMetadata, bundleManageResources } = state;
   const { publicationsHealth, progress = 100, loading = false } = bundleManageResources;
   const {
     errorMessage: publicationsHealthMessage,
@@ -268,17 +269,17 @@ function mapStateToProps(state, props) {
   } = publicationsHealth || {};
   const { bundleId, mode } = props.match.params;
   const { showMetadataFile } = bundleEditMetadata;
-  const { addedByBundleIds } = bundles;
   const columnConfig = createColumnConfig(mode);
   const getManifestResourceData = makeGetManifestResourcesData();
+  const bundlesById = getBundlesById(state);
   const getEntryRevisionsData = makeGetEntryRevisionsData();
-  const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
+  const selectedBundle = bundleId ? bundlesById[bundleId] : {};
   return {
     open: Boolean(bundleId),
     loading,
     progress,
     bundleId,
-    bundlesById: getBundlesById(state),
+    bundlesById,
     selectedBundle,
     mode,
     showMetadataFile,
@@ -300,7 +301,8 @@ const mapDispatchToProps = {
   getEntryRevisions,
   downloadResources,
   addManifestResources,
-  checkPublicationsHealth
+  checkPublicationsHealth,
+  createBundleFromDBL
 };
 
 const materialStyles = theme => ({
@@ -402,11 +404,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   handleDownloadRevision = () => {
-
+    const { selectedBundle } = this.props;
+    const { selected } = this.getSelectedLocalBundle();
+    this.props.createBundleFromDBL(selectedBundle.dblId, selected.revision);
   }
 
-  handleSwitchRevision = () => {
-
+  handleSwitchToRevision = () => {
+    const { selected, localBundle } = this.getSelectedLocalBundle();
+    this.handleClose();
   }
 
   handleAddFiles = () => {
@@ -617,15 +622,15 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           }
         };
       case 'revisions': {
-        const selectedLocalBundle = this.getSelectedLocalBundle();
+        const hasLocalBundle = Boolean(this.getSelectedLocalBundle().localBundle);
         return {
           mode,
           appBar: {
             title: 'Revisions',
             OkButtonProps: {
-              color: selectedLocalBundle.localBundle ? 'inherit' : 'secondary',
-              variant: selectedLocalBundle.localBundle ? 'text' : 'contained',
-              onClick: this.handleDownloadRevision,
+              color: hasLocalBundle ? 'inherit' : 'secondary',
+              variant: hasLocalBundle ? 'text' : 'contained',
+              onClick: hasLocalBundle ? this.handleSwitchToRevision : this.handleDownloadRevision,
               disabled: this.isNothingSelected()
             },
             OkButtonLabel: `${this.getRevisionsOkButtonLabel()}`,
