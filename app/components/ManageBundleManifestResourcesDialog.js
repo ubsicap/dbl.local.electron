@@ -246,7 +246,8 @@ const makeGetEntryRevisionsData = () => createSelector(
     const entryRevisions = allEntryRevisions[dblId] || {};
     return Object.values(entryRevisions)
       .map(entryRevision => {
-        const [localEntryBundle] = localEntryBundles.find(b => b.revision === entryRevision.revision);
+        const revision = `${entryRevision.revision}`;
+        const localEntryBundle = localEntryBundles.find(b => b.revision === revision);
         const { id: localBundleId } = localEntryBundle || {};
         const { [localBundleId]: bundleManifestResources = [] } = manifestResources;
         return createRevisionData(entryRevision, localEntryBundle, bundleManifestResources);
