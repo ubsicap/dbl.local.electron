@@ -225,12 +225,12 @@ function createRevisionData(entryRevision, localEntryBundle, bundleManifestResou
     href = '',
   } = entryRevision || {};
   const id = href;
-  const is_on_disk = Object.keys(localEntryBundle || {}) ? 'Y' : 'N';
+  const is_on_disk = Boolean(Object.keys(localEntryBundle || {}).length);
   const { storedFiles = {}, rawManifestResources = {} } = bundleManifestResources || {};
-  const stored = Object.values(storedFiles).length;
-  const manifest = Object.values(rawManifestResources).length;
+  const stored = is_on_disk ? Object.values(storedFiles).length : '';
+  const manifest = is_on_disk ? Object.values(rawManifestResources).length : '';
   return {
-    id, href, created_on, revision, version, archivist, comments, is_on_disk, stored, manifest
+    id, href, created_on, revision, version, archivist, comments, stored, manifest
   };
 }
 
