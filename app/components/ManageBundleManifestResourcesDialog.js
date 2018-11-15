@@ -49,6 +49,7 @@ type Props = {
   mode: string,
   showMetadataFile: ?string,
   manifestResources: [],
+  entryRevisions: [],
   columnConfig: [],
   isOkToAddFiles: boolean,
   publicationsHealthMessage: ?string,
@@ -375,8 +376,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       const { bundleId } = this.props;
       this.props.getManifestResources(bundleId);
     }
-    if (nextProps.manifestResources.length !== this.props.manifestResources) {
-      this.setState({ tableData: nextProps.manifestResources });
+    if ((nextProps.manifestResources.length !== this.props.manifestResources) ||
+      (this.props.mode === 'revisions' && nextProps.entryRevisions !== this.entryRevisions)) {
+      this.updateTableData(nextProps);
     }
   }
 
@@ -384,6 +386,11 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     if (this.props.showMetadataFile && !prevProps.showMetadataFile) {
       shell.openExternal(this.props.showMetadataFile);
     }
+  }
+
+  updateTableData = (props) => {
+    const tableData = props.mode === 'revisions' ? props.entryRevisions : props.manifestResources;
+    this.setState({ tableData });
   }
 
   handleClickOk = () => {
@@ -708,8 +715,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         return (<EnhancedTable
           data={tableData}
           columnConfig={columnConfig}
-          secondarySorts={['created_on']}
-          defaultOrderBy="created_on"
+          secondarySorts={['revision']}
+          defaultOrderBy="revision"
           onSelectedRowIds={this.onSelectedIds}
           selectAll={false}
         />);
