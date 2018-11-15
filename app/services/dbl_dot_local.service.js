@@ -69,7 +69,7 @@ async function newBundleMedia() {
 async function getEntryRevisions(dblId) {
   const requestOptions = {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' }
+    headers: { ...authHeader(), 'Content-Type': 'application/json' }
   };
   try {
     const response = await fetch(`${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/dbl/entry-revisions/${dblId}`, requestOptions);
