@@ -1,5 +1,6 @@
 import traverse from 'traverse';
 import log from 'electron-log';
+import waitUntil from 'async-wait-until';
 import { List, Map } from 'immutable';
 import throttledQueue from 'throttled-queue';
 import { bundleConstants } from '../constants/bundle.constants';
@@ -179,21 +180,28 @@ export function createNewBundle(_medium) {
   }
 }
 
+function bundleForEntryRevisionHasBeenMade(getState, dblIdTarget, revisionTarget) {
+  const { bundles: { allBundles } } = getState();
+  const targetBundle = allBundles.find(b => b.dblId === dblIdTarget && b.revision === revisionTarget);
+  return targetBundle || false;
+}
+
 export function createBundleFromDBL(dblId, revision, license) {
-  return async dispatch => {
+  return async (dispatch, getState) => {
     try {
-      dispatch(request(dblId, revision));
+      dispatch(request());
       await dblDotLocalService.downloadMetadata(dblId, revision, license);
-      dispatch(success(dblId, revision));
+      const targetBundle = await waitUntil(async () => bundleForEntryRevisionHasBeenMade(getState, dblId, revision), 60000, 500);
+      dispatch(success(targetBundle));
     } catch (error) {
       dispatch(failure(error));
     }
   };
   function request() {
-    return { type: bundleConstants.CREATE_FROM_DBL_REQUEST, dblId, revision };
+    return { type: bundleConstants.CREATE_FROM_DBL_REQUEST, dblId, revision, license };
   }
-  function success() {
-    return { type: bundleConstants.CREATE_FROM_DBL_SUCCESS, dblId, revision };
+  function success(targetBundle) {
+    return { type: bundleConstants.CREATE_FROM_DBL_SUCCESS, dblId, revision, license, targetBundle };
   }
   function failure(error) {
     return { type: bundleConstants.CREATE_FROM_DBL_FAILURE, error };

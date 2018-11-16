@@ -1,4 +1,5 @@
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
+import { bundleConstants } from '../constants/bundle.constants';
 import { utilities } from '../utils/utilities';
 
 const initialState = {
@@ -70,6 +71,24 @@ export function bundleManageResources(state = initialState, action) {
       return {
         ...state,
         loading: false
+      };
+    }
+    case bundleConstants.CREATE_FROM_DBL_REQUEST: {
+      return {
+        ...state,
+        fetchingMetadata: true
+      };
+    }
+    case bundleConstants.CREATE_FROM_DBL_SUCCESS: {
+      return {
+        ...state,
+        fetchingMetadata: false
+      };
+    }
+    case bundleConstants.CREATE_FROM_DBL_ERROR: {
+      return {
+        ...state,
+        fetchingMetadata: false
       };
     }
     case bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR: {

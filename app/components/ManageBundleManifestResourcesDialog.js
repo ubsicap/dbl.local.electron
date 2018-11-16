@@ -262,7 +262,9 @@ const makeGetEntryRevisionsData = () => createSelector(
 
 function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundleManageResources } = state;
-  const { publicationsHealth, progress = 100, loading = false } = bundleManageResources;
+  const {
+    publicationsHealth, progress = 100, loading = false, fetchingMetadata = false
+  } = bundleManageResources;
   const {
     errorMessage: publicationsHealthMessage,
     goFix: goFixPublications,
@@ -278,7 +280,7 @@ function mapStateToProps(state, props) {
   const origBundle = bundleId ? bundlesById[bundleId] : {};
   return {
     open: Boolean(bundleId),
-    loading,
+    loading: loading || fetchingMetadata,
     progress,
     bundleId,
     bundlesById,
@@ -635,7 +637,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               color: hasLocalBundle ? 'inherit' : 'secondary',
               variant: hasLocalBundle ? 'text' : 'contained',
               onClick: hasLocalBundle ? this.handleSwitchToRevision : this.handleDownloadRevision,
-              disabled: this.isNothingSelected()
+              disabled: this.isNothingSelected() || this.props.loading
             },
             OkButtonLabel: `${this.getRevisionsOkButtonLabel()}`,
             OkButtonIcon: <CheckIcon className={classNames(classes.leftIcon)} />,
