@@ -7,6 +7,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import ListIcon from '@material-ui/icons/List';
+import ListAltIcon from '@material-ui/icons/FormatListNumberedRtl';
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 
@@ -16,13 +17,15 @@ function mapStateToProps(state) {
   const { bundlesFilter, bundles } = state;
   const {
     downloadQueue = { nSpecs: 0, nAtoms: 0 },
-    uploadQueue = { nSpecs: 0, nAtoms: 0 }
+    uploadQueue = { nSpecs: 0, nAtoms: 0 },
+    allBundles
   } = bundles;
   const { isSearchActive, searchResults } = bundlesFilter;
   const entriesMatching = (isSearchActive && searchResults) ? Object.keys(searchResults.bundlesMatching) : [];
   const entries = bundles.items;
   return {
     entries,
+    allBundles,
     entriesMatching,
     isSearchActive,
     downloadQueue,
@@ -38,6 +41,7 @@ const mapDispatchToProps = {
 type Props = {
     classes: {},
     entries: [],
+    allBundles: [],
     entriesMatching: [],
     isSearchActive: boolean,
     downloadQueue: {},
@@ -78,7 +82,7 @@ class DblDotLocalAppBar extends React.PureComponent {
 
   render() {
     const {
-      classes, entries, entriesMatching, isSearchActive, downloadQueue, uploadQueue
+      classes, entries, entriesMatching, isSearchActive, downloadQueue, uploadQueue, allBundles
     } = this.props;
     return (
       <AppBar position="sticky" className={classes.appBar}>
@@ -94,6 +98,14 @@ class DblDotLocalAppBar extends React.PureComponent {
                 <Typography variant="title" color="inherit" className={classes.textSmall}>
                   {entries.length}
                 </Typography>}
+            </div>
+          </Tooltip>
+          <Tooltip title="Bundles">
+            <div className={classes.dblDotLocalBarItem}>
+              <ListAltIcon />
+              <Typography variant="title" color="inherit" className={classes.textSmall}>
+                {allBundles.length}
+              </Typography>
             </div>
           </Tooltip>
           <div className={classes.flex} />
