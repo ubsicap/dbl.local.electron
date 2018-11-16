@@ -99,8 +99,8 @@ function createNewBundle(medium) {
   return sessionAddTasks(`<createNewBundle><medium>${medium}</medium></createNewBundle>`);
 }
 
-function downloadMetadata(dblId, revision) {
-  return sessionAddTasks(`<downloadMetadata> <entry>${dblId}</entry> <revision>${revision}</revision> </downloadMetadata>`);
+function downloadMetadata(dblId, revision, license) {
+  return sessionAddTasks(`<downloadMetadata> <entry>${dblId}</entry> <revision>${revision}</revision> <license>${license}</license> </downloadMetadata>`);
 }
 
 function handlResponseAsReadable(response) {

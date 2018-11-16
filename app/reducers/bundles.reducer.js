@@ -6,13 +6,21 @@ import { utilities } from '../utils/utilities';
 
 const [idKey] = ['id'];
 
-function sortAndFilterBundlesAsEntries(allBundles, shouldIndexByIds = true) {
+function sortAndFilterBundlesAsEntries(
+  allBundles,
+  selectedBundleEntryRevisions = {},
+  shouldIndexByIds = true
+) {
   const sortedBundles = sort(allBundles).asc([
     b => b.dblId,
     b => (b.revision === '0' || !b.revision ? ~10000000 : ~b.revision) // eslint-disable-line no-bitwise
   ]);
   const reducedBundles = List(sortedBundles).reduce((acc, b) => {
     if (acc.visitedDblIds.includes(b.dblId)) {
+      return acc;
+    }
+    const selectedEntryRevisionBundle = selectedBundleEntryRevisions[b.dblId];
+    if (selectedEntryRevisionBundle && selectedEntryRevisionBundle.bundleId !== b.id) {
       return acc;
     }
     const visitedDblIds = acc.visitedDblIds.add(b.dblId);
@@ -90,7 +98,7 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
     case bundleConstants.FETCH_SUCCESS: {
       const { bundles: bundlesRaw, newMediaTypes = [] } = action;
       const allBundles = bundlesRaw.map(bundle => addBundleDecorators(bundle));
-      const { items, addedByBundleIds } = sortAndFilterBundlesAsEntries(allBundles);
+      const { items, addedByBundleIds } = sortAndFilterBundlesAsEntries(allBundles, state.selectedBundleEntryRevisions);
       const uploadJobs = items.filter(b => b.uploadJob).reduce((acc, b) =>
         ({ ...acc, [b.id]: b.uploadJob, [b.uploadJob]: b.id }), {});
       return {
@@ -133,7 +141,7 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
     case bundleConstants.DELETE_SUCCESS: {
       const { id: bundleIdToRemove } = action;
       const allBundles = state.allBundles.filter(bundle => bundle.id !== bundleIdToRemove);
-      const { items, addedByBundleIds } = sortAndFilterBundlesAsEntries(allBundles);
+      const { items, addedByBundleIds } = sortAndFilterBundlesAsEntries(allBundles, state.selectedBundleEntryRevisions);
       const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, null, bundleIdToRemove, items);
       return {
         ...state,
@@ -149,7 +157,7 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
       const { allBundles: origUnsorted } = state;
       const decoratedBundle = addBundleDecorators(bundle);
       const allBundles = ([decoratedBundle, ...origUnsorted]);
-      const { items } = sortAndFilterBundlesAsEntries(allBundles, false);
+      const { items } = sortAndFilterBundlesAsEntries(allBundles, state.selectedBundleEntryRevisions, false);
       const { addedByBundleIds } = updateIndexedByIds(state, decoratedBundle);
       const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, decoratedBundle, null, items);
       return {
@@ -270,6 +278,18 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
         selectedDBLEntryId
       };
     }
+    case bundleConstants.SELECT_BUNDLE_ENTRY_REVISION: {
+      const { id: bundleId, revision, dblId } = action;
+      const { selectedBundleEntryRevisions: selectedBundleEntryRevisionsOrig = {}, allBundles } = state;
+      const selectedBundleEntryRevisions = { ...selectedBundleEntryRevisionsOrig, [dblId]: { dblId, revision, bundleId } };
+      const { items, addedByBundleIds } = sortAndFilterBundlesAsEntries(allBundles, selectedBundleEntryRevisions);
+      return {
+        ...state,
+        selectedBundleEntryRevisions,
+        items,
+        addedByBundleIds
+      };
+    }
     case bundleConstants.GET_ENTRY_REVISIONS_RESPONSE: {
       const { allEntryRevisions: allEntryRevisionsOrig = {} } = state;
       const { dblId, entryRevisions } = action;
@@ -286,7 +306,7 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
 
   function updateTaskStatusProgress(bundleId, task, status, progress, updateDecorators) {
     const allBundles = updateBundleItems(bundleId, task, status, progress, updateDecorators);
-    const { items } = sortAndFilterBundlesAsEntries(allBundles, false);
+    const { items } = sortAndFilterBundlesAsEntries(allBundles, state.selectedBundleEntryRevisions, false);
     const decoratedBundle = allBundles.find(bundle => bundle.id === bundleId);
     const { addedByBundleIds } = updateIndexedByIds(state, decoratedBundle);
     return {

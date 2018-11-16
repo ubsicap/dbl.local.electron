@@ -27,7 +27,7 @@ import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth
 } from '../actions/bundleManageResources.actions';
-import { downloadResources, getEntryRevisions, createBundleFromDBL } from '../actions/bundle.actions';
+import { downloadResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
 import EnhancedTable from './EnhancedTable';
@@ -45,7 +45,7 @@ type Props = {
   progress: number,
   bundleId: ?string,
   bundlesById: ?{},
-  selectedBundle: {},
+  origBundle: {},
   mode: string,
   showMetadataFile: ?string,
   manifestResources: [],
@@ -63,7 +63,8 @@ type Props = {
   downloadResources: () => {},
   addManifestResources: () => {},
   checkPublicationsHealth: () => {},
-  createBundleFromDBL: () => {}
+  createBundleFromDBL: () => {},
+  selectBundleEntryRevision: () => {}
 };
 
 function createUpdatedTotalResources(origTotalResources, filePath, updateFunc) {
@@ -274,14 +275,14 @@ function mapStateToProps(state, props) {
   const getManifestResourceData = makeGetManifestResourcesData();
   const bundlesById = getBundlesById(state);
   const getEntryRevisionsData = makeGetEntryRevisionsData();
-  const selectedBundle = bundleId ? bundlesById[bundleId] : {};
+  const origBundle = bundleId ? bundlesById[bundleId] : {};
   return {
     open: Boolean(bundleId),
     loading,
     progress,
     bundleId,
     bundlesById,
-    selectedBundle,
+    origBundle,
     mode,
     showMetadataFile,
     manifestResources: getManifestResourceData(state, props),
@@ -303,7 +304,8 @@ const mapDispatchToProps = {
   downloadResources,
   addManifestResources,
   checkPublicationsHealth,
-  createBundleFromDBL
+  createBundleFromDBL,
+  selectBundleEntryRevision
 };
 
 const materialStyles = theme => ({
@@ -405,13 +407,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   handleDownloadRevision = () => {
-    const { selectedBundle } = this.props;
+    const { origBundle } = this.props;
     const { selected } = this.getSelectedLocalBundle();
-    this.props.createBundleFromDBL(selectedBundle.dblId, selected.revision);
+    this.props.createBundleFromDBL(origBundle.dblId, selected.revision, origBundle.license);
   }
 
   handleSwitchToRevision = () => {
-    const { selected, localBundle } = this.getSelectedLocalBundle();
+    const { localBundle } = this.getSelectedLocalBundle();
+    this.props.selectBundleEntryRevision(localBundle);
     this.handleClose();
   }
 
@@ -778,10 +781,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   render() {
     const {
-      classes, open, selectedBundle = {},
+      classes, open, origBundle = {},
       publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading, progress
     } = this.props;
-    const { displayAs = {} } = selectedBundle;
+    const { displayAs = {} } = origBundle;
     const { languageAndCountry, name } = displayAs;
     const modeUi = this.modeUi();
     const isAddFilesMode = this.isAddFilesMode();

@@ -22,7 +22,8 @@ export const bundleActions = {
   toggleSelectEntry,
   uploadBundle,
   fetchDownloadQueueCounts,
-  removeExcessBundles
+  removeExcessBundles,
+  selectBundleEntryRevision
 };
 
 export default bundleActions;
@@ -178,11 +179,11 @@ export function createNewBundle(_medium) {
   }
 }
 
-export function createBundleFromDBL(dblId, revision) {
+export function createBundleFromDBL(dblId, revision, license) {
   return async dispatch => {
     try {
       dispatch(request(dblId, revision));
-      await dblDotLocalService.downloadMetadata(dblId, revision);
+      await dblDotLocalService.downloadMetadata(dblId, revision, license);
       dispatch(success(dblId, revision));
     } catch (error) {
       dispatch(failure(error));
@@ -686,6 +687,16 @@ export function toggleSelectEntry(selectedBundle) {
     type: bundleConstants.TOGGLE_SELECT,
     selectedBundle,
     selectedDBLEntryId: selectedBundle.dblId
+  };
+}
+
+export function selectBundleEntryRevision(bundle) {
+  return {
+    type: bundleConstants.SELECT_BUNDLE_ENTRY_REVISION,
+    bundle,
+    id: bundle.id,
+    dblId: bundle.dblId,
+    revision: bundle.revision
   };
 }
 
