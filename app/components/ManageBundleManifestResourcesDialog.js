@@ -229,7 +229,8 @@ function createRevisionData(entryRevision, localEntryBundle, bundleManifestResou
   const is_on_disk = Boolean(Object.keys(localEntryBundle || {}).length);
   const localBundle = localEntryBundle || null;
   const { storedFiles = {}, rawManifestResources = {} } = bundleManifestResources || {};
-  const stored = is_on_disk ? Object.keys(storedFiles).filter(uri => uri !== 'metadata.xml').length : '';
+  const storedFromManifest = Object.values(rawManifestResources).filter(r => r.uri in storedFiles);
+  const stored = is_on_disk ? storedFromManifest.length : '';
   const manifest = is_on_disk ? Object.values(rawManifestResources).length : '';
   return {
     disabled, id, href, localBundle, created_on, revision, version, archivist, comments, stored, manifest
