@@ -21,7 +21,8 @@ export const bundleActions = {
   removeResources,
   toggleSelectEntry,
   uploadBundle,
-  fetchDownloadQueueCounts
+  fetchDownloadQueueCounts,
+  removeExcessBundles
 };
 
 export default bundleActions;
@@ -419,7 +420,6 @@ function addBundle(bundle, rawBundle) {
       rawBundle
     });
     dispatch(updateSearchResultsForBundleId(bundle.id));
-    dispatch(removeExcessBundles()); // debounced
   });
 }
 
@@ -427,14 +427,9 @@ function isInDraftMode(bundle) {
   return bundle.mode === 'create' || bundle.status === 'DRAFT';
 }
 
-function removeExcessBundles() {
-  const thunk = (dispatch, getState) => {
-    const { bundles, downloadQueue: { nSpecs = 0 } = {} } = getState();
-    if (nSpecs >= 10) {
-      // don't auto-remove when processing a lot of downloads (i.e. of metadata for new bundles)
-      return;
-    }
-    console.log('remove excess bundles');
+export function removeExcessBundles() {
+  return (dispatch, getState) => {
+    const { bundles } = getState();
     const { addedByBundleIds, items } = bundles;
     const itemsByBundleIds = List(items).map(bundle => bundle.id).toSet();
     const itemsByParentIds = List(items).filter(b => b.parent).reduce((acc, bundle) =>
@@ -466,17 +461,11 @@ function removeExcessBundles() {
       }
       return true;
     });
+    console.log(`Deleting ${bundleIdsToRemove.length} empty/unused bundles`);
     bundleIdsToRemove.forEach((idBundleToRemove) => {
       dispatch(removeBundle(idBundleToRemove));
     });
   };
-  thunk.meta = {
-    debounce: {
-      time: 10500,
-      key: 'BUNDLES_REMOVE_EXCESS_BUNDLES'
-    }
-  };
-  return thunk;
 }
 
 function updateDownloadQueue(nSpecs, nAtoms) {
