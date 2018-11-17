@@ -612,10 +612,6 @@ async-limiter@~1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/async-limiter/-/async-limiter-1.0.0.tgz#78faed8c3d074ab81f22b4e985d79e8738f720f8"
 
-async-wait-until@^1.2.4:
-  version "1.2.4"
-  resolved "https://registry.yarnpkg.com/async-wait-until/-/async-wait-until-1.2.4.tgz#55a6c29145b8037742a629b0ae0b69b5e2988404"
-
 async@^1.4.0, async@^1.5.2:
   version "1.5.2"
   resolved "https://registry.yarnpkg.com/async/-/async-1.5.2.tgz#ec6a61ae56480c0c3cb241c95618e20892f9672a"
@@ -7359,6 +7355,10 @@ node-sass@^4.7.2:
     sass-graph "^2.2.4"
     stdout-stream "^1.4.0"
     "true-case-path" "^1.0.2"
+
+node-wait-until@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/node-wait-until/-/node-wait-until-1.0.0.tgz#226f469fbd1266ad99d5bcffac8e4f2a264767a5"
 
 nomnom@~1.6.2:
   version "1.6.2"

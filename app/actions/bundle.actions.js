@@ -1,6 +1,6 @@
 import traverse from 'traverse';
 import log from 'electron-log';
-import waitUntil from 'async-wait-until';
+import waitUntil from 'node-wait-until';
 import { List, Map } from 'immutable';
 import throttledQueue from 'throttled-queue';
 import { bundleConstants } from '../constants/bundle.constants';
@@ -182,8 +182,8 @@ export function createNewBundle(_medium) {
 
 function bundleForEntryRevisionHasBeenMade(getState, dblIdTarget, revisionTarget) {
   const { bundles: { allBundles } } = getState();
-  const targetBundle = allBundles.find(b => b.dblId === dblIdTarget && b.revision === revisionTarget);
-  return targetBundle || false;
+  const targetBundle = allBundles.find(b => b.dblId === dblIdTarget && b.revision === `${revisionTarget}`);
+  return targetBundle;
 }
 
 export function createBundleFromDBL(dblId, revision, license) {
@@ -191,7 +191,7 @@ export function createBundleFromDBL(dblId, revision, license) {
     try {
       dispatch(request());
       await dblDotLocalService.downloadMetadata(dblId, revision, license);
-      const targetBundle = await waitUntil(async () => bundleForEntryRevisionHasBeenMade(getState, dblId, revision), 60000, 500);
+      const targetBundle = await waitUntil(() => bundleForEntryRevisionHasBeenMade(getState, dblId, revision), 60000, 500);
       dispatch(success(targetBundle));
     } catch (error) {
       dispatch(failure(error));
