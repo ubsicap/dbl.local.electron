@@ -14,6 +14,7 @@ export const dblDotLocalService = {
   newBundleMedia,
   sessionAddTasks,
   createNewBundle,
+  downloadMetadata,
   startDblDotLocal,
   importConfigXml,
   exportConfigXml,
@@ -24,7 +25,8 @@ export const dblDotLocalService = {
   convertConfigXmlToJson,
   updateConfigXmlWithNewPaths,
   updateAndWriteConfigXmlSettings,
-  startEventSource
+  startEventSource,
+  getEntryRevisions
 };
 export default dblDotLocalService;
 
@@ -65,6 +67,19 @@ async function newBundleMedia() {
   }
 }
 
+async function getEntryRevisions(dblId) {
+  const requestOptions = {
+    method: 'GET',
+    headers: { ...authHeader(), 'Content-Type': 'application/json' }
+  };
+  try {
+    const response = await fetch(`${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/dbl/entry-revisions/${dblId}`, requestOptions);
+    return handlResponseAsReadable(response).json();
+  } catch (error) {
+    return handlResponseAsReadable(error);
+  }
+}
+
 async function sessionAddTasks(innerTasks) {
   const requestOptions = {
     method: 'POST',
@@ -82,6 +97,10 @@ async function sessionAddTasks(innerTasks) {
 
 function createNewBundle(medium) {
   return sessionAddTasks(`<createNewBundle><medium>${medium}</medium></createNewBundle>`);
+}
+
+function downloadMetadata(dblId, revision, license) {
+  return sessionAddTasks(`<downloadMetadata> <entry>${dblId}</entry> <revision>${revision}</revision> <license>${license}</license> </downloadMetadata>`);
 }
 
 function handlResponseAsReadable(response) {

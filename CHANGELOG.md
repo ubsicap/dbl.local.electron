@@ -1,3 +1,10 @@
+### Version 0.16.0
+#### Features
+- change Rev into button where user can select revision
+- Add Revisions count and button to Remove Empty/Unused Revisions
+#### Fixes
+- really wait until start/stop create mode when opening dialogs to editing metadata/resources
+
 ### Version 0.15.1
 #### Features
 - add dialog "Install Updates?" after updates are downloaded

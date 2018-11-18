@@ -1,7 +1,7 @@
 {
   "name": "nathanael",
   "productName": "nathanael",
-  "version": "0.15.1",
+  "version": "0.16.0",
   "description": "Electron frontend to DBL dot Local",
   "scripts": {
     "build": "concurrently \"npm run build-main\" \"npm run build-renderer\"",
@@ -194,7 +194,6 @@
   "dependencies": {
     "@material-ui/core": "^3.4.0",
     "@material-ui/icons": "^3.0.1",
-    "async-wait-until": "^1.2.4",
     "bootstrap": "4.0.0",
     "devtron": "^1.4.0",
     "electron-debug": "^1.5.0",
@@ -212,6 +211,7 @@
     "material-ui-superselectfield": "^1.9.8",
     "md5-file": "^4.0.0",
     "mui-table": "^2.2.0",
+    "node-wait-until": "^1.0.0",
     "popper.js": "^1.14.2",
     "react": "^16.3.0",
     "react-addons-shallow-compare": "^15.6.2",

@@ -13,10 +13,13 @@ export const bundleManageResourceActions = {
   checkPublicationsHealth
 };
 
-export function openResourceManager(_bundleId, _mode = 'download') {
+export function openResourceManager(_bundleId, _mode) {
   return async (dispatch) => {
+    if (['download', 'revisions'].includes(_mode)) {
+      return dispatch(navigate(_bundleId, _mode));
+    }
     const isInCreateMode = await bundleService.bundleIsInCreateMode(_bundleId);
-    if (isInCreateMode || _mode === 'download') {
+    if (isInCreateMode) {
       return dispatch(navigate(_bundleId, _mode));
     }
     await bundleService.waitStartCreateMode(_bundleId);
@@ -67,6 +70,7 @@ export function getManifestResources(_bundleId) {
   function success(bundleId, manifestResources, storedFiles) {
     return {
       type: bundleResourceManagerConstants.GET_MANIFEST_RESOURCES_RESPONSE,
+      bundleId,
       manifestResources,
       storedFiles
     };

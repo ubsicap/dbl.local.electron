@@ -1,4 +1,5 @@
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
+import { bundleConstants } from '../constants/bundle.constants';
 import { utilities } from '../utils/utilities';
 
 const initialState = {
@@ -21,11 +22,13 @@ export function bundleManageResources(state = initialState, action) {
       return initialState;
     }
     case bundleResourceManagerConstants.GET_MANIFEST_RESOURCES_RESPONSE: {
-      const { manifestResources: rawManifestResources, storedFiles } = action;
+      const { manifestResources: rawManifestResources, storedFiles, bundleId } = action;
+      const { manifestResources: manifestResourcesOrig = {} } = state;
+      const bundleManifestResources = { rawManifestResources, storedFiles };
+      const manifestResources = { ...manifestResourcesOrig, [bundleId]: bundleManifestResources };
       return {
         ...state,
-        rawManifestResources,
-        storedFiles
+        manifestResources
       };
     }
     case bundleResourceManagerConstants.UPDATE_MANIFEST_RESOURCES_REQUEST: {
@@ -68,6 +71,24 @@ export function bundleManageResources(state = initialState, action) {
       return {
         ...state,
         loading: false
+      };
+    }
+    case bundleConstants.CREATE_FROM_DBL_REQUEST: {
+      return {
+        ...state,
+        fetchingMetadata: true
+      };
+    }
+    case bundleConstants.CREATE_FROM_DBL_SUCCESS: {
+      return {
+        ...state,
+        fetchingMetadata: false
+      };
+    }
+    case bundleConstants.CREATE_FROM_DBL_ERROR: {
+      return {
+        ...state,
+        fetchingMetadata: false
       };
     }
     case bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR: {

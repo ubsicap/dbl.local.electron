@@ -1,17 +1,17 @@
 import traverse from 'traverse';
 import log from 'electron-log';
+import waitUntil from 'node-wait-until';
 import { List, Map } from 'immutable';
 import throttledQueue from 'throttled-queue';
 import { bundleConstants } from '../constants/bundle.constants';
 import { bundleService } from '../services/bundle.service';
 import { updateSearchResultsForBundleId } from '../actions/bundleFilter.actions';
-import { history } from '../store/configureStore';
-import { navigationConstants } from '../constants/navigation.constants';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 
 export const bundleActions = {
   fetchAll,
   createNewBundle,
+  createBundleFromDBL,
   forkIntoNewBundle,
   createDraftRevision,
   updateBundle,
@@ -22,17 +22,15 @@ export const bundleActions = {
   removeResources,
   toggleSelectEntry,
   uploadBundle,
-  fetchDownloadQueueCounts
+  fetchDownloadQueueCounts,
+  removeExcessBundles,
+  selectBundleEntryRevision
 };
 
 export default bundleActions;
 
 export function updateBundle(bundleId) {
   return async (dispatch) => {
-    const isDemoMode = history.location.pathname.includes('/demo');
-    if (isDemoMode) {
-      return;
-    }
     try {
       const rawBundle = await bundleService.fetchById(bundleId);
       if (!bundleService.apiBundleHasMetadata(rawBundle)) {
@@ -111,24 +109,20 @@ export function createDraftRevision(_bundleId) {
 }
 
 function updateUploadJobs(bundleId, uploadJob, removeJobOrBundle) {
-  return { type: bundleConstants.UPDATE_UPLOAD_JOBS, bundleId, uploadJob, removeJobOrBundle };
+  return {
+    type: bundleConstants.UPDATE_UPLOAD_JOBS, bundleId, uploadJob, removeJobOrBundle
+  };
 }
 
 export function fetchAll() {
   return async dispatch => {
     dispatch(request());
-    const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO;
-    if (isDemoMode) {
-      const mockBundles = getMockBundles();
-      dispatch(success(mockBundles));
-    } else {
-      try {
-        const newMediaTypes = await dblDotLocalService.newBundleMedia();
-        const { bundles } = await bundleService.fetchAll();
-        dispatch(success(bundles, newMediaTypes));
-      } catch (error) {
-        dispatch(failure(error));
-      }
+    try {
+      const newMediaTypes = await dblDotLocalService.newBundleMedia();
+      const { bundles } = await bundleService.fetchAll();
+      dispatch(success(bundles, newMediaTypes));
+    } catch (error) {
+      dispatch(failure(error));
     }
   };
 
@@ -186,6 +180,34 @@ export function createNewBundle(_medium) {
   }
 }
 
+function bundleForEntryRevisionHasBeenMade(getState, dblIdTarget, revisionTarget) {
+  const { bundles: { allBundles } } = getState();
+  const targetBundle = allBundles.find(b => b.dblId === dblIdTarget && b.revision === `${revisionTarget}`);
+  return targetBundle;
+}
+
+export function createBundleFromDBL(dblId, revision, license) {
+  return async (dispatch, getState) => {
+    try {
+      dispatch(request());
+      await dblDotLocalService.downloadMetadata(dblId, revision, license);
+      const targetBundle = await waitUntil(() => bundleForEntryRevisionHasBeenMade(getState, dblId, revision), 60000, 500);
+      dispatch(success(targetBundle));
+    } catch (error) {
+      dispatch(failure(error));
+    }
+  };
+  function request() {
+    return { type: bundleConstants.CREATE_FROM_DBL_REQUEST, dblId, revision, license };
+  }
+  function success(targetBundle) {
+    return { type: bundleConstants.CREATE_FROM_DBL_SUCCESS, dblId, revision, license, targetBundle };
+  }
+  function failure(error) {
+    return { type: bundleConstants.CREATE_FROM_DBL_FAILURE, error };
+  }
+}
+
 export function setupBundlesEventSource() {
   return (dispatch, getState) => {
     const { authentication: { eventSource } } = getState();
@@ -212,7 +234,7 @@ export function setupBundlesEventSource() {
     });
   };
 
-  /* 
+  /*
    * data:{"args": [1, 11], "component": "downloader", "type": "global_status"}
    */
   function listenDownloaderGlobalStatus(e) {
@@ -221,7 +243,7 @@ export function setupBundlesEventSource() {
     return updateDownloadQueue(nSpecs, nAtoms);
   }
 
-  /* 
+  /*
    * data:{"args": [11], "component": "uploader", "type": "global_status"}
    */
   function listenUploaderGlobalStatus() {
@@ -407,7 +429,6 @@ function addBundle(bundle, rawBundle) {
       rawBundle
     });
     dispatch(updateSearchResultsForBundleId(bundle.id));
-    dispatch(removeExcessBundles());
   });
 }
 
@@ -415,14 +436,9 @@ function isInDraftMode(bundle) {
   return bundle.mode === 'create' || bundle.status === 'DRAFT';
 }
 
-function removeExcessBundles() {
-  const thunk = (dispatch, getState) => {
-    const { bundles, downloadQueue: { nSpecs = 0 } = {} } = getState();
-    if (nSpecs >= 10) {
-      // don't auto-remove when processing a lot of downloads (i.e. of metadata for new bundles)
-      return;
-    }
-    console.log('remove excess bundles');
+export function removeExcessBundles() {
+  return (dispatch, getState) => {
+    const { bundles } = getState();
     const { addedByBundleIds, items } = bundles;
     const itemsByBundleIds = List(items).map(bundle => bundle.id).toSet();
     const itemsByParentIds = List(items).filter(b => b.parent).reduce((acc, bundle) =>
@@ -454,17 +470,11 @@ function removeExcessBundles() {
       }
       return true;
     });
+    console.log(`Deleting ${bundleIdsToRemove.length} empty/unused revisions`);
     bundleIdsToRemove.forEach((idBundleToRemove) => {
       dispatch(removeBundle(idBundleToRemove));
     });
   };
-  thunk.meta = {
-    debounce: {
-      time: 10500,
-      key: 'BUNDLES_REMOVE_EXCESS_BUNDLES'
-    }
-  };
-  return thunk;
 }
 
 function updateDownloadQueue(nSpecs, nAtoms) {
@@ -688,139 +698,26 @@ export function toggleSelectEntry(selectedBundle) {
   };
 }
 
-function getMockBundles() {
-  const bundles = [
-    {
-      id: 'bundle01',
-      dblId: 'dblId1',
-      revision: '3',
-      parent: null,
-      medium: 'print',
-      name: 'Test Bundle #1',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'UPLOAD',
-      status: 'COMPLETED',
-      resourceCountStored: 2,
-      resourceCountManifest: 2
-    },
-    {
-      id: 'bundle03',
-      dblId: 'dblId3',
-      revision: '52',
-      parent: null,
-      medium: 'audio',
-      name: 'Audio Bundle',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'DOWNLOAD',
-      status: 'IN_PROGRESS',
-      progress: 12,
-      resourceCountStored: 1,
-      resourceCountManifest: 2
-    },
-    {
-      id: 'bundle04',
-      dblId: 'dblId4',
-      revision: '0',
-      medium: 'audio',
-      name: 'Unfinished Bundle',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'UPLOAD',
-      status: 'DRAFT',
-      parent: { revision: '32' },
-      resourceCountStored: 1,
-      resourceCountManifest: 2
-    },
-    {
-      id: 'bundle05',
-      dblId: 'dblId5',
-      revision: '0',
-      medium: 'video',
-      name: 'Unfinished Video Bundle',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'UPLOAD',
-      status: 'DRAFT',
-      parent: { revision: '42' },
-      resourceCountStored: 1,
-      resourceCountManifest: 2
-    },
-    {
-      id: 'bundle06',
-      dblId: 'dblId6',
-      parent: null,
-      revision: '3',
-      medium: 'text',
-      name: 'DBL Bundle',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'DOWNLOAD',
-      status: 'NOT_STARTED',
-      resourceCountStored: 0,
-      resourceCountManifest: 2
-    },
-    {
-      id: 'bundle07',
-      dblId: 'dblId7',
-      revision: '4',
-      parent: null,
-      medium: 'text',
-      name: 'DBL Bundle',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'DOWNLOAD',
-      status: 'NOT_STARTED',
-      resourceCountStored: 0,
-      resourceCountManifest: 2
-    },
-    {
-      id: 'bundle08',
-      dblId: 'dblId8',
-      revision: '40',
-      parent: null,
-      medium: 'audio',
-      name: 'Audio Bundle #2',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'DOWNLOAD',
-      status: 'COMPLETED',
-      resourceCountStored: 2,
-      resourceCountManifest: 2
-    },
-    {
-      id: 'bundle09',
-      dblId: 'dblId9',
-      revision: '5',
-      parent: null,
-      medium: 'audio',
-      name: 'Audio Bundle #3',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'SAVETO',
-      status: 'IN_PROGRESS',
-      progress: 0,
-      resourceCountStored: 2,
-      resourceCountManifest: 2
-    },
-    {
-      id: 'bundle10',
-      dblId: 'dblId10',
-      revision: '4',
-      parent: null,
-      medium: 'audio',
-      name: 'Audio Bundle #4',
-      languageIso: 'eng',
-      countryIso: 'us',
-      task: 'SAVETO',
-      status: 'IN_PROGRESS',
-      progress: 66,
-      resourceCountStored: 2,
-      resourceCountManifest: 2
-    }
-  ];
-  // const taskOrder = ['UPLOAD', 'DOWNLOAD', 'SAVETO'];
-  // const statusOrder = ['IN_PROGRESS', 'DRAFT', 'COMPLETED', 'NOT_STARTED'];
-  return bundles;
+export function selectBundleEntryRevision(bundle) {
+  return {
+    type: bundleConstants.SELECT_BUNDLE_ENTRY_REVISION,
+    bundle,
+    id: bundle.id,
+    dblId: bundle.dblId,
+    revision: bundle.revision
+  };
+}
+
+export function getEntryRevisions(bundleId) {
+  return async (dispatch, getState) => {
+    const { bundles: { addedByBundleIds } } = getState();
+    const bundle = addedByBundleIds[bundleId];
+    const { dblId } = bundle;
+    const entryRevisions = await dblDotLocalService.getEntryRevisions(dblId);
+    dispatch({
+      type: bundleConstants.GET_ENTRY_REVISIONS_RESPONSE,
+      dblId,
+      entryRevisions
+    });
+  };
 }

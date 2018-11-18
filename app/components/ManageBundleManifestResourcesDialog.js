@@ -27,7 +27,7 @@ import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth
 } from '../actions/bundleManageResources.actions';
-import { downloadResources } from '../actions/bundle.actions';
+import { downloadResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
 import EnhancedTable from './EnhancedTable';
@@ -44,10 +44,12 @@ type Props = {
   loading: boolean,
   progress: number,
   bundleId: ?string,
-  selectedBundle: {},
+  bundlesById: ?{},
+  origBundle: {},
   mode: string,
   showMetadataFile: ?string,
   manifestResources: [],
+  entryRevisions: [],
   columnConfig: [],
   isOkToAddFiles: boolean,
   publicationsHealthMessage: ?string,
@@ -57,9 +59,12 @@ type Props = {
   closeResourceManager: () => {},
   openMetadataFile: () => {},
   getManifestResources: () => {},
+  getEntryRevisions: () => {},
   downloadResources: () => {},
   addManifestResources: () => {},
-  checkPublicationsHealth: () => {}
+  checkPublicationsHealth: () => {},
+  createBundleFromDBL: () => {},
+  selectBundleEntryRevision: () => {}
 };
 
 function createUpdatedTotalResources(origTotalResources, filePath, updateFunc) {
@@ -143,7 +148,7 @@ function createAddedResource(fullToRelativePaths) {
 }
 
 function isNumeric(columnName) {
-  return ['size'].includes(columnName);
+  return ['size', 'revision', 'stored', 'manifest'].includes(columnName);
 }
 
 function getLabel(columnName) {
@@ -152,26 +157,114 @@ function getLabel(columnName) {
 
 const secondarySorts = ['container', 'name', 'status'];
 
-function createColumnConfig() {
-  const { id, uri, disabled, ...columns } = createResourceData({}, {}, 'ignore');
+function mapColumns(columns) {
   return Object.keys(columns)
     .map(c => ({ name: c, type: isNumeric(c) ? 'numeric' : 'string', label: getLabel(c) }));
 }
 
-const getRawManifestResources = (state) => state.bundleManageResources.rawManifestResources || {};
-const getStoredFiles = (state) => state.bundleManageResources.storedFiles;
+function createColumnConfig(mode) {
+  if (mode === 'revisions') {
+    const { id, href, localBundle, disabled, ...columns } = createRevisionData();
+    return mapColumns(columns);
+  }
+  const { id, uri, disabled, ...columns } = createResourceData({}, {}, 'ignore');
+  return mapColumns(columns);
+}
+
+const getAllManifestResources = (state) => state.bundleManageResources.manifestResources || {};
 const getMode = (state) => state.bundleManageResources.mode;
+const getBundleId = (state, props) => props.match.params.bundleId;
+const getAllEntryRevisions = (state) => state.bundles.allEntryRevisions || {};
+const getBundlesById = (state) => state.bundles.addedByBundleIds || {};
+
+function getOrDefault(obj, prop, defaultValue) {
+  if (!obj) {
+    return defaultValue;
+  }
+  return obj[prop] || defaultValue;
+}
+
+const emptyBundleManifestResources = { rawManifestResources: {}, storedFiles: {} };
 
 const makeGetManifestResourcesData = () => createSelector(
-  [getRawManifestResources, getStoredFiles, getMode],
-  (rawManifestResources, storedFiles, mode) =>
-    Object.values(rawManifestResources)
-      .map(r => createResourceData(r, storedFiles[r.uri], mode))
+  [getAllManifestResources, getMode, getBundleId],
+  (manifestResources, mode, bundleId) => {
+    const bundleManifestResources = getOrDefault(
+      manifestResources,
+      bundleId,
+      emptyBundleManifestResources
+    );
+    const { rawManifestResources, storedFiles } = bundleManifestResources;
+    return Object.values(rawManifestResources)
+      .map(r => createResourceData(r, storedFiles[r.uri], mode));
+  }
+);
+
+/*
+  {
+  "archivist": "B68BB7E4F225974EC823",
+  "comments": "Small bundle to test uploading",
+  "created_on": "Mon, 12 Nov 2018 16:30:26 GMT",
+  "href": "http://api-demo.thedigitalbiblelibrary.org/api/entries/2881c78491b2f8cf/revisions/13",
+  "revision": 13,
+  "version": "2.1"
+  },
+      { name: 'created_on', type: 'date', label: 'Created' },
+      { name: 'revision', type: 'numeric', label: 'Rev #' },
+      { name: 'stored', type: 'numeric', label: '# Stored' },
+      { name: 'manifest', type: 'numeric', label: '# Manifest' },
+      { name: 'archivist', type: 'string', label: 'Archivist' },
+      { name: 'comments', type: 'string', label: 'Comments' }
+ */
+function createRevisionData(entryRevision, localEntryBundle, bundleManifestResources, disabled) {
+  /* eslint-disable camelcase */
+  const {
+    created_on = '',
+    revision = 0,
+    version = '',
+    archivist = '',
+    comments = '',
+    href = '',
+  } = entryRevision || {};
+  const id = href;
+  const is_on_disk = Boolean(Object.keys(localEntryBundle || {}).length);
+  const localBundle = localEntryBundle || null;
+  const { storedFiles = {}, rawManifestResources = {} } = bundleManifestResources || {};
+  const storedFromManifest = Object.values(rawManifestResources).filter(r => r.uri in storedFiles);
+  const stored = is_on_disk ? storedFromManifest.length : '';
+  const manifest = is_on_disk ? Object.values(rawManifestResources).length : '';
+  return {
+    disabled, id, href, localBundle, created_on, revision, version, archivist, comments, stored, manifest
+  };
+}
+
+function findLocalEntryBundles(bundlesById, dblId) {
+  return Object.values(bundlesById).filter(b => b.dblId === dblId);
+}
+
+const makeGetEntryRevisionsData = () => createSelector(
+  [getAllEntryRevisions, getAllManifestResources, getBundlesById, getBundleId],
+  (allEntryRevisions, manifestResources, bundlesById, bundleId) => {
+    const bundle = bundlesById[bundleId];
+    const { dblId } = bundle;
+    const localEntryBundles = findLocalEntryBundles(bundlesById, dblId);
+    const entryRevisions = allEntryRevisions[dblId] || {};
+    return Object.values(entryRevisions)
+      .map(entryRevision => {
+        const revision = `${entryRevision.revision}`;
+        const localEntryBundle = localEntryBundles.find(b => b.revision === revision);
+        const { id: localBundleId } = localEntryBundle || {};
+        const { [localBundleId]: bundleManifestResources = [] } = manifestResources;
+        return createRevisionData(entryRevision, localEntryBundle, bundleManifestResources, bundleId === localBundleId);
+      });
+  }
 );
 
 function mapStateToProps(state, props) {
-  const { bundles, bundleEditMetadata, bundleManageResources } = state;
-  const { publicationsHealth, progress = 100, loading = false } = bundleManageResources;
+  const { bundleEditMetadata, bundleManageResources } = state;
+  const {
+    publicationsHealth, progress = 100, loading = false, fetchingMetadata = false
+  } = bundleManageResources;
   const {
     errorMessage: publicationsHealthMessage,
     goFix: goFixPublications,
@@ -180,19 +273,22 @@ function mapStateToProps(state, props) {
   } = publicationsHealth || {};
   const { bundleId, mode } = props.match.params;
   const { showMetadataFile } = bundleEditMetadata;
-  const { addedByBundleIds } = bundles;
-  const columnConfig = createColumnConfig();
+  const columnConfig = createColumnConfig(mode);
   const getManifestResourceData = makeGetManifestResourcesData();
-  const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
+  const bundlesById = getBundlesById(state);
+  const getEntryRevisionsData = makeGetEntryRevisionsData();
+  const origBundle = bundleId ? bundlesById[bundleId] : {};
   return {
     open: Boolean(bundleId),
-    loading,
+    loading: loading || fetchingMetadata,
     progress,
     bundleId,
-    selectedBundle,
+    bundlesById,
+    origBundle,
     mode,
     showMetadataFile,
-    manifestResources: getManifestResourceData(state),
+    manifestResources: getManifestResourceData(state, props),
+    entryRevisions: mode === 'revisions' ? getEntryRevisionsData(state, props) : [],
     columnConfig,
     isOkToAddFiles: !publicationsHealthMessage,
     publicationsHealthMessage,
@@ -206,9 +302,12 @@ const mapDispatchToProps = {
   closeResourceManager,
   openMetadataFile,
   getManifestResources,
+  getEntryRevisions,
   downloadResources,
   addManifestResources,
-  checkPublicationsHealth
+  checkPublicationsHealth,
+  createBundleFromDBL,
+  selectBundleEntryRevision
 };
 
 const materialStyles = theme => ({
@@ -258,11 +357,22 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   state = {
     selectedIds: [],
     addedFilePaths: [],
-    selectAll: true
+    selectAll: this.props.mode !== 'revisions'
   }
 
   componentDidMount() {
-    const { bundleId } = this.props;
+    const { bundleId, mode } = this.props;
+    if (mode === 'revisions') {
+      this.props.getEntryRevisions(bundleId);
+      const { bundlesById } = this.props;
+      const { [bundleId]: bundle } = bundlesById;
+      const { dblId } = bundle;
+      const localEntryBundles = findLocalEntryBundles(bundlesById, dblId);
+      localEntryBundles.forEach(localBundle => {
+        this.props.getManifestResources(localBundle.id);
+      });
+      return;
+    }
     this.props.getManifestResources(bundleId);
     if (this.isAddFilesMode()) {
       this.props.checkPublicationsHealth(bundleId);
@@ -274,8 +384,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       const { bundleId } = this.props;
       this.props.getManifestResources(bundleId);
     }
-    if (nextProps.manifestResources.length !== this.props.manifestResources) {
-      this.setState({ totalResources: nextProps.manifestResources });
+    if ((nextProps.manifestResources.length !== this.props.manifestResources) ||
+      (this.props.mode === 'revisions' && nextProps.entryRevisions !== this.entryRevisions)) {
+      this.updateTableData(nextProps);
     }
   }
 
@@ -285,25 +396,33 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
   }
 
-  handleClickOk = () => {
-    if (this.isDownloadMode()) {
-      this.handleDownload();
-      this.handleClose();
-    } else if (this.isAddFilesMode()) {
-      this.handleAddFiles();
-      // this.handleClose(); // seems to hang with too many requests
-    }
+  updateTableData = (props) => {
+    const tableData = props.mode === 'revisions' ? props.entryRevisions : props.manifestResources;
+    this.setState({ tableData });
   }
 
   handleDownload = () => {
     const { selectedIds = [] } = this.state;
     const { bundleId } = this.props;
     this.props.downloadResources(bundleId, selectedIds);
+    this.handleClose();
+  }
+
+  handleDownloadRevision = () => {
+    const { origBundle } = this.props;
+    const { selected } = this.getSelectedLocalBundle();
+    this.props.createBundleFromDBL(origBundle.dblId, selected.revision, origBundle.license);
+  }
+
+  handleSwitchToRevision = () => {
+    const { localBundle } = this.getSelectedLocalBundle();
+    this.props.selectBundleEntryRevision(localBundle);
+    this.handleClose();
   }
 
   handleAddFiles = () => {
     const { bundleId } = this.props;
-    const selectedResources = this.getSelectedResources();
+    const selectedResources = this.getSelectedRowData();
     const filesToContainers = selectedResources.reduce((acc, selectedResource) =>
       ({ ...acc, [selectedResource.id]: formatUriForApi(selectedResource) }), {});
     this.props.addManifestResources(bundleId, filesToContainers);
@@ -337,10 +456,33 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return ` (${selectedIds.length})`;
   }
 
-  shouldDisableDownload = () => {
+  getSelectedLocalBundle = () => {
+    if (this.isNothingSelected()) {
+      return false;
+    }
+    const [selected] = this.getSelectedRowData();
+    const { localBundle } = selected;
+    return { selected, localBundle };
+  };
+
+  getRevisionsOkButtonLabel = () => {
+    const label = 'Switch to';
+    if (this.isNothingSelected()) {
+      return `${label}`;
+    }
+    const { selected, localBundle } = this.getSelectedLocalBundle();
+    if (localBundle) {
+      return `${label} (Rev ${selected.revision})`;
+    }
+    return `Fetch (Rev ${selected.revision})`;
+  }
+
+  isNothingSelected = () => {
     const { selectedIds = [], selectAll } = this.state;
     return !selectAll && selectedIds.length === 0;
   }
+
+  shouldDisableDownload = () => this.isNothingSelected();
 
   shouldDisableAddFiles = () => {
     const { selectedIds = [] } = this.state;
@@ -350,8 +492,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   getUpdatedTotalResources(filePath, update) {
-    const { totalResources } = this.state;
-    return createUpdatedTotalResources(totalResources, filePath, () => update);
+    const { tableData } = this.state;
+    return createUpdatedTotalResources(tableData, filePath, () => update);
   }
 
   updateAddedResourcesWithFileStats = (newlyAddedFilePaths) => () => {
@@ -360,14 +502,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       const { size: sizeRaw } = stats;
       const size = formatBytesByKbs(sizeRaw);
       const checksum = size < 268435456 ? await md5File(filePath) : '(too expensive)';
-      const totalResources = this.getUpdatedTotalResources(filePath, { size, checksum });
-      this.setState({ totalResources });
+      const tableData = this.getUpdatedTotalResources(filePath, { size, checksum });
+      this.setState({ tableData });
     });
   }
 
   getUpdateSelectedResourcesContainers = (newContainer) => {
-    const { totalResources: origTotalResources, selectedIds } = this.state;
-    const totalResources = selectedIds.reduce((acc, filePath) => {
+    const { tableData: origTotalResources, selectedIds } = this.state;
+    const tableData = selectedIds.reduce((acc, filePath) => {
       const container = formatContainer(newContainer);
       const updatedTotalResources = createUpdatedTotalResources(
         acc,
@@ -380,12 +522,12 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       );
       return updatedTotalResources;
     }, origTotalResources);
-    return totalResources;
+    return tableData;
   }
 
   updateSelectedResourcesContainersSetState = (newContainer) => {
-    const totalResources = this.getUpdateSelectedResourcesContainers(newContainer);
-    this.setState({ totalResources });
+    const tableData = this.getUpdateSelectedResourcesContainers(newContainer);
+    this.setState({ tableData });
   }
 
   handleAddByFile = () => {
@@ -440,11 +582,11 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   updateTotalResources = (newAddedFilePaths, fullToRelativePaths) => () => {
     const { manifestResources } = this.props;
-    const { totalResources = manifestResources } = this.state;
-    const otherResources = totalResources.filter(r => !newAddedFilePaths.includes(r.id));
+    const { tableData = manifestResources } = this.state;
+    const otherResources = tableData.filter(r => !newAddedFilePaths.includes(r.id));
     const newlyAddedResources = newAddedFilePaths.map(createAddedResource(fullToRelativePaths));
     this.setState(
-      { totalResources: [...otherResources, ...newlyAddedResources] },
+      { tableData: [...otherResources, ...newlyAddedResources] },
       this.updateAddedResourcesWithFileStats(newAddedFilePaths)
     );
   }
@@ -461,9 +603,13 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           appBar:
           {
             title: 'Download resources',
+            OkButtonProps: {
+              color: 'inherit',
+              onClick: this.handleDownload,
+              disabled: this.shouldDisableDownload()
+            },
             OkButtonLabel: `Download${this.getSelectedCountMessage(this.shouldDisableDownload)}`,
             OkButtonIcon: <FileDownload className={classNames(classes.leftIcon)} />,
-            OkButtonDisable: this.shouldDisableDownload
           }
         };
       case 'addFiles':
@@ -471,30 +617,52 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           mode,
           appBar: {
             title: 'Add resources',
+            OkButtonProps: {
+              color: 'secondary',
+              variant: 'contained',
+              onClick: this.handleAddFiles,
+              disabled: this.shouldDisableAddFiles()
+            },
             OkButtonLabel: `Add${this.getSelectedCountMessage(this.shouldDisableAddFiles)}`,
-            OkButtonIcon: <CheckIcon className={classNames(classes.leftIcon)} />,
-            OkButtonDisable: this.shouldDisableAddFiles
+            OkButtonIcon: <CheckIcon className={classNames(classes.leftIcon)} />
           }
         };
+      case 'revisions': {
+        const hasLocalBundle = Boolean(this.getSelectedLocalBundle().localBundle);
+        return {
+          mode,
+          appBar: {
+            title: 'Revisions',
+            OkButtonProps: {
+              color: hasLocalBundle ? 'inherit' : 'secondary',
+              variant: hasLocalBundle ? 'text' : 'contained',
+              onClick: hasLocalBundle ? this.handleSwitchToRevision : this.handleDownloadRevision,
+              disabled: this.isNothingSelected() || this.props.loading
+            },
+            OkButtonLabel: `${this.getRevisionsOkButtonLabel()}`,
+            OkButtonIcon: <CheckIcon className={classNames(classes.leftIcon)} />,
+          }
+        };
+      }
       default:
         return { appBar: { title: '', OkButtonLabel: '', OkButtonIcon: (null) } };
     }
   }
 
   getHandleAddByFile = () => (
-    (!this.props.loading && this.isAddFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFile : null
+    (!this.props.loading && this.isAddFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFile : undefined
   )
 
   getHandleAddByFolder = () => (
-    (!this.props.loading && this.isAddFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFolder : null
+    (!this.props.loading && this.isAddFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFolder : undefined
   )
 
-  getAllSuggestions = (totalResources) => {
+  getAllSuggestions = (tableData) => {
     const { mode } = this.props;
     if (mode !== 'addFiles') {
       return null;
     }
-    return mapSuggestions(sort(utilities.union(totalResources
+    return mapSuggestions(sort(utilities.union(tableData
       .filter(r => r.container !== NEED_CONTAINER)
       .map(r => r.container), ['/'])).asc());
   }
@@ -517,19 +685,19 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     });
   }
 
-  getSelectedResources = () => {
+  getSelectedRowData = () => {
     const { manifestResources } = this.props;
-    const { totalResources = manifestResources, selectedIds } = this.state;
+    const { tableData = manifestResources, selectedIds } = this.state;
     const selectedIdSet = new Set(selectedIds);
-    return totalResources.filter(r => selectedIdSet.has(r.id));
+    return tableData.filter(r => selectedIdSet.has(r.id));
   }
 
   hasAnySelectedUnassignedContainers = () => {
     const { manifestResources } = this.props;
-    const { totalResources = manifestResources, selectedIds } = this.state;
+    const { tableData = manifestResources, selectedIds } = this.state;
     const selectedIdSet = new Set(selectedIds);
     const resourcesWithUnassignedContainers =
-      totalResources
+      tableData
         .filter(r => (r.container === NEED_CONTAINER));
     return resourcesWithUnassignedContainers
       .some(r => selectedIdSet.has(r.id));
@@ -561,15 +729,67 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       ));
   }
 
+  renderTable = () => {
+    const {
+      columnConfig, manifestResources, mode
+    } = this.props;
+    const { selectAll, tableData = manifestResources } = this.state;
+    switch (mode) {
+      case 'download': {
+        return (<EnhancedTable
+          data={tableData}
+          columnConfig={columnConfig}
+          secondarySorts={secondarySorts}
+          defaultOrderBy="container"
+          onSelectedRowIds={this.onSelectedIds}
+          multiSelections
+          selectAll={selectAll}
+        />);
+      }
+      case 'revisions': {
+        return (<EnhancedTable
+          data={tableData}
+          columnConfig={columnConfig}
+          secondarySorts={['revision']}
+          defaultOrderBy="revision"
+          orderDirection="desc"
+          onSelectedRowIds={this.onSelectedIds}
+          selectAll={false}
+        />);
+      }
+      case 'addFiles': {
+        return (<EnhancedTable
+          data={tableData}
+          columnConfig={columnConfig}
+          secondarySorts={secondarySorts}
+          defaultOrderBy="container"
+          onSelectedRowIds={this.onSelectedIds}
+          multiSelections
+          selectAll={selectAll}
+          handleAddByFile={this.getHandleAddByFile()}
+          handleAddByFolder={this.getHandleAddByFolder()}
+          getSuggestions={this.getSuggestions}
+          onAutosuggestInputChanged={this.handleAutosuggestInputChanged}
+        />);
+      }
+      default: {
+        return (<EnhancedTable
+          data={tableData}
+          columnConfig={columnConfig}
+        />);
+      }
+    }
+  }
+
   render() {
     const {
-      classes, open, selectedBundle = {}, columnConfig, manifestResources,
+      classes, open, origBundle = {},
       publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading, progress
     } = this.props;
-    const { selectAll, totalResources = manifestResources } = this.state;
-    const { displayAs = {} } = selectedBundle;
+    const { displayAs = {} } = origBundle;
     const { languageAndCountry, name } = displayAs;
     const modeUi = this.modeUi();
+    const isAddFilesMode = this.isAddFilesMode();
     return (
       <Zoom in={open}>
         <div>
@@ -586,8 +806,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                 Review
               </Button>
               <Button
-                key="btnOk" color="inherit" onClick={this.handleClickOk}
-                disabled={modeUi.appBar.OkButtonDisable()}
+                key="btnOk"
+                {...modeUi.appBar.OkButtonProps}
               >
                 {modeUi.appBar.OkButtonIcon}
                 {modeUi.appBar.OkButtonLabel}
@@ -602,7 +822,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               </Button>
             </Toolbar>
           </AppBar>
-          {this.isAddFilesMode() && publicationsHealthMessage &&
+          {isAddFilesMode && publicationsHealthMessage &&
             <Toolbar className={classes.errorBar}>
               <Typography variant="subheading" color="inherit">
                 {publicationsHealthMessage}
@@ -617,7 +837,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               </Button>
             </Toolbar>
           }
-          {!loading && this.isAddFilesMode() && publicationsHealthSuccessMessage &&
+          {!loading && isAddFilesMode && publicationsHealthSuccessMessage &&
             <Card className={classes.successBar} raised>
               <CardContent>
                 <Typography key="pubhealthSuccessMessage" variant="subheading" color="inherit" gutterBottom>
@@ -627,18 +847,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               </CardContent>
             </Card>
           }
-          <EnhancedTable
-            data={totalResources}
-            columnConfig={columnConfig}
-            secondarySorts={secondarySorts}
-            defaultOrderBy="container"
-            onSelectedRowIds={this.onSelectedIds}
-            selectAll={selectAll}
-            handleAddByFile={this.getHandleAddByFile()}
-            handleAddByFolder={this.getHandleAddByFolder()}
-            getSuggestions={this.getSuggestions}
-            onAutosuggestInputChanged={this.handleAutosuggestInputChanged}
-          />
+          {this.renderTable()}
         </div>
       </Zoom>
     );

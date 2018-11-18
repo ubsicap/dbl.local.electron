@@ -420,9 +420,8 @@ class DBLEntryRow extends PureComponent<Props> {
               <Button variant="text" size="small" className={classes.button}
                 disabled={dblId === undefined}
                 onKeyPress={this.onOpenDBLEntryLink}
-                onClick={this.onOpenDBLEntryLink}
+                onClick={this.onClickManageResources('revisions')}
               >
-                <Link className={classNames(classes.leftIcon, classes.iconSmall)} />
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
               </Button>
             </Tooltip>
