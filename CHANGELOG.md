@@ -1,3 +1,7 @@
+### Version 0.16.1
+#### Fixes
+- update dbl_dot_local_app to dbl_info_endpoints changeset (11/13/2018)
+
 ### Version 0.16.0
 #### Features
 - change Rev into button where user can select revision
