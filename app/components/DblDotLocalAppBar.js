@@ -119,7 +119,7 @@ class DblDotLocalAppBar extends React.PureComponent {
               </div>
             </Button>
           </Tooltip>
-          <Tooltip title="Bundles">
+          <Tooltip title="Revisions">
             <Button
               color="inherit"
               className={classes.textSmall}
@@ -144,7 +144,7 @@ class DblDotLocalAppBar extends React.PureComponent {
               key="delete_empty_bundles"
               onClick={this.handleCloseDeleteBundles}
             >
-                Delete Empty/Unused Bundles
+                Delete Empty/Unused Revisions
             </MenuItem>
           </Menu>
           <div className={classes.flex} />
