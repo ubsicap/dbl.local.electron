@@ -272,7 +272,7 @@ const makeGetEntryRevisionsData = () => createSelector(
         comments: localEntryBundle.raw.metadata.comments,
         href: '?',
       };
-      return createRevisionData(mockEntryRevision, localEntryBundle, bundleManifestResources, true);
+      return createRevisionData(mockEntryRevision, localEntryBundle, bundleManifestResources, bundleId === localBundleId);
     });
     return [...entryRevData, ...draftData];
   }
