@@ -222,7 +222,8 @@ async function convertApiBundleToNathanaelBundle(apiBundle, lazyLoads = {}) {
     resourceCountStored,
     resourceCountManifest,
     parent,
-    formsErrorStatus
+    formsErrorStatus,
+    raw: apiBundle
   };
 }
 

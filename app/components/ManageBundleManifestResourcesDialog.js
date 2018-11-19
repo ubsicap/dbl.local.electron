@@ -253,7 +253,7 @@ const makeGetEntryRevisionsData = () => createSelector(
     const { dblId } = bundle;
     const localEntryBundles = findLocalEntryBundles(bundlesById, dblId);
     const entryRevisions = allEntryRevisions[dblId] || {};
-    return Object.values(entryRevisions)
+    const entryRevData = Object.values(entryRevisions)
       .map(entryRevision => {
         const revision = `${entryRevision.revision}`;
         const localEntryBundle = localEntryBundles.find(b => b.revision === revision);
@@ -261,6 +261,20 @@ const makeGetEntryRevisionsData = () => createSelector(
         const { [localBundleId]: bundleManifestResources = [] } = manifestResources;
         return createRevisionData(entryRevision, localEntryBundle, bundleManifestResources, bundleId === localBundleId);
       });
+    const draftData = Object.values(localEntryBundles).filter(localBundle => [0, '0'].includes(localBundle.revision)).map(localEntryBundle => {
+      const { id: localBundleId } = localEntryBundle || {};
+      const { [localBundleId]: bundleManifestResources = [] } = manifestResources;
+      const mockEntryRevision = {
+        created_on: localEntryBundle.raw.store.created,
+        revision: 0,
+        version: '?',
+        archivist: '?',
+        comments: localEntryBundle.raw.metadata.comments,
+        href: '?',
+      };
+      return createRevisionData(mockEntryRevision, localEntryBundle, bundleManifestResources, true);
+    });
+    return [...entryRevData, ...draftData];
   }
 );
 
