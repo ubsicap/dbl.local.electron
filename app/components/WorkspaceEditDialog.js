@@ -57,7 +57,7 @@ function selectHtmlSetting(host) {
   if (host === 'api-demo.thedigitalbiblelibrary.org') {
     return 'https://demo.thedigitalbiblelibrary.org';
   }
-  return 'thedigitalbiblelibrary.org';
+  return 'https://thedigitalbiblelibrary.org';
 }
 
 function exportStateToSettings(state, origSettings) {

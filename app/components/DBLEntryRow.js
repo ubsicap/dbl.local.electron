@@ -18,7 +18,6 @@ import Folder from 'material-ui/svg-icons/file/folder';
 import Copyright from '@material-ui/icons/Copyright';
 import Save from '@material-ui/icons/Save';
 import CreateNewFolder from '@material-ui/icons/CreateNewFolder';
-import Link from '@material-ui/icons/Link';
 import Edit from '@material-ui/icons/Edit';
 import CloudUpload from '@material-ui/icons/CloudUpload';
 import styles from './DBLEntryRow.css';
@@ -28,7 +27,7 @@ import { toggleSelectEntry, requestSaveBundleTo, forkIntoNewBundle,
 import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
 import editMetadataService from '../services/editMetadata.service';
 import { openResourceManager } from '../actions/bundleManageResources.actions';
-import { utilities } from '../utils/utilities';
+import { bundleService } from '../services/bundle.service';
 import { ux } from '../utils/ux';
 import DeleteOrCleanButton from './DeleteOrCleanButton';
 import ConfirmButton from './ConfirmButton';
@@ -58,7 +57,6 @@ type Props = {
   shouldShowRow: boolean,
   classes: {},
   isRequestingRevision: boolean,
-  entryPageUrl: string,
   formsErrorStatus: {},
   formsErrors: {},
   newMediaTypes: [],
@@ -119,24 +117,10 @@ const makeGetIsRequestingRevision = () => createSelector(
   (requestingRevision, bundleId) => (requestingRevision === bundleId)
 );
 
-const getDblBaseUrl = (state) => state.dblDotLocalConfig.dblBaseUrl;
-const getPropsRevision = (state, props) => props.revision;
-const getPropsParent = (state, props) => props.parent;
-const getPropsDblId = (state, props) => props.dblId;
-const makeGetEntryPageUrl = () => createSelector(
-  [getDblBaseUrl, getPropsDblId, getPropsRevision, getPropsParent],
-  (dblBaseUrl, dblId, revision, parent) => (`${dblBaseUrl}/entry?id=${dblId}&revision=${getRevisionOrParentRevision(dblId, revision, parent) || 1}`)
-);
-
-function getRevisionOrParentRevision(dblId, revision, parent) {
-  return parseInt(revision, 10) || (parent && parent.dblId === dblId ? parent.revision : 0);
-}
-
 const makeMapStateToProps = () => {
   const shouldShowRow = makeShouldShowRow();
   const getMatches = makeGetBundleMatches();
   const getIsRequestingRevision = makeGetIsRequestingRevision();
-  const getEntryPageUrl = makeGetEntryPageUrl();
   const getIsDownloading = makeGetIsDownloading();
   const getFormsErrors = editMetadataService.makeGetFormsErrors();
   const mapStateToProps = (state, props) => {
@@ -147,7 +131,6 @@ const makeMapStateToProps = () => {
       bundleMatches: getMatches(state, props),
       bundlesSaveTo,
       newMediaTypes,
-      entryPageUrl: getEntryPageUrl(state, props),
       isDownloading: getIsDownloading(state, props),
       formsErrors: getFormsErrors(state, props)
     };
@@ -235,7 +218,7 @@ class DBLEntryRow extends PureComponent<Props> {
     const {
       status, revision, parent, dblId
     } = this.props;
-    return status === 'DRAFT' && getRevisionOrParentRevision(dblId, revision, parent) === 0;
+    return status === 'DRAFT' && bundleService.getRevisionOrParentRevision(dblId, revision, parent) === 0;
   }
 
   shouldDisableRevise = () => (this.props.isRequestingRevision || this.props.isDownloading)
@@ -330,10 +313,6 @@ class DBLEntryRow extends PureComponent<Props> {
     }
   }
 
-  onOpenDBLEntryLink = (event) => {
-    utilities.onOpenLink(this.props.entryPageUrl)(event);
-  }
-
   renderStatus = () => (
     <ControlledHighlighter {...this.getHighlighterSharedProps(this.props.displayAs.status)} />
   );
@@ -360,7 +339,7 @@ class DBLEntryRow extends PureComponent<Props> {
     const {
       classes, status, revision, parent, dblId
     } = this.props;
-    const effectiveRevision = getRevisionOrParentRevision(dblId, revision, parent);
+    const effectiveRevision = bundleService.getRevisionOrParentRevision(dblId, revision, parent);
     switch (status) {
       case 'DRAFT': return effectiveRevision ? classes.draftRevision : classes.draftNew;
       case 'NOT_STARTED': return classes.noneStoredMode;
@@ -416,10 +395,9 @@ class DBLEntryRow extends PureComponent<Props> {
             <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.name)} />
           </div>
           <div className={styles.bundleRowTopMiddle}>
-            <Tooltip title={this.props.entryPageUrl} placement="right">
+            <Tooltip title="Switch revision">
               <Button variant="text" size="small" className={classes.button}
                 disabled={dblId === undefined}
-                onKeyPress={this.onOpenDBLEntryLink}
                 onClick={this.onClickManageResources('revisions')}
               >
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />

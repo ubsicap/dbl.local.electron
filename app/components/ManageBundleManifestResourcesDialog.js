@@ -13,11 +13,13 @@ import CardContent from '@material-ui/core/CardContent';
 import Button from '@material-ui/core/Button';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
+import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import CloseIcon from '@material-ui/icons/Close';
 import CheckIcon from '@material-ui/icons/Check';
 import OpenInNew from '@material-ui/icons/OpenInNew';
+import Link from '@material-ui/icons/Link';
 import FileDownload from '@material-ui/icons/CloudDownloadOutlined';
 import { createSelector } from 'reselect';
 import classNames from 'classnames';
@@ -32,6 +34,7 @@ import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
 import EnhancedTable from './EnhancedTable';
 import { utilities } from '../utils/utilities';
+import { bundleService } from '../services/bundle.service';
 
 const { dialog } = require('electron').remote;
 const { shell } = require('electron');
@@ -56,6 +59,7 @@ type Props = {
   publicationsHealthSuccessMessage: ?string,
   wizardsResults: ?{},
   goFixPublications: ?() => {},
+  entryPageUrl: string,
   closeResourceManager: () => {},
   openMetadataFile: () => {},
   getManifestResources: () => {},
@@ -260,6 +264,20 @@ const makeGetEntryRevisionsData = () => createSelector(
   }
 );
 
+const getDblBaseUrl = (state) => state.dblDotLocalConfig.dblBaseUrl;
+const makeGetEntryPageUrl = () => createSelector(
+  [getDblBaseUrl, getBundlesById, getBundleId],
+  (dblBaseUrl, bundlesById, bundleId) => {
+    const origBundle = bundlesById[bundleId];
+    const { dblId, revision, parent } = origBundle;
+    const revisionNum = bundleService.getRevisionOrParentRevision(dblId, revision, parent);
+    const revisionQuery = revisionNum ? `&revision=${revisionNum}` : '';
+    const url = `${dblBaseUrl}/entry?id=${dblId}${revisionQuery}`;
+    return url;
+  }
+);
+
+
 function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundleManageResources } = state;
   const {
@@ -278,6 +296,7 @@ function mapStateToProps(state, props) {
   const bundlesById = getBundlesById(state);
   const getEntryRevisionsData = makeGetEntryRevisionsData();
   const origBundle = bundleId ? bundlesById[bundleId] : {};
+  const getEntryPageUrl = makeGetEntryPageUrl();
   return {
     open: Boolean(bundleId),
     loading: loading || fetchingMetadata,
@@ -294,7 +313,8 @@ function mapStateToProps(state, props) {
     publicationsHealthMessage,
     goFixPublications,
     publicationsHealthSuccessMessage,
-    wizardsResults
+    wizardsResults,
+    entryPageUrl: getEntryPageUrl(state, props),
   };
 }
 
@@ -781,13 +801,17 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
   }
 
+  onOpenDBLEntryLink = (event) => {
+    utilities.onOpenLink(this.props.entryPageUrl)(event);
+  }
+
   render() {
     const {
       classes, open, origBundle = {},
       publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading, progress
     } = this.props;
     const { displayAs = {} } = origBundle;
-    const { languageAndCountry, name } = displayAs;
+    const { languageAndCountry, name, revision } = displayAs;
     const modeUi = this.modeUi();
     const isAddFilesMode = this.isAddFilesMode();
     return (
@@ -798,9 +822,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               <IconButton color="inherit" onClick={this.handleClose} aria-label="Close">
                 <CloseIcon />
               </IconButton>
-              <Typography variant="title" color="inherit" className={classes.flex}>
+              <Typography variant="title" color="inherit">
                 {modeUi.appBar.title}: <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry} </span> {name}
               </Typography>
+              <Tooltip title={this.props.entryPageUrl}>
+                <Button color="inherit" onClick={this.onOpenDBLEntryLink}>
+                  <Link className={classNames(classes.leftIcon, classes.iconSmall)} />
+                  {revision}
+                </Button>
+              </Tooltip>
+              <div className={classes.flex} />
               <Button key="btnOpenXml" color="inherit" disable={this.props.showMetadataFile} onClick={this.handleReview}>
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
                 Review

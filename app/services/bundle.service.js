@@ -52,7 +52,8 @@ export const bundleService = {
   getPublicationsInstances,
   getSubSectionInstances,
   getSubsystemDownloadQueue,
-  getSubsystemUploadQueue
+  getSubsystemUploadQueue,
+  getRevisionOrParentRevision
 };
 export default bundleService;
 
@@ -620,6 +621,7 @@ async function updatePublications(bundleId, publicationIds) {
   }
 }
 
+/* HELPERS? */
 function getPublicationsInstances(formStructure) {
   return getSubSectionInstances(formStructure, 'publications', 'publication');
 }
@@ -631,3 +633,8 @@ function getSubSectionInstances(formStructure, sectionId, subSectionId) {
   const { instances } = subSectionStructure;
   return instances;
 }
+
+function getRevisionOrParentRevision(dblId, revision, parent) {
+  return parseInt(revision, 10) || (parent && parent.dblId === dblId ? parent.revision : 0);
+}
+
