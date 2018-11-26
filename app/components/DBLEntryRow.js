@@ -320,15 +320,9 @@ class DBLEntryRow extends PureComponent<Props> {
   renderEditIcon = () => {
     const { status, classes, formsErrors } = this.props;
     const formsErrorCount = Object.keys(formsErrors).length;
-    const conditionallyRenderBadge = (errorCount, node) => {
-      if (!errorCount) {
-        return node;
-      }
-      return <Badge key="badge" className={classes.badge} badgeContent={errorCount} color="error">{node}</Badge>;
-    };
     if (status === 'DRAFT') {
       return [
-        conditionallyRenderBadge(formsErrorCount, <Edit key="btnEdit" className={classNames(classes.leftIcon, classes.iconSmall)} />),
+        conditionallyRenderBadge({ className: classes.badge, color: 'error' }, formsErrorCount, <Edit key="btnEdit" className={classNames(classes.leftIcon, classes.iconSmall)} />),
         'Edit'
       ];
     }
@@ -396,11 +390,17 @@ class DBLEntryRow extends PureComponent<Props> {
           </div>
           <div className={styles.bundleRowTopMiddle}>
             <Tooltip title="Switch revision">
-              <Button variant="text" size="small" className={classes.button}
+              <Button
+                variant="text"
+                size="small"
+                className={classes.button}
                 disabled={dblId === undefined}
                 onClick={this.onClickManageResources('revisions')}
               >
-                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
+                {conditionallyRenderBadge(
+                  { classes: { badge: classes.badgeTight }, color: 'primary' }, '+1',
+                  <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
+                  )}
               </Button>
             </Tooltip>
           </div>
@@ -557,6 +557,9 @@ const materialStyles = theme => ({
   badge: {
     marginRight: theme.spacing.unit * 2,
   },
+  badgeTight: {
+    marginRight: -15,
+  },
   leftIcon: {
     marginRight: theme.spacing.unit,
   },
@@ -588,4 +591,12 @@ function getBundleExportInfo(bundleId, savedToHistory) {
 function stopPropagation(event) {
   event.stopPropagation();
   return null;
+}
+
+
+function conditionallyRenderBadge(props, content, node) {
+  if (!content) {
+    return node;
+  }
+  return <Badge key="badge" {...props} badgeContent={content}>{node}</Badge>;
 }
