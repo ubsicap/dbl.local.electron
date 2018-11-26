@@ -4,6 +4,7 @@ import { bundleConstants } from '../constants/bundle.constants';
 import { bundleService } from '../services/bundle.service';
 import { utilities } from '../utils/utilities';
 import { ux } from '../utils/ux';
+import dblDotLocalConfigConstants from '../constants/dblDotLocal.constants';
 
 const [idKey] = ['id'];
 
@@ -89,8 +90,16 @@ function updateIndexedByIds(state, decoratedBundle) {
   return { addedByBundleIds };
 }
 
-export function bundles(state = { items: [], allBundles: [] }, action) {
+const initialState = { items: [], allBundles: [] };
+
+export function bundles(state = initialState, action) {
   switch (action.type) {
+    case dblDotLocalConfigConstants.START_WORKSPACE_PROCESS: {
+      return initialState;
+    }
+    case dblDotLocalConfigConstants.STOP_WORKSPACE_PROCESS_DONE: {
+      return initialState;
+    }
     case bundleConstants.FETCH_REQUEST:
       return {
         ...state,
