@@ -35,6 +35,7 @@ import rowStyles from './DBLEntryRow.css';
 import EnhancedTable from './EnhancedTable';
 import { utilities } from '../utils/utilities';
 import { bundleService } from '../services/bundle.service';
+import { ux } from '../utils/ux';
 
 const { dialog } = require('electron').remote;
 const { shell } = require('electron');
@@ -224,7 +225,7 @@ function createRevisionData(entryRevision, localEntryBundle, bundleManifestResou
   /* eslint-disable camelcase */
   const {
     created_on = '',
-    revision = 0,
+    revision = '0',
     version = '',
     archivist = '',
     comments = '',
@@ -264,9 +265,10 @@ const makeGetEntryRevisionsData = () => createSelector(
     const draftData = Object.values(localEntryBundles).filter(localBundle => [0, '0'].includes(localBundle.revision)).map(localEntryBundle => {
       const { id: localBundleId } = localEntryBundle || {};
       const { [localBundleId]: bundleManifestResources = [] } = manifestResources;
+      const revision = ux.getFormattedRevision(localEntryBundle, '');
       const mockEntryRevision = {
         created_on: localEntryBundle.raw.store.created,
-        revision: 0,
+        revision,
         version: '?',
         archivist: '?',
         comments: localEntryBundle.raw.metadata.comments,
@@ -784,6 +786,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         return (<EnhancedTable
           data={tableData}
           columnConfig={columnConfig}
+          customSorts={{ revision: rData => (rData.localBundle ? ux.getFormattedRevision(rData.localBundle, '') : rData.revision) }}
           secondarySorts={['revision']}
           defaultOrderBy="revision"
           orderDirection="desc"

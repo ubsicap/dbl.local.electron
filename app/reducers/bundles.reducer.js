@@ -3,6 +3,7 @@ import { List, Set } from 'immutable';
 import { bundleConstants } from '../constants/bundle.constants';
 import { bundleService } from '../services/bundle.service';
 import { utilities } from '../utils/utilities';
+import { ux } from '../utils/ux';
 
 const [idKey] = ['id'];
 
@@ -351,14 +352,8 @@ function formatRevisionDisplayAs(bundle) {
   if (!revision && !parent) {
     return 'Update';
   }
-  if (parent || revision === '0') {
-    const { revision: parentRevision = null } = parent || {};
-    if (parentRevision && parent.dblId === bundle.dblId) {
-      return `> Rev ${parentRevision}`;
-    }
-    return 'Rev 1 (New)';
-  }
-  return `Rev ${revision}`;
+  const formattedRevision = ux.getFormattedRevision(bundle, 'Rev ');
+  return formattedRevision;
 }
 
 function formatDisplayAs(bundle) {

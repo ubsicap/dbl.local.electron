@@ -6,9 +6,33 @@ import Print from '@material-ui/icons/Print';
 import Grain from '@material-ui/icons/Grain';
 
 export const ux = {
-  getMediumIcon
+  getMediumIcon,
+  getFormattedRevision
 };
 export default ux;
+
+function getMatchingParentEntryRevision(bundle) {
+  const { parent } = bundle;
+  if (!parent || !parent.revision) {
+    return null;
+  }
+  const { revision: parentRevision = null } = parent || {};
+  if (parentRevision && parent.dblId === bundle.dblId) {
+    return parentRevision;
+  }
+  return null;
+}
+
+function getFormattedRevision(bundle, insertStr) {
+  const { revision } = bundle;
+  const parentRevision = getMatchingParentEntryRevision(bundle);
+  if (parentRevision) {
+    return `> ${insertStr}${parentRevision}`;
+  } else if (revision === '0') {
+    return `${insertStr}1 (New)`;
+  }
+  return `${insertStr}${revision}`;
+}
 
 export function getMediumIcon(medium) {
   const style = { style: { marginRight: '10px' } };
