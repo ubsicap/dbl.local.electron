@@ -636,6 +636,6 @@ function getSubSectionInstances(formStructure, sectionId, subSectionId) {
 }
 
 function getRevisionOrParentRevision(dblId, revision, parent) {
-  return parseInt(revision, 10) || (parent && parent.dblId === dblId ? parent.revision : 0);
+  return parseInt(revision, 10) || parseInt(parent && parent.dblId === dblId ? parent.revision : 0, 10);
 }
 

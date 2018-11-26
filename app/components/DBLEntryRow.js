@@ -57,6 +57,7 @@ type Props = {
   shouldShowRow: boolean,
   classes: {},
   isRequestingRevision: boolean,
+  laterEntryRevisions: [],
   formsErrorStatus: {},
   formsErrors: {},
   newMediaTypes: [],
@@ -87,8 +88,10 @@ const getTask = (state, props) => props.task;
 const getStatus = (state, props) => props.status;
 const getIsSearchActive = (state) => state.bundlesFilter.isSearchActive;
 const emptyBundleMatches = {};
+const emptyObj = {};
 const getEmptryBundleMatches = () => emptyBundleMatches;
 const getBundleId = (state, props) => props.bundleId;
+const getDblId = (state, props) => props.dblId;
 
 const getBundleMatches = (state, props) =>
   (state.bundlesFilter.searchResults && state.bundlesFilter.searchResults.bundlesMatching ?
@@ -117,16 +120,52 @@ const makeGetIsRequestingRevision = () => createSelector(
   (requestingRevision, bundleId) => (requestingRevision === bundleId)
 );
 
+const getSelectedBundleEntryRevisions = state =>
+  state.bundles.selectedBundleEntryRevisions || emptyObj;
+const getSelectedBundleEntryRevision = (state, props) =>
+  getSelectedBundleEntryRevisions(state)[props.dblId];
+const getAllBundles = (state) => state.bundles.allBundles || emptyObj;
+const getRevision = (state, props) => props.revision;
+const getParent = (state, props) => props.parent;
+
+function filterForLaterRevisionsOrDrafts(bundleId, effectiveRevision) {
+  return b => {
+    if (b.id === bundleId) {
+      return false;
+    }
+    const testEffectiveRevision = bundleService.getRevisionOrParentRevision(b.dblId, b.revision, b.parent);
+    if (b.revision !== '0' && testEffectiveRevision <= effectiveRevision) {
+      return false;
+    }
+    return true;
+  };
+}
+
+const makeGetLaterEntryRevisions = () => createSelector(
+  [getSelectedBundleEntryRevision, getAllBundles, getBundleId, getDblId, getRevision, getParent],
+  (selectedBundleEntryRevision, allBundles, bundleId, dblId, revision, parent) => {
+    if (!selectedBundleEntryRevision) {
+      return [];
+    }
+    const effectiveRevision = bundleService.getRevisionOrParentRevision(dblId, revision, parent);
+    const allRevisions = allBundles.filter(b => b.dblId === dblId);
+    const laterRevisions = allRevisions.filter(filterForLaterRevisionsOrDrafts(bundleId, effectiveRevision));
+    return laterRevisions;
+  }
+);
+
 const makeMapStateToProps = () => {
   const shouldShowRow = makeShouldShowRow();
   const getMatches = makeGetBundleMatches();
   const getIsRequestingRevision = makeGetIsRequestingRevision();
   const getIsDownloading = makeGetIsDownloading();
   const getFormsErrors = editMetadataService.makeGetFormsErrors();
+  const getLaterEntryRevisions = makeGetLaterEntryRevisions();
   const mapStateToProps = (state, props) => {
     const { bundlesSaveTo, bundles: { newMediaTypes = [] } } = state;
     return {
       isRequestingRevision: getIsRequestingRevision(state, props),
+      laterEntryRevisions: getLaterEntryRevisions(state, props),
       shouldShowRow: shouldShowRow(state, props),
       bundleMatches: getMatches(state, props),
       bundlesSaveTo,
@@ -366,6 +405,8 @@ class DBLEntryRow extends PureComponent<Props> {
       return (null);
     }
     const resourceManagerMode = status === 'DRAFT' ? 'addFiles' : 'download';
+    const laterEntryRevisionsCount = this.props.laterEntryRevisions.length;
+    const laterRevisionsBadge = laterEntryRevisionsCount ? `<${laterEntryRevisionsCount}` : '';
     return (
       <div
         className={classNames(styles.bundleRow, this.pickBackgroundColor())}
@@ -398,7 +439,7 @@ class DBLEntryRow extends PureComponent<Props> {
                 onClick={this.onClickManageResources('revisions')}
               >
                 {conditionallyRenderBadge(
-                  { classes: { badge: classes.badgeTight }, color: 'primary' }, '+1',
+                  { classes: { badge: classes.badgeTight }, color: 'primary' }, laterRevisionsBadge,
                   <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
                   )}
               </Button>
