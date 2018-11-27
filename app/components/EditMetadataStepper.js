@@ -473,28 +473,31 @@ class _EditMetadataStepper extends React.Component<Props> {
     }
     return (
       <div>
-        <Button
-          disabled={activeStepIndex === 0}
-          onClick={this.handleBack}
-          className={classes.button}
-        >
-          {this.getBackSectionName('', '')}
-          <NavigateBefore className={classNames(classes.rightIcon, classes.iconSmall)} />
-        </Button>
+        <Tooltip title={this.getBackSectionName('Navigate to ', '')}>
+          <Button
+            disabled={activeStepIndex === 0}
+            onClick={this.handleBack}
+            className={classes.button}
+          >
+            <NavigateBefore className={classNames(classes.rightIcon, classes.iconSmall)} />
+          </Button>
+        </Tooltip>
         {(isInstance || (present && !isRequired(step.arity)) ? this.renderDeleteButton(step) : (null))}
         {!hasFormChanged && hasFieldContent && isNotYetPresent && this.renderAddButton(step)}
-        <Button
-          variant="outlined"
-          color="default"
-          onClick={this.handleNext}
-          className={classes.button}
-        >
-          {isLastStep ?
-            ([<ExpandLessIcon key="Hide" className={classNames(classes.leftIcon, classes.iconSmall)} />, 'Hide'])
-            :
-            ([<NavigateNext key="Next" className={classNames(classes.leftIcon, classes.iconSmall)} />, this.getNextSectionName('', '')])
-          }
-        </Button>
+        <Tooltip title={this.getNextSectionName('Navigate to ', '')}>
+          <Button
+            variant="outlined"
+            color="default"
+            onClick={this.handleNext}
+            className={classes.button}
+          >
+            {isLastStep ?
+              ([<ExpandLessIcon key="Hide" className={classNames(classes.leftIcon, classes.iconSmall)} />, 'Hide'])
+              :
+              (<NavigateNext key="Next" className={classNames(classes.leftIcon, classes.iconSmall)} />)
+            }
+          </Button>
+        </Tooltip>
       </div>);
   }
 
