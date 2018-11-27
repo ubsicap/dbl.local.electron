@@ -22,7 +22,7 @@ import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import classNames from 'classnames';
 import { fetchFormStructure, saveMetadataSuccess, setArchivistStatusOverrides,
   saveFieldValuesForActiveForm, fetchActiveFormInputs,
-  deleteInstanceForm, updateFormFieldIssues } from '../actions/bundleEditMetadata.actions';
+  deleteForm, updateFormFieldIssues } from '../actions/bundleEditMetadata.actions';
 import EditMetadataForm from './EditMetadataForm';
 import editMetadataService from '../services/editMetadata.service';
 import { utilities } from '../utils/utilities';
@@ -169,7 +169,7 @@ const mapDispatchToProps = {
   saveMetadataSuccess,
   saveFieldValuesForActiveForm,
   fetchActiveFormInputs,
-  deleteInstanceForm,
+  deleteForm,
   updateFormFieldIssues
 };
 
@@ -191,7 +191,7 @@ type Props = {
     saveMetadataSuccess: () => {},
     saveFieldValuesForActiveForm: () => {},
     fetchActiveFormInputs: () => {},
-    deleteInstanceForm: () => {},
+    deleteForm: () => {},
     setArchivistStatusOverrides: () => {},
     updateFormFieldIssues: () => {},
     bundleId: string,
@@ -339,8 +339,9 @@ class _EditMetadataStepper extends React.Component<Props> {
 
   handleDeleteForm = step => () => {
     const { bundleId } = this.props;
-    const { formKey } = step;
-    this.props.deleteInstanceForm(bundleId, formKey);
+    const { formKey, isInstance } = step;
+    const reloadForm = !isInstance;
+    this.props.deleteForm(bundleId, formKey, reloadForm);
   };
 
   handleNext = () => {
@@ -480,7 +481,7 @@ class _EditMetadataStepper extends React.Component<Props> {
           {this.getBackSectionName('', '')}
           <NavigateBefore className={classNames(classes.rightIcon, classes.iconSmall)} />
         </Button>
-        {(isInstance || (present && !isRequired(step)) ? this.renderDeleteButton(step) : (null))}
+        {(isInstance || (present && !isRequired(step.arity)) ? this.renderDeleteButton(step) : (null))}
         {!hasFormChanged && hasFieldContent && isNotYetPresent && this.renderAddButton(step)}
         <Button
           variant="outlined"

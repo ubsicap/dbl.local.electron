@@ -15,7 +15,7 @@ export const bundleEditMetadataActions = {
   fetchFormStructure,
   fetchActiveFormInputs,
   openMetadataFile,
-  deleteInstanceForm,
+  deleteForm,
   saveMetadata,
   saveFieldValuesForActiveForm,
   reloadFieldValues,
@@ -257,13 +257,16 @@ function getActiveFormKey(getState) {
   return formKey;
 }
 
-export function deleteInstanceForm(bundleId, formKey) {
+export function deleteForm(bundleId, formKey, reloadActiveForm) {
   return async dispatch => {
     dispatch(request());
     try {
       await bundleService.deleteForm(bundleId, formKey);
       dispatch(success(bundleId, formKey));
       dispatch(fetchFormStructure(bundleId));
+      if (reloadActiveForm) {
+        dispatch(fetchActiveFormInputs(bundleId, formKey, true));
+      }
     } catch (errorReadable) {
       const error = await errorReadable.text();
       dispatch(failure(error));
