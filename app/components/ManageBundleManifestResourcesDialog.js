@@ -260,7 +260,8 @@ const makeGetEntryRevisionsData = () => createSelector(
         const localEntryBundle = localEntryBundles.find(b => b.revision === revision);
         const { id: localBundleId } = localEntryBundle || {};
         const { [localBundleId]: bundleManifestResources = [] } = manifestResources;
-        return createRevisionData(entryRevision, localEntryBundle, bundleManifestResources, bundleId === localBundleId);
+        const disabled = bundleId === localBundleId || !entryRevision.version.startsWith('2.');
+        return createRevisionData(entryRevision, localEntryBundle, bundleManifestResources, disabled);
       });
     const draftData = Object.values(localEntryBundles).filter(localBundle => [0, '0'].includes(localBundle.revision)).map(localEntryBundle => {
       const { id: localBundleId } = localEntryBundle || {};
@@ -269,7 +270,7 @@ const makeGetEntryRevisionsData = () => createSelector(
       const mockEntryRevision = {
         created_on: localEntryBundle.raw.store.created,
         revision,
-        version: '?',
+        version: '2.1?',
         archivist: '?',
         comments: localEntryBundle.raw.metadata.comments,
         href: '?',
@@ -786,7 +787,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         return (<EnhancedTable
           data={tableData}
           columnConfig={columnConfig}
-          customSorts={{ revision: rData => (rData.localBundle ? ux.getFormattedRevision(rData.localBundle, '') : rData.revision) }}
+          // customSorts={{ revision: rData => (rData.localBundle ? ux.getFormattedRevision(rData.localBundle, '') : rData.revision) }}
           secondarySorts={['revision']}
           defaultOrderBy="revision"
           orderDirection="desc"
