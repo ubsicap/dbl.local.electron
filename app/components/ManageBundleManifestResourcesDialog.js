@@ -270,10 +270,10 @@ const makeGetEntryRevisionsData = () => createSelector(
       const mockEntryRevision = {
         created_on: localEntryBundle.raw.store.created,
         revision,
-        version: '2.1?',
-        archivist: '?',
+        version: '2.x',
+        archivist: '',
         comments: localEntryBundle.raw.metadata.comments,
-        href: '?',
+        href: '',
       };
       return createRevisionData(mockEntryRevision, localEntryBundle, bundleManifestResources, bundleId === localBundleId);
     });
@@ -509,9 +509,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
     const { selected, localBundle } = this.getSelectedLocalBundle();
     if (localBundle) {
-      return `${label} (Rev ${selected.revision})`;
+      return `${label} Rev ${selected.revision}`;
     }
-    return `Fetch (Rev ${selected.revision})`;
+    return `Fetch Rev ${selected.revision}`;
   }
 
   isNothingSelected = () => {
