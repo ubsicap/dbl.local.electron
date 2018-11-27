@@ -35,6 +35,7 @@ type Props = {
   secondarySorts: [],
   selectAll: boolean,
   multiSelections?: boolean,
+  customSorts?: {},
   onSelectedRowIds: () => {},
   handleAddByFile?: () => {},
   handleAddByFolder?: () => {},
@@ -183,12 +184,21 @@ class EnhancedTable extends Component<Props> {
   isCellHovered = ({ rowData, hoveredRowData }) =>
     !rowData.disabled && rowData.id && rowData.id === hoveredRowData.id;
 
+  getSortMethod = (orderBy) => {
+    const { customSorts } = this.props;
+    const customSort = customSorts[orderBy];
+    if (customSort) {
+      return customSort;
+    }
+    return orderBy;
+  }
+
   getSortedData = () => {
     const { data, secondarySorts } = this.props;
     const { orderBy, order } = this.state;
     const secondaryOrderBys = secondarySorts.filter(s => s !== orderBy).map((s) =>
-      ({ asc: s }));
-    const orderByConfig = [{ [order]: orderBy }, ...secondaryOrderBys];
+      ({ asc: this.getSortMethod(s) }));
+    const orderByConfig = [{ [order]: this.getSortMethod(orderBy) }, ...secondaryOrderBys];
     const sorted = sort(data).by(orderByConfig);
     return sorted;
   }
@@ -235,6 +245,7 @@ class EnhancedTable extends Component<Props> {
 
 EnhancedTable.defaultProps = {
   orderDirection: 'asc',
+  customSorts: {},
   multiSelections: false,
   handleAddByFile: undefined,
   handleAddByFolder: undefined,

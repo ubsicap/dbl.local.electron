@@ -34,7 +34,7 @@ export function updateBundle(bundleId) {
     try {
       const rawBundle = await bundleService.fetchById(bundleId);
       if (!bundleService.apiBundleHasMetadata(rawBundle)) {
-        console.log(`Skipping updateBundle for ${bundleId}`);
+        // console.log(`Skipping updateBundle for ${bundleId}`);
         return; // hasn't downloaded metadata yet. (don't expect to be in our list)
       }
       dispatch(updateOrAddBundle(rawBundle));
@@ -83,9 +83,9 @@ function updateOrAddBundle(rawBundle) {
       }
     } else if (rawBundle.mode === 'store') {
       dispatch(addBundle(bundle, rawBundle));
-      console.log(`Added bundle ${bundleId} from listenStorerChangeMode`);
+      // console.log(`Added bundle ${bundleId} from listenStorerChangeMode`);
     } else {
-      console.log(`Skipped bundle ${bundleId} with mode ${rawBundle.mode}`);
+      // console.log(`Skipped bundle ${bundleId} with mode ${rawBundle.mode}`);
     }
   };
 }

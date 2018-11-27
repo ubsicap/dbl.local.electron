@@ -1,3 +1,16 @@
+### Version 0.17.0
+#### Features
+- Added Revision badge to indicate user has newer choices or drafts to choose
+- Re-added link to DBL (revision) webpage in Revisions dialog
+- Upgraded dbl_dot_local_app to 11/26/2018
+#### Fixes
+- fix links to open DBL webpage (due to missing https)
+- save webpage host to include https when saving config.xml
+- fix bundles to reset state when switching workspaces
+- disable revisions earlier than 2.x
+- fix revisions sorting logic
+- fix state when deleting draft after selecting an earlier revision
+
 ### Version 0.16.1
 #### Fixes
 - update dbl_dot_local_app to dbl_info_endpoints changeset (11/13/2018)

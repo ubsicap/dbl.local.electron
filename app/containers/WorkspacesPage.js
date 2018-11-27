@@ -363,7 +363,9 @@ export default compose(
 )(WorkspacesPage);
 
 function getDblWebsiteUrl(workspace) {
-  return workspace.configXmlSettings.settings.dbl[0].html[0];
+  const dblBaseUrl = workspace.configXmlSettings.settings.dbl[0].html[0];
+  const transport = dblBaseUrl.startsWith('http') ? '' : 'https://';
+  return `${transport}${dblBaseUrl}`;
 }
 
 function updateWorkspaceLastAccess(workspace) {

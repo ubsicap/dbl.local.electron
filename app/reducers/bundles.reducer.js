@@ -3,6 +3,8 @@ import { List, Set } from 'immutable';
 import { bundleConstants } from '../constants/bundle.constants';
 import { bundleService } from '../services/bundle.service';
 import { utilities } from '../utils/utilities';
+import { ux } from '../utils/ux';
+import dblDotLocalConfigConstants from '../constants/dblDotLocal.constants';
 
 const [idKey] = ['id'];
 
@@ -88,8 +90,16 @@ function updateIndexedByIds(state, decoratedBundle) {
   return { addedByBundleIds };
 }
 
-export function bundles(state = { items: [], allBundles: [] }, action) {
+const initialState = { items: [], allBundles: [] };
+
+export function bundles(state = initialState, action) {
   switch (action.type) {
+    case dblDotLocalConfigConstants.START_WORKSPACE_PROCESS: {
+      return initialState;
+    }
+    case dblDotLocalConfigConstants.STOP_WORKSPACE_PROCESS_DONE: {
+      return initialState;
+    }
     case bundleConstants.FETCH_REQUEST:
       return {
         ...state,
@@ -140,8 +150,11 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
     }
     case bundleConstants.DELETE_SUCCESS: {
       const { id: bundleIdToRemove } = action;
+      const bundleToRemove = state.addedByBundleIds[bundleIdToRemove];
       const allBundles = state.allBundles.filter(bundle => bundle.id !== bundleIdToRemove);
-      const { items, addedByBundleIds } = sortAndFilterBundlesAsEntries(allBundles, state.selectedBundleEntryRevisions);
+      const { selectedBundleEntryRevisions: selectedBundleEntryRevisionsOrig = {} } = state;
+      const { [bundleToRemove.dblId]: selectedEntryRevisionOrig, ...selectedBundleEntryRevisions } = selectedBundleEntryRevisionsOrig;
+      const { items, addedByBundleIds } = sortAndFilterBundlesAsEntries(allBundles, selectedBundleEntryRevisions);
       const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, null, bundleIdToRemove, items);
       return {
         ...state,
@@ -149,7 +162,8 @@ export function bundles(state = { items: [], allBundles: [] }, action) {
         allBundles,
         addedByBundleIds,
         selectedBundle,
-        selectedDBLEntryId
+        selectedDBLEntryId,
+        selectedBundleEntryRevisions
       };
     }
     case bundleConstants.ADD_BUNDLE: {
@@ -351,14 +365,8 @@ function formatRevisionDisplayAs(bundle) {
   if (!revision && !parent) {
     return 'Update';
   }
-  if (parent || revision === '0') {
-    const { revision: parentRevision = null } = parent || {};
-    if (parentRevision && parent.dblId === bundle.dblId) {
-      return `> Rev ${parentRevision}`;
-    }
-    return 'Rev 1 (New)';
-  }
-  return `Rev ${revision}`;
+  const formattedRevision = ux.getFormattedRevision(bundle, 'Rev ');
+  return formattedRevision;
 }
 
 function formatDisplayAs(bundle) {

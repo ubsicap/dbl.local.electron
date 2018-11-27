@@ -54,9 +54,10 @@ export function dblDotLocalConfig(state = initialState, action) {
     case dblDotLocalConfigConstants.HTML_BASE_URL_RESPONSE:
     {
       const { dblBaseUrl } = action;
+      const transport = dblBaseUrl.startsWith('http') ? '' : 'https://';
       return {
         ...state,
-        dblBaseUrl
+        dblBaseUrl: `${transport}${dblBaseUrl}`
       };
     }
     default:

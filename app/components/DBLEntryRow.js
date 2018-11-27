@@ -18,7 +18,6 @@ import Folder from 'material-ui/svg-icons/file/folder';
 import Copyright from '@material-ui/icons/Copyright';
 import Save from '@material-ui/icons/Save';
 import CreateNewFolder from '@material-ui/icons/CreateNewFolder';
-import Link from '@material-ui/icons/Link';
 import Edit from '@material-ui/icons/Edit';
 import CloudUpload from '@material-ui/icons/CloudUpload';
 import styles from './DBLEntryRow.css';
@@ -28,7 +27,7 @@ import { toggleSelectEntry, requestSaveBundleTo, forkIntoNewBundle,
 import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
 import editMetadataService from '../services/editMetadata.service';
 import { openResourceManager } from '../actions/bundleManageResources.actions';
-import { utilities } from '../utils/utilities';
+import { bundleService } from '../services/bundle.service';
 import { ux } from '../utils/ux';
 import DeleteOrCleanButton from './DeleteOrCleanButton';
 import ConfirmButton from './ConfirmButton';
@@ -58,7 +57,7 @@ type Props = {
   shouldShowRow: boolean,
   classes: {},
   isRequestingRevision: boolean,
-  entryPageUrl: string,
+  laterEntryRevisions: [],
   formsErrorStatus: {},
   formsErrors: {},
   newMediaTypes: [],
@@ -89,8 +88,10 @@ const getTask = (state, props) => props.task;
 const getStatus = (state, props) => props.status;
 const getIsSearchActive = (state) => state.bundlesFilter.isSearchActive;
 const emptyBundleMatches = {};
+const emptyObj = {};
 const getEmptryBundleMatches = () => emptyBundleMatches;
 const getBundleId = (state, props) => props.bundleId;
+const getDblId = (state, props) => props.dblId;
 
 const getBundleMatches = (state, props) =>
   (state.bundlesFilter.searchResults && state.bundlesFilter.searchResults.bundlesMatching ?
@@ -119,35 +120,56 @@ const makeGetIsRequestingRevision = () => createSelector(
   (requestingRevision, bundleId) => (requestingRevision === bundleId)
 );
 
-const getDblBaseUrl = (state) => state.dblDotLocalConfig.dblBaseUrl;
-const getPropsRevision = (state, props) => props.revision;
-const getPropsParent = (state, props) => props.parent;
-const getPropsDblId = (state, props) => props.dblId;
-const makeGetEntryPageUrl = () => createSelector(
-  [getDblBaseUrl, getPropsDblId, getPropsRevision, getPropsParent],
-  (dblBaseUrl, dblId, revision, parent) => (`${dblBaseUrl}/entry?id=${dblId}&revision=${getRevisionOrParentRevision(dblId, revision, parent) || 1}`)
-);
+const getSelectedBundleEntryRevisions = state =>
+  state.bundles.selectedBundleEntryRevisions || emptyObj;
+const getSelectedBundleEntryRevision = (state, props) =>
+  getSelectedBundleEntryRevisions(state)[props.dblId];
+const getAllBundles = (state) => state.bundles.allBundles || emptyObj;
+const getRevision = (state, props) => props.revision;
+const getParent = (state, props) => props.parent;
 
-function getRevisionOrParentRevision(dblId, revision, parent) {
-  return parseInt(revision, 10) || (parent && parent.dblId === dblId ? parent.revision : 0);
+function filterForLaterRevisionsOrDrafts(bundleId, effectiveRevision) {
+  return b => {
+    if (b.id === bundleId) {
+      return false;
+    }
+    const testEffectiveRevision = bundleService.getRevisionOrParentRevision(b.dblId, b.revision, b.parent);
+    if (b.revision !== '0' && testEffectiveRevision <= effectiveRevision) {
+      return false;
+    }
+    return true;
+  };
 }
+
+const makeGetLaterEntryRevisions = () => createSelector(
+  [getSelectedBundleEntryRevision, getAllBundles, getBundleId, getDblId, getRevision, getParent],
+  (selectedBundleEntryRevision, allBundles, bundleId, dblId, revision, parent) => {
+    if (!selectedBundleEntryRevision) {
+      return [];
+    }
+    const effectiveRevision = bundleService.getRevisionOrParentRevision(dblId, revision, parent);
+    const allRevisions = allBundles.filter(b => b.dblId === dblId);
+    const laterRevisions = allRevisions.filter(filterForLaterRevisionsOrDrafts(bundleId, effectiveRevision));
+    return laterRevisions;
+  }
+);
 
 const makeMapStateToProps = () => {
   const shouldShowRow = makeShouldShowRow();
   const getMatches = makeGetBundleMatches();
   const getIsRequestingRevision = makeGetIsRequestingRevision();
-  const getEntryPageUrl = makeGetEntryPageUrl();
   const getIsDownloading = makeGetIsDownloading();
   const getFormsErrors = editMetadataService.makeGetFormsErrors();
+  const getLaterEntryRevisions = makeGetLaterEntryRevisions();
   const mapStateToProps = (state, props) => {
     const { bundlesSaveTo, bundles: { newMediaTypes = [] } } = state;
     return {
       isRequestingRevision: getIsRequestingRevision(state, props),
+      laterEntryRevisions: getLaterEntryRevisions(state, props),
       shouldShowRow: shouldShowRow(state, props),
       bundleMatches: getMatches(state, props),
       bundlesSaveTo,
       newMediaTypes,
-      entryPageUrl: getEntryPageUrl(state, props),
       isDownloading: getIsDownloading(state, props),
       formsErrors: getFormsErrors(state, props)
     };
@@ -235,7 +257,7 @@ class DBLEntryRow extends PureComponent<Props> {
     const {
       status, revision, parent, dblId
     } = this.props;
-    return status === 'DRAFT' && getRevisionOrParentRevision(dblId, revision, parent) === 0;
+    return status === 'DRAFT' && bundleService.getRevisionOrParentRevision(dblId, revision, parent) === 0;
   }
 
   shouldDisableRevise = () => (this.props.isRequestingRevision || this.props.isDownloading)
@@ -330,10 +352,6 @@ class DBLEntryRow extends PureComponent<Props> {
     }
   }
 
-  onOpenDBLEntryLink = (event) => {
-    utilities.onOpenLink(this.props.entryPageUrl)(event);
-  }
-
   renderStatus = () => (
     <ControlledHighlighter {...this.getHighlighterSharedProps(this.props.displayAs.status)} />
   );
@@ -341,15 +359,9 @@ class DBLEntryRow extends PureComponent<Props> {
   renderEditIcon = () => {
     const { status, classes, formsErrors } = this.props;
     const formsErrorCount = Object.keys(formsErrors).length;
-    const conditionallyRenderBadge = (errorCount, node) => {
-      if (!errorCount) {
-        return node;
-      }
-      return <Badge key="badge" className={classes.badge} badgeContent={errorCount} color="error">{node}</Badge>;
-    };
     if (status === 'DRAFT') {
       return [
-        conditionallyRenderBadge(formsErrorCount, <Edit key="btnEdit" className={classNames(classes.leftIcon, classes.iconSmall)} />),
+        conditionallyRenderBadge({ className: classes.badge, color: 'error' }, formsErrorCount, <Edit key="btnEdit" className={classNames(classes.leftIcon, classes.iconSmall)} />),
         'Edit'
       ];
     }
@@ -360,7 +372,7 @@ class DBLEntryRow extends PureComponent<Props> {
     const {
       classes, status, revision, parent, dblId
     } = this.props;
-    const effectiveRevision = getRevisionOrParentRevision(dblId, revision, parent);
+    const effectiveRevision = bundleService.getRevisionOrParentRevision(dblId, revision, parent);
     switch (status) {
       case 'DRAFT': return effectiveRevision ? classes.draftRevision : classes.draftNew;
       case 'NOT_STARTED': return classes.noneStoredMode;
@@ -393,6 +405,8 @@ class DBLEntryRow extends PureComponent<Props> {
       return (null);
     }
     const resourceManagerMode = status === 'DRAFT' ? 'addFiles' : 'download';
+    const laterEntryRevisionsCount = this.props.laterEntryRevisions.length;
+    const laterRevisionsBadge = laterEntryRevisionsCount ? `${laterEntryRevisionsCount}` : '';
     return (
       <div
         className={classNames(styles.bundleRow, this.pickBackgroundColor())}
@@ -416,13 +430,18 @@ class DBLEntryRow extends PureComponent<Props> {
             <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.name)} />
           </div>
           <div className={styles.bundleRowTopMiddle}>
-            <Tooltip title={this.props.entryPageUrl} placement="right">
-              <Button variant="text" size="small" className={classes.button}
+            <Tooltip title="Switch revision">
+              <Button
+                variant="text"
+                size="small"
+                className={classes.button}
                 disabled={dblId === undefined}
-                onKeyPress={this.onOpenDBLEntryLink}
                 onClick={this.onClickManageResources('revisions')}
               >
-                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
+                {conditionallyRenderBadge(
+                  { classes: { badge: classes.badgeTight }, color: 'primary' }, laterRevisionsBadge,
+                  <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
+                  )}
               </Button>
             </Tooltip>
           </div>
@@ -579,6 +598,9 @@ const materialStyles = theme => ({
   badge: {
     marginRight: theme.spacing.unit * 2,
   },
+  badgeTight: {
+    marginRight: -15,
+  },
   leftIcon: {
     marginRight: theme.spacing.unit,
   },
@@ -610,4 +632,12 @@ function getBundleExportInfo(bundleId, savedToHistory) {
 function stopPropagation(event) {
   event.stopPropagation();
   return null;
+}
+
+
+function conditionallyRenderBadge(props, content, node) {
+  if (!content) {
+    return node;
+  }
+  return <Badge key="badge" {...props} badgeContent={content}>{node}</Badge>;
 }

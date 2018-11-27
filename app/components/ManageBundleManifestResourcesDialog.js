@@ -13,11 +13,13 @@ import CardContent from '@material-ui/core/CardContent';
 import Button from '@material-ui/core/Button';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
+import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import CloseIcon from '@material-ui/icons/Close';
 import CheckIcon from '@material-ui/icons/Check';
 import OpenInNew from '@material-ui/icons/OpenInNew';
+import Link from '@material-ui/icons/Link';
 import FileDownload from '@material-ui/icons/CloudDownloadOutlined';
 import { createSelector } from 'reselect';
 import classNames from 'classnames';
@@ -32,6 +34,8 @@ import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
 import EnhancedTable from './EnhancedTable';
 import { utilities } from '../utils/utilities';
+import { bundleService } from '../services/bundle.service';
+import { ux } from '../utils/ux';
 
 const { dialog } = require('electron').remote;
 const { shell } = require('electron');
@@ -56,6 +60,7 @@ type Props = {
   publicationsHealthSuccessMessage: ?string,
   wizardsResults: ?{},
   goFixPublications: ?() => {},
+  entryPageUrl: string,
   closeResourceManager: () => {},
   openMetadataFile: () => {},
   getManifestResources: () => {},
@@ -220,7 +225,7 @@ function createRevisionData(entryRevision, localEntryBundle, bundleManifestResou
   /* eslint-disable camelcase */
   const {
     created_on = '',
-    revision = 0,
+    revision = '0',
     version = '',
     archivist = '',
     comments = '',
@@ -249,16 +254,46 @@ const makeGetEntryRevisionsData = () => createSelector(
     const { dblId } = bundle;
     const localEntryBundles = findLocalEntryBundles(bundlesById, dblId);
     const entryRevisions = allEntryRevisions[dblId] || {};
-    return Object.values(entryRevisions)
+    const entryRevData = Object.values(entryRevisions)
       .map(entryRevision => {
         const revision = `${entryRevision.revision}`;
         const localEntryBundle = localEntryBundles.find(b => b.revision === revision);
         const { id: localBundleId } = localEntryBundle || {};
         const { [localBundleId]: bundleManifestResources = [] } = manifestResources;
-        return createRevisionData(entryRevision, localEntryBundle, bundleManifestResources, bundleId === localBundleId);
+        const disabled = bundleId === localBundleId || !entryRevision.version.startsWith('2.');
+        return createRevisionData(entryRevision, localEntryBundle, bundleManifestResources, disabled);
       });
+    const draftData = Object.values(localEntryBundles).filter(localBundle => [0, '0'].includes(localBundle.revision)).map(localEntryBundle => {
+      const { id: localBundleId } = localEntryBundle || {};
+      const { [localBundleId]: bundleManifestResources = [] } = manifestResources;
+      const revision = ux.getFormattedRevision(localEntryBundle, '');
+      const mockEntryRevision = {
+        created_on: localEntryBundle.raw.store.created,
+        revision,
+        version: '2.x',
+        archivist: '',
+        comments: localEntryBundle.raw.metadata.comments,
+        href: '',
+      };
+      return createRevisionData(mockEntryRevision, localEntryBundle, bundleManifestResources, bundleId === localBundleId);
+    });
+    return [...entryRevData, ...draftData];
   }
 );
+
+const getDblBaseUrl = (state) => state.dblDotLocalConfig.dblBaseUrl;
+const makeGetEntryPageUrl = () => createSelector(
+  [getDblBaseUrl, getBundlesById, getBundleId],
+  (dblBaseUrl, bundlesById, bundleId) => {
+    const origBundle = bundlesById[bundleId];
+    const { dblId, revision, parent } = origBundle;
+    const revisionNum = bundleService.getRevisionOrParentRevision(dblId, revision, parent);
+    const revisionQuery = revisionNum ? `&revision=${revisionNum}` : '';
+    const url = `${dblBaseUrl}/entry?id=${dblId}${revisionQuery}`;
+    return url;
+  }
+);
+
 
 function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundleManageResources } = state;
@@ -278,6 +313,7 @@ function mapStateToProps(state, props) {
   const bundlesById = getBundlesById(state);
   const getEntryRevisionsData = makeGetEntryRevisionsData();
   const origBundle = bundleId ? bundlesById[bundleId] : {};
+  const getEntryPageUrl = makeGetEntryPageUrl();
   return {
     open: Boolean(bundleId),
     loading: loading || fetchingMetadata,
@@ -294,7 +330,8 @@ function mapStateToProps(state, props) {
     publicationsHealthMessage,
     goFixPublications,
     publicationsHealthSuccessMessage,
-    wizardsResults
+    wizardsResults,
+    entryPageUrl: getEntryPageUrl(state, props),
   };
 }
 
@@ -472,9 +509,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
     const { selected, localBundle } = this.getSelectedLocalBundle();
     if (localBundle) {
-      return `${label} (Rev ${selected.revision})`;
+      return `${label} Rev ${selected.revision}`;
     }
-    return `Fetch (Rev ${selected.revision})`;
+    return `Fetch Rev ${selected.revision}`;
   }
 
   isNothingSelected = () => {
@@ -750,6 +787,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         return (<EnhancedTable
           data={tableData}
           columnConfig={columnConfig}
+          customSorts={{ revision: rData => (rData.localBundle ? sortLocalRevisions(rData.localBundle) : parseInt(rData.revision, 10)) }}
           secondarySorts={['revision']}
           defaultOrderBy="revision"
           orderDirection="desc"
@@ -781,13 +819,17 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
   }
 
+  onOpenDBLEntryLink = (event) => {
+    utilities.onOpenLink(this.props.entryPageUrl)(event);
+  }
+
   render() {
     const {
       classes, open, origBundle = {},
       publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading, progress
     } = this.props;
     const { displayAs = {} } = origBundle;
-    const { languageAndCountry, name } = displayAs;
+    const { languageAndCountry, name, revision } = displayAs;
     const modeUi = this.modeUi();
     const isAddFilesMode = this.isAddFilesMode();
     return (
@@ -798,9 +840,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               <IconButton color="inherit" onClick={this.handleClose} aria-label="Close">
                 <CloseIcon />
               </IconButton>
-              <Typography variant="title" color="inherit" className={classes.flex}>
+              <Typography variant="title" color="inherit">
                 {modeUi.appBar.title}: <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry} </span> {name}
               </Typography>
+              <Tooltip title={this.props.entryPageUrl}>
+                <Button color="inherit" onClick={this.onOpenDBLEntryLink}>
+                  <Link className={classNames(classes.leftIcon, classes.iconSmall)} />
+                  {revision}
+                </Button>
+              </Tooltip>
+              <div className={classes.flex} />
               <Button key="btnOpenXml" color="inherit" disable={this.props.showMetadataFile} onClick={this.handleReview}>
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
                 Review
@@ -861,3 +910,12 @@ export default compose(
     mapDispatchToProps
   ),
 )(ManageBundleManifestResourcesDialog);
+
+function sortLocalRevisions(bundle) {
+  const effectiveRevision =
+    bundleService.getRevisionOrParentRevision(bundle.dblId, bundle.revision, bundle.parent);
+  if (bundle.revision === '0') {
+    return effectiveRevision + 10000;
+  }
+  return effectiveRevision;
+}
