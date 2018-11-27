@@ -112,13 +112,6 @@ export function bundleEditMetadata(state = initialState, action) {
         activeFormEdits
       };
     }
-    case bundleEditMetadataConstants.METADATA_FORM_INSTANCE_DELETE_PROMPT_CONFIRM: {
-      const { promptConfirm = true } = action;
-      return {
-        ...state,
-        activeFormConfirmingDelete: promptConfirm
-      };
-    }
     case bundleEditMetadataConstants.METADATA_FORM_INSTANCE_DELETE_REQUEST: {
       return {
         ...state,

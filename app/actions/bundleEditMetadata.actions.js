@@ -15,7 +15,6 @@ export const bundleEditMetadataActions = {
   fetchFormStructure,
   fetchActiveFormInputs,
   openMetadataFile,
-  promptConfirmDeleteInstanceForm,
   deleteInstanceForm,
   saveMetadata,
   saveFieldValuesForActiveForm,
@@ -256,27 +255,6 @@ function getActiveFormKey(getState) {
   const { activeFormInputs } = bundleEditMetadata;
   const [formKey] = Object.keys(activeFormInputs);
   return formKey;
-}
-
-export function promptConfirmDeleteInstanceForm(bundleId, origFormKey) {
-  return async (dispatch, getState) => {
-    dispatch(promptConfirm(bundleId, origFormKey, true));
-    await utilities.sleep(3000); // wait a few seconds for user to click Confirm
-    const nextFormKey = getActiveFormKey(getState);
-    if (nextFormKey !== origFormKey) {
-      return; // switched form, so cancel this state change.
-    }
-    dispatch(promptConfirm(bundleId, origFormKey, false));
-  };
-
-  function promptConfirm(_bundleId, _formKey, shouldWaitForConfirm) {
-    return {
-      type: bundleEditMetadataConstants.METADATA_FORM_INSTANCE_DELETE_PROMPT_CONFIRM,
-      bundleId: _bundleId,
-      formKey: _formKey,
-      promptConfirm: shouldWaitForConfirm
-    };
-  }
 }
 
 export function deleteInstanceForm(bundleId, formKey) {
