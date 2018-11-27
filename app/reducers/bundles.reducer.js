@@ -150,8 +150,11 @@ export function bundles(state = initialState, action) {
     }
     case bundleConstants.DELETE_SUCCESS: {
       const { id: bundleIdToRemove } = action;
+      const bundleToRemove = state.addedByBundleIds[bundleIdToRemove];
       const allBundles = state.allBundles.filter(bundle => bundle.id !== bundleIdToRemove);
-      const { items, addedByBundleIds } = sortAndFilterBundlesAsEntries(allBundles, state.selectedBundleEntryRevisions);
+      const { selectedBundleEntryRevisions: selectedBundleEntryRevisionsOrig = {} } = state;
+      const { [bundleToRemove.dblId]: selectedEntryRevisionOrig, ...selectedBundleEntryRevisions } = selectedBundleEntryRevisionsOrig;
+      const { items, addedByBundleIds } = sortAndFilterBundlesAsEntries(allBundles, selectedBundleEntryRevisions);
       const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, null, bundleIdToRemove, items);
       return {
         ...state,
@@ -159,7 +162,8 @@ export function bundles(state = initialState, action) {
         allBundles,
         addedByBundleIds,
         selectedBundle,
-        selectedDBLEntryId
+        selectedDBLEntryId,
+        selectedBundleEntryRevisions
       };
     }
     case bundleConstants.ADD_BUNDLE: {
