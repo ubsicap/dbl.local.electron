@@ -787,7 +787,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         return (<EnhancedTable
           data={tableData}
           columnConfig={columnConfig}
-          // customSorts={{ revision: rData => (rData.localBundle ? ux.getFormattedRevision(rData.localBundle, '') : rData.revision) }}
+          customSorts={{ revision: rData => (rData.localBundle ? sortLocalRevisions(rData.localBundle) : parseInt(rData.revision, 10)) }}
           secondarySorts={['revision']}
           defaultOrderBy="revision"
           orderDirection="desc"
@@ -910,3 +910,12 @@ export default compose(
     mapDispatchToProps
   ),
 )(ManageBundleManifestResourcesDialog);
+
+function sortLocalRevisions(bundle) {
+  const effectiveRevision =
+    bundleService.getRevisionOrParentRevision(bundle.dblId, bundle.revision, bundle.parent);
+  if (bundle.revision === '0') {
+    return effectiveRevision + 10000;
+  }
+  return effectiveRevision;
+}
