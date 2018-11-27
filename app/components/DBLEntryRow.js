@@ -406,7 +406,7 @@ class DBLEntryRow extends PureComponent<Props> {
     }
     const resourceManagerMode = status === 'DRAFT' ? 'addFiles' : 'download';
     const laterEntryRevisionsCount = this.props.laterEntryRevisions.length;
-    const laterRevisionsBadge = laterEntryRevisionsCount ? `<${laterEntryRevisionsCount}` : '';
+    const laterRevisionsBadge = laterEntryRevisionsCount ? `${laterEntryRevisionsCount}` : '';
     return (
       <div
         className={classNames(styles.bundleRow, this.pickBackgroundColor())}
