@@ -540,16 +540,17 @@ class _EditMetadataStepper extends React.Component<Props> {
 
   render() {
     const { bundleId, classes, steps = [] } = this.props;
-    const { activeStepIndex } = this.state;
     if (!bundleId) {
       return (null);
     }
+    const { activeStepIndex } = this.state;
+    const getStepBackground = (step, index) => (index === activeStepIndex && (step.template && (!step.contains || step.isFactory)) ? { background: '#F8F6AE' } : {});
     return (
       <div className={classes.root}>
         <Stepper nonLinear activeStep={activeStepIndex} orientation="vertical">
           {steps.map((step, index) =>
             (
-              <Step key={step.label}>
+              <Step key={step.label} style={getStepBackground(step, index)}>
                 <StepLabel
                   onClick={this.handleStep(index)}
                   completed={this.state.completed[index]}
