@@ -15,8 +15,7 @@ export const bundleEditMetadataActions = {
   fetchFormStructure,
   fetchActiveFormInputs,
   openMetadataFile,
-  promptConfirmDeleteInstanceForm,
-  deleteInstanceForm,
+  deleteForm,
   saveMetadata,
   saveFieldValuesForActiveForm,
   reloadFieldValues,
@@ -258,34 +257,16 @@ function getActiveFormKey(getState) {
   return formKey;
 }
 
-export function promptConfirmDeleteInstanceForm(bundleId, origFormKey) {
-  return async (dispatch, getState) => {
-    dispatch(promptConfirm(bundleId, origFormKey, true));
-    await utilities.sleep(3000); // wait a few seconds for user to click Confirm
-    const nextFormKey = getActiveFormKey(getState);
-    if (nextFormKey !== origFormKey) {
-      return; // switched form, so cancel this state change.
-    }
-    dispatch(promptConfirm(bundleId, origFormKey, false));
-  };
-
-  function promptConfirm(_bundleId, _formKey, shouldWaitForConfirm) {
-    return {
-      type: bundleEditMetadataConstants.METADATA_FORM_INSTANCE_DELETE_PROMPT_CONFIRM,
-      bundleId: _bundleId,
-      formKey: _formKey,
-      promptConfirm: shouldWaitForConfirm
-    };
-  }
-}
-
-export function deleteInstanceForm(bundleId, formKey) {
+export function deleteForm(bundleId, formKey, reloadActiveForm) {
   return async dispatch => {
     dispatch(request());
     try {
       await bundleService.deleteForm(bundleId, formKey);
-      dispatch(success(bundleId, formKey));
       dispatch(fetchFormStructure(bundleId));
+      if (reloadActiveForm) {
+        dispatch(fetchActiveFormInputs(bundleId, formKey, true));
+      }
+      dispatch(success(bundleId, formKey));
     } catch (errorReadable) {
       const error = await errorReadable.text();
       dispatch(failure(error));
@@ -384,11 +365,11 @@ export function saveMetadata({
         // reset state so that saving overrides does not result in infinite loop when errors occur
         dispatch(fetchActiveFormInputs(bundleId, formKey));
       }
-      dispatch(saveMetadataSuccess(bundleId, formKey));
       dispatch(updateFormFieldIssues(bundleId));
       if (isFactory || forceSaveState /* reload 'present' status */) {
         dispatch(fetchFormStructure(bundleId));
       }
+      dispatch(saveMetadataSuccess(bundleId, formKey));
       dispatch(saveMetadatFileToTempBundleFolder(bundleId));
       dispatch(saveSuccessMiddleware(bundleId, formKey));
       if (saveOverrides) {

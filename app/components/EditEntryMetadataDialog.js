@@ -14,6 +14,7 @@ import OpenInNew from '@material-ui/icons/OpenInNew';
 import Save from '@material-ui/icons/Save';
 import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
+import Tooltip from '@material-ui/core/Tooltip';
 import { updateBundle } from '../actions/bundle.actions';
 import { closeEditMetadata, saveFieldValuesForActiveForm, openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import editMetadataService from '../services/editMetadata.service';
@@ -77,6 +78,7 @@ const materialStyles = theme => ({
   },
   badge: {
     marginRight: theme.spacing.unit * 2,
+    marginLeft: theme.spacing.unit
   },
 });
 
@@ -145,13 +147,15 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     }
     const { currentFormNumWithErrors } = this.props;
     return (
-      <Button key="btnGotoError" color="inherit" onClick={this.navigateToNextErrror}>
-        {currentFormNumWithErrors || ''}
-        <Badge key="badge" className={classes.badge} badgeContent={formsErrorsCount} color="error">
-          <NavigateNext key="navigateNext" className={classNames(classes.leftIcon, classes.iconSmall)} />
-        </Badge>
-        Next
-      </Button>
+      <Tooltip title="Navigate to next form with error">
+        <Button key="btnGotoError" color="secondary" variant="contained" onClick={this.navigateToNextErrror}>
+          {currentFormNumWithErrors || ''}
+          <Badge key="badge" className={classes.badge} badgeContent={formsErrorsCount} color="error">
+            <NavigateNext style={{ background: '#F8F6AE' }} color="action" key="navigateNext" className={classNames(classes.iconSmall)} />
+          </Badge>
+          Next
+        </Button>
+      </Tooltip>
     );
   }
 

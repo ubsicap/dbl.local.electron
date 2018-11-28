@@ -58,6 +58,52 @@ function tryAddNewEntry(rawBundle) {
   };
 }
 
+function isOptional(arity) {
+  return ['*', '?'].includes(arity);
+}
+
+function getFormBundleTreeErrors(acc, treeNode) {
+  const { arity = null, instances = null } = treeNode;
+  if (!arity || isOptional(arity) || this.isRoot) {
+    return acc;
+  }
+  if (!instances || Object.keys(instances).length > 0) {
+    return acc;
+  }
+  const { parents } = this;
+  const isNestedInOptionalForm = parents
+    .map(context => context.node)
+    .some(node => isOptional(node.arity) && !node.present);
+  if (isNestedInOptionalForm) {
+    return acc;
+  }
+  const treeError = {
+    field_issues: [],
+    document_issues: [
+      [
+        'missing_instance',
+        'requires at least one instance'
+      ]
+    ],
+    response_format_valid: true,
+    response_valid: false
+  };
+
+  // build formKey recusively from node.id -> parent.node.id
+  const formKey = [...parents, this]
+    .filter(context => context.key && context.node.id &&
+      !['contains', 'instances'].includes(context.key))
+    .map(context => context.node.id).join('/');
+  return { ...acc, [formKey]: treeError };
+}
+
+async function getAllFormsErrorStatus(bundleId) {
+  const formsErrorStatus = await bundleService.checkAllFields(bundleId);
+  const formStructure = await bundleService.getFormBundleTree(bundleId);
+  const formTreeErrors = traverse(formStructure).reduce(getFormBundleTreeErrors, {});
+  return { ...formsErrorStatus, ...formTreeErrors };
+}
+
 function updateOrAddBundle(rawBundle) {
   return async (dispatch, getState) => {
     const { local_id: bundleId } = rawBundle;
@@ -65,7 +111,7 @@ function updateOrAddBundle(rawBundle) {
     const manifestResources = hasStoredResources ?
       await bundleService.getManifestResourcePaths(bundleId) : 0;
     const { status } = bundleService.getInitialTaskAndStatus(rawBundle);
-    const formsErrorStatus = status === 'DRAFT' ? await bundleService.checkAllFields(bundleId) : {};
+    const formsErrorStatus = status === 'DRAFT' ? await getAllFormsErrorStatus(bundleId) : {};
     const resourceCountManifest = (manifestResources || []).length;
     const bundle = await bundleService.convertApiBundleToNathanaelBundle(
       rawBundle,
