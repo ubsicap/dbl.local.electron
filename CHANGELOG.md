@@ -1,3 +1,13 @@
+### Version 0.18.0
+#### Features (in Edit metadata dialog)
+- Offer Delete Button for optional forms 
+- Add background to active form
+- Condense navigation buttons and add tooltips
+- Show more errors related to required (factory) forms that aren't present
+- Change button/badge style for navigate to Next form error
+#### Fixes
+- remove some "flashing" of buttons during state transitions.
+
 ### Version 0.17.0
 #### Features
 - Added Revision badge to indicate user has newer choices or drafts to choose
