@@ -262,11 +262,11 @@ export function deleteForm(bundleId, formKey, reloadActiveForm) {
     dispatch(request());
     try {
       await bundleService.deleteForm(bundleId, formKey);
-      dispatch(success(bundleId, formKey));
       dispatch(fetchFormStructure(bundleId));
       if (reloadActiveForm) {
         dispatch(fetchActiveFormInputs(bundleId, formKey, true));
       }
+      dispatch(success(bundleId, formKey));
     } catch (errorReadable) {
       const error = await errorReadable.text();
       dispatch(failure(error));
@@ -365,11 +365,11 @@ export function saveMetadata({
         // reset state so that saving overrides does not result in infinite loop when errors occur
         dispatch(fetchActiveFormInputs(bundleId, formKey));
       }
-      dispatch(saveMetadataSuccess(bundleId, formKey));
       dispatch(updateFormFieldIssues(bundleId));
       if (isFactory || forceSaveState /* reload 'present' status */) {
         dispatch(fetchFormStructure(bundleId));
       }
+      dispatch(saveMetadataSuccess(bundleId, formKey));
       dispatch(saveMetadatFileToTempBundleFolder(bundleId));
       dispatch(saveSuccessMiddleware(bundleId, formKey));
       if (saveOverrides) {

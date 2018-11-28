@@ -434,7 +434,7 @@ class _EditMetadataStepper extends React.Component<Props> {
   }
 
   renderStepContentActionsContainer = (stepIndex) => {
-    const { classes, steps = [] } = this.props;
+    const { classes, activeFormDeleting = false, steps = [] } = this.props;
     const { activeStepIndex } = this.state;
     const hasFormChanged = this.getHasFormChanged(stepIndex);
     const hasFieldContent = activeStepIndex === stepIndex ?
@@ -471,20 +471,23 @@ class _EditMetadataStepper extends React.Component<Props> {
         </div>
       );
     }
+    const navigateTo = 'Navigate to ';
     return (
       <div>
-        <Tooltip title={this.getBackSectionName('Navigate to ', '')}>
-          <Button
-            disabled={activeStepIndex === 0}
-            onClick={this.handleBack}
-            className={classes.button}
-          >
-            <NavigateBefore className={classNames(classes.rightIcon, classes.iconSmall)} />
-          </Button>
+        <Tooltip title={this.getBackSectionName(navigateTo, '')}>
+          <span>
+            <Button
+              disabled={activeStepIndex === 0}
+              onClick={this.handleBack}
+              className={classes.button}
+            >
+              <NavigateBefore className={classNames(classes.iconSmall)} />
+            </Button>
+          </span>
         </Tooltip>
         {(isInstance || (present && !isRequired(step.arity)) ? this.renderDeleteButton(step) : (null))}
-        {!hasFormChanged && hasFieldContent && isNotYetPresent && this.renderAddButton(step)}
-        <Tooltip title={this.getNextSectionName('Navigate to ', '')}>
+        {/* !activeFormDeleting && !hasFormChanged && hasFieldContent && isNotYetPresent && this.renderAddButton(step) */}
+        <Tooltip title={this.getNextSectionName(navigateTo, '')}>
           <Button
             variant="outlined"
             color="default"
@@ -494,7 +497,7 @@ class _EditMetadataStepper extends React.Component<Props> {
             {isLastStep ?
               ([<ExpandLessIcon key="Hide" className={classNames(classes.leftIcon, classes.iconSmall)} />, 'Hide'])
               :
-              (<NavigateNext key="Next" className={classNames(classes.leftIcon, classes.iconSmall)} />)
+              (<NavigateNext key="Next" className={classNames(classes.iconSmall)} />)
             }
           </Button>
         </Tooltip>
