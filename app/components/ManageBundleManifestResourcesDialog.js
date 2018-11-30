@@ -774,7 +774,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const {
       columnConfig, manifestResources, mode
     } = this.props;
-    const { selectAll, tableData = manifestResources } = this.state;
+    const { selectAll, tableData = manifestResources, selectedIds } = this.state;
     switch (mode) {
       case 'download': {
         return (<EnhancedTable
@@ -785,6 +785,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           onSelectedRowIds={this.onSelectedIds}
           multiSelections
           selectAll={selectAll}
+          selectedIds={selectedIds}
         />);
       }
       case 'revisions': {
@@ -797,6 +798,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           orderDirection="desc"
           onSelectedRowIds={this.onSelectedIds}
           selectAll={false}
+          selectedIds={selectedIds}
         />);
       }
       case 'addFiles': {
@@ -808,6 +810,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           onSelectedRowIds={this.onSelectedIds}
           multiSelections
           selectAll={selectAll}
+          selectedIds={selectedIds}
           handleAddByFile={this.getHandleAddByFile()}
           handleAddByFolder={this.getHandleAddByFolder()}
           getSuggestions={this.getSuggestions}

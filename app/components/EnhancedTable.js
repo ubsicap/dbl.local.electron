@@ -34,6 +34,7 @@ type Props = {
   defaultOrderBy: string,
   secondarySorts: [],
   selectAll: boolean,
+  selectedIds: [],
   multiSelections?: boolean,
   customSorts?: {},
   onSelectedRowIds: () => {},
@@ -61,12 +62,14 @@ class EnhancedTable extends Component<Props> {
   state = {
     order: this.props.orderDirection,
     orderBy: this.props.defaultOrderBy || this.props.columnConfig[0].name,
-    selectedRowIds: []
+    selectedRowIds: this.props.selectedIds
   };
 
   componentWillReceiveProps(nextProps) {
     // You don't have to do this check first, but it can help prevent an unneeded render
-    if (nextProps.multiSelections && nextProps.selectAll && nextProps.data.length &&
+    if (nextProps.selectedIds !== this.props.selectedIds) {
+      this.setState({ selectedRowIds: nextProps.selectedIds });
+    } else if (nextProps.multiSelections && nextProps.selectAll && nextProps.data.length &&
       (this.props.data !== nextProps.data ||
       this.state.selectedRowIds.length === 0 ||
       nextProps.selectAll !== this.props.selectAll)) {
