@@ -323,8 +323,9 @@ function getSubsystemUploadQueue() {
   return fetch(url, requestOptions).then(handleResponse);
 }
 
-function removeResources(bundleId) {
-  return bundleAddTasks(bundleId, '<removeLocalResources/>');
+function removeResources(bundleId, pathsToRemove = []) {
+  const resourceList = pathsToRemove.map(uri => `<resource uri="${uri}"/>`).join('');
+  return bundleAddTasks(bundleId, `<removeLocalResources>${resourceList}</removeLocalResources>`);
 }
 
 function removeBundle(bundleId) {

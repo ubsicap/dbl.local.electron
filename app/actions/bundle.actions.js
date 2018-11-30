@@ -608,13 +608,15 @@ export function downloadResources(_id, _uris = []) {
   }
 }
 
-export function removeResources(id) {
+export function removeResources(id, selected = []) {
   return async dispatch => {
     try {
-      const resourcePathsToRemove = await bundleService.getResourcePaths(id);
+      const resourcePaths = await bundleService.getResourcePaths(id);
+      const resourcePathsToRemove = resourcePaths
+        .filter(path => !selected.length || selected.includes(path));
       dispatch(request(id, resourcePathsToRemove));
       dispatch(updateSearchResultsForBundleId(id));
-      await bundleService.removeResources(id);
+      await bundleService.removeResources(id, resourcePathsToRemove);
     } catch (errorReadable) {
       const error = await errorReadable.text();
       dispatch(failure(id, error));

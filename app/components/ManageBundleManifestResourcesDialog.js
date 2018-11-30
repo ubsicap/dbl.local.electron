@@ -29,7 +29,7 @@ import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth
 } from '../actions/bundleManageResources.actions';
-import { downloadResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
+import { downloadResources, removeResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
 import EnhancedTable from './EnhancedTable';
@@ -69,7 +69,8 @@ type Props = {
   addManifestResources: () => {},
   checkPublicationsHealth: () => {},
   createBundleFromDBL: () => {},
-  selectBundleEntryRevision: () => {}
+  selectBundleEntryRevision: () => {},
+  removeResources: () => {}
 };
 
 function createUpdatedTotalResources(origTotalResources, filePath, updateFunc) {
@@ -344,7 +345,8 @@ const mapDispatchToProps = {
   addManifestResources,
   checkPublicationsHealth,
   createBundleFromDBL,
-  selectBundleEntryRevision
+  selectBundleEntryRevision,
+  removeResources
 };
 
 const materialStyles = theme => ({
@@ -458,10 +460,19 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.handleClose();
   }
 
-  handleAddFiles = () => {
+  handleModifyFiles = () => {
     const { bundleId } = this.props;
     const selectedResources = this.getSelectedRowData();
-    const filesToContainers = selectedResources.reduce((acc, selectedResource) =>
+    const storedResources = selectedResources.filter(r => r.status === 'stored');
+    const dblResources = selectedResources.filter(r => r.status === 'dbl');
+    const toAddResources = selectedResources.filter(r => r.status === 'add?');
+    if (storedResources.length) {
+      this.props.removeResources(bundleId, storedResources.map(r => r.uri));
+      return;
+    } else if (dblResources.length) {
+      return;
+    }
+    const filesToContainers = toAddResources.reduce((acc, selectedResource) =>
       ({ ...acc, [selectedResource.id]: formatUriForApi(selectedResource) }), {});
     this.props.addManifestResources(bundleId, filesToContainers);
     this.setState({ selectedIds: [] });
@@ -669,7 +680,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             OkButtonProps: {
               color: 'secondary',
               variant: 'contained',
-              onClick: this.handleAddFiles,
+              onClick: this.handleModifyFiles,
               disabled: this.shouldDisableAddFiles()
             },
             OkButtonLabel,
