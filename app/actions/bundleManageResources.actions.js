@@ -165,15 +165,15 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
     for (const [filePath, containerPath] of Object.entries(_fileToContainerPaths)) {
       try {
         await bundleService.postResource(_bundleId, filePath, containerPath);
-        const { bundleManageResources } = getState();
-        const { publicationsHealth } = bundleManageResources;
-        const { publications } = publicationsHealth;
-        await bundleService.updatePublications(_bundleId, publications);
         dispatch(success(_bundleId, filePath, containerPath));
       } catch (error) {
         dispatch(failure(_bundleId, error));
       }
     }
+    const { bundleManageResources } = getState();
+    const { publicationsHealth } = bundleManageResources;
+    const { publications } = publicationsHealth;
+    await bundleService.updatePublications(_bundleId, publications);
     dispatch(done(_bundleId));
     /*
     await Promise.all(Object.entries(_fileToContainerPaths)

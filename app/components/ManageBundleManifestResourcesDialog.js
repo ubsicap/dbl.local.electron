@@ -417,7 +417,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.progress !== this.props.progress) {
+    if (nextProps.progress !== this.props.progress &&
+      (nextProps.progress === 100)) {
       const { bundleId } = this.props;
       this.props.getManifestResources(bundleId);
     }
