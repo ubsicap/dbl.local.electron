@@ -126,7 +126,7 @@ function ignoreHiddenFunc(file, stats) {
   return false;
 }
 
-function createResourceData(manifestResourceRaw, fileStoreInfo, mode) {
+function createResourceData(manifestResourceRaw, fileStoreInfo) {
   const { uri = '', checksum = '', size: sizeRaw = 0, mimeType = '' } = manifestResourceRaw;
   const container = formatContainer(upath.normalizeTrim(path.dirname(uri)));
   const name = path.basename(uri);
@@ -134,7 +134,7 @@ function createResourceData(manifestResourceRaw, fileStoreInfo, mode) {
   const size = formatBytesByKbs(sizeRaw);
   const id = uri;
   const status = fileStoreInfo ? 'stored' : '';
-  const disabled = mode === 'addFiles' ? status !== 'add?' : status === 'stored';
+  const disabled = false; /* mode === 'addFiles' ? status !== 'add?' : status === 'stored'; */
   return {
     id, uri, status, container, name, mimeType, size, checksum, disabled
   };
@@ -394,7 +394,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   state = {
     selectedIds: [],
     addedFilePaths: [],
-    selectAll: this.props.mode !== 'revisions'
+    selectAll: ['download'].includes(this.props.mode)
   }
 
   componentDidMount() {
@@ -579,8 +579,11 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   setAddedFilePathsAndSelectAll = (newAddedFilePaths, fullToRelativePaths) => {
     const addedFilePaths = this.getUnionWithAddedFiles(newAddedFilePaths);
     const selectedIds = this.getUnionWithSelectedIds(addedFilePaths);
-    this.setState({ addedFilePaths, selectedIds }, this.updateTotalResources(newAddedFilePaths, fullToRelativePaths));
-    this.setState({ selectAll: true });
+    this.setState(
+      { addedFilePaths, selectedIds },
+      this.updateTotalResources(newAddedFilePaths, fullToRelativePaths)
+    );
+    // this.setState({ selectAll: true });
   };
 
   getUnionWithAddedFiles = (newAddedFilePaths) => {
@@ -653,7 +656,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         return {
           mode,
           appBar: {
-            title: 'Add resources',
+            title: 'Manage resources',
             OkButtonProps: {
               color: 'secondary',
               variant: 'contained',

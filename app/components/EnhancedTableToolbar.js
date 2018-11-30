@@ -108,7 +108,7 @@ class EnhancedTableToolbar extends Component<Props> {
         <div className={classes.actions}>
           {handleAddByFile ? (
             <div>
-              <Tooltip title="Add resource">
+              <Tooltip title="Add resource(s)">
                 <Button
                   aria-owns={anchorEl ? 'simple-menu' : null}
                   aria-haspopup="true"
