@@ -407,6 +407,7 @@ class DBLEntryRow extends PureComponent<Props> {
     const resourceManagerMode = status === 'DRAFT' ? 'addFiles' : 'download';
     const laterEntryRevisionsCount = this.props.laterEntryRevisions.length;
     const laterRevisionsBadge = laterEntryRevisionsCount ? `${laterEntryRevisionsCount}` : '';
+    const mediumIconMarginRight = ux.getMediumIcon(medium);
     return (
       <div
         className={classNames(styles.bundleRow, this.pickBackgroundColor())}
@@ -420,7 +421,7 @@ class DBLEntryRow extends PureComponent<Props> {
         <div className={styles.bundleRowTop}>
           <div className={styles.bundleRowTopLeftSideIcon}>
             <Tooltip title={medium}>
-              { ux.getMediumIcon(medium) }
+              { mediumIconMarginRight }
             </Tooltip>
           </div>
           <div className={styles.bundleRowTopLeftSideLanguageAndCountry}>
@@ -467,7 +468,9 @@ class DBLEntryRow extends PureComponent<Props> {
                 onClick={this.onClickManageResources(resourceManagerMode)}
               >
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
-                <Folder className={classNames(classes.rightIcon, classes.iconSmall)} />
+                <Badge badgeContent={ux.getMediumIcon(medium, { className: classNames(classes.rightIcon, classes.iconSmaller) })} >
+                  <Folder className={classNames(classes.rightIcon, classes.iconSmall)} />
+                </Badge>
               </Button>
             )}
             {this.showStatusAsText() && (
@@ -552,7 +555,7 @@ class DBLEntryRow extends PureComponent<Props> {
                     key={mediumOption}
                     onClick={this.handleClickMediaType(mediumOption)}
                   >
-                    {ux.getMediumIcon(mediumOption)}
+                    {mediumIconMarginRight}
                     {mediumOption}
                   </MenuItem>
                 ))}
@@ -609,6 +612,9 @@ const materialStyles = theme => ({
   },
   iconSmall: {
     fontSize: 20,
+  },
+  iconSmaller: {
+    fontSize: 10,
   },
   draftRevision: { backgroundColor: lighten(theme.palette.secondary.light, 0.85) },
   draftNew: { backgroundColor: lighten(theme.palette.primary.main, 0.60) },
