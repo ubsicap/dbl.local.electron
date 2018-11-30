@@ -165,7 +165,6 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
     for (const [filePath, containerPath] of Object.entries(_fileToContainerPaths)) {
       try {
         await bundleService.postResource(_bundleId, filePath, containerPath);
-        await bundleService.updateManifestResource(_bundleId, containerPath);
         const { bundleManageResources } = getState();
         const { publicationsHealth } = bundleManageResources;
         const { publications } = publicationsHealth;
