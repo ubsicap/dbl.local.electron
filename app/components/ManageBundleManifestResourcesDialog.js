@@ -299,7 +299,7 @@ const makeGetEntryPageUrl = () => createSelector(
 function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundleManageResources } = state;
   const {
-    publicationsHealth, progress = 100, loading = false, fetchingMetadata = false
+    publicationsHealth, progress = 100, loading = false, isStoreMode = false, fetchingMetadata = false
   } = bundleManageResources;
   const {
     errorMessage: publicationsHealthMessage,
@@ -317,7 +317,7 @@ function mapStateToProps(state, props) {
   const getEntryPageUrl = makeGetEntryPageUrl();
   return {
     open: Boolean(bundleId),
-    loading: loading || fetchingMetadata,
+    loading: loading || fetchingMetadata || !isStoreMode,
     progress,
     bundleId,
     bundlesById,
@@ -424,7 +424,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       const { bundleId } = this.props;
       this.props.getManifestResources(bundleId);
     }
-    if ((nextProps.manifestResources.length !== this.props.manifestResources) ||
+    if ((nextProps.manifestResources !== this.props.manifestResources) ||
       (this.props.mode === 'revisions' && nextProps.entryRevisions !== this.entryRevisions)) {
       this.updateTableData(nextProps);
     }
@@ -533,11 +533,11 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   shouldDisableDownload = () => this.isNothingSelected();
 
-  shouldDisableAddFiles = () => {
+  shouldDisableModifyFiles = () => {
     const { selectedIds = [] } = this.state;
-    const { isOkToAddFiles = false, loading = false } = this.props;
+    const { loading = false } = this.props;
     return loading ||
-      selectedIds.length === 0 || !isOkToAddFiles || this.hasAnySelectedUnassignedContainers();
+      selectedIds.length === 0;
   }
 
   getUpdatedTotalResources(filePath, update) {
@@ -681,7 +681,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               color: 'secondary',
               variant: 'contained',
               onClick: this.handleModifyFiles,
-              disabled: this.shouldDisableAddFiles()
+              disabled: this.shouldDisableModifyFiles()
             },
             OkButtonLabel,
             OkButtonIcon: <CheckIcon className={classNames(classes.leftIcon)} />

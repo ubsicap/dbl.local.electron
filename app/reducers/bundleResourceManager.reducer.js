@@ -3,6 +3,7 @@ import { bundleConstants } from '../constants/bundle.constants';
 import { utilities } from '../utils/utilities';
 
 const initialState = {
+  isStoreMode: true,
   bundleId: null,
   mode: null,
   publicationsHealth: null
@@ -20,6 +21,29 @@ export function bundleManageResources(state = initialState, action) {
     }
     case bundleResourceManagerConstants.CLOSE_RESOURCE_MANAGER: {
       return initialState;
+    }
+    case bundleConstants.UPDATE_BUNDLE: {
+      const {
+        mode,
+        manifestResources: updatedManifestResources,
+        storedFiles: updatedStoredFiles
+      } = action.bundle;
+      const { manifestResources: origManifestResources = {}, storedFiles: origStoredFiles = {} } = state;
+      if (action.bundle.id !== state.bundleId && !(action.bundle.id in origManifestResources)) {
+        return state;
+      }
+      const bundleId = action.bundle.id;
+      const isStoreMode = mode === 'stored';
+      const origBundleManifestResources = origManifestResources[bundleId] || [];
+      const bundleManifestResources = (updatedManifestResources.length === origBundleManifestResources.length &&
+        Object.keys(updatedStoredFiles).length === Object.keys(origStoredFiles).length) ?
+        state.bundleManifestResources : { rawManifestResources: updatedManifestResources, storedFiles: updatedStoredFiles };
+      const manifestResources = { ...origBundleManifestResources, [bundleId]: bundleManifestResources };
+      return {
+        ...state,
+        isStoreMode,
+        manifestResources
+      };
     }
     case bundleResourceManagerConstants.GET_MANIFEST_RESOURCES_RESPONSE: {
       const { manifestResources: rawManifestResources, storedFiles, bundleId } = action;

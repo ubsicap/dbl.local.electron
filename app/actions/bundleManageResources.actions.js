@@ -15,14 +15,6 @@ export const bundleManageResourceActions = {
 
 export function openResourceManager(_bundleId, _mode) {
   return async (dispatch) => {
-    if (['download', 'revisions'].includes(_mode)) {
-      return dispatch(navigate(_bundleId, _mode));
-    }
-    const isInCreateMode = await bundleService.bundleIsInCreateMode(_bundleId);
-    if (isInCreateMode) {
-      return dispatch(navigate(_bundleId, _mode));
-    }
-    await bundleService.waitStartCreateMode(_bundleId);
     dispatch(navigate(_bundleId, _mode));
   };
   function success(bundleId, mode) {
@@ -160,6 +152,7 @@ export function checkPublicationsHealth(_bundleId) {
 export function addManifestResources(_bundleId, _fileToContainerPaths) {
   return async (dispatch, getState) => {
     dispatch(request(_bundleId, _fileToContainerPaths));
+    await bundleService.waitStartCreateMode(_bundleId);
     /* eslint-disable no-restricted-syntax */
     /* eslint-disable no-await-in-loop */
     for (const [filePath, containerPath] of Object.entries(_fileToContainerPaths)) {

@@ -39,6 +39,7 @@ export const bundleService = {
   bundleIsInCreateMode,
   waitStartCreateMode,
   waitStopCreateMode,
+  waitMode,
   postResource,
   forkBundle,
   updateManifestResource,
@@ -181,25 +182,25 @@ function getHasStoredResources(apiBundle) {
   return Object.keys(apiBundle.store.file_info || {}).length > 1;
 }
 
-function getResourcFileStoredCount(apiBundle) {
-  const flatFileInfo = getFlatFileInfo(apiBundle);
-  const flatFilePaths = Object.keys(flatFileInfo || {});
+function getResourceFileStoredCount(apiBundle) {
+  const storedFiles = getFlatFileInfo(apiBundle);
+  const flatFilePaths = Object.keys(storedFiles || {});
   const resourceCountStored = (flatFilePaths.length > 1 ? flatFilePaths.length - 1 : 0);
-  return resourceCountStored;
+  return { resourceCountStored, storedFiles };
 }
 
 async function convertApiBundleToNathanaelBundle(apiBundle, lazyLoads = {}) {
   const {
     mode, metadata, dbl, upload
   } = apiBundle;
-  const { resourceCountManifest = null, formsErrorStatus = {} } = lazyLoads;
+  const { resourceCountManifest = null, formsErrorStatus = {}, manifestResources = [] } = lazyLoads;
   const { jobId: uploadJob } = upload || {};
   const { parent } = dbl;
   const bundleId = apiBundle.local_id;
   const initTaskStatus = getInitialTaskAndStatus(apiBundle);
   const { task } = initTaskStatus;
   let { status } = initTaskStatus;
-  const resourceCountStored = getResourcFileStoredCount(apiBundle);
+  const { resourceCountStored, storedFiles } = getResourceFileStoredCount(apiBundle);
   if (resourceCountStored) {
     if (task === 'DOWNLOAD' && mode === 'store') {
       status = 'COMPLETED'; // even if only some are stored
@@ -219,6 +220,8 @@ async function convertApiBundleToNathanaelBundle(apiBundle, lazyLoads = {}) {
     task,
     status,
     uploadJob,
+    manifestResources,
+    storedFiles,
     resourceCountStored,
     resourceCountManifest,
     parent,
@@ -476,6 +479,12 @@ function getCurrentBundleState(getState, bundleId) {
   const { bundles } = getState();
   const { addedByBundleIds } = bundles;
   return bundleId ? addedByBundleIds[bundleId] : null;
+}
+
+async function waitMode(getState, bundleId, mode) {
+  const bundleCurrentState = bundleService.getCurrentBundleState(getState, bundleId);
+  await waitUntil(async () => bundleCurrentState.mode === mode, 60000, 500);
+  return bundleCurrentState;
 }
 
 async function waitStartCreateMode(bundleId) {

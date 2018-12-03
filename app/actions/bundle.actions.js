@@ -115,7 +115,7 @@ function updateOrAddBundle(rawBundle) {
     const resourceCountManifest = (manifestResources || []).length;
     const bundle = await bundleService.convertApiBundleToNathanaelBundle(
       rawBundle,
-      { resourceCountManifest, formsErrorStatus }
+      { resourceCountManifest, formsErrorStatus, manifestResources }
     );
     const addedBundle = getAddedBundle(getState, bundleId);
     if (addedBundle) {
@@ -609,7 +609,7 @@ export function downloadResources(_id, _uris = []) {
 }
 
 export function removeResources(id, selected = []) {
-  return async dispatch => {
+  return async (dispatch) => {
     try {
       const resourcePaths = await bundleService.getResourcePaths(id);
       const resourcePathsToRemove = resourcePaths
