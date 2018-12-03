@@ -461,12 +461,22 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.handleClose();
   }
 
-  handleModifyFiles = () => {
-    const { bundleId } = this.props;
+  getResourcesByStatus = () => {
     const selectedResources = this.getSelectedRowData();
     const storedResources = selectedResources.filter(r => r.status === 'stored');
     const dblResources = selectedResources.filter(r => r.status === 'manifest');
     const toAddResources = selectedResources.filter(r => r.status === 'add?');
+    const inEffect = getArrayIfNonEmpty(storedResources) ||
+      getArrayIfNonEmpty(dblResources) ||
+      getArrayIfNonEmpty(toAddResources);
+    return {
+      storedResources, dblResources, toAddResources, inEffect
+    };
+  };
+
+  handleModifyFiles = () => {
+    const { bundleId } = this.props;
+    const { storedResources, dblResources, toAddResources } = this.getResourcesByStatus();
     if (storedResources.length) {
       this.props.removeResources(bundleId, storedResources.map(r => r.uri));
       return;
@@ -794,7 +804,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   renderTableToolbar = () => {
     const { mode } = this.props;
     const { selectedIds } = this.state;
+    const { toAddResources, inEffect } = this.getResourcesByStatus();
     const addModeProps = mode === 'addFiles' ? {
+      enableEditContainer: toAddResources === inEffect,
       handleAddByFile: this.getHandleAddByFile(),
       handleAddByFolder: this.getHandleAddByFolder(),
       getSuggestions: this.getSuggestions,
@@ -973,4 +985,8 @@ function sortLocalRevisions(bundle) {
     return effectiveRevision + 10000;
   }
   return effectiveRevision;
+}
+
+function getArrayIfNonEmpty(array) {
+  return array.length ? array : null;
 }

@@ -49,6 +49,7 @@ const toolbarStyles = theme => ({
 type Props = {
   classes: {},
   numSelected: number,
+  enableEditContainer?: boolean,
   handleAddByFile?: () => {},
   handleAddByFolder?: () => {},
   getSuggestions?: () => {},
@@ -80,7 +81,7 @@ class EnhancedTableToolbar extends Component<Props> {
   }
 
   render() {
-    const { numSelected, classes, handleAddByFile } = this.props;
+    const { numSelected, classes, handleAddByFile, enableEditContainer } = this.props;
     const { anchorEl } = this.state;
     return (
       <Toolbar
@@ -99,7 +100,7 @@ class EnhancedTableToolbar extends Component<Props> {
         </div>
         <div className={classes.spacer} />
         <div style={{ width: 700 }}>
-          {handleAddByFile && numSelected > 0 ? (
+          {enableEditContainer ? (
             <IntegrationAutosuggest
               getSuggestions={this.props.getSuggestions}
               onInputChanged={this.props.onAutosuggestInputChanged}
@@ -155,6 +156,7 @@ class EnhancedTableToolbar extends Component<Props> {
 }
 
 EnhancedTableToolbar.defaultProps = {
+  enableEditContainer: false,
   handleAddByFile: undefined,
   handleAddByFolder: undefined,
   getSuggestions: undefined,
