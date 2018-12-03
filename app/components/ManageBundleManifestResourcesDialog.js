@@ -134,7 +134,7 @@ function createResourceData(manifestResourceRaw, fileStoreInfo) {
   /* const ext = path.extname(uri); */
   const size = formatBytesByKbs(sizeRaw);
   const id = uri;
-  const status = fileStoreInfo ? 'stored' : 'dbl';
+  const status = fileStoreInfo ? 'stored' : 'manifest';
   const disabled = false; /* mode === 'addFiles' ? status !== 'add?' : status === 'stored'; */
   return {
     id, uri, status, container, name, mimeType, size, checksum, disabled
@@ -464,7 +464,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { bundleId } = this.props;
     const selectedResources = this.getSelectedRowData();
     const storedResources = selectedResources.filter(r => r.status === 'stored');
-    const dblResources = selectedResources.filter(r => r.status === 'dbl');
+    const dblResources = selectedResources.filter(r => r.status === 'manifest');
     const toAddResources = selectedResources.filter(r => r.status === 'add?');
     if (storedResources.length) {
       this.props.removeResources(bundleId, storedResources.map(r => r.uri));
@@ -667,10 +667,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       case 'addFiles': {
         const selectedResources = this.getSelectedRowData();
         const storedResources = selectedResources.filter(r => r.status === 'stored');
-        const dblResources = selectedResources.filter(r => r.status === 'dbl');
+        const dblResources = selectedResources.filter(r => r.status === 'manifest');
         const toAddResources = selectedResources.filter(r => r.status === 'add?');
         const deleteLabel = (storedResources.length ? `Clean (${storedResources.length})`
-          : `Delete from DBL (${dblResources.length})`);
+          : `Delete from Manifest (${dblResources.length})`);
         const OkButtonLabel = (storedResources.length || dblResources.length) ? deleteLabel
           : `Add (${toAddResources.length})`;
         return {
