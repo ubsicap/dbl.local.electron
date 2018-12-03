@@ -795,8 +795,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { mode } = this.props;
     const { selectedIds } = this.state;
     const addModeProps = mode === 'addFiles' ? {
-      handleAddByFile: this.handleAddByFile,
-      handleAddByFolder: this.handleAddByFolder,
+      handleAddByFile: this.getHandleAddByFile(),
+      handleAddByFolder: this.getHandleAddByFolder(),
       getSuggestions: this.getSuggestions,
       onAutosuggestInputChanged: this.handleAutosuggestInputChanged
     } : {};
