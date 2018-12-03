@@ -32,13 +32,13 @@ export function bundleManageResources(state = initialState, action) {
       if (action.bundle.id !== state.bundleId && !(action.bundle.id in origManifestResources)) {
         return state;
       }
+      const isStoreMode = mode === 'store';
       const bundleId = action.bundle.id;
-      const isStoreMode = mode === 'stored';
       const origBundleManifestResources = origManifestResources[bundleId] || [];
       const bundleManifestResources = (updatedManifestResources.length === origBundleManifestResources.length &&
         Object.keys(updatedStoredFiles).length === Object.keys(origStoredFiles).length) ?
         state.bundleManifestResources : { rawManifestResources: updatedManifestResources, storedFiles: updatedStoredFiles };
-      const manifestResources = { ...origBundleManifestResources, [bundleId]: bundleManifestResources };
+      const manifestResources = { ...origManifestResources, [bundleId]: bundleManifestResources };
       return {
         ...state,
         isStoreMode,

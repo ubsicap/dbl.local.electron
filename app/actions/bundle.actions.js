@@ -109,10 +109,10 @@ function updateOrAddBundle(rawBundle) {
     const { local_id: bundleId } = rawBundle;
     const hasStoredResources = bundleService.getHasStoredResources(rawBundle);
     const manifestResources = hasStoredResources ?
-      await bundleService.getManifestResourcePaths(bundleId) : 0;
+      await bundleService.getManifestResourceDetails(bundleId) : {};
     const { status } = bundleService.getInitialTaskAndStatus(rawBundle);
     const formsErrorStatus = status === 'DRAFT' ? await getAllFormsErrorStatus(bundleId) : {};
-    const resourceCountManifest = (manifestResources || []).length;
+    const resourceCountManifest = (Object.values(manifestResources) || []).length;
     const bundle = await bundleService.convertApiBundleToNathanaelBundle(
       rawBundle,
       { resourceCountManifest, formsErrorStatus, manifestResources }
