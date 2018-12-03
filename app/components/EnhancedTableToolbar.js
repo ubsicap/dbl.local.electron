@@ -49,10 +49,10 @@ const toolbarStyles = theme => ({
 type Props = {
   classes: {},
   numSelected: number,
-  handleAddByFile: ?() => {},
-  handleAddByFolder: ?() => {},
-  getSuggestions: ?() => {},
-  onAutosuggestInputChanged: ?() => {}
+  handleAddByFile?: () => {},
+  handleAddByFolder?: () => {},
+  getSuggestions?: () => {},
+  onAutosuggestInputChanged?: () => {}
 };
 
 class EnhancedTableToolbar extends Component<Props> {
@@ -153,5 +153,12 @@ class EnhancedTableToolbar extends Component<Props> {
     );
   }
 }
+
+EnhancedTableToolbar.defaultProps = {
+  handleAddByFile: undefined,
+  handleAddByFolder: undefined,
+  getSuggestions: undefined,
+  onAutosuggestInputChanged: undefined
+};
 
 export default withStyles(toolbarStyles)(EnhancedTableToolbar);

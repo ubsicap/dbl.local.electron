@@ -33,6 +33,7 @@ import { downloadResources, removeResources, getEntryRevisions, createBundleFrom
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
 import EnhancedTable from './EnhancedTable';
+import EnhancedTableToolbar from './EnhancedTableToolbar';
 import { utilities } from '../utils/utilities';
 import { bundleService } from '../services/bundle.service';
 import { ux } from '../utils/ux';
@@ -413,7 +414,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       return;
     }
     this.props.getManifestResources(bundleId);
-    if (this.isAddFilesMode()) {
+    if (this.isModifyFilesMode()) {
       this.props.checkPublicationsHealth(bundleId);
     }
   }
@@ -643,7 +644,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     );
   }
 
-  isAddFilesMode = () => this.props.mode === 'addFiles';
+  isModifyFilesMode = () => this.props.mode === 'addFiles';
   isDownloadMode = () => this.props.mode === 'download';
 
   modeUi = () => {
@@ -711,11 +712,11 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   getHandleAddByFile = () => (
-    (!this.props.loading && this.isAddFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFile : undefined
+    (!this.props.loading && this.isModifyFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFile : undefined
   )
 
   getHandleAddByFolder = () => (
-    (!this.props.loading && this.isAddFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFolder : undefined
+    (!this.props.loading && this.isModifyFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFolder : undefined
   )
 
   getAllSuggestions = (tableData) => {
@@ -790,6 +791,21 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       ));
   }
 
+  renderTableToolbar = () => {
+    const { mode } = this.props;
+    const { selectedIds } = this.state;
+    const addModeProps = mode === 'addFiles' ? {
+      handleAddByFile: this.handleAddByFile,
+      handleAddByFolder: this.handleAddByFolder,
+      getSuggestions: this.getSuggestions,
+      onAutosuggestInputChanged: this.handleAutosuggestInputChanged
+    } : {};
+    return (<EnhancedTableToolbar
+      numSelected={selectedIds.length}
+      {...addModeProps}
+    />);
+  }
+
   renderTable = () => {
     const {
       columnConfig, manifestResources, mode
@@ -797,45 +813,56 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { selectAll, tableData = manifestResources, selectedIds } = this.state;
     switch (mode) {
       case 'download': {
-        return (<EnhancedTable
-          data={tableData}
-          columnConfig={columnConfig}
-          secondarySorts={secondarySorts}
-          defaultOrderBy="container"
-          onSelectedRowIds={this.onSelectedIds}
-          multiSelections
-          selectAll={selectAll}
-          selectedIds={selectedIds}
-        />);
+        return (
+          <React.Fragment>
+            {this.renderTableToolbar()}
+            <EnhancedTable
+              data={tableData}
+              columnConfig={columnConfig}
+              secondarySorts={secondarySorts}
+              defaultOrderBy="container"
+              onSelectedRowIds={this.onSelectedIds}
+              multiSelections
+              selectAll={selectAll}
+              selectedIds={selectedIds}
+            />
+          </React.Fragment>
+        );
       }
       case 'revisions': {
-        return (<EnhancedTable
-          data={tableData}
-          columnConfig={columnConfig}
-          customSorts={{ revision: rData => (rData.localBundle ? sortLocalRevisions(rData.localBundle) : parseInt(rData.revision, 10)) }}
-          secondarySorts={['revision']}
-          defaultOrderBy="revision"
-          orderDirection="desc"
-          onSelectedRowIds={this.onSelectedIds}
-          selectAll={false}
-          selectedIds={selectedIds}
-        />);
+        return (
+          <React.Fragment>
+            {this.renderTableToolbar()}
+            <EnhancedTable
+              data={tableData}
+              columnConfig={columnConfig}
+              customSorts={{ revision: rData => (rData.localBundle ? sortLocalRevisions(rData.localBundle) : parseInt(rData.revision, 10)) }}
+              secondarySorts={['revision']}
+              defaultOrderBy="revision"
+              orderDirection="desc"
+              onSelectedRowIds={this.onSelectedIds}
+              selectAll={false}
+              selectedIds={selectedIds}
+            />
+          </React.Fragment>
+        );
       }
       case 'addFiles': {
-        return (<EnhancedTable
-          data={tableData}
-          columnConfig={columnConfig}
-          secondarySorts={secondarySorts}
-          defaultOrderBy="container"
-          onSelectedRowIds={this.onSelectedIds}
-          multiSelections
-          selectAll={selectAll}
-          selectedIds={selectedIds}
-          handleAddByFile={this.getHandleAddByFile()}
-          handleAddByFolder={this.getHandleAddByFolder()}
-          getSuggestions={this.getSuggestions}
-          onAutosuggestInputChanged={this.handleAutosuggestInputChanged}
-        />);
+        return (
+          <React.Fragment>
+            {this.renderTableToolbar()}
+            <EnhancedTable
+              data={tableData}
+              columnConfig={columnConfig}
+              secondarySorts={secondarySorts}
+              defaultOrderBy="container"
+              onSelectedRowIds={this.onSelectedIds}
+              multiSelections
+              selectAll={selectAll}
+              selectedIds={selectedIds}
+            />
+          </React.Fragment>
+        );
       }
       default: {
         return (<EnhancedTable
@@ -853,12 +880,13 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   render() {
     const {
       classes, open, origBundle = {},
-      publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading, progress
+      publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading, progress,
     } = this.props;
+    const { selectedIds } = this.state;
     const { displayAs = {} } = origBundle;
     const { languageAndCountry, name, revision } = displayAs;
     const modeUi = this.modeUi();
-    const isAddFilesMode = this.isAddFilesMode();
+    const isModifyFilesMode = this.isModifyFilesMode();
     return (
       <Zoom in={open}>
         <div>
@@ -898,7 +926,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               </Button>
             </Toolbar>
           </AppBar>
-          {isAddFilesMode && publicationsHealthMessage &&
+          {isModifyFilesMode && publicationsHealthMessage &&
             <Toolbar className={classes.errorBar}>
               <Typography variant="subheading" color="inherit">
                 {publicationsHealthMessage}
@@ -913,7 +941,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               </Button>
             </Toolbar>
           }
-          {!loading && isAddFilesMode && publicationsHealthSuccessMessage &&
+          {!loading && isModifyFilesMode && publicationsHealthSuccessMessage &&
             <Card className={classes.successBar} raised>
               <CardContent>
                 <Typography key="pubhealthSuccessMessage" variant="subheading" color="inherit" gutterBottom>

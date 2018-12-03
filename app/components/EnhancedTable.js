@@ -37,11 +37,7 @@ type Props = {
   selectedIds: [],
   multiSelections?: boolean,
   customSorts?: {},
-  onSelectedRowIds: () => {},
-  handleAddByFile?: () => {},
-  handleAddByFolder?: () => {},
-  getSuggestions?: () => {},
-  onAutosuggestInputChanged?: () => {}
+  onSelectedRowIds: () => {}
 };
 
 function getDataRowIds(data) {
@@ -213,17 +209,10 @@ class EnhancedTable extends Component<Props> {
 
   render() {
     const { classes } = this.props;
-    const { selectedRowIds, orderBy, order } = this.state;
+    const { orderBy, order } = this.state;
 
     return (
       <Paper className={classes.root}>
-        <EnhancedTableToolbar
-          numSelected={selectedRowIds.length}
-          handleAddByFile={this.props.handleAddByFile}
-          handleAddByFolder={this.props.handleAddByFolder}
-          getSuggestions={this.props.getSuggestions}
-          onAutosuggestInputChanged={this.props.onAutosuggestInputChanged}
-        />
         <MuiTable
           data={this.getSortedData()}
           columns={this.columns()}
@@ -249,11 +238,7 @@ class EnhancedTable extends Component<Props> {
 EnhancedTable.defaultProps = {
   orderDirection: 'asc',
   customSorts: {},
-  multiSelections: false,
-  handleAddByFile: undefined,
-  handleAddByFolder: undefined,
-  getSuggestions: undefined,
-  onAutosuggestInputChanged: undefined
+  multiSelections: false
 };
 
 export default withStyles(styles)(EnhancedTable);
