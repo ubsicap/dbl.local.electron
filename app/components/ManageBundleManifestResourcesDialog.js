@@ -692,15 +692,36 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return '';
   }
 
+  getOkButtonLabelDownloadOrCleanResources = () => {
+    const {
+      storedResources, manifestResources, inEffect
+    } = this.getResourcesByStatus();
+    if (storedResources === inEffect) {
+      return `Clean (${storedResources.length})`;
+    }
+    if (manifestResources === inEffect) {
+      return `Download${this.getSelectedCountMessage(this.shouldDisableDownload)}`;
+    }
+    return '';
+  }
+
   modeUi = () => {
     const { mode, classes } = this.props;
+    const title = 'Manage resources';
     switch (mode) {
-      case 'download':
+      case 'download': {
+        const OkButtonLabel = this.getOkButtonLabelDownloadOrCleanResources();
+        const {
+          manifestResources, inEffect
+        } = this.getResourcesByStatus();
+        const OkButtonIcon = manifestResources === inEffect ?
+          <FileDownload className={classNames(classes.leftIcon)} /> :
+          <CheckIcon className={classNames(classes.leftIcon)} />;
         return {
           mode,
           appBar:
           {
-            title: 'Download resources',
+            title,
             OkButtonProps: {
               classes,
               confirmingProps: { variant: 'contained' },
@@ -708,16 +729,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               onClick: this.handleDownload,
               disabled: this.shouldDisableDownload()
             },
-            OkButtonLabel: `Download${this.getSelectedCountMessage(this.shouldDisableDownload)}`,
-            OkButtonIcon: <FileDownload className={classNames(classes.leftIcon)} />,
+            OkButtonLabel,
+            OkButtonIcon,
           }
         };
-      case 'addFiles': {
+      } case 'addFiles': {
         const OkButtonLabel = this.getOkButtonLabelModifyResources();
         return {
           mode,
           appBar: {
-            title: 'Manage resources',
+            title,
             OkButtonProps: {
               classes,
               color: 'secondary',
