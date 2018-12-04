@@ -23,6 +23,7 @@ export const bundleService = {
   getInitialTaskAndStatus,
   getManifestResourcePaths,
   getManifestResourceDetails,
+  deletetManifestResource,
   downloadResources,
   removeResources,
   getResourcePaths,
@@ -295,6 +296,15 @@ function getManifestResourceDetails(bundleId) {
     headers: authHeader()
   };
   const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${MANIFEST_API}/${bundleId}/${MANIFEST_DETAILS}`;
+  return fetch(url, requestOptions).then(handleResponse);
+}
+
+function deletetManifestResource(bundleId, uri) {
+  const requestOptions = {
+    method: 'POST',
+    headers: authHeader()
+  };
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${MANIFEST_API}/${bundleId}/delete/${uri}`;
   return fetch(url, requestOptions).then(handleResponse);
 }
 

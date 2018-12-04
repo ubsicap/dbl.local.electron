@@ -149,6 +149,13 @@ export function checkPublicationsHealth(_bundleId) {
   }
 }
 
+async function updatePublications(getState, bundleId) {
+  const { bundleManageResources } = getState();
+  const { publicationsHealth } = bundleManageResources;
+  const { publications } = publicationsHealth;
+  await bundleService.updatePublications(bundleId, publications);
+}
+
 export function addManifestResources(_bundleId, _fileToContainerPaths) {
   return async (dispatch, getState) => {
     dispatch(request(_bundleId, _fileToContainerPaths));
@@ -163,10 +170,7 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
         dispatch(failure(_bundleId, error));
       }
     }
-    const { bundleManageResources } = getState();
-    const { publicationsHealth } = bundleManageResources;
-    const { publications } = publicationsHealth;
-    await bundleService.updatePublications(_bundleId, publications);
+    await updatePublications(getState, _bundleId);
     dispatch(done(_bundleId));
     /*
     await Promise.all(Object.entries(_fileToContainerPaths)
@@ -207,5 +211,42 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
       type: bundleResourceManagerConstants.UPDATE_MANIFEST_RESOURCE_FAILURE,
       error
     };
+  }
+}
+
+export function deleteManifestResources(_bundleId, _uris) {
+  return async (dispatch, getState) => {
+    try {
+      dispatch(request(_bundleId, _uris));
+      /* eslint-disable no-restricted-syntax */
+      /* eslint-disable no-await-in-loop */
+      for (const uri of _uris) {
+        try {
+          await bundleService.deleteManifestResource(_bundleId, uri);
+          dispatch(success(_bundleId, uri));
+        } catch (error) {
+          dispatch(failure(_bundleId, error));
+        }
+      }
+      await updatePublications(getState, _bundleId);
+      dispatch(success(_bundleId, _uris));
+    } catch (error) {
+      dispatch(failure(_bundleId, error));
+    }
+  };
+  function request(bundleId, uris) {
+    return {
+      type: bundleResourceManagerConstants.DELETE_MANIFEST_RESOURCES_REQUEST, bundleId, uris
+    };
+  }
+  function success(bundleId, uris) {
+    return {
+      type: bundleResourceManagerConstants.DELETE_MANIFEST_RESOURCES_RESPONSE,
+      bundleId,
+      uris
+    };
+  }
+  function failure(bundleId, error) {
+    return { type: bundleResourceManagerConstants.DELETE_MANIFEST_RESOURCES_FAILURE, error };
   }
 }
