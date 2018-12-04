@@ -37,6 +37,7 @@ import EnhancedTableToolbar from './EnhancedTableToolbar';
 import { utilities } from '../utils/utilities';
 import { bundleService } from '../services/bundle.service';
 import { ux } from '../utils/ux';
+import ConfirmButton from '../components/ConfirmButton';
 
 const { dialog } = require('electron').remote;
 const { shell } = require('electron');
@@ -701,6 +702,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           {
             title: 'Download resources',
             OkButtonProps: {
+              classes,
+              confirmingProps: { variant: 'contained' },
               color: 'inherit',
               onClick: this.handleDownload,
               disabled: this.shouldDisableDownload()
@@ -716,6 +719,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           appBar: {
             title: 'Manage resources',
             OkButtonProps: {
+              classes,
               color: 'secondary',
               variant: 'contained',
               onClick: this.handleModifyFiles,
@@ -947,7 +951,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
                 Review
               </Button>
-              <Button
+              <ConfirmButton
                 key="btnOk"
                 {...modeUi.appBar.OkButtonProps}
               >
@@ -961,7 +965,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                   variant="indeterminate"
                   value={progress}
                 />}
-              </Button>
+              </ConfirmButton>
             </Toolbar>
           </AppBar>
           {isModifyFilesMode && publicationsHealthMessage &&
