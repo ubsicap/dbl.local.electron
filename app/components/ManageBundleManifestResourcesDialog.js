@@ -568,8 +568,12 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   getUpdateSelectedResourcesContainers = (newContainer) => {
-    const { tableData: origTotalResources, selectedIds } = this.state;
-    const tableData = selectedIds.reduce((acc, filePath) => {
+    const { tableData: origTotalResources } = this.state;
+    const { toAddResources, inEffect } = this.getResourcesByStatus();
+    if (toAddResources !== inEffect) {
+      return origTotalResources;
+    }
+    const tableData = toAddResources.map(resource => resource.id).reduce((acc, filePath) => {
       const container = formatContainer(newContainer);
       const updatedTotalResources = createUpdatedTotalResources(
         acc,
@@ -676,14 +680,13 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           }
         };
       case 'addFiles': {
-        const selectedResources = this.getSelectedRowData();
-        const storedResources = selectedResources.filter(r => r.status === 'stored');
-        const dblResources = selectedResources.filter(r => r.status === 'manifest');
-        const toAddResources = selectedResources.filter(r => r.status === 'add?');
-        const deleteLabel = (storedResources.length ? `Clean (${storedResources.length})`
-          : `Delete from Manifest (${dblResources.length})`);
-        const OkButtonLabel = (storedResources.length || dblResources.length) ? deleteLabel
-          : `Add (${toAddResources.length})`;
+        const {
+          storedResources, dblResources, toAddResources, inEffect
+        } = this.getResourcesByStatus();
+        const deleteLabel = (storedResources === inEffect) ?
+          `Clean (${storedResources.length})` : `Delete from Manifest (${dblResources.length})`;
+        const OkButtonLabel = (toAddResources === inEffect) ?
+          `Add (${toAddResources.length})` : deleteLabel;
         return {
           mode,
           appBar: {
