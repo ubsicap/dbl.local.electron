@@ -57,6 +57,7 @@ type Props = {
   entryRevisions: [],
   columnConfig: [],
   isOkToAddFiles: boolean,
+  isOkToRemoveFromManifest: boolean,
   publicationsHealthMessage: ?string,
   publicationsHealthSuccessMessage: ?string,
   wizardsResults: ?{},
@@ -329,6 +330,7 @@ function mapStateToProps(state, props) {
     entryRevisions: mode === 'revisions' ? getEntryRevisionsData(state, props) : [],
     columnConfig,
     isOkToAddFiles: !publicationsHealthMessage,
+    isOkToRemoveFromManifest: !publicationsHealthMessage,
     publicationsHealthMessage,
     goFixPublications,
     publicationsHealthSuccessMessage,
@@ -464,23 +466,23 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   getResourcesByStatus = () => {
     const selectedResources = this.getSelectedRowData();
     const storedResources = selectedResources.filter(r => r.status === 'stored');
-    const dblResources = selectedResources.filter(r => r.status === 'manifest');
+    const manifestResources = selectedResources.filter(r => r.status === 'manifest');
     const toAddResources = selectedResources.filter(r => r.status === 'add?');
     const inEffect = getArrayIfNonEmpty(storedResources) ||
-      getArrayIfNonEmpty(dblResources) ||
+      getArrayIfNonEmpty(manifestResources) ||
       getArrayIfNonEmpty(toAddResources);
     return {
-      storedResources, dblResources, toAddResources, inEffect
+      storedResources, manifestResources, toAddResources, inEffect
     };
   };
 
   handleModifyFiles = () => {
     const { bundleId } = this.props;
-    const { storedResources, dblResources, toAddResources } = this.getResourcesByStatus();
+    const { storedResources, manifestResources, toAddResources } = this.getResourcesByStatus();
     if (storedResources.length) {
       this.props.removeResources(bundleId, storedResources.map(r => r.uri));
       return;
-    } else if (dblResources.length) {
+    } else if (manifestResources.length) {
       return;
     }
     const filesToContainers = toAddResources.reduce((acc, selectedResource) =>
@@ -547,8 +549,20 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   shouldDisableModifyFiles = () => {
     const { selectedIds = [] } = this.state;
     const { loading = false } = this.props;
-    return loading ||
-      selectedIds.length === 0;
+    if (loading || selectedIds.length === 0) {
+      return true;
+    }
+    const { isOkToRemoveFromManifest, isOkToAddFiles } = this.props;
+    const {
+      manifestResources, toAddResources, inEffect
+    } = this.getResourcesByStatus();
+    if (manifestResources === inEffect && !isOkToRemoveFromManifest) {
+      return true;
+    }
+    if (toAddResources === inEffect && !isOkToAddFiles) {
+      return true;
+    }
+    return false;
   }
 
   getUpdatedTotalResources(filePath, update) {
@@ -661,6 +675,22 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   isModifyFilesMode = () => this.props.mode === 'addFiles';
   isDownloadMode = () => this.props.mode === 'download';
 
+  getOkButtonLabelModifyResources = () => {
+    const {
+      storedResources, manifestResources, toAddResources, inEffect
+    } = this.getResourcesByStatus();
+    if (storedResources === inEffect) {
+      return `Clean (${storedResources.length})`;
+    }
+    if (manifestResources === inEffect) {
+      return `Delete from Manifest (${manifestResources.length})`;
+    }
+    if (toAddResources === inEffect) {
+      return `Add (${toAddResources.length})`;
+    }
+    return '';
+  }
+
   modeUi = () => {
     const { mode, classes } = this.props;
     switch (mode) {
@@ -680,13 +710,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           }
         };
       case 'addFiles': {
-        const {
-          storedResources, dblResources, toAddResources, inEffect
-        } = this.getResourcesByStatus();
-        const deleteLabel = (storedResources === inEffect) ?
-          `Clean (${storedResources.length})` : `Delete from Manifest (${dblResources.length})`;
-        const OkButtonLabel = (toAddResources === inEffect) ?
-          `Add (${toAddResources.length})` : deleteLabel;
+        const OkButtonLabel = this.getOkButtonLabelModifyResources();
         return {
           mode,
           appBar: {
@@ -897,7 +921,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       classes, open, origBundle = {},
       publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading, progress,
     } = this.props;
-    const { selectedIds } = this.state;
     const { displayAs = {} } = origBundle;
     const { languageAndCountry, name, revision } = displayAs;
     const modeUi = this.modeUi();

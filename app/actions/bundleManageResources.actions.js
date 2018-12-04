@@ -72,6 +72,8 @@ export function getManifestResources(_bundleId) {
   }
 }
 
+const msgToAddOrRemoveResources = 'To add or remove resources in the manifest';
+
 export function checkPublicationsHealth(_bundleId) {
   return async (dispatch, getState) => {
     const { bundles: { addedByBundleIds } } = getState();
@@ -93,7 +95,7 @@ export function checkPublicationsHealth(_bundleId) {
         type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR,
         error: 'NO_PUBLICATION_INSTANCE',
         publications: [],
-        errorMessage: 'To add a resource, first add a publication to Publications',
+        errorMessage: `${msgToAddOrRemoveResources}, first add a publication to Publications`,
         goFix: () => dispatch(openEditMetadata(_bundleId, { formKey: '/publications/publication' }))
       });
     }
@@ -119,7 +121,7 @@ export function checkPublicationsHealth(_bundleId) {
       return dispatch(updateMissingCanonSpecs(dispatch, pubsMissingCanonComponentsIds));
     }
     const bestPubWizards = await bundleService.getBestWizards(_bundleId, publicationInstanceIds);
-    const message = 'The following publication structure wizards will be applied. After adding resources, please click the Review button above to make sure you have the expected publication(s)';
+    const message = 'The following publication structure wizards will be applied. After modifying the manifest, please click the Review button above to make sure you have the expected publication(s)';
     const { wizardsResults } = bestPubWizards.reduce((acc, bestPubWizard) => {
       const { wizard: wizardName } = bestPubWizard;
       const { description, documentation } = applicableWizards.find(w => w.name === wizardName);
@@ -143,7 +145,7 @@ export function checkPublicationsHealth(_bundleId) {
       type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR,
       error: 'MISSING_CANON_SPECS',
       publications: pubsMissingCanonSpecs,
-      errorMessage: `To add a resource, first add Canon Specification (ESPECIALLY Canon Components) to the following publications: ${pubsMissingCanonSpecs}`,
+      errorMessage: `${msgToAddOrRemoveResources}, first add Canon Specification (ESPECIALLY Canon Components) to the following publications: ${pubsMissingCanonSpecs}`,
       goFix: () => dispatch(openEditMetadata(_bundleId, { formKey: `/publications/publication/${p1}/canonSpec` }))
     };
   }
