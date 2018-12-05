@@ -1,3 +1,14 @@
+### Version 0.19.0
+#### Features (Manage Resources Dialog)
+- add medium badge to folder icon
+- add ability to delete selected resources from manifest
+- add ability to clean selected resources
+- add confirm buttons to operations
+- button row style changes
+#### Fixes
+- removed call to updateManifestResource() (now handled internally by postResource)
+- fewer locking issues when adding resources (and run wizards after all complete)
+
 ### Version 0.18.0
 #### Features (in Edit metadata dialog)
 - Offer Delete Button for optional forms 
