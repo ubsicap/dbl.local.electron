@@ -445,9 +445,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   updateTableData = (props) => {
     const tableData = props.mode === 'revisions' ? props.entryRevisions : props.manifestResources;
-    const selectedIds = this.state.selectAll ? tableData.map(row => row.id) :
-      this.state.selectedIds.filter(id => tableData.some(row => row.id === id));
+    const selectedIds = this.getSelectedIds(tableData, props.mode);
     this.setState({ tableData, selectedIds });
+  }
+
+  getSelectedIds = (tableData, mode) => {
+    const isDownloadMode = mode === 'download';
+    const selectedIds = this.state.selectAll ?
+      tableData.filter(row => !isDownloadMode || row.status === 'manifest').map(row => row.id) :
+      this.state.selectedIds.filter(id => tableData.some(row => row.id === id));
+    return selectedIds;
   }
 
   handleDownloadOrClean = () => {
@@ -483,8 +490,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const storedResources = selectedResources.filter(r => r.status === 'stored');
     const manifestResources = selectedResources.filter(r => r.status === 'manifest');
     const toAddResources = selectedResources.filter(r => r.status === 'add?');
-    const sortedByFilters = this.props.mode === 'download' ?
-      [manifestResources, storedResources] : [storedResources, manifestResources, toAddResources];
+    const sortedByFilters =
+      this.props.mode === 'download' ? [storedResources, manifestResources] :
+        [storedResources, manifestResources, toAddResources];
     const inEffect = sortedByFilters.find(getArrayIfNonEmpty);
     return {
       storedResources, manifestResources, toAddResources, inEffect
