@@ -107,17 +107,18 @@ async function getAllFormsErrorStatus(bundleId) {
 function updateOrAddBundle(rawBundle) {
   return async (dispatch, getState) => {
     const { local_id: bundleId } = rawBundle;
+    const addedBundle = getAddedBundle(getState, bundleId);
     const hasStoredResources = bundleService.getHasStoredResources(rawBundle);
-    const manifestResources = hasStoredResources ?
-      await bundleService.getManifestResourcePaths(bundleId) : 0;
+    const manifestResources = (hasStoredResources ||
+      (addedBundle && Object.keys(addedBundle.manifestResources || []).length)) ?
+      await bundleService.getManifestResourceDetails(bundleId) : {};
     const { status } = bundleService.getInitialTaskAndStatus(rawBundle);
     const formsErrorStatus = status === 'DRAFT' ? await getAllFormsErrorStatus(bundleId) : {};
-    const resourceCountManifest = (manifestResources || []).length;
+    const resourceCountManifest = (Object.values(manifestResources) || []).length;
     const bundle = await bundleService.convertApiBundleToNathanaelBundle(
       rawBundle,
-      { resourceCountManifest, formsErrorStatus }
+      { resourceCountManifest, formsErrorStatus, manifestResources }
     );
-    const addedBundle = getAddedBundle(getState, bundleId);
     if (addedBundle) {
       // console.log(`Updated bundle ${bundleId} from ${context}`);
       dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle, rawBundle });
@@ -608,13 +609,15 @@ export function downloadResources(_id, _uris = []) {
   }
 }
 
-export function removeResources(id) {
-  return async dispatch => {
+export function removeResources(id, selected = []) {
+  return async (dispatch) => {
     try {
-      const resourcePathsToRemove = await bundleService.getResourcePaths(id);
+      const resourcePaths = await bundleService.getResourcePaths(id);
+      const resourcePathsToRemove = resourcePaths
+        .filter(path => !selected.length || selected.includes(path));
       dispatch(request(id, resourcePathsToRemove));
       dispatch(updateSearchResultsForBundleId(id));
-      await bundleService.removeResources(id);
+      await bundleService.removeResources(id, resourcePathsToRemove);
     } catch (errorReadable) {
       const error = await errorReadable.text();
       dispatch(failure(id, error));

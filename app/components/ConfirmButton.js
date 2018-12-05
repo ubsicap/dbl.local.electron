@@ -8,6 +8,7 @@ import { utilities } from '../utils/utilities';
 type Props = {
   onClick: () => {},
   classes: {},
+  confirmingProps?: {},
   children: React.Node
 };
 
@@ -45,7 +46,7 @@ export default class ConfirmButton extends Component<Props> {
 
   renderConfirmButton = () => {
     const {
-      classes, ...rest
+      classes, confirmingProps, ...rest
     } = this.props;
     const buttonLabel = this.props.children[1];
     const renderButton = () => (
@@ -53,6 +54,7 @@ export default class ConfirmButton extends Component<Props> {
         {...rest}
         color="secondary"
         onClick={this.onClick}
+        {...confirmingProps}
       >
         <Warning key="btnConfirm" className={classNames(classes.leftIcon, classes.iconSmall)} />
         {buttonLabel ? 'Confirm' : ''}
@@ -66,7 +68,9 @@ export default class ConfirmButton extends Component<Props> {
   }
 
   render() {
-    const { onClick: origOnClick, classes, ...restProps } = this.props;
+    const {
+      onClick: origOnClick, classes, confirmingProps, ...restProps
+    } = this.props;
     const { isConfirming } = this.state;
     return (isConfirming ?
       this.renderConfirmButton() :
@@ -76,3 +80,7 @@ export default class ConfirmButton extends Component<Props> {
     );
   }
 }
+
+ConfirmButton.defaultProps = {
+  confirmingProps: {}
+};

@@ -16,6 +16,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
+import Delete from '@material-ui/icons/Delete';
 import CloseIcon from '@material-ui/icons/Close';
 import CheckIcon from '@material-ui/icons/Check';
 import OpenInNew from '@material-ui/icons/OpenInNew';
@@ -27,15 +28,17 @@ import Zoom from '@material-ui/core/Zoom';
 import path from 'path';
 import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
-  getManifestResources, addManifestResources, checkPublicationsHealth
+  getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources
 } from '../actions/bundleManageResources.actions';
-import { downloadResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
+import { downloadResources, removeResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
 import EnhancedTable from './EnhancedTable';
+import EnhancedTableToolbar from './EnhancedTableToolbar';
 import { utilities } from '../utils/utilities';
 import { bundleService } from '../services/bundle.service';
 import { ux } from '../utils/ux';
+import ConfirmButton from '../components/ConfirmButton';
 
 const { dialog } = require('electron').remote;
 const { shell } = require('electron');
@@ -56,6 +59,7 @@ type Props = {
   entryRevisions: [],
   columnConfig: [],
   isOkToAddFiles: boolean,
+  isOkToRemoveFromManifest: boolean,
   publicationsHealthMessage: ?string,
   publicationsHealthSuccessMessage: ?string,
   wizardsResults: ?{},
@@ -67,9 +71,11 @@ type Props = {
   getEntryRevisions: () => {},
   downloadResources: () => {},
   addManifestResources: () => {},
+  deleteManifestResources: () => {},
   checkPublicationsHealth: () => {},
   createBundleFromDBL: () => {},
-  selectBundleEntryRevision: () => {}
+  selectBundleEntryRevision: () => {},
+  removeResources: () => {}
 };
 
 function createUpdatedTotalResources(origTotalResources, filePath, updateFunc) {
@@ -126,15 +132,15 @@ function ignoreHiddenFunc(file, stats) {
   return false;
 }
 
-function createResourceData(manifestResourceRaw, fileStoreInfo, mode) {
+function createResourceData(manifestResourceRaw, fileStoreInfo) {
   const { uri = '', checksum = '', size: sizeRaw = 0, mimeType = '' } = manifestResourceRaw;
   const container = formatContainer(upath.normalizeTrim(path.dirname(uri)));
   const name = path.basename(uri);
   /* const ext = path.extname(uri); */
   const size = formatBytesByKbs(sizeRaw);
   const id = uri;
-  const status = fileStoreInfo ? 'stored' : '';
-  const disabled = mode === 'addFiles' ? status !== 'add?' : status === 'stored';
+  const status = fileStoreInfo ? 'stored' : 'manifest';
+  const disabled = false; /* mode === 'addFiles' ? status !== 'add?' : status === 'stored'; */
   return {
     id, uri, status, container, name, mimeType, size, checksum, disabled
   };
@@ -298,7 +304,7 @@ const makeGetEntryPageUrl = () => createSelector(
 function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundleManageResources } = state;
   const {
-    publicationsHealth, progress = 100, loading = false, fetchingMetadata = false
+    publicationsHealth, progress = 100, loading = false, isStoreMode = false, fetchingMetadata = false
   } = bundleManageResources;
   const {
     errorMessage: publicationsHealthMessage,
@@ -316,7 +322,7 @@ function mapStateToProps(state, props) {
   const getEntryPageUrl = makeGetEntryPageUrl();
   return {
     open: Boolean(bundleId),
-    loading: loading || fetchingMetadata,
+    loading: loading || fetchingMetadata || !isStoreMode,
     progress,
     bundleId,
     bundlesById,
@@ -327,6 +333,7 @@ function mapStateToProps(state, props) {
     entryRevisions: mode === 'revisions' ? getEntryRevisionsData(state, props) : [],
     columnConfig,
     isOkToAddFiles: !publicationsHealthMessage,
+    isOkToRemoveFromManifest: !publicationsHealthMessage,
     publicationsHealthMessage,
     goFixPublications,
     publicationsHealthSuccessMessage,
@@ -342,9 +349,11 @@ const mapDispatchToProps = {
   getEntryRevisions,
   downloadResources,
   addManifestResources,
+  deleteManifestResources,
   checkPublicationsHealth,
   createBundleFromDBL,
-  selectBundleEntryRevision
+  selectBundleEntryRevision,
+  removeResources
 };
 
 const materialStyles = theme => ({
@@ -394,7 +403,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   state = {
     selectedIds: [],
     addedFilePaths: [],
-    selectAll: this.props.mode !== 'revisions'
+    selectAll: ['download'].includes(this.props.mode)
   }
 
   componentDidMount() {
@@ -411,17 +420,18 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       return;
     }
     this.props.getManifestResources(bundleId);
-    if (this.isAddFilesMode()) {
+    if (this.isModifyFilesMode()) {
       this.props.checkPublicationsHealth(bundleId);
     }
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.progress !== this.props.progress) {
+    if (nextProps.progress !== this.props.progress &&
+      (nextProps.progress === 100)) {
       const { bundleId } = this.props;
       this.props.getManifestResources(bundleId);
     }
-    if ((nextProps.manifestResources.length !== this.props.manifestResources) ||
+    if ((nextProps.manifestResources !== this.props.manifestResources) ||
       (this.props.mode === 'revisions' && nextProps.entryRevisions !== this.entryRevisions)) {
       this.updateTableData(nextProps);
     }
@@ -435,14 +445,32 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   updateTableData = (props) => {
     const tableData = props.mode === 'revisions' ? props.entryRevisions : props.manifestResources;
-    this.setState({ tableData });
+    const selectedIds = this.getSelectedIds(tableData, props.mode);
+    this.setState({ tableData, selectedIds });
   }
 
-  handleDownload = () => {
-    const { selectedIds = [] } = this.state;
+  getSelectedIds = (tableData, mode) => {
+    const isDownloadMode = mode === 'download';
+    const selectedIds = this.state.selectAll ?
+      tableData.filter(row => !isDownloadMode || row.status === 'manifest').map(row => row.id) :
+      this.state.selectedIds.filter(id => tableData.some(row => row.id === id));
+    return selectedIds;
+  }
+
+  handleDownloadOrClean = () => {
+    const {
+      storedResources, manifestResources, inEffect
+    } = this.getResourcesByStatus();
     const { bundleId } = this.props;
-    this.props.downloadResources(bundleId, selectedIds);
-    this.handleClose();
+    const effectiveSelectedIds = inEffect.map(row => row.id);
+    if (manifestResources === inEffect) {
+      this.props.downloadResources(bundleId, effectiveSelectedIds);
+      this.handleClose();
+      return;
+    }
+    if (storedResources === inEffect) {
+      this.props.removeResources(bundleId, storedResources.map(r => r.uri));
+    }
   }
 
   handleDownloadRevision = () => {
@@ -457,10 +485,34 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.handleClose();
   }
 
-  handleAddFiles = () => {
-    const { bundleId } = this.props;
+  getResourcesByStatus = () => {
     const selectedResources = this.getSelectedRowData();
-    const filesToContainers = selectedResources.reduce((acc, selectedResource) =>
+    const storedResources = selectedResources.filter(r => r.status === 'stored');
+    const manifestResources = selectedResources.filter(r => r.status === 'manifest');
+    const toAddResources = selectedResources.filter(r => r.status === 'add?');
+    const sortedByFilters =
+      this.props.mode === 'download' ? [storedResources, manifestResources] :
+        [storedResources, manifestResources, toAddResources];
+    const inEffect = sortedByFilters.find(getArrayIfNonEmpty);
+    return {
+      storedResources, manifestResources, toAddResources, inEffect
+    };
+  };
+
+  handleModifyFiles = () => {
+    const { bundleId } = this.props;
+    const {
+      storedResources, manifestResources, toAddResources, inEffect
+    } = this.getResourcesByStatus();
+    const inEffectUris = inEffect.map(r => r.uri);
+    if (storedResources === inEffect) {
+      this.props.removeResources(bundleId, inEffectUris);
+      return;
+    } else if (manifestResources === inEffect) {
+      this.props.deleteManifestResources(bundleId, inEffectUris);
+      return;
+    }
+    const filesToContainers = toAddResources.reduce((acc, selectedResource) =>
       ({ ...acc, [selectedResource.id]: formatUriForApi(selectedResource) }), {});
     this.props.addManifestResources(bundleId, filesToContainers);
     this.setState({ selectedIds: [] });
@@ -483,14 +535,15 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   getSelectedCountMessage = (shouldDisableOk) => {
-    const { selectedIds = [], selectAll } = this.state;
+    const { selectAll } = this.state;
     if (shouldDisableOk()) {
       return '';
     }
-    if (selectAll) {
-      return ' (All)';
-    }
-    return ` (${selectedIds.length})`;
+    const allMsg = selectAll ? 'All ' : '';
+    const {
+      inEffect = []
+    } = this.getResourcesByStatus();
+    return ` (${allMsg}${inEffect.length})`;
   }
 
   getSelectedLocalBundle = () => {
@@ -515,17 +568,29 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   isNothingSelected = () => {
-    const { selectedIds = [], selectAll } = this.state;
-    return !selectAll && selectedIds.length === 0;
+    const { selectedIds = [] } = this.state;
+    return selectedIds.length === 0;
   }
 
   shouldDisableDownload = () => this.isNothingSelected();
 
-  shouldDisableAddFiles = () => {
+  shouldDisableModifyFiles = () => {
     const { selectedIds = [] } = this.state;
-    const { isOkToAddFiles = false, loading = false } = this.props;
-    return loading ||
-      selectedIds.length === 0 || !isOkToAddFiles || this.hasAnySelectedUnassignedContainers();
+    const { loading = false } = this.props;
+    if (loading || selectedIds.length === 0) {
+      return true;
+    }
+    const { isOkToRemoveFromManifest, isOkToAddFiles } = this.props;
+    const {
+      manifestResources, toAddResources, inEffect
+    } = this.getResourcesByStatus();
+    if (manifestResources === inEffect && !isOkToRemoveFromManifest) {
+      return true;
+    }
+    if (toAddResources === inEffect && !isOkToAddFiles) {
+      return true;
+    }
+    return false;
   }
 
   getUpdatedTotalResources(filePath, update) {
@@ -545,8 +610,12 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   getUpdateSelectedResourcesContainers = (newContainer) => {
-    const { tableData: origTotalResources, selectedIds } = this.state;
-    const tableData = selectedIds.reduce((acc, filePath) => {
+    const { tableData: origTotalResources } = this.state;
+    const { toAddResources, inEffect } = this.getResourcesByStatus();
+    if (toAddResources !== inEffect) {
+      return origTotalResources;
+    }
+    const tableData = toAddResources.map(resource => resource.id).reduce((acc, filePath) => {
       const container = formatContainer(newContainer);
       const updatedTotalResources = createUpdatedTotalResources(
         acc,
@@ -579,8 +648,11 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   setAddedFilePathsAndSelectAll = (newAddedFilePaths, fullToRelativePaths) => {
     const addedFilePaths = this.getUnionWithAddedFiles(newAddedFilePaths);
     const selectedIds = this.getUnionWithSelectedIds(addedFilePaths);
-    this.setState({ addedFilePaths, selectedIds }, this.updateTotalResources(newAddedFilePaths, fullToRelativePaths));
-    this.setState({ selectAll: true });
+    this.setState(
+      { addedFilePaths, selectedIds },
+      this.updateTotalResources(newAddedFilePaths, fullToRelativePaths)
+    );
+    // this.setState({ selectAll: true });
   };
 
   getUnionWithAddedFiles = (newAddedFilePaths) => {
@@ -628,42 +700,95 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     );
   }
 
-  isAddFilesMode = () => this.props.mode === 'addFiles';
+  isModifyFilesMode = () => this.props.mode === 'addFiles';
   isDownloadMode = () => this.props.mode === 'download';
+
+  getOkButtonDataModifyResources = () => {
+    const { classes } = this.props;
+    const {
+      storedResources, manifestResources, toAddResources, inEffect = []
+    } = this.getResourcesByStatus();
+    const toAddReourcesInEffect = toAddResources === inEffect;
+    const OkButtonIcon = toAddReourcesInEffect ?
+      <CheckIcon className={classNames(classes.leftIcon)} /> :
+      <Delete className={classNames(classes.leftIcon)} />;
+    const inEffectCount = inEffect.length;
+    let OkButtonLabel = '';
+    if (storedResources === inEffect) {
+      OkButtonLabel = `Clean (${inEffectCount})`;
+    }
+    if (manifestResources === inEffect) {
+      OkButtonLabel = `Delete from Manifest (${inEffectCount})`;
+    }
+    if (toAddResources === inEffect) {
+      OkButtonLabel = `Add (${inEffectCount})`;
+    }
+    const OkButtonProps = {
+      classes,
+      color: 'secondary',
+      variant: 'contained',
+      onClick: this.handleModifyFiles,
+      disabled: this.shouldDisableModifyFiles()
+    };
+    return { OkButtonLabel, OkButtonIcon, OkButtonProps };
+  }
+
+  getOkButtonDataDownloadOrCleanResources = () => {
+    const { classes } = this.props;
+    const {
+      storedResources, manifestResources, inEffect
+    } = this.getResourcesByStatus();
+    const isManifestResourcesInEffect = manifestResources === inEffect;
+    const OkButtonIcon = isManifestResourcesInEffect ?
+      <FileDownload className={classNames(classes.leftIcon)} /> :
+      <Delete className={classNames(classes.leftIcon)} />;
+    let OkButtonLabel;
+    if (manifestResources === inEffect) {
+      OkButtonLabel = `Download${this.getSelectedCountMessage(this.shouldDisableDownload)}`;
+    }
+    if (storedResources === inEffect) {
+      OkButtonLabel = `Clean (${storedResources.length})`;
+    }
+    const OkButtonProps = {
+      classes,
+      confirmingProps: { variant: 'contained' },
+      color: isManifestResourcesInEffect ? 'inherit' : 'secondary',
+      variant: isManifestResourcesInEffect ? 'text' : 'contained',
+      onClick: this.handleDownloadOrClean,
+      disabled: this.shouldDisableDownload()
+    };
+    return { OkButtonLabel, OkButtonIcon, OkButtonProps };
+  }
 
   modeUi = () => {
     const { mode, classes } = this.props;
+    const title = 'Manage resources';
     switch (mode) {
-      case 'download':
+      case 'download': {
+        const { OkButtonLabel, OkButtonIcon, OkButtonProps } =
+          this.getOkButtonDataDownloadOrCleanResources();
         return {
           mode,
           appBar:
           {
-            title: 'Download resources',
-            OkButtonProps: {
-              color: 'inherit',
-              onClick: this.handleDownload,
-              disabled: this.shouldDisableDownload()
-            },
-            OkButtonLabel: `Download${this.getSelectedCountMessage(this.shouldDisableDownload)}`,
-            OkButtonIcon: <FileDownload className={classNames(classes.leftIcon)} />,
+            title,
+            OkButtonProps,
+            OkButtonLabel,
+            OkButtonIcon,
           }
         };
-      case 'addFiles':
+      } case 'addFiles': {
+        const { OkButtonLabel, OkButtonIcon, OkButtonProps } = this.getOkButtonDataModifyResources();
         return {
           mode,
           appBar: {
-            title: 'Add resources',
-            OkButtonProps: {
-              color: 'secondary',
-              variant: 'contained',
-              onClick: this.handleAddFiles,
-              disabled: this.shouldDisableAddFiles()
-            },
-            OkButtonLabel: `Add${this.getSelectedCountMessage(this.shouldDisableAddFiles)}`,
-            OkButtonIcon: <CheckIcon className={classNames(classes.leftIcon)} />
+            title,
+            OkButtonProps,
+            OkButtonLabel,
+            OkButtonIcon
           }
         };
+      }
       case 'revisions': {
         const hasLocalBundle = Boolean(this.getSelectedLocalBundle().localBundle);
         return {
@@ -671,6 +796,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           appBar: {
             title: 'Revisions',
             OkButtonProps: {
+              classes,
+              confirmingProps: { variant: 'contained' },
               color: hasLocalBundle ? 'inherit' : 'secondary',
               variant: hasLocalBundle ? 'text' : 'contained',
               onClick: hasLocalBundle ? this.handleSwitchToRevision : this.handleDownloadRevision,
@@ -687,11 +814,11 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   getHandleAddByFile = () => (
-    (!this.props.loading && this.isAddFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFile : undefined
+    (!this.props.loading && this.isModifyFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFile : undefined
   )
 
   getHandleAddByFolder = () => (
-    (!this.props.loading && this.isAddFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFolder : undefined
+    (!this.props.loading && this.isModifyFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFolder : undefined
   )
 
   getAllSuggestions = (tableData) => {
@@ -766,49 +893,77 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       ));
   }
 
+  renderTableToolbar = () => {
+    const { mode } = this.props;
+    const { selectedIds } = this.state;
+    const { toAddResources, inEffect } = this.getResourcesByStatus();
+    const addModeProps = mode === 'addFiles' ? {
+      enableEditContainer: toAddResources === inEffect,
+      handleAddByFile: this.getHandleAddByFile(),
+      handleAddByFolder: this.getHandleAddByFolder(),
+      getSuggestions: this.getSuggestions,
+      onAutosuggestInputChanged: this.handleAutosuggestInputChanged
+    } : {};
+    return (<EnhancedTableToolbar
+      numSelected={selectedIds.length}
+      {...addModeProps}
+    />);
+  }
+
   renderTable = () => {
     const {
       columnConfig, manifestResources, mode
     } = this.props;
-    const { selectAll, tableData = manifestResources } = this.state;
+    const { tableData = manifestResources, selectedIds } = this.state;
     switch (mode) {
       case 'download': {
-        return (<EnhancedTable
-          data={tableData}
-          columnConfig={columnConfig}
-          secondarySorts={secondarySorts}
-          defaultOrderBy="container"
-          onSelectedRowIds={this.onSelectedIds}
-          multiSelections
-          selectAll={selectAll}
-        />);
+        return (
+          <React.Fragment>
+            {this.renderTableToolbar()}
+            <EnhancedTable
+              data={tableData}
+              columnConfig={columnConfig}
+              secondarySorts={secondarySorts}
+              defaultOrderBy="container"
+              onSelectedRowIds={this.onSelectedIds}
+              multiSelections
+              selectedIds={selectedIds}
+            />
+          </React.Fragment>
+        );
       }
       case 'revisions': {
-        return (<EnhancedTable
-          data={tableData}
-          columnConfig={columnConfig}
-          customSorts={{ revision: rData => (rData.localBundle ? sortLocalRevisions(rData.localBundle) : parseInt(rData.revision, 10)) }}
-          secondarySorts={['revision']}
-          defaultOrderBy="revision"
-          orderDirection="desc"
-          onSelectedRowIds={this.onSelectedIds}
-          selectAll={false}
-        />);
+        return (
+          <React.Fragment>
+            {this.renderTableToolbar()}
+            <EnhancedTable
+              data={tableData}
+              columnConfig={columnConfig}
+              customSorts={{ revision: rData => (rData.localBundle ? sortLocalRevisions(rData.localBundle) : parseInt(rData.revision, 10)) }}
+              secondarySorts={['revision']}
+              defaultOrderBy="revision"
+              orderDirection="desc"
+              onSelectedRowIds={this.onSelectedIds}
+              selectedIds={selectedIds}
+            />
+          </React.Fragment>
+        );
       }
       case 'addFiles': {
-        return (<EnhancedTable
-          data={tableData}
-          columnConfig={columnConfig}
-          secondarySorts={secondarySorts}
-          defaultOrderBy="container"
-          onSelectedRowIds={this.onSelectedIds}
-          multiSelections
-          selectAll={selectAll}
-          handleAddByFile={this.getHandleAddByFile()}
-          handleAddByFolder={this.getHandleAddByFolder()}
-          getSuggestions={this.getSuggestions}
-          onAutosuggestInputChanged={this.handleAutosuggestInputChanged}
-        />);
+        return (
+          <React.Fragment>
+            {this.renderTableToolbar()}
+            <EnhancedTable
+              data={tableData}
+              columnConfig={columnConfig}
+              secondarySorts={secondarySorts}
+              defaultOrderBy="container"
+              onSelectedRowIds={this.onSelectedIds}
+              multiSelections
+              selectedIds={selectedIds}
+            />
+          </React.Fragment>
+        );
       }
       default: {
         return (<EnhancedTable
@@ -826,12 +981,12 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   render() {
     const {
       classes, open, origBundle = {},
-      publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading, progress
+      publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading, progress,
     } = this.props;
     const { displayAs = {} } = origBundle;
     const { languageAndCountry, name, revision } = displayAs;
     const modeUi = this.modeUi();
-    const isAddFilesMode = this.isAddFilesMode();
+    const isModifyFilesMode = this.isModifyFilesMode();
     return (
       <Zoom in={open}>
         <div>
@@ -854,7 +1009,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
                 Review
               </Button>
-              <Button
+              <ConfirmButton
                 key="btnOk"
                 {...modeUi.appBar.OkButtonProps}
               >
@@ -868,10 +1023,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                   variant="indeterminate"
                   value={progress}
                 />}
-              </Button>
+              </ConfirmButton>
             </Toolbar>
           </AppBar>
-          {isAddFilesMode && publicationsHealthMessage &&
+          {isModifyFilesMode && publicationsHealthMessage &&
             <Toolbar className={classes.errorBar}>
               <Typography variant="subheading" color="inherit">
                 {publicationsHealthMessage}
@@ -886,7 +1041,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               </Button>
             </Toolbar>
           }
-          {!loading && isAddFilesMode && publicationsHealthSuccessMessage &&
+          {!loading && isModifyFilesMode && publicationsHealthSuccessMessage &&
             <Card className={classes.successBar} raised>
               <CardContent>
                 <Typography key="pubhealthSuccessMessage" variant="subheading" color="inherit" gutterBottom>
@@ -918,4 +1073,8 @@ function sortLocalRevisions(bundle) {
     return effectiveRevision + 10000;
   }
   return effectiveRevision;
+}
+
+function getArrayIfNonEmpty(array) {
+  return array.length ? array : null;
 }

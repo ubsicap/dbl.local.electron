@@ -34,12 +34,11 @@ function getFormattedRevision(bundle, insertStr) {
   return `${insertStr}${revision}`;
 }
 
-export function getMediumIcon(medium) {
-  const style = { style: { marginRight: '10px' } };
-  return (medium === 'text' && <Book {...style} />)
-  || (medium === 'audio' && <Headset {...style} />)
-  || (medium === 'video' && <Videocam {...style} />)
-  || (medium === 'print' && <Print {...style} />)
-  || (medium === 'braille' && <Grain {...style} />)
+export function getMediumIcon(medium, props = { style: { marginRight: '10px' } }) {
+  return (medium === 'text' && <Book {...props} />)
+  || (medium === 'audio' && <Headset {...props} />)
+  || (medium === 'video' && <Videocam {...props} />)
+  || (medium === 'print' && <Print {...props} />)
+  || (medium === 'braille' && <Grain {...props} />)
   || (null);
 }

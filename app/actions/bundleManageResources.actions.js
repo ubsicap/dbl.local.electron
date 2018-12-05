@@ -10,19 +10,12 @@ export const bundleManageResourceActions = {
   closeResourceManager,
   getManifestResources,
   addManifestResources,
+  deleteManifestResources,
   checkPublicationsHealth
 };
 
 export function openResourceManager(_bundleId, _mode) {
   return async (dispatch) => {
-    if (['download', 'revisions'].includes(_mode)) {
-      return dispatch(navigate(_bundleId, _mode));
-    }
-    const isInCreateMode = await bundleService.bundleIsInCreateMode(_bundleId);
-    if (isInCreateMode) {
-      return dispatch(navigate(_bundleId, _mode));
-    }
-    await bundleService.waitStartCreateMode(_bundleId);
     dispatch(navigate(_bundleId, _mode));
   };
   function success(bundleId, mode) {
@@ -80,6 +73,8 @@ export function getManifestResources(_bundleId) {
   }
 }
 
+const msgToAddOrRemoveResources = 'To add or remove resources in the manifest';
+
 export function checkPublicationsHealth(_bundleId) {
   return async (dispatch, getState) => {
     const { bundles: { addedByBundleIds } } = getState();
@@ -101,7 +96,7 @@ export function checkPublicationsHealth(_bundleId) {
         type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR,
         error: 'NO_PUBLICATION_INSTANCE',
         publications: [],
-        errorMessage: 'To add a resource, first add a publication to Publications',
+        errorMessage: `${msgToAddOrRemoveResources}, first add a publication to Publications`,
         goFix: () => dispatch(openEditMetadata(_bundleId, { formKey: '/publications/publication' }))
       });
     }
@@ -127,7 +122,7 @@ export function checkPublicationsHealth(_bundleId) {
       return dispatch(updateMissingCanonSpecs(dispatch, pubsMissingCanonComponentsIds));
     }
     const bestPubWizards = await bundleService.getBestWizards(_bundleId, publicationInstanceIds);
-    const message = 'The following publication structure wizards will be applied. After adding resources, please click the Review button above to make sure you have the expected publication(s)';
+    const message = 'The following publication structure wizards will be applied. After modifying the manifest, please click the Review button above to make sure you have the expected publication(s)';
     const { wizardsResults } = bestPubWizards.reduce((acc, bestPubWizard) => {
       const { wizard: wizardName } = bestPubWizard;
       const { description, documentation } = applicableWizards.find(w => w.name === wizardName);
@@ -151,30 +146,35 @@ export function checkPublicationsHealth(_bundleId) {
       type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR,
       error: 'MISSING_CANON_SPECS',
       publications: pubsMissingCanonSpecs,
-      errorMessage: `To add a resource, first add Canon Specification (ESPECIALLY Canon Components) to the following publications: ${pubsMissingCanonSpecs}`,
+      errorMessage: `${msgToAddOrRemoveResources}, first add Canon Specification (ESPECIALLY Canon Components) to the following publications: ${pubsMissingCanonSpecs}`,
       goFix: () => dispatch(openEditMetadata(_bundleId, { formKey: `/publications/publication/${p1}/canonSpec` }))
     };
   }
 }
 
+async function updatePublications(getState, bundleId) {
+  const { bundleManageResources } = getState();
+  const { publicationsHealth } = bundleManageResources;
+  const { publications } = publicationsHealth;
+  await bundleService.updatePublications(bundleId, publications);
+}
+
 export function addManifestResources(_bundleId, _fileToContainerPaths) {
   return async (dispatch, getState) => {
     dispatch(request(_bundleId, _fileToContainerPaths));
+    await bundleService.waitStartCreateMode(_bundleId);
     /* eslint-disable no-restricted-syntax */
     /* eslint-disable no-await-in-loop */
     for (const [filePath, containerPath] of Object.entries(_fileToContainerPaths)) {
       try {
         await bundleService.postResource(_bundleId, filePath, containerPath);
-        await bundleService.updateManifestResource(_bundleId, containerPath);
-        const { bundleManageResources } = getState();
-        const { publicationsHealth } = bundleManageResources;
-        const { publications } = publicationsHealth;
-        await bundleService.updatePublications(_bundleId, publications);
         dispatch(success(_bundleId, filePath, containerPath));
       } catch (error) {
         dispatch(failure(_bundleId, error));
       }
     }
+    await updatePublications(getState, _bundleId);
+    await bundleService.waitStopCreateMode(_bundleId);
     dispatch(done(_bundleId));
     /*
     await Promise.all(Object.entries(_fileToContainerPaths)
@@ -215,5 +215,43 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
       type: bundleResourceManagerConstants.UPDATE_MANIFEST_RESOURCE_FAILURE,
       error
     };
+  }
+}
+
+export function deleteManifestResources(_bundleId, _uris) {
+  return async (dispatch, getState) => {
+    try {
+      dispatch(request(_bundleId, _uris));
+      await bundleService.waitStartCreateMode(_bundleId);
+      /* eslint-disable no-restricted-syntax */
+      /* eslint-disable no-await-in-loop */
+      for (const uri of _uris) {
+        try {
+          await bundleService.deleteManifestResource(_bundleId, uri);
+        } catch (error) {
+          dispatch(failure(_bundleId, error, uri));
+        }
+      }
+      await updatePublications(getState, _bundleId);
+      await bundleService.waitStopCreateMode(_bundleId);
+      dispatch(success(_bundleId, _uris));
+    } catch (error) {
+      dispatch(failure(_bundleId, error));
+    }
+  };
+  function request(bundleId, uris) {
+    return {
+      type: bundleResourceManagerConstants.DELETE_MANIFEST_RESOURCES_REQUEST, bundleId, uris
+    };
+  }
+  function success(bundleId, uris) {
+    return {
+      type: bundleResourceManagerConstants.DELETE_MANIFEST_RESOURCES_RESPONSE,
+      bundleId,
+      uris
+    };
+  }
+  function failure(bundleId, error, uri) {
+    return { type: bundleResourceManagerConstants.DELETE_MANIFEST_RESOURCES_FAILURE, error, uri };
   }
 }
