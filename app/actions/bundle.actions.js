@@ -107,8 +107,9 @@ async function getAllFormsErrorStatus(bundleId) {
 function updateOrAddBundle(rawBundle) {
   return async (dispatch, getState) => {
     const { local_id: bundleId } = rawBundle;
+    const addedBundle = getAddedBundle(getState, bundleId);
     const hasStoredResources = bundleService.getHasStoredResources(rawBundle);
-    const manifestResources = hasStoredResources ?
+    const manifestResources = (hasStoredResources || Object.keys(addedBundle.manifestResources || []).length) ?
       await bundleService.getManifestResourceDetails(bundleId) : {};
     const { status } = bundleService.getInitialTaskAndStatus(rawBundle);
     const formsErrorStatus = status === 'DRAFT' ? await getAllFormsErrorStatus(bundleId) : {};
@@ -117,7 +118,6 @@ function updateOrAddBundle(rawBundle) {
       rawBundle,
       { resourceCountManifest, formsErrorStatus, manifestResources }
     );
-    const addedBundle = getAddedBundle(getState, bundleId);
     if (addedBundle) {
       // console.log(`Updated bundle ${bundleId} from ${context}`);
       dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle, rawBundle });
