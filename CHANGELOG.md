@@ -5,6 +5,7 @@
 - add ability to clean selected resources
 - add confirm buttons to operations
 - button row style changes
+- update dbl_dot_local_app to 12/05/2018
 #### Fixes
 - removed call to updateManifestResource() (now handled internally by postResource)
 - fewer locking issues when adding resources (and run wizards after all complete)
