@@ -688,34 +688,61 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   isModifyFilesMode = () => this.props.mode === 'addFiles';
   isDownloadMode = () => this.props.mode === 'download';
 
-  getOkButtonLabelModifyResources = () => {
+  getOkButtonDataModifyResources = () => {
+    const { classes } = this.props;
     const {
       storedResources, manifestResources, toAddResources, inEffect = []
     } = this.getResourcesByStatus();
+    const toAddReourcesInEffect = toAddResources === inEffect;
+    const OkButtonIcon = toAddReourcesInEffect ?
+      <CheckIcon className={classNames(classes.leftIcon)} /> :
+      <Delete className={classNames(classes.leftIcon)} />;
     const inEffectCount = inEffect.length;
+    let OkButtonLabel = '';
     if (storedResources === inEffect) {
-      return `Clean (${inEffectCount})`;
+      OkButtonLabel = `Clean (${inEffectCount})`;
     }
     if (manifestResources === inEffect) {
-      return `Delete from Manifest (${inEffectCount})`;
+      OkButtonLabel = `Delete from Manifest (${inEffectCount})`;
     }
     if (toAddResources === inEffect) {
-      return `Add (${inEffectCount})`;
+      OkButtonLabel = `Add (${inEffectCount})`;
     }
-    return '';
+    const OkButtonProps = {
+      classes,
+      color: 'secondary',
+      variant: 'contained',
+      onClick: this.handleModifyFiles,
+      disabled: this.shouldDisableModifyFiles()
+    };
+    return { OkButtonLabel, OkButtonIcon, OkButtonProps };
   }
 
-  getOkButtonLabelDownloadOrCleanResources = () => {
+  getOkButtonDataDownloadOrCleanResources = () => {
+    const { classes } = this.props;
     const {
       storedResources, manifestResources, inEffect
     } = this.getResourcesByStatus();
-    if (storedResources === inEffect) {
-      return `Clean (${storedResources.length})`;
-    }
+    const isManifestResourcesInEffect = manifestResources === inEffect;
+    const OkButtonIcon = isManifestResourcesInEffect ?
+      <FileDownload className={classNames(classes.leftIcon)} /> :
+      <Delete className={classNames(classes.leftIcon)} />;
+    let OkButtonLabel;
     if (manifestResources === inEffect) {
-      return `Download${this.getSelectedCountMessage(this.shouldDisableDownload)}`;
+      OkButtonLabel = `Download${this.getSelectedCountMessage(this.shouldDisableDownload)}`;
     }
-    return '';
+    if (storedResources === inEffect) {
+      OkButtonLabel = `Clean (${storedResources.length})`;
+    }
+    const OkButtonProps = {
+      classes,
+      confirmingProps: { variant: 'contained' },
+      color: isManifestResourcesInEffect ? 'inherit' : 'secondary',
+      variant: isManifestResourcesInEffect ? 'text' : 'contained',
+      onClick: this.handleDownloadOrClean,
+      disabled: this.shouldDisableDownload()
+    };
+    return { OkButtonLabel, OkButtonIcon, OkButtonProps };
   }
 
   modeUi = () => {
@@ -723,46 +750,27 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const title = 'Manage resources';
     switch (mode) {
       case 'download': {
-        const OkButtonLabel = this.getOkButtonLabelDownloadOrCleanResources();
-        const {
-          manifestResources, inEffect
-        } = this.getResourcesByStatus();
-        const isManifestResourcesInEffect = manifestResources === inEffect;
-        const OkButtonIcon = isManifestResourcesInEffect ?
-          <FileDownload className={classNames(classes.leftIcon)} /> :
-          <Delete className={classNames(classes.leftIcon)} />;
+        const { OkButtonLabel, OkButtonIcon, OkButtonProps } =
+          this.getOkButtonDataDownloadOrCleanResources();
         return {
           mode,
           appBar:
           {
             title,
-            OkButtonProps: {
-              classes,
-              confirmingProps: { variant: 'contained' },
-              color: isManifestResourcesInEffect ? 'inherit' : 'secondary',
-              variant: isManifestResourcesInEffect ? 'text' : 'contained',
-              onClick: this.handleDownloadOrClean,
-              disabled: this.shouldDisableDownload()
-            },
+            OkButtonProps,
             OkButtonLabel,
             OkButtonIcon,
           }
         };
       } case 'addFiles': {
-        const OkButtonLabel = this.getOkButtonLabelModifyResources();
+        const { OkButtonLabel, OkButtonIcon, OkButtonProps } = this.getOkButtonDataModifyResources();
         return {
           mode,
           appBar: {
             title,
-            OkButtonProps: {
-              classes,
-              color: 'secondary',
-              variant: 'contained',
-              onClick: this.handleModifyFiles,
-              disabled: this.shouldDisableModifyFiles()
-            },
+            OkButtonProps,
             OkButtonLabel,
-            OkButtonIcon: <CheckIcon className={classNames(classes.leftIcon)} />
+            OkButtonIcon
           }
         };
       }

@@ -109,7 +109,8 @@ function updateOrAddBundle(rawBundle) {
     const { local_id: bundleId } = rawBundle;
     const addedBundle = getAddedBundle(getState, bundleId);
     const hasStoredResources = bundleService.getHasStoredResources(rawBundle);
-    const manifestResources = (hasStoredResources || Object.keys(addedBundle.manifestResources || []).length) ?
+    const manifestResources = (hasStoredResources ||
+      (addedBundle && Object.keys(addedBundle.manifestResources || []).length)) ?
       await bundleService.getManifestResourceDetails(bundleId) : {};
     const { status } = bundleService.getInitialTaskAndStatus(rawBundle);
     const formsErrorStatus = status === 'DRAFT' ? await getAllFormsErrorStatus(bundleId) : {};
