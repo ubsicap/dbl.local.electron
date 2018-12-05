@@ -472,7 +472,7 @@ class DBLEntryRow extends PureComponent<Props> {
               <Button
                 variant="text"
                 size="small"
-                className={classes.button}
+                className={classNames(classes.button, this.pickBackgroundColor())}
                 onClick={this.onClickManageResources(resourceManagerMode)}
               >
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
