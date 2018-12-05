@@ -727,7 +727,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         const {
           manifestResources, inEffect
         } = this.getResourcesByStatus();
-        const OkButtonIcon = manifestResources === inEffect ?
+        const isManifestResourcesInEffect = manifestResources === inEffect;
+        const OkButtonIcon = isManifestResourcesInEffect ?
           <FileDownload className={classNames(classes.leftIcon)} /> :
           <Delete className={classNames(classes.leftIcon)} />;
         return {
@@ -738,7 +739,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             OkButtonProps: {
               classes,
               confirmingProps: { variant: 'contained' },
-              color: 'inherit',
+              color: isManifestResourcesInEffect ? 'inherit' : 'secondary',
+              variant: isManifestResourcesInEffect ? 'text' : 'contained',
               onClick: this.handleDownloadOrClean,
               disabled: this.shouldDisableDownload()
             },
