@@ -16,6 +16,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
+import Delete from '@material-ui/icons/Delete';
 import CloseIcon from '@material-ui/icons/Close';
 import CheckIcon from '@material-ui/icons/Check';
 import OpenInNew from '@material-ui/icons/OpenInNew';
@@ -442,14 +443,24 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   updateTableData = (props) => {
     const tableData = props.mode === 'revisions' ? props.entryRevisions : props.manifestResources;
-    this.setState({ tableData });
+    const selectedIds = this.state.selectAll ? tableData.map(row => row.id) : this.state.selectedIds;
+    this.setState({ tableData, selectedIds });
   }
 
-  handleDownload = () => {
-    const { selectedIds = [] } = this.state;
+  handleDownloadOrClean = () => {
+    const {
+      storedResources, manifestResources, inEffect
+    } = this.getResourcesByStatus();
     const { bundleId } = this.props;
-    this.props.downloadResources(bundleId, selectedIds);
-    this.handleClose();
+    const effectiveSelectedIds = inEffect.map(row => row.id);
+    if (manifestResources === inEffect) {
+      this.props.downloadResources(bundleId, effectiveSelectedIds);
+      this.handleClose();
+      return;
+    }
+    if (storedResources === inEffect) {
+      this.props.removeResources(bundleId, storedResources.map(r => r.uri));
+    }
   }
 
   handleDownloadRevision = () => {
@@ -469,9 +480,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const storedResources = selectedResources.filter(r => r.status === 'stored');
     const manifestResources = selectedResources.filter(r => r.status === 'manifest');
     const toAddResources = selectedResources.filter(r => r.status === 'add?');
-    const inEffect = getArrayIfNonEmpty(storedResources) ||
-      getArrayIfNonEmpty(manifestResources) ||
-      getArrayIfNonEmpty(toAddResources);
+    const sortedByFilters = this.props.mode === 'download' ?
+      [manifestResources, storedResources] : [storedResources, manifestResources, toAddResources];
+    const inEffect = sortedByFilters.find(getArrayIfNonEmpty);
     return {
       storedResources, manifestResources, toAddResources, inEffect
     };
@@ -509,14 +520,15 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   getSelectedCountMessage = (shouldDisableOk) => {
-    const { selectedIds = [], selectAll } = this.state;
+    const { selectAll } = this.state;
     if (shouldDisableOk()) {
       return '';
     }
-    if (selectAll) {
-      return ' (All)';
-    }
-    return ` (${selectedIds.length})`;
+    const allMsg = selectAll ? 'All ' : '';
+    const {
+      inEffect = []
+    } = this.getResourcesByStatus();
+    return ` (${allMsg}${inEffect.length})`;
   }
 
   getSelectedLocalBundle = () => {
@@ -678,16 +690,17 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   getOkButtonLabelModifyResources = () => {
     const {
-      storedResources, manifestResources, toAddResources, inEffect
+      storedResources, manifestResources, toAddResources, inEffect = []
     } = this.getResourcesByStatus();
+    const inEffectCount = inEffect.length;
     if (storedResources === inEffect) {
-      return `Clean (${storedResources.length})`;
+      return `Clean (${inEffectCount})`;
     }
     if (manifestResources === inEffect) {
-      return `Delete from Manifest (${manifestResources.length})`;
+      return `Delete from Manifest (${inEffectCount})`;
     }
     if (toAddResources === inEffect) {
-      return `Add (${toAddResources.length})`;
+      return `Add (${inEffectCount})`;
     }
     return '';
   }
@@ -716,7 +729,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         } = this.getResourcesByStatus();
         const OkButtonIcon = manifestResources === inEffect ?
           <FileDownload className={classNames(classes.leftIcon)} /> :
-          <CheckIcon className={classNames(classes.leftIcon)} />;
+          <Delete className={classNames(classes.leftIcon)} />;
         return {
           mode,
           appBar:
@@ -726,7 +739,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               classes,
               confirmingProps: { variant: 'contained' },
               color: 'inherit',
-              onClick: this.handleDownload,
+              onClick: this.handleDownloadOrClean,
               disabled: this.shouldDisableDownload()
             },
             OkButtonLabel,
