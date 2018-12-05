@@ -796,6 +796,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           appBar: {
             title: 'Revisions',
             OkButtonProps: {
+              classes,
+              confirmingProps: { variant: 'contained' },
               color: hasLocalBundle ? 'inherit' : 'secondary',
               variant: hasLocalBundle ? 'text' : 'contained',
               onClick: hasLocalBundle ? this.handleSwitchToRevision : this.handleDownloadRevision,
