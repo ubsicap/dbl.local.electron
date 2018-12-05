@@ -36,8 +36,8 @@
 .languageAndCountryLabel {
   font-size: small;
   padding: 5px;
-  border-radius: 10px;
-  border: 1px solid darkgray;
+  border-top: 1px solid darkgray;
+  border-bottom: 1px solid darkgray;
   vertical-align: middle;
 }
 

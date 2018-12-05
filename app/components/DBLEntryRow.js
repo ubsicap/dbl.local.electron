@@ -368,13 +368,18 @@ class DBLEntryRow extends PureComponent<Props> {
     return (null);
   };
 
-  pickBackgroundColor = () => {
+  pickBackgroundColor = (isForRow) => {
     const {
       classes, status, revision, parent, dblId
     } = this.props;
-    const effectiveRevision = bundleService.getRevisionOrParentRevision(dblId, revision, parent);
     switch (status) {
-      case 'DRAFT': return effectiveRevision ? classes.draftRevision : classes.draftNew;
+      case 'DRAFT': {
+        if (isForRow) {
+          return classes.storedMode;
+        }
+        const effectiveRevision = bundleService.getRevisionOrParentRevision(dblId, revision, parent);
+        return effectiveRevision ? classes.draftRevision : classes.draftNew;
+      }
       case 'NOT_STARTED': return classes.noneStoredMode;
       default:
         return classes.storedMode;
@@ -406,11 +411,11 @@ class DBLEntryRow extends PureComponent<Props> {
     }
     const resourceManagerMode = status === 'DRAFT' ? 'addFiles' : 'download';
     const laterEntryRevisionsCount = this.props.laterEntryRevisions.length;
-    const laterRevisionsBadge = laterEntryRevisionsCount ? `${laterEntryRevisionsCount}` : '';
+    const laterRevisionsBadge = laterEntryRevisionsCount ? `${laterEntryRevisionsCount}+` : '';
     const mediumIconMarginRight = ux.getMediumIcon(medium);
     return (
       <div
-        className={classNames(styles.bundleRow, this.pickBackgroundColor())}
+        className={classNames(styles.bundleRow, this.pickBackgroundColor(true))}
         key={bundleId}
         onKeyPress={this.onKeyPress}
         onClick={this.onClickBundleRow}
@@ -433,9 +438,9 @@ class DBLEntryRow extends PureComponent<Props> {
           <div className={styles.bundleRowTopMiddle}>
             <Tooltip title="Switch revision">
               <Button
-                variant="text"
+                variant="outlined"
                 size="small"
-                className={classes.button}
+                className={classNames(classes.button, this.pickBackgroundColor())}
                 disabled={dblId === undefined}
                 onClick={this.onClickManageResources('revisions')}
               >
@@ -464,7 +469,10 @@ class DBLEntryRow extends PureComponent<Props> {
           </div>
           <div className={styles.bundleRowTopRightSide}>
             {this.showStoredButton() && (
-              <Button variant="text" size="small" className={classes.button}
+              <Button
+                variant="text"
+                size="small"
+                className={classes.button}
                 onClick={this.onClickManageResources(resourceManagerMode)}
               >
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
@@ -479,7 +487,10 @@ class DBLEntryRow extends PureComponent<Props> {
               </div>
             )}
             {this.showDownloadButton() && (
-              <Button variant="text" size="small" className={classes.button}
+              <Button
+                variant="outlined"
+                size="small"
+                className={classes.button}
                 onKeyPress={this.onClickManageResources('download')}
                 onClick={this.onClickManageResources('download')}
               >
@@ -498,7 +509,7 @@ class DBLEntryRow extends PureComponent<Props> {
           </div>
         )}
         {isSelected && (
-          <Toolbar style={{ minHeight: '36px' }}>
+          <Toolbar style={{ minHeight: '36px' }} className={this.pickBackgroundColor()}>
             {this.shouldShowEdit() &&
             <Button
               disabled={this.shouldDisableDraftRevisionOrEdit()}
