@@ -10,6 +10,7 @@ export const bundleManageResourceActions = {
   closeResourceManager,
   getManifestResources,
   addManifestResources,
+  deleteManifestResources,
   checkPublicationsHealth
 };
 
@@ -173,6 +174,7 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
       }
     }
     await updatePublications(getState, _bundleId);
+    await bundleService.waitStopCreateMode(_bundleId);
     dispatch(done(_bundleId));
     /*
     await Promise.all(Object.entries(_fileToContainerPaths)
@@ -220,17 +222,18 @@ export function deleteManifestResources(_bundleId, _uris) {
   return async (dispatch, getState) => {
     try {
       dispatch(request(_bundleId, _uris));
+      await bundleService.waitStartCreateMode(_bundleId);
       /* eslint-disable no-restricted-syntax */
       /* eslint-disable no-await-in-loop */
       for (const uri of _uris) {
         try {
           await bundleService.deleteManifestResource(_bundleId, uri);
-          dispatch(success(_bundleId, uri));
         } catch (error) {
-          dispatch(failure(_bundleId, error));
+          dispatch(failure(_bundleId, error, uri));
         }
       }
       await updatePublications(getState, _bundleId);
+      await bundleService.waitStopCreateMode(_bundleId);
       dispatch(success(_bundleId, _uris));
     } catch (error) {
       dispatch(failure(_bundleId, error));
@@ -248,7 +251,7 @@ export function deleteManifestResources(_bundleId, _uris) {
       uris
     };
   }
-  function failure(bundleId, error) {
-    return { type: bundleResourceManagerConstants.DELETE_MANIFEST_RESOURCES_FAILURE, error };
+  function failure(bundleId, error, uri) {
+    return { type: bundleResourceManagerConstants.DELETE_MANIFEST_RESOURCES_FAILURE, error, uri };
   }
 }

@@ -28,7 +28,7 @@ import Zoom from '@material-ui/core/Zoom';
 import path from 'path';
 import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
-  getManifestResources, addManifestResources, checkPublicationsHealth
+  getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources
 } from '../actions/bundleManageResources.actions';
 import { downloadResources, removeResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
@@ -71,6 +71,7 @@ type Props = {
   getEntryRevisions: () => {},
   downloadResources: () => {},
   addManifestResources: () => {},
+  deleteManifestResources: () => {},
   checkPublicationsHealth: () => {},
   createBundleFromDBL: () => {},
   selectBundleEntryRevision: () => {},
@@ -348,6 +349,7 @@ const mapDispatchToProps = {
   getEntryRevisions,
   downloadResources,
   addManifestResources,
+  deleteManifestResources,
   checkPublicationsHealth,
   createBundleFromDBL,
   selectBundleEntryRevision,
@@ -443,7 +445,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   updateTableData = (props) => {
     const tableData = props.mode === 'revisions' ? props.entryRevisions : props.manifestResources;
-    const selectedIds = this.state.selectAll ? tableData.map(row => row.id) : this.state.selectedIds;
+    const selectedIds = this.state.selectAll ? tableData.map(row => row.id) :
+      this.state.selectedIds.filter(id => tableData.some(row => row.id === id));
     this.setState({ tableData, selectedIds });
   }
 
@@ -490,11 +493,15 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   handleModifyFiles = () => {
     const { bundleId } = this.props;
-    const { storedResources, manifestResources, toAddResources } = this.getResourcesByStatus();
-    if (storedResources.length) {
-      this.props.removeResources(bundleId, storedResources.map(r => r.uri));
+    const {
+      storedResources, manifestResources, toAddResources, inEffect
+    } = this.getResourcesByStatus();
+    const inEffectUris = inEffect.map(r => r.uri);
+    if (storedResources === inEffect) {
+      this.props.removeResources(bundleId, inEffectUris);
       return;
-    } else if (manifestResources.length) {
+    } else if (manifestResources === inEffect) {
+      this.props.deleteManifestResources(bundleId, inEffectUris);
       return;
     }
     const filesToContainers = toAddResources.reduce((acc, selectedResource) =>

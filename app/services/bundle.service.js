@@ -23,7 +23,7 @@ export const bundleService = {
   getInitialTaskAndStatus,
   getManifestResourcePaths,
   getManifestResourceDetails,
-  deletetManifestResource,
+  deleteManifestResource,
   downloadResources,
   removeResources,
   getResourcePaths,
@@ -299,7 +299,7 @@ function getManifestResourceDetails(bundleId) {
   return fetch(url, requestOptions).then(handleResponse);
 }
 
-function deletetManifestResource(bundleId, uri) {
+function deleteManifestResource(bundleId, uri) {
   const requestOptions = {
     method: 'POST',
     headers: authHeader()
