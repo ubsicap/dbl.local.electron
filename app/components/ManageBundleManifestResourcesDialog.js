@@ -560,8 +560,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   isNothingSelected = () => {
-    const { selectedIds = [], selectAll } = this.state;
-    return !selectAll && selectedIds.length === 0;
+    const { selectedIds = [] } = this.state;
+    return selectedIds.length === 0;
   }
 
   shouldDisableDownload = () => this.isNothingSelected();
@@ -904,7 +904,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const {
       columnConfig, manifestResources, mode
     } = this.props;
-    const { selectAll, tableData = manifestResources, selectedIds } = this.state;
+    const { tableData = manifestResources, selectedIds } = this.state;
     switch (mode) {
       case 'download': {
         return (
@@ -917,7 +917,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               defaultOrderBy="container"
               onSelectedRowIds={this.onSelectedIds}
               multiSelections
-              selectAll={selectAll}
               selectedIds={selectedIds}
             />
           </React.Fragment>
@@ -935,7 +934,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               defaultOrderBy="revision"
               orderDirection="desc"
               onSelectedRowIds={this.onSelectedIds}
-              selectAll={false}
               selectedIds={selectedIds}
             />
           </React.Fragment>
@@ -952,7 +950,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               defaultOrderBy="container"
               onSelectedRowIds={this.onSelectedIds}
               multiSelections
-              selectAll={selectAll}
               selectedIds={selectedIds}
             />
           </React.Fragment>

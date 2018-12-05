@@ -33,7 +33,6 @@ type Props = {
   columnConfig: [],
   defaultOrderBy: string,
   secondarySorts: [],
-  selectAll: boolean,
   selectedIds: [],
   multiSelections?: boolean,
   customSorts?: {},
@@ -48,11 +47,6 @@ function getSelectableData(data) {
   return data.filter(d => !d.disabled);
 }
 
-function getAllSelectableRowIds(data) {
-  const selectableData = getSelectableData(data);
-  return getDataRowIds(selectableData);
-}
-
 class EnhancedTable extends Component<Props> {
   props: Props;
   state = {
@@ -65,11 +59,6 @@ class EnhancedTable extends Component<Props> {
     // You don't have to do this check first, but it can help prevent an unneeded render
     if (nextProps.selectedIds !== this.props.selectedIds) {
       this.setState({ selectedRowIds: nextProps.selectedIds });
-    } else if (nextProps.multiSelections && nextProps.selectAll && nextProps.data.length &&
-      (this.props.data !== nextProps.data ||
-      this.state.selectedRowIds.length === 0 ||
-      nextProps.selectAll !== this.props.selectAll)) {
-      this.setState({ selectedRowIds: getAllSelectableRowIds(nextProps.data) });
     }
   }
 
