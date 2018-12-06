@@ -168,6 +168,11 @@ export function bundles(state = initialState, action) {
     }
     case bundleConstants.ADD_BUNDLE: {
       const { bundle } = action;
+      const origBundle = state.addedByBundleIds[bundle.id];
+      if (origBundle) {
+        // avoid race conditions where the same bundle gets added twice.
+        return state;
+      }
       const { allBundles: origUnsorted } = state;
       const decoratedBundle = addBundleDecorators(bundle);
       const allBundles = ([decoratedBundle, ...origUnsorted]);

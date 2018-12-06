@@ -448,22 +448,6 @@ export function setupBundlesEventSource() {
     dispatch(removeBundleSuccess(bundleId));
     dispatch(updateUploadJobs(bundleId, null, bundleId));
   }
-
-  async function listenStorerUpdateFromDownload(e, dispatch, getState) {
-    const data = JSON.parse(e.data);
-    const bundleId = data.args[0];
-    const rawBundle = await bundleService.fetchById(bundleId);
-    if (bundleService.apiBundleHasMetadata(rawBundle)) {
-      const addedBundle = getAddedBundle(getState, bundleId);
-      if (addedBundle) {
-        return; // already exists in items.
-      }
-      // we just downloaded metadata.xml
-      const bundle = await bundleService.convertApiBundleToNathanaelBundle(rawBundle);
-      dispatch(addBundle(bundle, rawBundle));
-      // console.log(`Added bundle ${bundleId} from listenStorerUpdateFromDownload`);
-    }
-  }
 }
 
 const throttleAddBundle = throttledQueue(4, 1000, true);
