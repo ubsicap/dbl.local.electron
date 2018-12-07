@@ -640,8 +640,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             formatContainer(upath.joinSafe(container, resource.relativeFolder)) :
             container);
           const updatedUri = formatUri(updatedContainer, resource.name);
-          const existingResources = origTotalResources.filter(r => r.id !== filePath);
-          const status = getAddStatus(updatedUri, existingResources);
+          const duplicateUriResources = origTotalResources.filter(r => r.id !== filePath && r.uri === updatedUri);
+          const status = getAddStatus(updatedUri, duplicateUriResources);
           return {
             container: updatedContainer,
             uri: updatedUri,
@@ -744,7 +744,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       OkButtonLabel = `Delete from Manifest (${inEffectCount})`;
     }
     if (toAddResources === inEffect) {
-      OkButtonLabel = `Add (${inEffectCount})`;
+      const overwritesMsg = toAddResources.some(r => r.status === addAndOverwrite) ? '/ Overwrite' : '';
+      OkButtonLabel = `Add ${overwritesMsg} (${inEffectCount})`;
     }
     const OkButtonProps = {
       classes,
