@@ -29,7 +29,7 @@ export const bundleActions = {
 
 export default bundleActions;
 
-export function updateBundle(bundleId) {
+export function updateBundle(bundleId, updateManifestResources = false) {
   return async (dispatch) => {
     try {
       const rawBundle = await bundleService.fetchById(bundleId);
@@ -37,7 +37,7 @@ export function updateBundle(bundleId) {
         // console.log(`Skipping updateBundle for ${bundleId}`);
         return; // hasn't downloaded metadata yet. (don't expect to be in our list)
       }
-      dispatch(updateOrAddBundle(rawBundle));
+      dispatch(updateOrAddBundle(rawBundle, updateManifestResources));
     } catch (error) {
       if (error.status === 404) {
         // this has been deleted.
@@ -104,12 +104,12 @@ async function getAllFormsErrorStatus(bundleId) {
   return { ...formsErrorStatus, ...formTreeErrors };
 }
 
-function updateOrAddBundle(rawBundle) {
+function updateOrAddBundle(rawBundle, updateManifestResources = false) {
   return async (dispatch, getState) => {
     const { local_id: bundleId } = rawBundle;
     const addedBundle = getAddedBundle(getState, bundleId);
     const hasStoredResources = bundleService.getHasStoredResources(rawBundle);
-    const manifestResources = (hasStoredResources ||
+    const manifestResources = (updateManifestResources || hasStoredResources ||
       (addedBundle && Object.keys(addedBundle.manifestResources || []).length)) ?
       await bundleService.getManifestResourceDetails(bundleId) : {};
     const { status } = bundleService.getInitialTaskAndStatus(rawBundle);

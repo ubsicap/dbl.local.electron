@@ -4,6 +4,7 @@ import { history } from '../store/configureStore';
 import { bundleService } from '../services/bundle.service';
 import { utilities } from '../utils/utilities';
 import { openEditMetadata } from './bundleEditMetadata.actions';
+import { bundleActions } from './bundle.actions';
 
 export const bundleManageResourceActions = {
   openResourceManager,
@@ -16,6 +17,7 @@ export const bundleManageResourceActions = {
 
 export function openResourceManager(_bundleId, _mode) {
   return async (dispatch) => {
+    dispatch(bundleActions.updateBundle(_bundleId, true));
     dispatch(navigate(_bundleId, _mode));
   };
   function success(bundleId, mode) {
