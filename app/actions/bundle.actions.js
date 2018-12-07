@@ -238,17 +238,26 @@ export function createBundleFromDBL(dblId, revision, license) {
     try {
       dispatch(request());
       await dblDotLocalService.downloadMetadata(dblId, revision, license);
-      const targetBundle = await waitUntil(() => bundleForEntryRevisionHasBeenMade(getState, dblId, revision), 60000, 500);
+      const targetBundle =
+        await waitUntil(
+          () => bundleForEntryRevisionHasBeenMade(getState, dblId, revision),
+          60000,
+          500
+        );
       dispatch(success(targetBundle));
     } catch (error) {
       dispatch(failure(error));
     }
   };
   function request() {
-    return { type: bundleConstants.CREATE_FROM_DBL_REQUEST, dblId, revision, license };
+    return {
+      type: bundleConstants.CREATE_FROM_DBL_REQUEST, dblId, revision, license
+    };
   }
   function success(targetBundle) {
-    return { type: bundleConstants.CREATE_FROM_DBL_SUCCESS, dblId, revision, license, targetBundle };
+    return {
+      type: bundleConstants.CREATE_FROM_DBL_SUCCESS, dblId, revision, license, targetBundle
+    };
   }
   function failure(error) {
     return { type: bundleConstants.CREATE_FROM_DBL_FAILURE, error };
@@ -263,6 +272,7 @@ export function setupBundlesEventSource() {
       return;
     }
     const listeners = {
+      error: (e) => dispatch(listenError(e)),
       'storer/execute_task': listenStorerExecuteTaskDownloadResources,
       'storer/change_mode': (e) => dispatch(listenStorerChangeMode(e)),
       'uploader/job': (e) => listenUploaderJob(e, dispatch, getState().bundles.uploadJobs),
@@ -280,6 +290,21 @@ export function setupBundlesEventSource() {
       eventSource.addEventListener(evType, handler);
     });
   };
+
+  /*
+   * { data: "{"args": ["createJob", "e7495bea-37d1-4980-ba30-73…0}\n"],
+   *  "component": "uploader", "type": "error"}"
+   */
+  function listenError(event) {
+    const { data: rawData } = event;
+    const data = rawData ? JSON.parse(rawData) : {};
+    if (rawData) {
+      log.error(data);
+    }
+    return {
+      type: 'SSE_ERROR', dispatcher: 'bundle.actions', rawData, data, event
+    };
+  }
 
   /*
    * data:{"args": [1, 11], "component": "downloader", "type": "global_status"}
@@ -333,7 +358,12 @@ export function setupBundlesEventSource() {
     };
   }
 
-  /* {'event': 'uploader/createJob', 'data': {'args': ('2f57466e-a5c4-41de-a67e-4ba5b54e7870', '3a6424b3-8b52-4f05-b69c-3e8cdcf85b0c'), 'component': 'uploader', 'type': 'createJob'}} */
+  /* {'event':
+   *  'uploader/createJob',
+   *  'data': {'args': ('2f57466e-a5c4-41de-a67e-4ba5b54e7870',
+   *                    '3a6424b3-8b52-4f05-b69c-3e8cdcf85b0c'),
+   *  'component': 'uploader', 'type': 'createJob'}}
+   */
   function listenUploaderCreateJob(e, dispatch) {
     // console.log(e);
     const data = JSON.parse(e.data);

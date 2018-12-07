@@ -162,8 +162,11 @@ function startDblDotLocalSubProcess(configXmlFile) {
   ['error', 'close', 'exit'].forEach(event => {
     subProcess.on(event, (code) => {
       const msg = `dbl_dot_local_app (${event}): ${code}`;
+      if (code === null) {
+        console.log(msg);
+        return;
+      }
       log.error(msg);
-      console.log(msg);
     });
   });
   return subProcess;
@@ -337,8 +340,11 @@ function startEventSource(authToken, getState) {
     console.log('Connection to event source opened.');
   };
   eventSource.onerror = (error) => {
-    console.log('EventSource error.');
-    console.log(error);
+    const { isTrusted, ...rest } = error;
+    if (Object.keys(rest).length > 0) {
+      log.error('EventSource error:');
+      log.error(error);
+    }
     const evtSource = error.currentTarget;
     const IS_CLOSED = 2;
     const { dblDotLocalConfig: { dblDotLocalExecProcess } } = getState();
