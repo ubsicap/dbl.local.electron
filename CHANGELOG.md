@@ -1,3 +1,8 @@
+### Version 0.19.1
+#### Fixes
+- don't show empty list after deleting manifest resource on bundle with no stored resources
+- prevent same bundle from getting added to app state multiple times (due to race conditions)
+
 ### Version 0.19.0
 #### Features (Manage Resources Dialog)
 - add medium badge to folder icon
