@@ -78,6 +78,9 @@ type Props = {
   removeResources: () => {}
 };
 
+const addStatus = 'add?';
+const addAndOverwrite = 'add + overwrite?';
+
 function createUpdatedTotalResources(origTotalResources, filePath, updateFunc) {
   return origTotalResources.map(r => (r.id === filePath ? { ...r, ...updateFunc(r) } : r));
 }
@@ -98,6 +101,10 @@ function formatContainer(containerInput) {
 
 function formatUriForApi(resource) {
   const { container, name } = resource;
+  return formatUri(container, name);
+}
+
+function formatUri(container, name) {
   return `${container.substr(1)}${name}`;
 }
 
@@ -133,27 +140,35 @@ function ignoreHiddenFunc(file, stats) {
 }
 
 function createResourceData(manifestResourceRaw, fileStoreInfo) {
-  const { uri = '', checksum = '', size: sizeRaw = 0, mimeType = '' } = manifestResourceRaw;
+  const {
+    uri = '', checksum = '', size: sizeRaw = 0, mimeType = ''
+  } = manifestResourceRaw;
   const container = formatContainer(upath.normalizeTrim(path.dirname(uri)));
   const name = path.basename(uri);
   /* const ext = path.extname(uri); */
   const size = formatBytesByKbs(sizeRaw);
   const id = uri;
   const status = fileStoreInfo ? 'stored' : 'manifest';
-  const disabled = false; /* mode === 'addFiles' ? status !== 'add?' : status === 'stored'; */
+  const disabled = false;
   return {
     id, uri, status, container, name, mimeType, size, checksum, disabled
   };
 }
 
-function createAddedResource(fullToRelativePaths) {
+function getAddStatus(uri, existingResources) {
+  return existingResources.some(r => r.uri === uri) ? addAndOverwrite : addStatus;
+}
+
+function createAddedResource(fullToRelativePaths, existingResources) {
   return (filePath) => {
     const fileName = path.basename(filePath);
     const relativePath = fullToRelativePaths ? upath.normalizeTrim(fullToRelativePaths[filePath]) : '';
     const relativeFolder = formatContainer(path.dirname(relativePath));
-    const [id, uri, name] = [filePath, fileName, fileName];
+    const uri = formatUri(relativeFolder, fileName);
+    const [id, name] = [filePath, fileName];
+    const status = getAddStatus(uri, existingResources);
     return {
-      id, uri, status: 'add?', mimeType: '', container: relativeFolder || NEED_CONTAINER, relativeFolder, name, size: 0, checksum: '', disabled: false
+      id, uri, status, mimeType: '', container: relativeFolder || NEED_CONTAINER, relativeFolder, name, size: 0, checksum: '', disabled: false
     };
   };
 }
@@ -489,7 +504,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const selectedResources = this.getSelectedRowData();
     const storedResources = selectedResources.filter(r => r.status === 'stored');
     const manifestResources = selectedResources.filter(r => r.status === 'manifest');
-    const toAddResources = selectedResources.filter(r => r.status === 'add?');
+    const toAddResources = selectedResources.filter(r => [addStatus, addAndOverwrite].includes(r.status));
     const sortedByFilters =
       this.props.mode === 'download' ? [storedResources, manifestResources] :
         [storedResources, manifestResources, toAddResources];
@@ -620,11 +635,19 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       const updatedTotalResources = createUpdatedTotalResources(
         acc,
         filePath,
-        (resource) => ({
-          container: (resource.relativeFolder ?
+        (resource) => {
+          const updatedContainer = (resource.relativeFolder ?
             formatContainer(upath.joinSafe(container, resource.relativeFolder)) :
-            container)
-        })
+            container);
+          const updatedUri = formatUri(updatedContainer, resource.name);
+          const existingResources = origTotalResources.filter(r => r.id !== filePath);
+          const status = getAddStatus(updatedUri, existingResources);
+          return {
+            container: updatedContainer,
+            uri: updatedUri,
+            status
+          };
+        }
       );
       return updatedTotalResources;
     }, origTotalResources);
@@ -693,7 +716,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { manifestResources } = this.props;
     const { tableData = manifestResources } = this.state;
     const otherResources = tableData.filter(r => !newAddedFilePaths.includes(r.id));
-    const newlyAddedResources = newAddedFilePaths.map(createAddedResource(fullToRelativePaths));
+    const newlyAddedResources = newAddedFilePaths.map(createAddedResource(fullToRelativePaths, otherResources));
     this.setState(
       { tableData: [...otherResources, ...newlyAddedResources] },
       this.updateAddedResourcesWithFileStats(newAddedFilePaths)
