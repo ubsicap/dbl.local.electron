@@ -81,7 +81,7 @@ type Props = {
 };
 
 const addStatus = 'add?';
-const addAndOverwrite = 'add + overwrite?';
+const addAndOverwrite = 'add (revise)?';
 
 function createUpdatedTotalResources(origTotalResources, filePath, updateFunc) {
   return origTotalResources.map(r => (r.id === filePath ? { ...r, ...updateFunc(r) } : r));
@@ -158,18 +158,18 @@ function createResourceData(manifestResourceRaw, fileStoreInfo, parentManifesRes
   };
 }
 
-function getAddStatus(uri, existingResources) {
-  return existingResources.some(r => r.uri === uri) ? addAndOverwrite : addStatus;
+function getAddStatus(uri, resourcesInParent) {
+  return resourcesInParent.has(uri) ? addAndOverwrite : addStatus;
 }
 
-function createAddedResource(fullToRelativePaths, existingResources) {
+function createAddedResource(fullToRelativePaths, resourcesInParent) {
   return (filePath) => {
     const fileName = path.basename(filePath);
     const relativePath = fullToRelativePaths ? upath.normalizeTrim(fullToRelativePaths[filePath]) : '';
     const relativeFolder = formatContainer(path.dirname(relativePath));
     const uri = formatUri(relativeFolder, fileName);
     const [id, name] = [filePath, fileName];
-    const status = getAddStatus(uri, existingResources);
+    const status = getAddStatus(uri, resourcesInParent);
     return {
       id, uri, status, mimeType: '', container: relativeFolder || NEED_CONTAINER, relativeFolder, name, size: 0, checksum: '', disabled: false
     };
@@ -530,41 +530,49 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   getResourcesByStatus = () => {
     const selectedResources = this.getSelectedRowData();
-    const parentRawManifestResourceUris = getParentRawManifestResourceUris(this.props.parentManifestResources);
+    const parentRawManifestResourceUris =
+      getParentRawManifestResourceUris(this.props.parentManifestResources);
     const filteredResources
-      = List(selectedResources).reduce((acc, r) => {
-        const resourceInParent = parentRawManifestResourceUris.has(r.uri);
-        const parentResources = resourceInParent ?
-          acc.parentResources.push(r) : acc.parentResources;
-        const discardableResources = !resourceInParent ?
-          acc.discardableResources.push(r) : acc.discardableResources;
-        if (r.status === 'stored') {
-          return {
-            ...acc, storedResources: acc.storedResources.push(r), parentResources, discardableResources
-          };
-        } else if (r.status === 'manifest') {
-          return {
-            ...acc, manifestResources: acc.manifestResources.push(r), parentResources, discardableResources
-          };
-        } else if ([addStatus, addAndOverwrite].includes(r.status)) {
-          return { ...acc, toAddResources: acc.toAddResources.push(r) };
+      = List(selectedResources).reduce(
+        (acc, r) => {
+          const resourceInParent = parentRawManifestResourceUris.has(r.uri);
+          const resourcesInParent = resourceInParent ?
+            acc.resourcesInParent.push(r) : acc.resourcesInParent;
+          const discardableResources = !resourceInParent ?
+            acc.discardableResources.push(r) : acc.discardableResources;
+          if (r.status === 'stored') {
+            return {
+              ...acc,
+              storedResources: acc.storedResources.push(r),
+              resourcesInParent,
+              discardableResources
+            };
+          } else if (r.status === 'manifest') {
+            return {
+              ...acc,
+              manifestResources: acc.manifestResources.push(r),
+              resourcesInParent,
+              discardableResources
+            };
+          } else if ([addStatus, addAndOverwrite].includes(r.status)) {
+            return { ...acc, toAddResources: acc.toAddResources.push(r), resourcesInParent };
+          }
+          return acc;
+        },
+        {
+          storedResources: List(),
+          manifestResources: List(),
+          toAddResources: List(),
+          resourcesInParent: List(),
+          discardableResources: List()
         }
-        return acc;
-      },
-      {
-        storedResources: List(),
-        manifestResources: List(),
-        toAddResources: List(),
-        parentResources: List(),
-        discardableResources: List()
-      }
       );
     const [storedResources, manifestResources, toAddResources,
-      parentResources, discardableResources] = [
+      resourcesInParent, discardableResources] = [
       filteredResources.storedResources.toArray(),
       filteredResources.manifestResources.toArray(),
       filteredResources.toAddResources.toArray(),
-      filteredResources.parentResources.toArray(),
+      filteredResources.resourcesInParent.toArray(),
       filteredResources.discardableResources.toArray()];
     const sortedByFilters =
       this.props.mode === 'download' ? [storedResources, manifestResources] :
@@ -574,7 +582,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       storedResources,
       manifestResources,
       toAddResources,
-      parentResources,
+      resourcesInParent,
       discardableResources,
       inEffect
     };
@@ -696,6 +704,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     if (toAddResources !== inEffect) {
       return origTotalResources;
     }
+    const parentRawManifestResourceUris =
+      getParentRawManifestResourceUris(this.props.parentManifestResources);
     const tableData = toAddResources.map(resource => resource.id).reduce((acc, filePath) => {
       const container = formatContainer(newContainer);
       const updatedTotalResources = createUpdatedTotalResources(
@@ -706,8 +716,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             formatContainer(upath.joinSafe(container, resource.relativeFolder)) :
             container);
           const updatedUri = formatUri(updatedContainer, resource.name);
-          const duplicateUriResources = origTotalResources.filter(r => r.id !== filePath && r.uri === updatedUri);
-          const status = getAddStatus(updatedUri, duplicateUriResources);
+          const status = getAddStatus(updatedUri, parentRawManifestResourceUris);
           return {
             container: updatedContainer,
             uri: updatedUri,
@@ -781,8 +790,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   updateTotalResources = (newAddedFilePaths, fullToRelativePaths) => () => {
     const { manifestResources } = this.props;
     const { tableData = manifestResources } = this.state;
+    const parentRawManifestResourceUris =
+      getParentRawManifestResourceUris(this.props.parentManifestResources);
     const otherResources = tableData.filter(r => !newAddedFilePaths.includes(r.id));
-    const newlyAddedResources = newAddedFilePaths.map(createAddedResource(fullToRelativePaths, otherResources));
+    const newlyAddedResources = newAddedFilePaths.map(createAddedResource(fullToRelativePaths, parentRawManifestResourceUris));
     this.setState(
       { tableData: [...otherResources, ...newlyAddedResources] },
       this.updateAddedResourcesWithFileStats(newAddedFilePaths)
@@ -804,14 +815,15 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const inEffectCount = inEffect.length;
     let OkButtonLabel = '';
     if (discardableResources === inEffect) {
-      OkButtonLabel = `Discard (${inEffectCount})`;
+      OkButtonLabel = `Discard New (${inEffectCount})`;
     } else if (storedResources === inEffect) {
       OkButtonLabel = `Clean (${inEffectCount})`;
     } else if (manifestResources === inEffect) {
       OkButtonLabel = `Delete from Manifest (${inEffectCount})`;
     } else if (toAddResources === inEffect) {
-      const overwritesMsg = toAddResources.some(r => r.status === addAndOverwrite) ? '/ Overwrite' : '';
-      OkButtonLabel = `Add ${overwritesMsg} (${inEffectCount})`;
+      const revisions = toAddResources.filter(r => r.status === addAndOverwrite);
+      const overwritesMsg = revisions.length ? ` / Revise (${revisions.length})` : '';
+      OkButtonLabel = `Add (${inEffectCount - revisions.length})${overwritesMsg}`;
     }
     const OkButtonProps = {
       classes,
