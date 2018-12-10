@@ -4,6 +4,7 @@ import sort from 'fast-sort';
 import upath from 'upath';
 import md5File from 'md5-file/promise';
 import recursiveReadDir from 'recursive-readdir';
+import { List, Set } from 'immutable';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
@@ -502,9 +503,21 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   getResourcesByStatus = () => {
     const selectedResources = this.getSelectedRowData();
-    const storedResources = selectedResources.filter(r => r.status === 'stored');
-    const manifestResources = selectedResources.filter(r => r.status === 'manifest');
-    const toAddResources = selectedResources.filter(r => [addStatus, addAndOverwrite].includes(r.status));
+    const filteredResources
+      = List(selectedResources).reduce((acc, r) => {
+        if (r.status === 'stored') {
+          return { ...acc, storedResources: acc.storedResources.push(r) };
+        } else if (r.status === 'manifest') {
+          return { ...acc, manifestResources: acc.manifestResources.push(r) };
+        } else if ([addStatus, addAndOverwrite].includes(r.status)) {
+          return { ...acc, toAddResources: acc.toAddResources.push(r) };
+        }
+        return acc;
+      }, { storedResources: List(), manifestResources: List(), toAddResources: List() });
+    const [storedResources, manifestResources, toAddResources] = [
+      filteredResources.storedResources.toArray(),
+      filteredResources.manifestResources.toArray(),
+      filteredResources.toAddResources.toArray()];
     const sortedByFilters =
       this.props.mode === 'download' ? [storedResources, manifestResources] :
         [storedResources, manifestResources, toAddResources];
@@ -876,14 +889,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   getSelectedRowData = () => {
     const { manifestResources } = this.props;
     const { tableData = manifestResources, selectedIds } = this.state;
-    const selectedIdSet = new Set(selectedIds);
+    const selectedIdSet = Set(selectedIds);
     return tableData.filter(r => selectedIdSet.has(r.id));
   }
 
   hasAnySelectedUnassignedContainers = () => {
     const { manifestResources } = this.props;
     const { tableData = manifestResources, selectedIds } = this.state;
-    const selectedIdSet = new Set(selectedIds);
+    const selectedIdSet = Set(selectedIds);
     const resourcesWithUnassignedContainers =
       tableData
         .filter(r => (r.container === NEED_CONTAINER));
