@@ -57,6 +57,7 @@ type Props = {
   mode: string,
   showMetadataFile: ?string,
   manifestResources: [],
+  parentManifestResources: {},
   entryRevisions: [],
   columnConfig: [],
   isOkToAddFiles: boolean,
@@ -140,7 +141,7 @@ function ignoreHiddenFunc(file, stats) {
   return false;
 }
 
-function createResourceData(manifestResourceRaw, fileStoreInfo) {
+function createResourceData(manifestResourceRaw, fileStoreInfo, parentManifesResource) {
   const {
     uri = '', checksum = '', size: sizeRaw = 0, mimeType = ''
   } = manifestResourceRaw;
@@ -149,8 +150,9 @@ function createResourceData(manifestResourceRaw, fileStoreInfo) {
   /* const ext = path.extname(uri); */
   const size = formatBytesByKbs(sizeRaw);
   const id = uri;
+  const isModifiedFromParent = parentManifesResource ? parentManifesResource.checksum !== checksum : false;
   const status = fileStoreInfo ? 'stored' : 'manifest';
-  const disabled = false;
+  const disabled = isModifiedFromParent;
   return {
     id, uri, status, container, name, mimeType, size, checksum, disabled
   };
@@ -194,7 +196,7 @@ function createColumnConfig(mode) {
     const { id, href, localBundle, disabled, ...columns } = createRevisionData();
     return mapColumns(columns);
   }
-  const { id, uri, disabled, ...columns } = createResourceData({}, {}, 'ignore');
+  const { id, uri, disabled, ...columns } = createResourceData({}, {});
   return mapColumns(columns);
 }
 
@@ -214,17 +216,40 @@ function getOrDefault(obj, prop, defaultValue) {
 const emptyBundleManifestResources = { rawManifestResources: {}, storedFiles: {} };
 
 const makeGetManifestResourcesData = () => createSelector(
-  [getAllManifestResources, getMode, getBundleId],
-  (manifestResources, mode, bundleId) => {
+  [getAllManifestResources, getMode, getBundleId, getBundlesById],
+  (manifestResources, mode, bundleId, bundlesById) => {
     const bundleManifestResources = getOrDefault(
       manifestResources,
       bundleId,
       emptyBundleManifestResources
     );
     const { rawManifestResources, storedFiles } = bundleManifestResources;
+    const parentManifestResources = getParentManifestResource(bundleId, bundlesById, manifestResources);
     return Object.values(rawManifestResources)
-      .map(r => createResourceData(r, storedFiles[r.uri], mode));
+      .map(r => createResourceData(r, storedFiles[r.uri], parentManifestResources.rawManifestResources[r.uri]));
   }
+);
+
+
+function getParentRawManifestResourceUris(parentManifestResources) {
+  const parentRawManifestResourceUris =
+    Set(Object.keys(parentManifestResources.rawManifestResources));
+  return parentRawManifestResourceUris;
+}
+
+function getParentManifestResource(bundleId, bundlesById, manifestResources) {
+  const bundle = bundlesById[bundleId];
+  const { parent } = bundle;
+  if (parent && parent.dblId === bundle.dblId) {
+    return manifestResources[parent.bundleId] || emptyBundleManifestResources;
+  }
+  return emptyBundleManifestResources;
+}
+
+const makeGetParentManifestResources = () => createSelector(
+  [getAllManifestResources, getBundleId, getBundlesById],
+  (manifestResources, bundleId, bundlesById) =>
+    getParentManifestResource(bundleId, bundlesById, manifestResources)
 );
 
 /*
@@ -332,6 +357,7 @@ function mapStateToProps(state, props) {
   const { showMetadataFile } = bundleEditMetadata;
   const columnConfig = createColumnConfig(mode);
   const getManifestResourceData = makeGetManifestResourcesData();
+  const getParentManifestResources = makeGetParentManifestResources();
   const bundlesById = getBundlesById(state);
   const getEntryRevisionsData = makeGetEntryRevisionsData();
   const origBundle = bundleId ? bundlesById[bundleId] : {};
@@ -346,6 +372,7 @@ function mapStateToProps(state, props) {
     mode,
     showMetadataFile,
     manifestResources: getManifestResourceData(state, props),
+    parentManifestResources: getParentManifestResources(state, props),
     entryRevisions: mode === 'revisions' ? getEntryRevisionsData(state, props) : [],
     columnConfig,
     isOkToAddFiles: !publicationsHealthMessage,
@@ -503,27 +530,53 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   getResourcesByStatus = () => {
     const selectedResources = this.getSelectedRowData();
+    const parentRawManifestResourceUris = getParentRawManifestResourceUris(this.props.parentManifestResources);
     const filteredResources
       = List(selectedResources).reduce((acc, r) => {
+        const resourceInParent = parentRawManifestResourceUris.has(r.uri);
+        const parentResources = resourceInParent ?
+          acc.parentResources.push(r) : acc.parentResources;
+        const discardableResources = !resourceInParent ?
+          acc.discardableResources.push(r) : acc.discardableResources;
         if (r.status === 'stored') {
-          return { ...acc, storedResources: acc.storedResources.push(r) };
+          return {
+            ...acc, storedResources: acc.storedResources.push(r), parentResources, discardableResources
+          };
         } else if (r.status === 'manifest') {
-          return { ...acc, manifestResources: acc.manifestResources.push(r) };
+          return {
+            ...acc, manifestResources: acc.manifestResources.push(r), parentResources, discardableResources
+          };
         } else if ([addStatus, addAndOverwrite].includes(r.status)) {
           return { ...acc, toAddResources: acc.toAddResources.push(r) };
         }
         return acc;
-      }, { storedResources: List(), manifestResources: List(), toAddResources: List() });
-    const [storedResources, manifestResources, toAddResources] = [
+      },
+      {
+        storedResources: List(),
+        manifestResources: List(),
+        toAddResources: List(),
+        parentResources: List(),
+        discardableResources: List()
+      }
+      );
+    const [storedResources, manifestResources, toAddResources,
+      parentResources, discardableResources] = [
       filteredResources.storedResources.toArray(),
       filteredResources.manifestResources.toArray(),
-      filteredResources.toAddResources.toArray()];
+      filteredResources.toAddResources.toArray(),
+      filteredResources.parentResources.toArray(),
+      filteredResources.discardableResources.toArray()];
     const sortedByFilters =
       this.props.mode === 'download' ? [storedResources, manifestResources] :
-        [storedResources, manifestResources, toAddResources];
+        [discardableResources, storedResources, manifestResources, toAddResources];
     const inEffect = sortedByFilters.find(getArrayIfNonEmpty);
     return {
-      storedResources, manifestResources, toAddResources, inEffect
+      storedResources,
+      manifestResources,
+      toAddResources,
+      parentResources,
+      discardableResources,
+      inEffect
     };
   };
 
@@ -742,7 +795,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   getOkButtonDataModifyResources = () => {
     const { classes } = this.props;
     const {
-      storedResources, manifestResources, toAddResources, inEffect = []
+      discardableResources, storedResources, manifestResources, toAddResources, inEffect = []
     } = this.getResourcesByStatus();
     const toAddReourcesInEffect = toAddResources === inEffect;
     const OkButtonIcon = toAddReourcesInEffect ?
@@ -750,13 +803,13 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       <Delete className={classNames(classes.leftIcon)} />;
     const inEffectCount = inEffect.length;
     let OkButtonLabel = '';
-    if (storedResources === inEffect) {
+    if (discardableResources === inEffect) {
+      OkButtonLabel = `Discard (${inEffectCount})`;
+    } else if (storedResources === inEffect) {
       OkButtonLabel = `Clean (${inEffectCount})`;
-    }
-    if (manifestResources === inEffect) {
+    } else if (manifestResources === inEffect) {
       OkButtonLabel = `Delete from Manifest (${inEffectCount})`;
-    }
-    if (toAddResources === inEffect) {
+    } else if (toAddResources === inEffect) {
       const overwritesMsg = toAddResources.some(r => r.status === addAndOverwrite) ? '/ Overwrite' : '';
       OkButtonLabel = `Add ${overwritesMsg} (${inEffectCount})`;
     }

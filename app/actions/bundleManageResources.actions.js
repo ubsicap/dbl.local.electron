@@ -16,8 +16,14 @@ export const bundleManageResourceActions = {
 };
 
 export function openResourceManager(_bundleId, _mode) {
-  return async (dispatch) => {
+  return async (dispatch, getState) => {
     dispatch(bundleActions.updateBundle(_bundleId, true));
+    const { addedByBundleIds } = getState().bundles;
+    const bundleId = _bundleId;
+    const bundle = addedByBundleIds[bundleId];
+    if (bundle.parent && bundle.parent.dblId === bundle.dblId) {
+      dispatch(getManifestResources(bundle.parent.bundleId));
+    }
     dispatch(navigate(_bundleId, _mode));
   };
   function success(bundleId, mode) {
