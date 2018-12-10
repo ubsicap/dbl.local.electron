@@ -141,6 +141,13 @@ function ignoreHiddenFunc(file, stats) {
   return false;
 }
 
+function getStatusResourceData(isStored, isModifiedFromParent) {
+  if (isModifiedFromParent) {
+    return 'revised';
+  }
+  return isStored ? 'stored' : 'manifest';
+}
+
 function createResourceData(manifestResourceRaw, fileStoreInfo, parentManifesResource) {
   const {
     uri = '', checksum = '', size: sizeRaw = 0, mimeType = ''
@@ -151,7 +158,7 @@ function createResourceData(manifestResourceRaw, fileStoreInfo, parentManifesRes
   const size = formatBytesByKbs(sizeRaw);
   const id = uri;
   const isModifiedFromParent = parentManifesResource ? parentManifesResource.checksum !== checksum : false;
-  const status = fileStoreInfo ? 'stored' : 'manifest';
+  const status = getStatusResourceData(Boolean(fileStoreInfo), isModifiedFromParent);
   const disabled = isModifiedFromParent;
   return {
     id, uri, status, container, name, mimeType, size, checksum, disabled
@@ -540,7 +547,13 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             acc.resourcesInParent.push(r) : acc.resourcesInParent;
           const discardableResources = !resourceInParent ?
             acc.discardableResources.push(r) : acc.discardableResources;
-          if (r.status === 'stored') {
+          if (r.status === 'revised') {
+            return {
+              ...acc,
+              revisedResources: acc.revisedResources.push(r),
+              discardableResources
+            };
+          } else if (r.status === 'stored') {
             return {
               ...acc,
               storedResources: acc.storedResources.push(r),
@@ -560,6 +573,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           return acc;
         },
         {
+          revisedResources: List(),
           storedResources: List(),
           manifestResources: List(),
           toAddResources: List(),
@@ -567,8 +581,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           discardableResources: List()
         }
       );
-    const [storedResources, manifestResources, toAddResources,
+    const [revisedResources, storedResources, manifestResources, toAddResources,
       resourcesInParent, discardableResources] = [
+      filteredResources.revisedResources.toArray(),
       filteredResources.storedResources.toArray(),
       filteredResources.manifestResources.toArray(),
       filteredResources.toAddResources.toArray(),
@@ -579,6 +594,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         [discardableResources, storedResources, manifestResources, toAddResources];
     const inEffect = sortedByFilters.find(getArrayIfNonEmpty);
     return {
+      revisedResources,
       storedResources,
       manifestResources,
       toAddResources,
