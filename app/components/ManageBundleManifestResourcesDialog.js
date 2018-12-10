@@ -141,11 +141,16 @@ function ignoreHiddenFunc(file, stats) {
   return false;
 }
 
-function getStatusResourceData(isStored, isModifiedFromParent) {
+const [statusStored, statusAdded] = ['stored', 'added'];
+
+function getStatusResourceData(isStored, isModifiedFromParent, parentManifesResource) {
   if (isModifiedFromParent) {
     return 'revised';
   }
-  return isStored ? 'stored' : 'manifest';
+  if (!isStored) {
+    return 'manifest';
+  }
+  return parentManifesResource ? statusStored : statusAdded;
 }
 
 function createResourceData(manifestResourceRaw, fileStoreInfo, parentManifesResource) {
@@ -158,7 +163,7 @@ function createResourceData(manifestResourceRaw, fileStoreInfo, parentManifesRes
   const size = formatBytesByKbs(sizeRaw);
   const id = uri;
   const isModifiedFromParent = parentManifesResource ? parentManifesResource.checksum !== checksum : false;
-  const status = getStatusResourceData(Boolean(fileStoreInfo), isModifiedFromParent);
+  const status = getStatusResourceData(Boolean(fileStoreInfo), isModifiedFromParent, parentManifesResource);
   const disabled = isModifiedFromParent;
   return {
     id, uri, status, container, name, mimeType, size, checksum, disabled
@@ -553,17 +558,17 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               revisedResources: acc.revisedResources.push(r),
               discardableResources
             };
-          } else if (r.status === 'stored') {
-            return {
-              ...acc,
-              storedResources: acc.storedResources.push(r),
-              resourcesInParent,
-              discardableResources
-            };
           } else if (r.status === 'manifest') {
             return {
               ...acc,
               manifestResources: acc.manifestResources.push(r),
+              resourcesInParent,
+              discardableResources
+            };
+          } else if ([statusAdded, statusStored].includes(r.status)) {
+            return {
+              ...acc,
+              storedResources: acc.storedResources.push(r),
               resourcesInParent,
               discardableResources
             };
@@ -591,7 +596,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       filteredResources.discardableResources.toArray()];
     const sortedByFilters =
       this.props.mode === 'download' ? [storedResources, manifestResources] :
-        [discardableResources, storedResources, manifestResources, toAddResources];
+        [storedResources, manifestResources, toAddResources];
     const inEffect = sortedByFilters.find(getArrayIfNonEmpty);
     return {
       revisedResources,
@@ -607,20 +612,29 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   handleModifyFiles = () => {
     const { bundleId } = this.props;
     const {
-      storedResources, manifestResources, toAddResources, inEffect
+      storedResources, manifestResources, toAddResources, discardableResources, inEffect
     } = this.getResourcesByStatus();
-    const inEffectUris = inEffect.map(r => r.uri);
     if (storedResources === inEffect) {
-      this.props.removeResources(bundleId, inEffectUris);
-      return;
+      const discardableUris = discardableResources.map(r => r.uri);
+      if (discardableUris.length > 0) {
+        this.props.deleteManifestResources(bundleId, discardableUris);
+      }
+      const justCleanThese = storedResources.filter(r => !discardableUris.includes(r.uri));
+      if (justCleanThese.length > 0) {
+        this.props.removeResources(
+          bundleId,
+          justCleanThese.map(r => r.uri)
+        );
+      }
     } else if (manifestResources === inEffect) {
+      const inEffectUris = inEffect.map(r => r.uri);
       this.props.deleteManifestResources(bundleId, inEffectUris);
-      return;
+    } else if (toAddResources === inEffect) {
+      const filesToContainers = toAddResources.reduce((acc, selectedResource) =>
+        ({ ...acc, [selectedResource.id]: formatUriForApi(selectedResource) }), {});
+      this.props.addManifestResources(bundleId, filesToContainers);
+      this.setState({ selectedIds: [] });
     }
-    const filesToContainers = toAddResources.reduce((acc, selectedResource) =>
-      ({ ...acc, [selectedResource.id]: formatUriForApi(selectedResource) }), {});
-    this.props.addManifestResources(bundleId, filesToContainers);
-    this.setState({ selectedIds: [] });
   }
 
   handleClose = () => {
@@ -830,10 +844,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       <Delete className={classNames(classes.leftIcon)} />;
     const inEffectCount = inEffect.length;
     let OkButtonLabel = '';
-    if (discardableResources === inEffect) {
-      OkButtonLabel = `Discard New (${inEffectCount})`;
-    } else if (storedResources === inEffect) {
-      OkButtonLabel = `Clean (${inEffectCount})`;
+    if ([storedResources, discardableResources].includes(inEffect)) {
+      const discardMsg = discardableResources.length ? ` / Discard (${discardableResources.length})` : '';
+      OkButtonLabel = `Clean (${inEffectCount - discardableResources.length})${discardMsg}`;
     } else if (manifestResources === inEffect) {
       OkButtonLabel = `Delete from Manifest (${inEffectCount})`;
     } else if (toAddResources === inEffect) {
