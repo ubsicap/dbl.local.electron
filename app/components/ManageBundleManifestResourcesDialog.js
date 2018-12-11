@@ -154,10 +154,10 @@ function getStatusResourceData(
   if (isModifiedFromParent) {
     return 'revised';
   }
-  if (!isStored) {
-    return 'manifest';
+  if (!parentManifestResource) {
+    return statusAdded;
   }
-  return parentManifestResource ? statusStored : statusAdded;
+  return isStored ? statusStored : 'manifest';
 }
 
 function createResourceData(manifestResourceRaw, fileStoreInfo, parentManifesResource) {
@@ -171,12 +171,16 @@ function createResourceData(manifestResourceRaw, fileStoreInfo, parentManifesRes
   const id = uri;
   const isModifiedFromParent = parentManifesResource ?
     parentManifesResource.checksum !== checksum : false;
-  const status = getStatusResourceData(manifestResourceRaw,
-    Boolean(fileStoreInfo), isModifiedFromParent, parentManifesResource
+  const isParentResource = manifestResourceRaw === parentManifesResource;
+  const isStored = Boolean(fileStoreInfo) && !isParentResource;
+  const stored = isStored ? '✓' : '';
+  const status = getStatusResourceData(
+    manifestResourceRaw,
+    isStored, isModifiedFromParent, parentManifesResource
   );
-  const disabled = isModifiedFromParent || manifestResourceRaw === parentManifesResource;
+  const disabled = isModifiedFromParent || isParentResource;
   return {
-    id, uri, status, container, name, mimeType, size, checksum, disabled
+    id, uri, stored, status, container, name, mimeType, size, checksum, disabled
   };
 }
 
@@ -527,7 +531,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   getSelectedIds = (tableData, mode) => {
     const isDownloadMode = mode === 'download';
     const selectedIds = this.state.selectAll ?
-      tableData.filter(row => !isDownloadMode || row.status === 'manifest').map(row => row.id) :
+      tableData.filter(row => !isDownloadMode || !row.stored).map(row => row.id) :
       this.state.selectedIds.filter(id => tableData.some(row => row.id === id && !row.disabled));
     return selectedIds;
   }
@@ -578,14 +582,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               revisedResources: acc.revisedResources.push(r),
               discardableResources
             };
-          } else if (r.status === 'manifest') {
-            return {
-              ...acc,
-              manifestResources: acc.manifestResources.push(r),
-              resourcesInParent,
-              discardableResources
-            };
-          } else if ([statusAdded, statusStored].includes(r.status)) {
+          } else if (r.stored) {
             return {
               ...acc,
               storedResources: acc.storedResources.push(r),
@@ -594,6 +591,13 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             };
           } else if ([addStatus, addAndOverwrite].includes(r.status)) {
             return { ...acc, toAddResources: acc.toAddResources.push(r), resourcesInParent };
+          } else if (!r.stored) {
+            return {
+              ...acc,
+              manifestResources: acc.manifestResources.push(r),
+              resourcesInParent,
+              discardableResources
+            };
           }
           return acc;
         },
