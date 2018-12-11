@@ -4,10 +4,14 @@ import Headset from '@material-ui/icons/Headset';
 import Videocam from '@material-ui/icons/Videocam';
 import Print from '@material-ui/icons/Print';
 import Grain from '@material-ui/icons/Grain';
+import { lighten } from '@material-ui/core/styles/colorManipulator';
+import { bundleService } from '../services/bundle.service';
 
 export const ux = {
   getMediumIcon,
-  getFormattedRevision
+  getFormattedRevision,
+  getDblRowStyles,
+  getDblRowBackgroundColor
 };
 export default ux;
 
@@ -41,4 +45,49 @@ export function getMediumIcon(medium, props = { style: { marginRight: '10px' } }
   || (medium === 'print' && <Print {...props} />)
   || (medium === 'braille' && <Grain {...props} />)
   || (null);
+}
+
+function getDblRowStyles(theme) {
+  return ({
+    button: {
+      margin: theme.spacing.unit,
+    },
+    badge: {
+      marginRight: theme.spacing.unit * 2,
+    },
+    badgeTight: {
+      marginRight: -15,
+    },
+    leftIcon: {
+      marginRight: theme.spacing.unit,
+    },
+    rightIcon: {
+      marginLeft: theme.spacing.unit,
+    },
+    iconSmall: {
+      fontSize: 20,
+    },
+    iconSmaller: {
+      fontSize: 10,
+    },
+    draftRevision: { backgroundColor: lighten(theme.palette.secondary.light, 0.85) },
+    draftNew: { backgroundColor: lighten(theme.palette.primary.main, 0.60) },
+    storedMode: { backgroundColor: 'white' },
+    noneStoredMode: { backgroundColor: '#EDEDED' },
+  });
+}
+
+function getDblRowBackgroundColor(isForRow, classes, status, revision, parent, dblId) {
+  switch (status) {
+    case 'DRAFT': {
+      if (isForRow) {
+        return classes.storedMode;
+      }
+      const effectiveRevision = bundleService.getRevisionOrParentRevision(dblId, revision, parent);
+      return effectiveRevision ? classes.draftRevision : classes.draftNew;
+    }
+    case 'NOT_STARTED': return classes.noneStoredMode;
+    default:
+      return classes.storedMode;
+  }
 }

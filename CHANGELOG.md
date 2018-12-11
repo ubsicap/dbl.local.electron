@@ -1,3 +1,19 @@
+### Version 0.20.0
+#### Features (Manage Resources Dialog - discard / revision status)
+- added `Clean () / Discard ()` button to indicate how many newly added resources will be discarded from manifest
+- added `Add () / Revise ()` button to indicate how many resources will be change files from previous revision
+- added status `add (revise)?` for files with same uri target as previous revision
+- added status `added` for resources that have been added since previous revision
+- added column `stored` to indicate if is resource is stored locally
+- added folder, medium icons, and background for Rev link in app bar
+- moved DevTools to Help menu (Shift+CntrlOrCmd+I)
+- added status `deleted` to indicate it has been removed since previous revision
+- disable `revised` and `deleted` rows
+- update dbl_dot_local_app to 12/11/2018.
+
+#### Fixes
+- try to do better at capturing error logs (that can be filtered).
+
 ### Version 0.19.1
 #### Fixes
 - don't show empty list after deleting manifest resource on bundle with no stored resources

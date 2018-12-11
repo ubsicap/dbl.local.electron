@@ -14,7 +14,7 @@ export default class MenuBuilder {
 
   buildMenu() {
     if (!this.initializedMenu && (process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true')) {
-      this.setupDevelopmentEnvironment();
+      // this.setupDevelopmentEnvironment();
     }
 
     const template = process.platform === 'darwin'
@@ -188,6 +188,17 @@ export default class MenuBuilder {
       {
         label: 'Help',
         submenu: [{
+          label: 'Toggle &Developer Tools',
+          accelerator: 'Shift+CmdOrCtrl+I',
+          click: () => {
+            this.mainWindow.toggleDevTools();
+          }
+        }, {
+          label: 'See Nathanael releases',
+          click() {
+            shell.openExternal('https://github.com/ubsicap/dbl.local.electron/releases');
+          }
+        }, {
           label: 'Learn More',
           click() {
             shell.openExternal('https://github.com/ubsicap/dbl.local.electron');
