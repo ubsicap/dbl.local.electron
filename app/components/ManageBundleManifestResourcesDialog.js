@@ -614,8 +614,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const {
       storedResources, manifestResources, toAddResources, discardableResources, inEffect
     } = this.getResourcesByStatus();
-    if (storedResources === inEffect) {
-      const discardableUris = discardableResources.map(r => r.uri);
+    const discardableUris = discardableResources.map(r => r.uri);
+    if (storedResources === inEffect || discardableUris.length > 0) {
       if (discardableUris.length > 0) {
         this.props.deleteManifestResources(bundleId, discardableUris);
       }
