@@ -194,6 +194,11 @@ export default class MenuBuilder {
             this.mainWindow.toggleDevTools();
           }
         }, {
+          label: 'See Nathanael releases',
+          click() {
+            shell.openExternal('https://github.com/ubsicap/dbl.local.electron/releases');
+          }
+        }, {
           label: 'Learn More',
           click() {
             shell.openExternal('https://github.com/ubsicap/dbl.local.electron');
