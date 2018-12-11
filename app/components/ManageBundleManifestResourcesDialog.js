@@ -1147,7 +1147,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               <IconButton color="inherit" onClick={this.handleClose} aria-label="Close">
                 <CloseIcon />
               </IconButton>
-              <FolderOpen color="inherit" className={classNames(classes.leftIcon, classes.iconSmall)} />
+              <FolderOpen color="inherit" className={classNames(classes.leftIcon)} />
               <Typography variant="title" color="inherit">
                 {modeUi.appBar.title}: {mediumIconMarginRight} <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry} </span> {name}
               </Typography>
