@@ -1145,7 +1145,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const isModifyFilesMode = this.isModifyFilesMode();
     const mediumIconMarginRight = ux.getMediumIcon(origBundle.medium);
     const { status, parent, dblId } = origBundle;
-    const revBackground = ux.getDblRowBackgroundColor(false, classes, status, revision, parent, dblId);
+    const revBackground =
+      ux.getDblRowBackgroundColor(false, classes, status, revision, parent, dblId);
     return (
       <Zoom in={open}>
         <div>
