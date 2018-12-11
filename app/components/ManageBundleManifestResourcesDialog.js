@@ -143,14 +143,20 @@ function ignoreHiddenFunc(file, stats) {
 
 const [statusStored, statusAdded] = ['stored', 'added'];
 
-function getStatusResourceData(isStored, isModifiedFromParent, parentManifesResource) {
+function getStatusResourceData(
+  rawManifestResource,
+  isStored, isModifiedFromParent, parentManifestResource
+) {
+  if (rawManifestResource === parentManifestResource) {
+    return 'deleted';
+  }
   if (isModifiedFromParent) {
     return 'revised';
   }
   if (!isStored) {
     return 'manifest';
   }
-  return parentManifesResource ? statusStored : statusAdded;
+  return parentManifestResource ? statusStored : statusAdded;
 }
 
 function createResourceData(manifestResourceRaw, fileStoreInfo, parentManifesResource) {
@@ -162,9 +168,12 @@ function createResourceData(manifestResourceRaw, fileStoreInfo, parentManifesRes
   /* const ext = path.extname(uri); */
   const size = formatBytesByKbs(sizeRaw);
   const id = uri;
-  const isModifiedFromParent = parentManifesResource ? parentManifesResource.checksum !== checksum : false;
-  const status = getStatusResourceData(Boolean(fileStoreInfo), isModifiedFromParent, parentManifesResource);
-  const disabled = isModifiedFromParent;
+  const isModifiedFromParent = parentManifesResource ?
+    parentManifesResource.checksum !== checksum : false;
+  const status = getStatusResourceData(manifestResourceRaw,
+    Boolean(fileStoreInfo), isModifiedFromParent, parentManifesResource
+  );
+  const disabled = isModifiedFromParent || manifestResourceRaw === parentManifesResource;
   return {
     id, uri, status, container, name, mimeType, size, checksum, disabled
   };
@@ -236,17 +245,27 @@ const makeGetManifestResourcesData = () => createSelector(
       emptyBundleManifestResources
     );
     const { rawManifestResources, storedFiles } = bundleManifestResources;
-    const parentManifestResources = getParentManifestResource(bundleId, bundlesById, manifestResources);
-    return Object.values(rawManifestResources)
-      .map(r => createResourceData(r, storedFiles[r.uri], parentManifestResources.rawManifestResources[r.uri]));
+    const parentManifestResources =
+      getParentManifestResource(bundleId, bundlesById, manifestResources);
+    const bundleManifestResourcesData = Object.values(rawManifestResources)
+      .map(r => createResourceData(
+        r, storedFiles[r.uri],
+        parentManifestResources.rawManifestResources[r.uri]
+      ));
+    const bundleManifestResourceUris = getRawManifestResourceUris(bundleManifestResources);
+    const { storedFiles: parentStoredFiles } = parentManifestResources;
+    const deletedParentBundleResources = Object.values(parentManifestResources.rawManifestResources)
+      .filter(pr => !bundleManifestResourceUris.has(pr.uri))
+      .map(pr => createResourceData(pr, parentStoredFiles[pr.uri], pr));
+    return [...bundleManifestResourcesData, ...deletedParentBundleResources];
   }
 );
 
 
-function getParentRawManifestResourceUris(parentManifestResources) {
-  const parentRawManifestResourceUris =
-    Set(Object.keys(parentManifestResources.rawManifestResources));
-  return parentRawManifestResourceUris;
+function getRawManifestResourceUris(manifestResources) {
+  const rawManifestResourceUris =
+    Set(Object.keys(manifestResources.rawManifestResources));
+  return rawManifestResourceUris;
 }
 
 function getParentManifestResource(bundleId, bundlesById, manifestResources) {
@@ -508,7 +527,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const isDownloadMode = mode === 'download';
     const selectedIds = this.state.selectAll ?
       tableData.filter(row => !isDownloadMode || row.status === 'manifest').map(row => row.id) :
-      this.state.selectedIds.filter(id => tableData.some(row => row.id === id));
+      this.state.selectedIds.filter(id => tableData.some(row => row.id === id && !row.disabled));
     return selectedIds;
   }
 
@@ -543,7 +562,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   getResourcesByStatus = () => {
     const selectedResources = this.getSelectedRowData();
     const parentRawManifestResourceUris =
-      getParentRawManifestResourceUris(this.props.parentManifestResources);
+      getRawManifestResourceUris(this.props.parentManifestResources);
     const filteredResources
       = List(selectedResources).reduce(
         (acc, r) => {
@@ -735,7 +754,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       return origTotalResources;
     }
     const parentRawManifestResourceUris =
-      getParentRawManifestResourceUris(this.props.parentManifestResources);
+      getRawManifestResourceUris(this.props.parentManifestResources);
     const tableData = toAddResources.map(resource => resource.id).reduce((acc, filePath) => {
       const container = formatContainer(newContainer);
       const updatedTotalResources = createUpdatedTotalResources(
@@ -821,7 +840,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { manifestResources } = this.props;
     const { tableData = manifestResources } = this.state;
     const parentRawManifestResourceUris =
-      getParentRawManifestResourceUris(this.props.parentManifestResources);
+      getRawManifestResourceUris(this.props.parentManifestResources);
     const otherResources = tableData.filter(r => !newAddedFilePaths.includes(r.id));
     const newlyAddedResources = newAddedFilePaths.map(createAddedResource(fullToRelativePaths, parentRawManifestResourceUris));
     this.setState(
