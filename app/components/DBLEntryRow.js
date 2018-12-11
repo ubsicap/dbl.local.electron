@@ -14,7 +14,7 @@ import VerifiedUser from '@material-ui/icons/VerifiedUser';
 import AddCircle from '@material-ui/icons/AddCircle';
 import Button from '@material-ui/core/Button';
 import FileDownload from 'material-ui/svg-icons/file/file-download';
-import Folder from 'material-ui/svg-icons/file/folder';
+import Folder from '@material-ui/icons/Folder';
 import Copyright from '@material-ui/icons/Copyright';
 import Save from '@material-ui/icons/Save';
 import CreateNewFolder from '@material-ui/icons/CreateNewFolder';

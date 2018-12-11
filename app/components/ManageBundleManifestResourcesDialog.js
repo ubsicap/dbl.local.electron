@@ -15,6 +15,7 @@ import Button from '@material-ui/core/Button';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
+import FolderOpen from '@material-ui/icons/FolderOpen';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import Delete from '@material-ui/icons/Delete';
@@ -1137,6 +1138,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { languageAndCountry, name, revision } = displayAs;
     const modeUi = this.modeUi();
     const isModifyFilesMode = this.isModifyFilesMode();
+    const mediumIconMarginRight = ux.getMediumIcon(origBundle.medium);
     return (
       <Zoom in={open}>
         <div>
@@ -1145,8 +1147,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               <IconButton color="inherit" onClick={this.handleClose} aria-label="Close">
                 <CloseIcon />
               </IconButton>
+              <FolderOpen color="inherit" className={classNames(classes.leftIcon, classes.iconSmall)} />
               <Typography variant="title" color="inherit">
-                {modeUi.appBar.title}: <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry} </span> {name}
+                {modeUi.appBar.title}: {mediumIconMarginRight} <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry} </span> {name}
               </Typography>
               <Tooltip title={this.props.entryPageUrl}>
                 <Button color="inherit" onClick={this.onOpenDBLEntryLink}>
