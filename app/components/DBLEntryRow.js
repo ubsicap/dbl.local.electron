@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
-import { lighten } from '@material-ui/core/styles/colorManipulator';
 import { withStyles } from '@material-ui/core/styles';
 import classNames from 'classnames';
 import { createSelector } from 'reselect';
@@ -372,18 +371,7 @@ class DBLEntryRow extends PureComponent<Props> {
     const {
       classes, status, revision, parent, dblId
     } = this.props;
-    switch (status) {
-      case 'DRAFT': {
-        if (isForRow) {
-          return classes.storedMode;
-        }
-        const effectiveRevision = bundleService.getRevisionOrParentRevision(dblId, revision, parent);
-        return effectiveRevision ? classes.draftRevision : classes.draftNew;
-      }
-      case 'NOT_STARTED': return classes.noneStoredMode;
-      default:
-        return classes.storedMode;
-    }
+    return ux.getDblRowBackgroundColor(isForRow, classes, status, revision, parent, dblId);
   }
 
   renderLicenseIcon = (license) => {
@@ -605,34 +593,7 @@ DBLEntryRow.defaultProps = {
   isDownloading: null
 };
 
-const materialStyles = theme => ({
-  button: {
-    margin: theme.spacing.unit,
-  },
-  badge: {
-    marginRight: theme.spacing.unit * 2,
-  },
-  badgeTight: {
-    marginRight: -15,
-  },
-  leftIcon: {
-    marginRight: theme.spacing.unit,
-  },
-  rightIcon: {
-    marginLeft: theme.spacing.unit,
-  },
-  iconSmall: {
-    fontSize: 20,
-  },
-  iconSmaller: {
-    fontSize: 10,
-  },
-  draftRevision: { backgroundColor: lighten(theme.palette.secondary.light, 0.85) },
-  draftNew: { backgroundColor: lighten(theme.palette.primary.main, 0.60) },
-  storedMode: { backgroundColor: 'white' },
-  noneStoredMode: { backgroundColor: '#EDEDED' },
-});
-
+const materialStyles = theme => ux.getDblRowStyles(theme);
 
 export default compose(
   withStyles(materialStyles, { name: 'DBLEntryRow' }),

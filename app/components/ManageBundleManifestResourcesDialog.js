@@ -436,6 +436,7 @@ const mapDispatchToProps = {
 };
 
 const materialStyles = theme => ({
+  ...ux.getDblRowStyles(theme),
   appBar: {
     position: 'sticky'
   },
@@ -470,7 +471,7 @@ const materialStyles = theme => ({
     left: '50%',
     marginTop: -25,
     marginLeft: -23,
-  },
+  }
 });
 
 function mapSuggestions(suggestions) {
@@ -1143,6 +1144,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const modeUi = this.modeUi();
     const isModifyFilesMode = this.isModifyFilesMode();
     const mediumIconMarginRight = ux.getMediumIcon(origBundle.medium);
+    const { status, parent, dblId } = origBundle;
+    const revBackground = ux.getDblRowBackgroundColor(false, classes, status, revision, parent, dblId);
     return (
       <Zoom in={open}>
         <div>
@@ -1156,7 +1159,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                 {modeUi.appBar.title}: {mediumIconMarginRight} <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry} </span> {name}
               </Typography>
               <Tooltip title={this.props.entryPageUrl}>
-                <Button color="inherit" onClick={this.onOpenDBLEntryLink}>
+                <Button onClick={this.onOpenDBLEntryLink} className={classNames(classes.button, revBackground)}>
                   <Link className={classNames(classes.leftIcon, classes.iconSmall)} />
                   {revision}
                 </Button>
