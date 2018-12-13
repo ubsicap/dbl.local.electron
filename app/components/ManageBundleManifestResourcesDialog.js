@@ -60,7 +60,7 @@ type Props = {
   manifestResources: [],
   previousEntryRevision: ?{},
   bundlePreviousRevision: ?{},
-  prevManifestResources: ?{},
+  previousManifestResources: {},
   entryRevisions: [],
   columnConfig: [],
   isOkToAddFiles: boolean,
@@ -148,21 +148,29 @@ const [statusStored, statusAdded] = ['stored', 'added'];
 
 function getStatusResourceData(
   rawManifestResource,
-  isStored, isModifiedFromParent, parentManifestResource
+  isStored, isModifiedFromPrev, previousManifestResource,
+  { previousEntryRevision, bundlePreviousRevision, previousManifestResources }
 ) {
-  if (rawManifestResource === parentManifestResource) {
+  if (rawManifestResource === previousManifestResource) {
     return 'deleted';
   }
-  if (isModifiedFromParent) {
+  if (isModifiedFromPrev) {
     return 'revised';
   }
-  if (!parentManifestResource) {
+  if (previousEntryRevision && bundlePreviousRevision &&
+    Object.keys(previousManifestResources.rawManifestResources).length &&
+    !previousManifestResource) {
     return statusAdded;
   }
   return isStored ? statusStored : 'manifest';
 }
 
-function createResourceData(manifestResourceRaw, fileStoreInfo, parentManifesResource) {
+function createResourceData(
+  manifestResourceRaw, fileStoreInfo, prevManifestResource,
+  { previousEntryRevision, bundlePreviousRevision, previousManifestResources } = {
+    previousManifestResources: emptyBundleManifestResources
+  }
+) {
   const {
     uri = '', checksum = '', size: sizeRaw = 0, mimeType = ''
   } = manifestResourceRaw;
@@ -171,16 +179,17 @@ function createResourceData(manifestResourceRaw, fileStoreInfo, parentManifesRes
   /* const ext = path.extname(uri); */
   const size = formatBytesByKbs(sizeRaw);
   const id = uri;
-  const isModifiedFromParent = parentManifesResource ?
-    parentManifesResource.checksum !== checksum : false;
-  const isParentResource = manifestResourceRaw === parentManifesResource;
+  const isModifiedFromPrev = prevManifestResource ?
+    prevManifestResource.checksum !== checksum : false;
+  const isParentResource = manifestResourceRaw === prevManifestResource;
   const isStored = Boolean(fileStoreInfo) && !isParentResource;
   const stored = isStored ? '✓' : '';
   const status = getStatusResourceData(
     manifestResourceRaw,
-    isStored, isModifiedFromParent, parentManifesResource
+    isStored, isModifiedFromPrev, prevManifestResource,
+    { previousEntryRevision, bundlePreviousRevision, previousManifestResources }
   );
-  const disabled = isModifiedFromParent || isParentResource;
+  const disabled = isModifiedFromPrev || isParentResource;
   return {
     id, uri, stored, status, container, name, mimeType, size, checksum, disabled
   };
@@ -252,16 +261,17 @@ const makeGetManifestResourcesData = () => createSelector(
       emptyBundleManifestResources
     );
     const { rawManifestResources, storedFiles } = bundleManifestResources;
-    const prevManifestResources =
+    const { previousEntryRevision, bundlePreviousRevision, previousManifestResources } =
       getPreviousManifestResource(bundleId, bundlesById, manifestResources, allEntryRevisions);
     const bundleManifestResourcesData = Object.values(rawManifestResources)
       .map(r => createResourceData(
         r, storedFiles[r.uri],
-        prevManifestResources.rawManifestResources[r.uri]
+        previousManifestResources.rawManifestResources[r.uri],
+        { previousEntryRevision, bundlePreviousRevision, previousManifestResources }
       ));
     const bundleManifestResourceUris = getRawManifestResourceUris(bundleManifestResources);
-    const { storedFiles: parentStoredFiles } = prevManifestResources;
-    const deletedParentBundleResources = Object.values(prevManifestResources.rawManifestResources)
+    const { storedFiles: parentStoredFiles } = previousManifestResources;
+    const deletedParentBundleResources = Object.values(previousManifestResources.rawManifestResources)
       .filter(pr => !bundleManifestResourceUris.has(pr.uri))
       .map(pr => createResourceData(pr, parentStoredFiles[pr.uri], pr));
     return [...bundleManifestResourcesData, ...deletedParentBundleResources];
@@ -277,7 +287,7 @@ function getRawManifestResourceUris(manifestResources) {
 
 function getPrevEntryRevision(bundle, allEntryRevisions) {
   const { dblId, revision } = bundle;
-  const entryRevisions = allEntryRevisions[dblId];
+  const entryRevisions = allEntryRevisions[dblId] || [];
   const prevEntryRevision = entryRevisions.find((entryRevision, index) => {
     const prevIndex = index - 1;
     if (prevIndex < 0) {
@@ -292,10 +302,11 @@ function getPrevEntryRevision(bundle, allEntryRevisions) {
 function getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions) {
   const bundle = bundlesById[bundleId];
   const { dblId } = bundle;
-  const prevEntryRevision = getPrevEntryRevision(bundle, allEntryRevisions);
+  const previousEntryRevision = getPrevEntryRevision(bundle, allEntryRevisions);
   const localEntryBundles = findLocalEntryBundles(bundlesById, dblId);
-  const bundlePrevRev = localEntryBundles.find(b => b.revision === `${prevEntryRevision.revision}`);
-  return bundlePrevRev;
+  const bundlePreviousRevision = previousEntryRevision ?
+    localEntryBundles.find(b => b.revision === `${previousEntryRevision.revision}`) : null;
+  return { bundlePreviousRevision, previousEntryRevision };
 }
 
 function getPreviousManifestResource(bundleId, bundlesById, manifestResources, allEntryRevisions) {
@@ -304,8 +315,12 @@ function getPreviousManifestResource(bundleId, bundlesById, manifestResources, a
   if (parent && parent.dblId === dblId) {
     return manifestResources[parent.bundleId] || emptyBundleManifestResources;
   }
-  const bundlePrevRev = getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions);
-  return bundlePrevRev ? manifestResources[bundlePrevRev.id] : null;
+  const { previousEntryRevision, bundlePreviousRevision } =
+    getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions);
+  const previousManifestResources = bundlePreviousRevision ?
+    manifestResources[bundlePreviousRevision.id] || emptyBundleManifestResources :
+    emptyBundleManifestResources;
+  return { previousEntryRevision, bundlePreviousRevision, previousManifestResources };
 }
 
 const makeGetPrevManifestResources = () => createSelector(
@@ -378,8 +393,8 @@ const makeGetEntryRevisionsData = () => createSelector(
     const bundle = bundlesById[bundleId];
     const { dblId } = bundle;
     const localEntryBundles = findLocalEntryBundles(bundlesById, dblId);
-    const entryRevisions = allEntryRevisions[dblId] || {};
-    const entryRevData = Object.values(entryRevisions)
+    const entryRevisions = allEntryRevisions[dblId] || [];
+    const entryRevData = entryRevisions
       .map(entryRevision => {
         const revision = `${entryRevision.revision}`;
         const localEntryBundle = localEntryBundles.find(b => b.revision === revision);
@@ -436,12 +451,16 @@ function mapStateToProps(state, props) {
   const columnConfig = createColumnConfig(mode);
   const getManifestResourceData = makeGetManifestResourcesData();
   const getPrevManifestResources = makeGetPrevManifestResources();
-  const getBundlePreviousRevision = makeGetBundlePrevRevision();
-  const getPreviousEntryRevision = makeGetPrevEntryRevision();
   const bundlesById = getBundlesById(state);
   const getEntryRevisionsData = makeGetEntryRevisionsData();
   const origBundle = bundleId ? bundlesById[bundleId] : {};
   const getEntryPageUrl = makeGetEntryPageUrl();
+  const {
+    previousEntryRevision,
+    bundlePreviousRevision,
+    previousManifestResources
+  } = (mode !== 'revisions' ? getPrevManifestResources(state, props) :
+    { previousManifestResources: emptyBundleManifestResources });
   return {
     open: Boolean(bundleId),
     loading: loading || fetchingMetadata || !isStoreMode,
@@ -452,9 +471,9 @@ function mapStateToProps(state, props) {
     mode,
     showMetadataFile,
     manifestResources: getManifestResourceData(state, props),
-    prevManifestResources: getPrevManifestResources(state, props),
-    previousEntryRevision: getPreviousEntryRevision(state, props),
-    bundlePreviousRevision: getBundlePreviousRevision(state, props),
+    previousEntryRevision,
+    bundlePreviousRevision,
+    previousManifestResources,
     entryRevisions: mode === 'revisions' ? getEntryRevisionsData(state, props) : [],
     columnConfig,
     isOkToAddFiles: !publicationsHealthMessage,
@@ -557,21 +576,24 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       const { bundleId } = this.props;
       this.props.getManifestResources(bundleId);
     }
-    if (!this.props.previousEntryRevision &&
-      nextProps.previousEntryRevision) {
-      const { origBundle } = this.props;
-      this.props.createBundleFromDBL(
-        origBundle.dblId,
-        nextProps.previousEntryRevision.revision,
-        origBundle.license
-      );
-    }
-    if (!this.props.bundlePreviousRevision && nextProps.bundlePreviousRevision) {
-      this.props.getManifestResources(nextProps.bundlePreviousRevision.id);
+    if (this.props.mode !== 'revisions') {
+      if (!this.props.previousEntryRevision &&
+        nextProps.previousEntryRevision &&
+        getIsCompatibleVersion(nextProps.previousEntryRevision)) {
+        const { origBundle } = this.props;
+        this.props.createBundleFromDBL(
+          origBundle.dblId,
+          nextProps.previousEntryRevision.revision,
+          origBundle.license
+        );
+      }
+      if (!this.props.bundlePreviousRevision && nextProps.bundlePreviousRevision) {
+        this.props.getManifestResources(nextProps.bundlePreviousRevision.id);
+      }
     }
     if ((nextProps.manifestResources !== this.props.manifestResources) ||
       (this.props.mode === 'revisions' && nextProps.entryRevisions !== this.entryRevisions) ||
-      (!this.props.prevManifestResources && nextProps.prevManifestResources)) {
+      (!this.props.previousManifestResources && nextProps.previousManifestResources)) {
       this.updateTableData(nextProps);
     }
   }
@@ -627,7 +649,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   getResourcesByStatus = () => {
     const selectedResources = this.getSelectedRowData();
     const parentRawManifestResourceUris =
-      getRawManifestResourceUris(this.props.prevManifestResources);
+      getRawManifestResourceUris(this.props.previousManifestResources);
     const filteredResources
       = List(selectedResources).reduce(
         (acc, r) => {
@@ -819,7 +841,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       return origTotalResources;
     }
     const parentRawManifestResourceUris =
-      getRawManifestResourceUris(this.props.prevManifestResources);
+      getRawManifestResourceUris(this.props.previousManifestResources);
     const tableData = toAddResources.map(resource => resource.id).reduce((acc, filePath) => {
       const container = formatContainer(newContainer);
       const updatedTotalResources = createUpdatedTotalResources(
@@ -905,7 +927,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { manifestResources } = this.props;
     const { tableData = manifestResources } = this.state;
     const parentRawManifestResourceUris =
-      getRawManifestResourceUris(this.props.prevManifestResources);
+      getRawManifestResourceUris(this.props.previousManifestResources);
     const otherResources = tableData.filter(r => !newAddedFilePaths.includes(r.id));
     const newlyAddedResources = newAddedFilePaths.map(createAddedResource(fullToRelativePaths, parentRawManifestResourceUris));
     this.setState(
