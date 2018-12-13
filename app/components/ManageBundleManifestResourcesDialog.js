@@ -301,7 +301,15 @@ function getPrevEntryRevision(bundle, allEntryRevisions) {
 
 function getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions) {
   const bundle = bundlesById[bundleId];
-  const { dblId } = bundle;
+  const { dblId, parent } = bundle;
+  if (parent && parent.dblId === dblId) {
+    const bundleBundle = bundlesById[parent.bundleId];
+    const entryRevisions = allEntryRevisions[dblId];
+    return {
+      bundlePreviousRevision: bundleBundle,
+      previousEntryRevision: (entryRevisions || []).find(r => `${r.revision}` === bundleBundle.revision)
+    };
+  }
   const previousEntryRevision = getPrevEntryRevision(bundle, allEntryRevisions);
   const localEntryBundles = findLocalEntryBundles(bundlesById, dblId);
   const bundlePreviousRevision = previousEntryRevision ?
@@ -310,11 +318,6 @@ function getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions) {
 }
 
 function getPreviousManifestResource(bundleId, bundlesById, manifestResources, allEntryRevisions) {
-  const bundle = bundlesById[bundleId];
-  const { parent, dblId } = bundle;
-  if (parent && parent.dblId === dblId) {
-    return manifestResources[parent.bundleId] || emptyBundleManifestResources;
-  }
   const { previousEntryRevision, bundlePreviousRevision } =
     getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions);
   const previousManifestResources = bundlePreviousRevision ?
@@ -578,7 +581,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
     if (this.props.mode !== 'revisions') {
       if (!this.props.previousEntryRevision &&
-        nextProps.previousEntryRevision &&
+        nextProps.previousEntryRevision && !nextProps.bundlePreviousRevision &&
         getIsCompatibleVersion(nextProps.previousEntryRevision)) {
         const { origBundle } = this.props;
         this.props.createBundleFromDBL(
