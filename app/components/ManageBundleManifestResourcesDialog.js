@@ -166,7 +166,7 @@ function getStatusResourceData(
 }
 
 function createResourceData(
-  manifestResourceRaw, fileStoreInfo, prevManifestResource,
+  bundle, manifestResourceRaw, fileStoreInfo, prevManifestResource,
   { previousEntryRevision, bundlePreviousRevision, previousManifestResources } = {
     previousManifestResources: emptyBundleManifestResources
   }
@@ -181,15 +181,16 @@ function createResourceData(
   const id = uri;
   const isModifiedFromPrev = prevManifestResource ?
     prevManifestResource.checksum !== checksum : false;
-  const isParentResource = manifestResourceRaw === prevManifestResource;
-  const isStored = Boolean(fileStoreInfo) && !isParentResource;
+  const isPrevResource = manifestResourceRaw === prevManifestResource;
+  const isDraft = bundle ? bundle.status === 'DRAFT' : false;
+  const isStored = Boolean(fileStoreInfo) && !isPrevResource;
   const stored = isStored ? '✓' : '';
   const status = getStatusResourceData(
     manifestResourceRaw,
     isStored, isModifiedFromPrev, prevManifestResource,
     { previousEntryRevision, bundlePreviousRevision, previousManifestResources }
   );
-  const disabled = isModifiedFromPrev || isParentResource;
+  const disabled = (isDraft && isModifiedFromPrev) || isPrevResource;
   return {
     id, uri, stored, status, container, name, mimeType, size, checksum, disabled
   };
@@ -233,7 +234,7 @@ function createColumnConfig(mode) {
     const { id, href, localBundle, disabled, ...columns } = createRevisionData();
     return mapColumns(columns);
   }
-  const { id, uri, disabled, ...columns } = createResourceData({}, {});
+  const { id, uri, disabled, ...columns } = createResourceData(null, {}, {});
   return mapColumns(columns);
 }
 
@@ -265,6 +266,7 @@ const makeGetManifestResourcesData = () => createSelector(
       getPreviousManifestResource(bundleId, bundlesById, manifestResources, allEntryRevisions);
     const bundleManifestResourcesData = Object.values(rawManifestResources)
       .map(r => createResourceData(
+        bundleId[bundlesById],
         r, storedFiles[r.uri],
         previousManifestResources.rawManifestResources[r.uri],
         { previousEntryRevision, bundlePreviousRevision, previousManifestResources }
@@ -273,7 +275,7 @@ const makeGetManifestResourcesData = () => createSelector(
     const { storedFiles: parentStoredFiles } = previousManifestResources;
     const deletedParentBundleResources = Object.values(previousManifestResources.rawManifestResources)
       .filter(pr => !bundleManifestResourceUris.has(pr.uri))
-      .map(pr => createResourceData(pr, parentStoredFiles[pr.uri], pr));
+      .map(pr => createResourceData(null, pr, parentStoredFiles[pr.uri], pr));
     return [...bundleManifestResourcesData, ...deletedParentBundleResources];
   }
 );
