@@ -576,6 +576,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   componentWillReceiveProps(nextProps) {
+    if (this.state.closing) {
+      return;
+    }
     if (nextProps.progress !== this.props.progress &&
       (nextProps.progress === 100)) {
       const { bundleId } = this.props;
@@ -749,6 +752,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   handleClose = () => {
+    this.setState({ closing: true });
     this.props.closeResourceManager(this.props.bundleId);
   };
 
