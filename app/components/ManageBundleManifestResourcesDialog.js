@@ -58,9 +58,9 @@ type Props = {
   mode: string,
   showMetadataFile: ?string,
   manifestResources: [],
-  prevManifestResources: {},
   previousEntryRevision: ?{},
   bundlePreviousRevision: ?{},
+  prevManifestResources: ?{},
   entryRevisions: [],
   columnConfig: [],
   isOkToAddFiles: boolean,
@@ -570,7 +570,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       this.props.getManifestResources(nextProps.bundlePreviousRevision.id);
     }
     if ((nextProps.manifestResources !== this.props.manifestResources) ||
-      (this.props.mode === 'revisions' && nextProps.entryRevisions !== this.entryRevisions)) {
+      (this.props.mode === 'revisions' && nextProps.entryRevisions !== this.entryRevisions) ||
+      (!this.props.prevManifestResources && nextProps.prevManifestResources)) {
       this.updateTableData(nextProps);
     }
   }
