@@ -70,7 +70,7 @@ async function newBundleMedia() {
 
 async function getMapperReport(direction, uris) {
   const requestOptions = {
-    method: 'GET',
+    method: 'POST',
     headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `uris=${encodeURIComponent(JSON.stringify(uris))}`
   };
