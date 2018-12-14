@@ -30,7 +30,8 @@ import Zoom from '@material-ui/core/Zoom';
 import path from 'path';
 import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
-  getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources
+  getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources,
+  getMapperReport
 } from '../actions/bundleManageResources.actions';
 import { downloadResources, removeResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
@@ -66,6 +67,7 @@ type Props = {
   publicationsHealthMessage: ?string,
   publicationsHealthSuccessMessage: ?string,
   wizardsResults: ?{},
+  mapperInputReport: ?{},
   goFixPublications: ?() => {},
   entryPageUrl: string,
   closeResourceManager: () => {},
@@ -78,7 +80,8 @@ type Props = {
   checkPublicationsHealth: () => {},
   createBundleFromDBL: () => {},
   selectBundleEntryRevision: () => {},
-  removeResources: () => {}
+  removeResources: () => {},
+  getMapperReport: () => {}
 };
 
 const addStatus = 'add?';
@@ -381,7 +384,9 @@ const makeGetEntryPageUrl = () => createSelector(
 function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundleManageResources } = state;
   const {
-    publicationsHealth, progress = 100, loading = false, isStoreMode = false, fetchingMetadata = false
+    publicationsHealth, progress = 100, loading = false,
+    isStoreMode = false, fetchingMetadata = false,
+    mapperReport = {}
   } = bundleManageResources;
   const {
     errorMessage: publicationsHealthMessage,
@@ -407,6 +412,7 @@ function mapStateToProps(state, props) {
     origBundle,
     mode,
     showMetadataFile,
+    mapperInputReport: mapperReport.input,
     manifestResources: getManifestResourceData(state, props),
     parentManifestResources: getParentManifestResources(state, props),
     entryRevisions: mode === 'revisions' ? getEntryRevisionsData(state, props) : [],
@@ -432,7 +438,8 @@ const mapDispatchToProps = {
   checkPublicationsHealth,
   createBundleFromDBL,
   selectBundleEntryRevision,
-  removeResources
+  removeResources,
+  getMapperReport
 };
 
 const materialStyles = theme => ({
@@ -540,7 +547,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   handleDownloadOrClean = () => {
     const {
       storedResources, manifestResources, inEffect
-    } = this.getResourcesByStatus();
+    } = this.getSelectedResourcesByStatus();
     const { bundleId } = this.props;
     const effectiveSelectedIds = inEffect.map(row => row.id);
     if (manifestResources === inEffect) {
@@ -565,7 +572,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.handleClose();
   }
 
-  getResourcesByStatus = () => {
+  getSelectedResourcesByStatus = () => {
     const selectedResources = this.getSelectedRowData();
     const parentRawManifestResourceUris =
       getRawManifestResourceUris(this.props.parentManifestResources);
@@ -638,7 +645,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { bundleId } = this.props;
     const {
       storedResources, manifestResources, toAddResources, discardableResources, inEffect
-    } = this.getResourcesByStatus();
+    } = this.getSelectedResourcesByStatus();
     const discardableUris = discardableResources.map(r => r.uri);
     if (storedResources === inEffect || discardableUris.length > 0) {
       if (discardableUris.length > 0) {
@@ -675,6 +682,13 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   onSelectedIds = (selectedIds) => {
+    if (this.isModifyFilesMode()) {
+      const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
+      if (toAddResources === inEffect) {
+        const uris = toAddResources.map(r => r.uri);
+        this.props.getMapperReport('input', uris);
+      }
+    }
     this.setState({ selectedIds, selectAll: false });
   }
 
@@ -686,7 +700,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const allMsg = selectAll ? 'All ' : '';
     const {
       inEffect = []
-    } = this.getResourcesByStatus();
+    } = this.getSelectedResourcesByStatus();
     return ` (${allMsg}${inEffect.length})`;
   }
 
@@ -727,7 +741,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { isOkToRemoveFromManifest, isOkToAddFiles } = this.props;
     const {
       manifestResources, toAddResources, inEffect
-    } = this.getResourcesByStatus();
+    } = this.getSelectedResourcesByStatus();
     if (manifestResources === inEffect && !isOkToRemoveFromManifest) {
       return true;
     }
@@ -755,7 +769,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   getUpdateSelectedResourcesContainers = (newContainer) => {
     const { tableData: origTotalResources } = this.state;
-    const { toAddResources, inEffect } = this.getResourcesByStatus();
+    const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
     if (toAddResources !== inEffect) {
       return origTotalResources;
     }
@@ -862,7 +876,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { classes } = this.props;
     const {
       discardableResources, storedResources, manifestResources, toAddResources, inEffect = []
-    } = this.getResourcesByStatus();
+    } = this.getSelectedResourcesByStatus();
     const toAddReourcesInEffect = toAddResources === inEffect;
     const OkButtonIcon = toAddReourcesInEffect ?
       <CheckIcon className={classNames(classes.leftIcon)} /> :
@@ -893,7 +907,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { classes } = this.props;
     const {
       storedResources, manifestResources, inEffect
-    } = this.getResourcesByStatus();
+    } = this.getSelectedResourcesByStatus();
     const isManifestResourcesInEffect = manifestResources === inEffect;
     const OkButtonIcon = isManifestResourcesInEffect ?
       <FileDownload className={classNames(classes.leftIcon)} /> :
@@ -1050,14 +1064,15 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   renderTableToolbar = () => {
-    const { mode } = this.props;
+    const { mode, mapperInputReport } = this.props;
     const { selectedIds } = this.state;
-    const { toAddResources, inEffect } = this.getResourcesByStatus();
+    const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
     const addModeProps = mode === 'addFiles' ? {
       enableEditContainer: toAddResources === inEffect,
       handleAddByFile: this.getHandleAddByFile(),
       handleAddByFolder: this.getHandleAddByFolder(),
       getSuggestions: this.getSuggestions,
+      mapperInputReport,
       onAutosuggestInputChanged: this.handleAutosuggestInputChanged
     } : {};
     return (<EnhancedTableToolbar

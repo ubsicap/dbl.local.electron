@@ -2,6 +2,7 @@ import { bundleResourceManagerConstants } from '../constants/bundleResourceManag
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
 import { bundleService } from '../services/bundle.service';
+import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { utilities } from '../utils/utilities';
 import { openEditMetadata } from './bundleEditMetadata.actions';
 import { bundleActions } from './bundle.actions';
@@ -261,5 +262,28 @@ export function deleteManifestResources(_bundleId, _uris) {
   }
   function failure(bundleId, error, uri) {
     return { type: bundleResourceManagerConstants.DELETE_MANIFEST_RESOURCES_FAILURE, error, uri };
+  }
+}
+
+export function getMapperReport(_direction, _uris) {
+  return async dispatch => {
+    dispatch(request(_direction, _uris));
+    const report = await dblDotLocalService.getMapperReport(_direction, _uris);
+    dispatch(success(_direction, _uris, report));
+  };
+  function request(direction, uris) {
+    return {
+      type: bundleResourceManagerConstants.MAPPER_REPORT_REQUEST,
+      direction,
+      uris
+    };
+  }
+  function success(direction, uris, report) {
+    return {
+      type: bundleResourceManagerConstants.MAPPER_REPORT_SUCCESS,
+      direction,
+      uris,
+      report
+    };
   }
 }

@@ -127,10 +127,22 @@ export function bundleManageResources(state = initialState, action) {
       };
     }
     case bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_SUCCESS: {
-      const { publications, medium, message, wizardsResults } = action;
+      const {
+        publications, medium, message, wizardsResults
+      } = action;
       return {
         ...state,
-        publicationsHealth: { publications, medium, message, wizardsResults }
+        publicationsHealth: {
+          publications, medium, message, wizardsResults
+        }
+      };
+    }
+    case bundleResourceManagerConstants.MAPPER_REPORT_SUCCESS: {
+      const { uris, direction, report } = action;
+      const { mapperReport: mapperReportOrig } = state;
+      return {
+        ...state,
+        mapperReport: { ...mapperReportOrig, [direction]: { uris, report } }
       };
     }
     default: {
