@@ -554,7 +554,7 @@ class DBLEntryRow extends PureComponent<Props> {
                     key={mediumOption}
                     onClick={this.handleClickMediaType(mediumOption)}
                   >
-                    {mediumIconMarginRight}
+                    {ux.getMediumIcon(mediumOption)}
                     {mediumOption}
                   </MenuItem>
                 ))}
