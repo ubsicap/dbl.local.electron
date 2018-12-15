@@ -1165,9 +1165,25 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       mapperInputReport,
       onAutosuggestInputChanged: this.handleAutosuggestInputChanged
     } : {};
-    return (<EnhancedTableToolbar
-      numSelected={selectedIds.length}
-      {...addModeProps}
+    return (
+      <React.Fragment>
+        <EnhancedTableToolbar
+          numSelected={selectedIds.length}
+          {...addModeProps}
+        />
+        {mapperInputReport && this.renderInputMapperReportTable()}
+      </React.Fragment>);
+  }
+
+  renderInputMapperReportTable = () => {
+    return (<EnhancedTable
+      data={tableData}
+      columnConfig={columnConfig}
+      secondarySorts={secondarySorts}
+      defaultOrderBy="container"
+      onSelectedRowIds={this.onSelectedIds}
+      multiSelections
+      selectedIds={selectedIds}
     />);
   }
 
