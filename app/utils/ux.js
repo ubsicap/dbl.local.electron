@@ -12,7 +12,8 @@ export const ux = {
   getFormattedRevision,
   getDblRowStyles,
   getDblRowBackgroundColor,
-  mapColumns
+  mapColumns,
+  getHighlightTheme
 };
 export default ux;
 
@@ -96,4 +97,16 @@ function getDblRowBackgroundColor(isForRow, classes, status, revision, parent, d
     default:
       return classes.storedMode;
   }
+}
+
+function getHighlightTheme(theme, themeType) {
+  return (themeType === 'light'
+    ? {
+      color: theme.palette.secondary.main,
+      backgroundColor: lighten(theme.palette.secondary.light, 0.85),
+    }
+    : {
+      color: theme.palette.text.primary,
+      backgroundColor: theme.palette.secondary.dark,
+    });
 }

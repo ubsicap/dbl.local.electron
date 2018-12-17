@@ -1,11 +1,15 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
+import classNames from 'classnames';
+import { withStyles } from '@material-ui/core/styles';
+import Paper from '@material-ui/core/Paper';
 import EnhancedTable from './EnhancedTable';
 import { ux } from '../utils/ux';
 
 
 type Props = {
+  classes: {},
   direction: string,
   tableData: [],
   selectedIds: [],
@@ -22,27 +26,35 @@ function createMapperRowData(id, mapperReport = [], optionsData = {}) {
   const matches = mapperReport.length;
   const { description } = optionsData;
   return {
-    id, disabled: false, description, matches
+    id, disabled: false, matches, description
   };
 }
 
 const secondarySorts = ['description', 'matches'];
 
+const styles = theme => ({
+  highlight: ux.getHighlightTheme(theme, 'light'),
+});
+
 class MapperTable extends Component<Props> {
   props: Props;
   render() {
     const {
-      columnConfig, tableData, selectedIds, onSelectedIds
+      columnConfig, tableData, selectedIds, onSelectedIds, classes
     } = this.props;
-    return (<EnhancedTable
-      data={tableData}
-      columnConfig={columnConfig}
-      secondarySorts={secondarySorts}
-      defaultOrderBy="description"
-      onSelectedRowIds={onSelectedIds}
-      multiSelections
-      selectedIds={selectedIds}
-    />);
+    return (
+      <div className={classNames(classes.highlight)}>
+        <EnhancedTable
+          data={tableData}
+          columnConfig={columnConfig}
+          secondarySorts={secondarySorts}
+          defaultOrderBy="description"
+          onSelectedRowIds={onSelectedIds}
+          multiSelections
+          selectedIds={selectedIds}
+        />
+      </div>
+    );
   }
 }
 
@@ -64,4 +76,7 @@ function mapStateToProps(state, props) {
 const mapDispatchToProps = {
 };
 
-export default compose(connect(mapStateToProps, mapDispatchToProps))(MapperTable);
+export default compose(
+  withStyles(styles),
+  connect(mapStateToProps, mapDispatchToProps)
+)(MapperTable);

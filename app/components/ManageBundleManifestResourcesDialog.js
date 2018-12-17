@@ -1171,9 +1171,22 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       </React.Fragment>);
   }
 
-  handleSelectedIdsInputConverters = (selectedIds) => {
-    console.log(selectedIds);
+  handleSelectedIdsInputConverters = (selectedConverterIds) => {
+    console.log(selectedConverterIds);
+    /*
+    const { mapperInputReport = {} } = this.props;
+    const { report = {}} = mapperInputReport;
+    // get uris from selected reports
+    const selectedUris = selectedConverterIds.reduce((acc, mapperId) =>
+      [...acc, report[mapperId] || []], []);
+    // find selected file paths;
+    const selectedIds = this.getUnionWithSelectedIds(addedFilePaths);
     this.setState({ selectedIdsInputConverters: selectedIds });
+    this.setState(
+      { addedFilePaths, selectedIds },
+      this.updateTotalResources(newAddedFilePaths)
+    );
+    */
   }
 
   renderInputMapperReportTable = () => {

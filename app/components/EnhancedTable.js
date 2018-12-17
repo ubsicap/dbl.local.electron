@@ -4,7 +4,6 @@ import { withStyles } from '@material-ui/core/styles';
 import sort from 'fast-sort';
 import Paper from '@material-ui/core/Paper';
 import Checkbox from '@material-ui/core/Checkbox';
-import EnhancedTableToolbar from './EnhancedTableToolbar';
 
 const styles = theme => ({
   root: {
