@@ -268,8 +268,9 @@ export function deleteManifestResources(_bundleId, _uris) {
 export function getMapperReport(_direction, _uris) {
   return async dispatch => {
     dispatch(request(_direction, _uris));
+    const options = await dblDotLocalService.getMappers(_direction);
     const report = await dblDotLocalService.getMapperReport(_direction, _uris);
-    dispatch(success(_direction, _uris, report));
+    dispatch(success(_direction, _uris, report, options));
   };
   function request(direction, uris) {
     return {
@@ -278,12 +279,13 @@ export function getMapperReport(_direction, _uris) {
       uris
     };
   }
-  function success(direction, uris, report) {
+  function success(direction, uris, report, options) {
     return {
       type: bundleResourceManagerConstants.MAPPER_REPORT_SUCCESS,
       direction,
       uris,
-      report
+      report,
+      options
     };
   }
 }

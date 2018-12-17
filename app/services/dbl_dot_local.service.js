@@ -27,7 +27,8 @@ export const dblDotLocalService = {
   updateAndWriteConfigXmlSettings,
   startEventSource,
   getEntryRevisions,
-  getMapperReport
+  getMapperReport,
+  getMappers
 };
 export default dblDotLocalService;
 
@@ -62,6 +63,23 @@ async function newBundleMedia() {
   };
   try {
     const response = await fetch(`${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/${UX_API}/new-bundle-media`, requestOptions);
+    return handlResponseAsReadable(response).json();
+  } catch (error) {
+    return handlResponseAsReadable(error);
+  }
+}
+
+async function getMappers(direction) {
+  const requestOptions = {
+    method: 'GET',
+    headers: { ...authHeader(), 'Content-Type': 'application/json' },
+  };
+  try {
+    const response =
+      await fetch(
+        `${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/${UX_API}/mapper/${direction}`,
+        requestOptions
+      );
     return handlResponseAsReadable(response).json();
   } catch (error) {
     return handlResponseAsReadable(error);

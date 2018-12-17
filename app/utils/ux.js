@@ -11,7 +11,8 @@ export const ux = {
   getMediumIcon,
   getFormattedRevision,
   getDblRowStyles,
-  getDblRowBackgroundColor
+  getDblRowBackgroundColor,
+  mapColumns
 };
 export default ux;
 
@@ -75,6 +76,11 @@ function getDblRowStyles(theme) {
     storedMode: { backgroundColor: 'white' },
     noneStoredMode: { backgroundColor: '#EDEDED' },
   });
+}
+
+function mapColumns(columns, getIsNumeric, getColumnLabel) {
+  return Object.keys(columns)
+    .map(c => ({ name: c, type: getIsNumeric(c) ? 'numeric' : 'string', label: getColumnLabel(c) }));
 }
 
 function getDblRowBackgroundColor(isForRow, classes, status, revision, parent, dblId) {

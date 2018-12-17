@@ -42,6 +42,7 @@ import { utilities } from '../utils/utilities';
 import { bundleService } from '../services/bundle.service';
 import { ux } from '../utils/ux';
 import ConfirmButton from '../components/ConfirmButton';
+import MapperTable from '../components/MapperTable';
 
 const { dialog } = require('electron').remote;
 const { shell } = require('electron');
@@ -227,18 +228,13 @@ function getLabel(columnName) {
 
 const secondarySorts = ['container', 'name', 'status'];
 
-function mapColumns(columns) {
-  return Object.keys(columns)
-    .map(c => ({ name: c, type: isNumeric(c) ? 'numeric' : 'string', label: getLabel(c) }));
-}
-
 function createColumnConfig(mode) {
   if (mode === 'revisions') {
     const { id, href, localBundle, disabled, ...columns } = createRevisionData();
-    return mapColumns(columns);
+    return ux.mapColumns(columns, isNumeric, getLabel);
   }
   const { id, uri, disabled, ...columns } = createResourceData(null, {}, {});
-  return mapColumns(columns);
+  return ux.mapColumns(columns, isNumeric, getLabel);
 }
 
 const getAllManifestResources = (state) => state.bundleManageResources.manifestResources || {};
@@ -448,7 +444,7 @@ function mapStateToProps(state, props) {
   const {
     publicationsHealth, progress = 100, loading = false,
     isStoreMode = false, fetchingMetadata = false,
-    mapperReport = {}
+    mapperReports = {}
   } = bundleManageResources;
   const {
     errorMessage: publicationsHealthMessage,
@@ -480,7 +476,7 @@ function mapStateToProps(state, props) {
     origBundle,
     mode,
     showMetadataFile,
-    mapperInputReport: mapperReport.input,
+    mapperInputReport: mapperReports.input,
     manifestResources: getManifestResourceData(state, props),
     previousEntryRevision,
     bundlePreviousRevision,
@@ -1175,15 +1171,17 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       </React.Fragment>);
   }
 
+  handleSelectedIdsInputConverters = (selectedIds) => {
+    console.log(selectedIds);
+    this.setState({ selectedIdsInputConverters: selectedIds });
+  }
+
   renderInputMapperReportTable = () => {
-    return (<EnhancedTable
-      data={tableData}
-      columnConfig={columnConfig}
-      secondarySorts={secondarySorts}
-      defaultOrderBy="container"
-      onSelectedRowIds={this.onSelectedIds}
-      multiSelections
-      selectedIds={selectedIds}
+    const { selectedIdsInputConverters = [] } = this.state;
+    return (<MapperTable
+      direction="input"
+      onSelectedIds={this.handleSelectedIdsInputConverters}
+      selectedIds={selectedIdsInputConverters}
     />);
   }
 

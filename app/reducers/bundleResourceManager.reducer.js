@@ -138,11 +138,11 @@ export function bundleManageResources(state = initialState, action) {
       };
     }
     case bundleResourceManagerConstants.MAPPER_REPORT_SUCCESS: {
-      const { uris, direction, report } = action;
-      const { mapperReport: mapperReportOrig } = state;
+      const { uris, direction, report, options } = action;
+      const { mapperReports: mapperReportsOrig } = state;
       return {
         ...state,
-        mapperReport: { ...mapperReportOrig, [direction]: { uris, report } }
+        mapperReports: { ...mapperReportsOrig, [direction]: { uris, report, options } }
       };
     }
     default: {
