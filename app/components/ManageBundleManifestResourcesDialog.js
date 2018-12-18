@@ -782,7 +782,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   getMapperReport = () => {
     const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
-    if (toAddResources !== inEffect) {
+    if (toAddResources !== inEffect && inEffect.length !== 0) {
       return;
     }
     const { bundleId } = this.props;
