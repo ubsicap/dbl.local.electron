@@ -1182,12 +1182,13 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       </React.Fragment>);
   }
 
-  handleSelectedIdsInputConverters = (selectedConverterIds) => {
-    console.log(selectedConverterIds);
+  handleSelectedIdsInputConverters = (selectedIdsInputConverters) => {
+    console.log(selectedIdsInputConverters);
+    this.setState({ selectedIdsInputConverters });
     const { mapperInputReport = {} } = this.props;
     const { report = {} } = mapperInputReport;
     // get uris from selected reports
-    const urisToConvert = selectedConverterIds.reduce((acc, mapperId) =>
+    const urisToConvert = selectedIdsInputConverters.reduce((acc, mapperId) =>
       [...acc, ...(report[mapperId] || [])], []);
     console.log(urisToConvert);
     const { manifestResources } = this.props;
