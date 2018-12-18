@@ -1,3 +1,5 @@
+import path from 'path';
+import { Set } from 'immutable';
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
@@ -168,16 +170,28 @@ async function updatePublications(getState, bundleId) {
   await bundleService.updatePublications(bundleId, publications);
 }
 
-export function addManifestResources(_bundleId, _fileToContainerPaths) {
+export function addManifestResources(_bundleId, _fileToContainerPaths, inputMappers) {
   return async (dispatch, getState) => {
     dispatch(request(_bundleId, _fileToContainerPaths));
     await bundleService.waitStartCreateMode(_bundleId);
+    const urisToConvert = Object.values(inputMappers).reduce((acc, mapperUris) =>
+      acc.union(mapperUris), Set());
     /* eslint-disable no-restricted-syntax */
     /* eslint-disable no-await-in-loop */
     for (const [filePath, containerPath] of Object.entries(_fileToContainerPaths)) {
       try {
-        await bundleService.postResource(_bundleId, filePath, containerPath);
-        dispatch(success(_bundleId, filePath, containerPath));
+        if (!urisToConvert.has(containerPath)) {
+          await bundleService.postResource(_bundleId, filePath, containerPath);
+          dispatch(success(_bundleId, filePath, containerPath));
+        } else {
+          const applicableInputMappers = Object.entries(inputMappers)
+            .filter(([, mapperUris]) => mapperUris
+              .includes(containerPath)).map(([mapperKey]) => mapperKey);
+          for (const mapper of applicableInputMappers) {
+            await bundleService.postResource(_bundleId, filePath, containerPath, mapper);
+            dispatch(success(_bundleId, filePath, containerPath, mapper));
+          }
+        }
       } catch (error) {
         dispatch(failure(_bundleId, error));
       }
@@ -205,12 +219,13 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
       fileToContainerPaths
     };
   }
-  function success(bundleId, filePath, containerPath) {
+  function success(bundleId, filePath, containerPath, mapper) {
     return {
       type: bundleResourceManagerConstants.UPDATE_MANIFEST_RESOURCE_RESPONSE,
       bundleId,
       filePath,
-      containerPath
+      containerPath,
+      mapper
     };
   }
   function done(bundleId) {

@@ -527,12 +527,13 @@ function stopCreateContent(bundleId, mode = 'success') {
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }
 
-function postResource(bundleId, filePath, bundlePath) {
+function postResource(bundleId, filePath, bundlePath, mapper) {
   const filename = path.basename(filePath);
   const uri = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/resource/${bundlePath}`;
+  const fullUri = mapper ? `${uri}?mapper=${mapper}` : uri;
   const options = {
     method: 'POST',
-    uri,
+    uri: fullUri,
     formData: {
       // Like <input type="file" name="content">
       name: filename,

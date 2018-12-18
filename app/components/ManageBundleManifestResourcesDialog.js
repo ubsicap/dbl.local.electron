@@ -631,7 +631,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   updateTableData = (props) => {
     const tableData = props.mode === 'revisions' ? props.entryRevisions : props.manifestResources;
     const selectedIds = this.getSelectedIds(tableData, props.mode);
-    this.setState({ tableData, selectedIds });
+    this.setState({
+      tableData, selectedIds, selectedIdsInputConverters: [], addedFilePaths: []
+    }, this.getMapperReport);
   }
 
   getSelectedIds = (tableData, mode) => {
@@ -760,9 +762,15 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       const inEffectUris = inEffect.map(r => r.uri);
       this.props.deleteManifestResources(bundleId, inEffectUris);
     } else if (toAddResources === inEffect) {
+      const { mapperInputReport = {} } = this.props;
+      const { report: inputMappers = {} } = mapperInputReport;
+      const { selectedIdsInputConverters: selectedMapperKeys = [] } = this.state;
+      const selectedMappers = Object.keys(inputMappers)
+        .filter(mapperKey => selectedMapperKeys.includes(mapperKey))
+        .reduce((acc, mapperKey) => ({ ...acc, [mapperKey]: inputMappers[mapperKey] }), {});
       const filesToContainers = toAddResources.reduce((acc, selectedResource) =>
         ({ ...acc, [selectedResource.id]: formatUriForApi(selectedResource) }), {});
-      this.props.addManifestResources(bundleId, filesToContainers);
+      this.props.addManifestResources(bundleId, filesToContainers, selectedMappers);
       this.setState({ selectedIds: [] });
     }
   }
@@ -781,6 +789,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   getMapperReport = () => {
+    if (!this.isModifyFilesMode()) {
+      return;
+    }
     const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
     if (toAddResources !== inEffect && inEffect) {
       return;
@@ -791,12 +802,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   handleSelectedResourceIds = (selectedIds) => {
-    const newState = { selectedIds, selectAll: false };
-    if (this.isModifyFilesMode()) {
-      this.setState(newState, this.getMapperReport);
-      return;
-    }
-    this.setState(newState);
+    this.setState({ selectedIds, selectAll: false }, this.getMapperReport);
   }
 
   getSelectedCountMessage = (shouldDisableOk) => {
@@ -1193,28 +1199,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   handleSelectedIdsInputConverters = (selectedIdsInputConverters) => {
-    console.log(selectedIdsInputConverters);
-    const { mapperInputReport = {} } = this.props;
-    const { report = {} } = mapperInputReport;
-    // get uris from selected reports
-    const urisToConvert = Set(selectedIdsInputConverters.reduce((acc, mapperId) =>
-      acc.union(report[mapperId] || []), Set()));
-    this.setState({ selectedIdsInputConverters, urisToConvert });
-    console.log(urisToConvert.toArray());
-    /*
-    const { manifestResources } = this.props;
-    const { tableData = manifestResources } = this.state;
-    const parentRawManifestResourceUris =
-      getRawManifestResourceUris(this.props.previousManifestResources);
-    // todo: use overwrites
-    // todo: disable existing manifestResources
-    const otherResources = tableData.filter(r => !urisToConvert.includes(r.id));
-    const newlyAddedToConvertResources = urisToConvert
-      .map(createAddedToConvertResource(parentRawManifestResourceUris));
-    this.setState({
-      tableData: [...otherResources, ...newlyAddedToConvertResources]
-    }, () => this.setState({ selectedIds: urisToConvert }));
-    */
+    this.setState({ selectedIdsInputConverters });
   }
 
   renderInputMapperReportTable = () => {
