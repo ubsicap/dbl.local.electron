@@ -19,14 +19,15 @@ type Props = {
 
 function createColumnConfig() {
   const { id, disabled, ...columns } = createMapperRowData();
-  return ux.mapColumns(columns, (c) => ['matches'].includes(c), () => null);
+  return ux.mapColumns(columns, (c) => ['matches', 'overwrites'].includes(c), () => null);
 }
 
-function createMapperRowData(id, mapperReport = [], optionsData = {}) {
+function createMapperRowData(id, mapperReport = [], optionsData = {}, mapperOverwrites = []) {
   const matches = mapperReport.length;
-  const { description } = optionsData;
+  const overwrites = mapperOverwrites.length;
+  const { description, medium, documentation } = optionsData;
   return {
-    id, disabled: false, matches, description
+    id, disabled: false, medium, matches, overwrites, description, documentation
   };
 }
 
@@ -64,9 +65,9 @@ function mapStateToProps(state, props) {
     mapperReports = {}
   } = bundleManageResources;
   const { [props.direction]: mapperData = {} } = mapperReports;
-  const { report, options } = mapperData;
+  const { report, options, overwrites } = mapperData;
   const tableData = Object.entries(report).map(([mapperKey, mapperReport]) =>
-    createMapperRowData(mapperKey, mapperReport, options[mapperKey]));
+    createMapperRowData(mapperKey, mapperReport, options[mapperKey], overwrites[mapperKey]));
   return {
     columnConfig: createColumnConfig(),
     tableData,

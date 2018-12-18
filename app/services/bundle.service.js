@@ -5,6 +5,7 @@ import rp from 'request-promise-native';
 import uuidv1 from 'uuid/v1';
 import waitUntil from 'node-wait-until';
 import { authHeader } from '../helpers';
+import { servicesHelpers } from '../helpers/services';
 import dblDotLocalConfigConstants from '../constants/dblDotLocal.constants';
 import download from './download-with-fetch.flow';
 
@@ -55,7 +56,8 @@ export const bundleService = {
   getSubSectionInstances,
   getSubsystemDownloadQueue,
   getSubsystemUploadQueue,
-  getRevisionOrParentRevision
+  getRevisionOrParentRevision,
+  getMapperInputOverwrites
 };
 export default bundleService;
 
@@ -639,6 +641,25 @@ async function updatePublications(bundleId, publicationIds) {
       console.log(`Publication ${pubId} was updated by wizard ${wizard} for uri ${uri}`);
       console.log(bestWizard);
     }
+  }
+}
+
+/* /bundle/<local_id>/mapper/input/overwrites (POST) */
+async function getMapperInputOverwrites(bundleId, mappers, uris) {
+  const requestOptions = {
+    method: 'POST',
+    headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `uris=${encodeURIComponent(JSON.stringify(uris))}&mappers=${encodeURIComponent(JSON.stringify(mappers))}`
+  };
+  try {
+    const response =
+      await fetch(
+        `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/mapper/input/overwrites`,
+        requestOptions
+      );
+    return servicesHelpers.handleResponseAsReadable(response).json();
+  } catch (error) {
+    return servicesHelpers.handleResponseAsReadable(error).text();
   }
 }
 

@@ -265,12 +265,28 @@ export function deleteManifestResources(_bundleId, _uris) {
   }
 }
 
-export function getMapperReport(_direction, _uris) {
+async function getOverwritesPerMapper(direction, report, bundleId) {
+  if (direction !== 'input') {
+    return undefined;
+  }
+  const overwrites = {};
+  /* eslint-disable no-restricted-syntax */
+  /* eslint-disable no-await-in-loop */
+  for (const [mapperKey, mapperUris] of Object.entries(report)) {
+    const mapperOverwrites =
+      await bundleService.getMapperInputOverwrites(bundleId, { [mapperKey]: mapperUris }, []);
+    overwrites[mapperKey] = mapperOverwrites;
+  }
+  return overwrites;
+}
+
+export function getMapperReport(_direction, _uris, _bundleId) {
   return async dispatch => {
     dispatch(request(_direction, _uris));
     const options = await dblDotLocalService.getMappers(_direction);
     const report = await dblDotLocalService.getMapperReport(_direction, _uris);
-    dispatch(success(_direction, _uris, report, options));
+    const overwrites = await getOverwritesPerMapper(_direction, report, _bundleId);
+    dispatch(success(_direction, _uris, report, options, overwrites));
   };
   function request(direction, uris) {
     return {
@@ -279,13 +295,14 @@ export function getMapperReport(_direction, _uris) {
       uris
     };
   }
-  function success(direction, uris, report, options) {
+  function success(direction, uris, report, options, overwrites) {
     return {
       type: bundleResourceManagerConstants.MAPPER_REPORT_SUCCESS,
       direction,
       uris,
       report,
-      options
+      options,
+      overwrites
     };
   }
 }

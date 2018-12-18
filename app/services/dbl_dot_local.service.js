@@ -5,6 +5,7 @@ import xml2js from 'xml2js';
 import log from 'electron-log';
 import dblDotLocalConstants from '../constants/dblDotLocal.constants';
 import { authHeader } from '../helpers';
+import { servicesHelpers } from '../helpers/services';
 // import { history } from '../store/configureStore';
 // import { navigationConstants } from '../constants/navigation.constants';
 
@@ -141,14 +142,7 @@ function downloadMetadata(dblId, revision, license) {
 }
 
 function handlResponseAsReadable(response) {
-  if (!response.ok) {
-    if (response.message === 'Failed to fetch') {
-      const error = { text: () => response.message };
-      return Promise.reject(error);
-    }
-    return Promise.reject(response);
-  }
-  return response;
+  return servicesHelpers.handleResponseAsReadable(response);
 }
 
 async function getDblDotLocalExecStatus() {
