@@ -218,6 +218,17 @@ function createAddedResource(fullToRelativePaths, resourcesInParent) {
   };
 }
 
+function createAddedToConvertResource(resourcesInParent) {
+  return (uri) => {
+    const [container, fileName] = [formatContainer(path.dirname(uri)), path.basename(uri)];
+    const [id, name] = [uri, fileName];
+    const status = getAddStatus(uri, resourcesInParent);
+    return {
+      id, uri, status, mimeType: '', container, relativeFolder: container, name, size: '', checksum: '', disabled: false
+    };
+  };
+}
+
 function isNumeric(columnName) {
   return ['size', 'revision', 'stored', 'manifest'].includes(columnName);
 }
@@ -1173,20 +1184,24 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   handleSelectedIdsInputConverters = (selectedConverterIds) => {
     console.log(selectedConverterIds);
-    /*
     const { mapperInputReport = {} } = this.props;
-    const { report = {}} = mapperInputReport;
+    const { report = {} } = mapperInputReport;
     // get uris from selected reports
-    const selectedUris = selectedConverterIds.reduce((acc, mapperId) =>
-      [...acc, report[mapperId] || []], []);
-    // find selected file paths;
-    const selectedIds = this.getUnionWithSelectedIds(addedFilePaths);
-    this.setState({ selectedIdsInputConverters: selectedIds });
-    this.setState(
-      { addedFilePaths, selectedIds },
-      this.updateTotalResources(newAddedFilePaths)
-    );
-    */
+    const urisToConvert = selectedConverterIds.reduce((acc, mapperId) =>
+      [...acc, ...(report[mapperId] || [])], []);
+    console.log(urisToConvert);
+    const { manifestResources } = this.props;
+    const { tableData = manifestResources } = this.state;
+    const parentRawManifestResourceUris =
+      getRawManifestResourceUris(this.props.previousManifestResources);
+    // todo: use overwrites
+    // todo: disable existing manifestResources
+    const otherResources = tableData.filter(r => !urisToConvert.includes(r.id));
+    const newlyAddedToConvertResources = urisToConvert
+      .map(createAddedToConvertResource(parentRawManifestResourceUris));
+    this.setState({
+      tableData: [...otherResources, ...newlyAddedToConvertResources]
+    }, () => this.setState({ selectedIds: urisToConvert }));
   }
 
   renderInputMapperReportTable = () => {
