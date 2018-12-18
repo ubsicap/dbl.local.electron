@@ -283,9 +283,11 @@ const makeGetManifestResourcesData = () => createSelector(
       ));
     const bundleManifestResourceUris = getRawManifestResourceUris(bundleManifestResources);
     const { storedFiles: parentStoredFiles } = previousManifestResources;
-    const deletedParentBundleResources = Object.values(previousManifestResources.rawManifestResources)
-      .filter(pr => !bundleManifestResourceUris.has(pr.uri))
-      .map(pr => createResourceData(null, pr, parentStoredFiles[pr.uri], pr));
+    const deletedParentBundleResources =
+      Object.values(previousManifestResources.rawManifestResources)
+        .filter(pr => !bundleManifestResourceUris.has(pr.uri) &&
+          bundleManifestResources !== emptyBundleManifestResources)
+        .map(pr => createResourceData(null, pr, parentStoredFiles[pr.uri], pr));
     return [...bundleManifestResourcesData, ...deletedParentBundleResources];
   }
 );
@@ -613,9 +615,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         this.props.getManifestResources(nextProps.bundlePreviousRevision.id);
       }
     }
-    if ((nextProps.manifestResources !== this.props.manifestResources) ||
-      (this.props.mode === 'revisions' && nextProps.entryRevisions !== this.entryRevisions) ||
-      (!this.props.previousManifestResources && nextProps.previousManifestResources)) {
+    if ((nextProps.manifestResources.length !== this.props.manifestResources.length) ||
+      (this.props.mode === 'revisions' && nextProps.entryRevisions.length !== this.props.entryRevisions.length) ||
+      !utilities.haveEqualKeys(this.props.previousManifestResources, nextProps.previousManifestResources)) {
       this.updateTableData(nextProps);
     }
   }
@@ -778,16 +780,23 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.props.goFixPublications();
   }
 
-  onSelectedIds = (selectedIds) => {
-    if (this.isModifyFilesMode()) {
-      const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
-      if (toAddResources === inEffect) {
-        const { bundleId } = this.props;
-        const uris = toAddResources.map(r => r.uri);
-        this.props.getMapperReport('input', uris, bundleId);
-      }
+  getMapperReport = () => {
+    const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
+    if (toAddResources !== inEffect) {
+      return;
     }
-    this.setState({ selectedIds, selectAll: false });
+    const { bundleId } = this.props;
+    const uris = toAddResources.map(r => r.uri);
+    this.props.getMapperReport('input', uris, bundleId);
+  }
+
+  onSelectedIds = (selectedIds) => {
+    const newState = { selectedIds, selectAll: false };
+    if (this.isModifyFilesMode()) {
+      this.setState(newState, this.getMapperReport);
+      return;
+    }
+    this.setState(newState);
   }
 
   getSelectedCountMessage = (shouldDisableOk) => {

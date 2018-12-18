@@ -7,6 +7,7 @@ export const utilities = {
   areEqualArraysDeep,
   areEqualObjectsDeep,
   areEqualCollections,
+  haveEqualKeys,
   onOpenLink,
   sleep,
   union,
@@ -44,9 +45,13 @@ export function areEqualArraysDeep(a1, a2) {
   return a1 === a2 || (a1.length === a2.length && JSON.stringify(a1) === JSON.stringify(a2));
 }
 
+function haveEqualKeys(o1, o2) {
+  return areEqualArraysDeep(Object.keys(o1), Object.keys(o2));
+}
+
 export function areEqualObjectsDeep(o1, o2) {
   return o1 === o2 ||
-  (areEqualArraysDeep(Object.keys(o1), Object.keys(o2)) &&
+  (haveEqualKeys(o1, o2) &&
    areEqualArraysDeep(Object.values(o1), Object.values(o2)));
 }
 
