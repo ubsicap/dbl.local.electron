@@ -286,7 +286,7 @@ const makeGetManifestResourcesData = () => createSelector(
     const deletedParentBundleResources =
       Object.values(previousManifestResources.rawManifestResources)
         .filter(pr => !bundleManifestResourceUris.has(pr.uri) &&
-          bundleManifestResources !== emptyBundleManifestResources)
+          Object.keys(rawManifestResources).length)
         .map(pr => createResourceData(null, pr, parentStoredFiles[pr.uri], pr));
     return [...bundleManifestResourcesData, ...deletedParentBundleResources];
   }
@@ -782,15 +782,15 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   getMapperReport = () => {
     const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
-    if (toAddResources !== inEffect && inEffect.length !== 0) {
+    if (toAddResources !== inEffect && inEffect) {
       return;
     }
     const { bundleId } = this.props;
-    const uris = toAddResources.map(r => r.uri);
+    const uris = (toAddResources || []).map(r => r.uri);
     this.props.getMapperReport('input', uris, bundleId);
   }
 
-  onSelectedIds = (selectedIds) => {
+  handleSelectedResourceIds = (selectedIds) => {
     const newState = { selectedIds, selectAll: false };
     if (this.isModifyFilesMode()) {
       this.setState(newState, this.getMapperReport);
@@ -1241,7 +1241,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               columnConfig={columnConfig}
               secondarySorts={secondarySorts}
               defaultOrderBy="container"
-              onSelectedRowIds={this.onSelectedIds}
+              onSelectedRowIds={this.handleSelectedResourceIds}
               multiSelections
               selectedIds={selectedIds}
             />
@@ -1259,7 +1259,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               secondarySorts={['revision']}
               defaultOrderBy="revision"
               orderDirection="desc"
-              onSelectedRowIds={this.onSelectedIds}
+              onSelectedRowIds={this.handleSelectedResourceIds}
               selectedIds={selectedIds}
             />
           </React.Fragment>
@@ -1274,7 +1274,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               columnConfig={columnConfig}
               secondarySorts={secondarySorts}
               defaultOrderBy="container"
-              onSelectedRowIds={this.onSelectedIds}
+              onSelectedRowIds={this.handleSelectedResourceIds}
               multiSelections
               selectedIds={selectedIds}
             />
