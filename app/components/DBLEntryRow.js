@@ -144,7 +144,7 @@ const makeGetLaterEntryRevisions = () => createSelector(
   [getSelectedBundleEntryRevision, getAllBundles, getBundleId, getDblId, getRevision, getParent],
   (selectedBundleEntryRevision, allBundles, bundleId, dblId, revision, parent) => {
     if (!selectedBundleEntryRevision) {
-      return [];
+      return []; // todo: remove this optimization if (it doesn't effect initial downloads)
     }
     const effectiveRevision = bundleService.getRevisionOrParentRevision(dblId, revision, parent);
     const allRevisions = allBundles.filter(b => b.dblId === dblId);
