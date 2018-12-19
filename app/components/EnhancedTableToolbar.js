@@ -41,7 +41,6 @@ type Props = {
   classes: {},
   numSelected: number,
   enableEditContainer?: boolean,
-  mapperInputReport?: ?{},
   handleAddByFile?: () => {},
   handleAddByFolder?: () => {},
   getSuggestions?: () => {},
@@ -74,10 +73,9 @@ class EnhancedTableToolbar extends Component<Props> {
 
   render() {
     const {
-      numSelected, classes, handleAddByFile, enableEditContainer, mapperInputReport
+      numSelected, classes, handleAddByFile, enableEditContainer
     } = this.props;
     const { anchorEl } = this.state;
-    const converterCount = mapperInputReport ? Object.keys(mapperInputReport.report).length : 0;
     return (
       <Toolbar
         className={classNames(classes.root, {
@@ -93,10 +91,6 @@ class EnhancedTableToolbar extends Component<Props> {
             <Typography variant="title" id="tableTitle" />
           )}
         </div>
-        {mapperInputReport &&
-        <Button>
-          {`Converters (${converterCount})`}
-        </Button>}
         <div className={classes.spacer} />
         <div style={{ width: 700 }}>
           {enableEditContainer ? (
@@ -156,7 +150,6 @@ class EnhancedTableToolbar extends Component<Props> {
 
 EnhancedTableToolbar.defaultProps = {
   enableEditContainer: false,
-  mapperInputReport: undefined,
   handleAddByFile: undefined,
   handleAddByFolder: undefined,
   getSuggestions: undefined,
