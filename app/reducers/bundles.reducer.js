@@ -291,10 +291,16 @@ export function bundles(state = initialState, action) {
     }
     case bundleConstants.TOGGLE_SELECT: {
       const { selectedBundle, selectedDBLEntryId } = getSelectedState(state, action.selectedBundle);
+      const { selectedBundleEntryRevisions: selectedBundleEntryRevisionsOrig = {} } = state;
+      const selectedBundleEntryRevisions = selectedBundle ? {
+        ...selectedBundleEntryRevisionsOrig,
+        [selectedDBLEntryId]: { dblId: selectedDBLEntryId, revision: selectedBundle.revision, bundleId: selectedBundle.id }
+      } : selectedBundleEntryRevisionsOrig;
       return {
         ...state,
         selectedBundle,
-        selectedDBLEntryId
+        selectedDBLEntryId,
+        selectedBundleEntryRevisions
       };
     }
     case bundleConstants.SELECT_BUNDLE_ENTRY_REVISION: {
