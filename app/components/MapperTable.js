@@ -100,7 +100,7 @@ class MapperTable extends Component<Props> {
           </div>
         </Toolbar>
         <Toolbar
-          className={classNames(classes.root, {
+          className={classNames({
             [classes.highlight]: true,
           })}
         >
