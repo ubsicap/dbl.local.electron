@@ -619,12 +619,13 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       }
     }
     if ((this.props.manifestResources.length !== prevProps.manifestResources.length) ||
-      (this.props.mode === 'revisions' && this.props.entryRevisions.length !== prevProps.entryRevisions.length) ||
+      (this.props.mode === 'revisions' && this.props.entryRevisions !== prevProps.entryRevisions) ||
       !utilities.haveEqualKeys(this.props.previousManifestResources, this.props.previousManifestResources)) {
       this.updateTableData(this.props);
     }
   }
 
+  /* todo: memoize tableData */
   updateTableData = (props) => {
     const tableData = props.mode === 'revisions' ? props.entryRevisions : props.manifestResources;
     const selectedIds = this.getSelectedIds(tableData, props.mode);
