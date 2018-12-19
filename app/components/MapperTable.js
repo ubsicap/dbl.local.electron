@@ -73,12 +73,12 @@ class MapperTable extends Component<Props> {
       return '';
     }
     if (mappersUris.length === 0) {
-      return '(No matches found for converters)';
+      return 'No matches found for converters';
     }
     if (selectedIds.length === 0) {
-      return `(Select converter(s) below for upto ${mappersUris.length} matches)`;
+      return `Select converter(s) below for upto ${mappersUris.length} matches`;
     }
-    return `(${selectedMapperUris.length} of ${mappersUris} matches in ${selectedIds.length} converters)`;
+    return `${selectedMapperUris.length} of ${mappersUris.length} matches in ${selectedIds.length} converters`;
   }
 
   render() {
@@ -87,26 +87,34 @@ class MapperTable extends Component<Props> {
     } = this.props;
     const mapperMessage = this.getMapperMessage();
     return (
-      <Toolbar
-        className={classNames(classes.root, {
-          [classes.highlight]: true,
-        })}
-      >
-        <div className={classes.title}>
-          <Typography color="inherit" variant="subheading">
-            {mapperMessage}
-          </Typography>
-        </div>
-        <EnhancedTable
-          data={tableData}
-          columnConfig={columnConfig}
-          secondarySorts={secondarySorts}
-          defaultOrderBy="description"
-          onSelectedRowIds={onSelectedIds}
-          multiSelections
-          selectedIds={selectedIds}
-        />
-      </Toolbar>
+      <React.Fragment>
+        <Toolbar
+          className={classNames(classes.root, {
+            [classes.highlight]: true,
+          })}
+        >
+          <div className={classes.title}>
+            <Typography color="inherit" variant="subheading">
+              {mapperMessage}
+            </Typography>
+          </div>
+        </Toolbar>
+        <Toolbar
+          className={classNames(classes.root, {
+            [classes.highlight]: true,
+          })}
+        >
+          <EnhancedTable
+            data={tableData}
+            columnConfig={columnConfig}
+            secondarySorts={secondarySorts}
+            defaultOrderBy="description"
+            onSelectedRowIds={onSelectedIds}
+            multiSelections
+            selectedIds={selectedIds}
+          />
+        </Toolbar>
+      </React.Fragment>
     );
   }
 }
