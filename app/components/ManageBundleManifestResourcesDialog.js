@@ -591,40 +591,37 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
   }
 
-  componentWillReceiveProps(nextProps) {
+  componentDidUpdate(prevProps) {
     if (this.state.closing) {
       return;
     }
-    if (nextProps.progress !== this.props.progress &&
-      (nextProps.progress === 100)) {
+    if (this.props.showMetadataFile && !prevProps.showMetadataFile) {
+      shell.openExternal(this.props.showMetadataFile);
+    }
+    if (this.props.progress !== prevProps.progress &&
+      (this.props.progress === 100)) {
       const { bundleId } = this.props;
       this.props.getManifestResources(bundleId);
     }
     if (this.props.mode !== 'revisions') {
-      if (!this.props.previousEntryRevision &&
-        nextProps.previousEntryRevision && !nextProps.bundlePreviousRevision &&
-        getIsCompatibleVersion(nextProps.previousEntryRevision)) {
+      if (!prevProps.previousEntryRevision &&
+        this.props.previousEntryRevision && !this.props.bundlePreviousRevision &&
+        getIsCompatibleVersion(this.props.previousEntryRevision)) {
         const { origBundle } = this.props;
         this.props.createBundleFromDBL(
           origBundle.dblId,
-          nextProps.previousEntryRevision.revision,
+          this.props.previousEntryRevision.revision,
           origBundle.license
         );
       }
-      if (!this.props.bundlePreviousRevision && nextProps.bundlePreviousRevision) {
-        this.props.getManifestResources(nextProps.bundlePreviousRevision.id);
+      if (!prevProps.bundlePreviousRevision && this.props.bundlePreviousRevision) {
+        this.props.getManifestResources(this.props.bundlePreviousRevision.id);
       }
     }
-    if ((nextProps.manifestResources.length !== this.props.manifestResources.length) ||
-      (this.props.mode === 'revisions' && nextProps.entryRevisions.length !== this.props.entryRevisions.length) ||
-      !utilities.haveEqualKeys(this.props.previousManifestResources, nextProps.previousManifestResources)) {
-      this.updateTableData(nextProps);
-    }
-  }
-
-  componentDidUpdate(prevProps) {
-    if (this.props.showMetadataFile && !prevProps.showMetadataFile) {
-      shell.openExternal(this.props.showMetadataFile);
+    if ((this.props.manifestResources.length !== prevProps.manifestResources.length) ||
+      (this.props.mode === 'revisions' && this.props.entryRevisions.length !== prevProps.entryRevisions.length) ||
+      !utilities.haveEqualKeys(this.props.previousManifestResources, this.props.previousManifestResources)) {
+      this.updateTableData(this.props);
     }
   }
 
