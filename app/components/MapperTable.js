@@ -76,7 +76,7 @@ class MapperTable extends Component<Props> {
       return 'No matches found for converters';
     }
     if (selectedIds.length === 0) {
-      return `Select converter(s) below for upto ${mappersUris.length} matches`;
+      return `Select converter(s) below (${mappersUris.length} matches)`;
     }
     return `${selectedMapperUris.length} of ${mappersUris.length} matches in ${selectedIds.length} converters`;
   }

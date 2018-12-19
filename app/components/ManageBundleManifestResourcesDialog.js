@@ -89,6 +89,9 @@ type Props = {
 
 const addStatus = 'add?';
 const addAndOverwrite = 'add (revise)?';
+const addAndConvert = 'add / convert?';
+const addAndConvertOverwrite = 'add / convert (revise)?';
+const addStatuses = [addStatus, addAndOverwrite, addAndConvert, addAndConvertOverwrite];
 
 function createUpdatedTotalResources(origTotalResources, filePath, updateFunc) {
   return origTotalResources.map(r => (r.id === filePath ? { ...r, ...updateFunc(r) } : r));
@@ -200,31 +203,32 @@ function createResourceData(
   };
 }
 
-function getAddStatus(uri, resourcesInParent) {
-  return resourcesInParent.has(uri) ? addAndOverwrite : addStatus;
+function getAddStatus(uri, resourcesInParent, conversions = Set(), conversionOverwrites = Set()) {
+  if (conversionOverwrites.has(uri)) {
+    return addAndConvertOverwrite;
+  }
+  if (conversions.has(uri)) {
+    return addAndConvert;
+  }
+  if (resourcesInParent.has(uri)) {
+    return addAndOverwrite;
+  }
+  return addStatus;
 }
 
-function createAddedResource(fullToRelativePaths, resourcesInParent) {
+function createAddedResource(
+  fullToRelativePaths, resourcesInParent,
+  conversions, conversionOverwrites
+) {
   return (filePath) => {
     const fileName = path.basename(filePath);
     const relativePath = fullToRelativePaths ? upath.normalizeTrim(fullToRelativePaths[filePath]) : '';
     const relativeFolder = formatContainer(path.dirname(relativePath));
     const uri = formatUri(relativeFolder, fileName);
     const [id, name] = [filePath, fileName];
-    const status = getAddStatus(uri, resourcesInParent);
+    const status = getAddStatus(uri, resourcesInParent, conversions, conversionOverwrites);
     return {
       id, uri, status, mimeType: '', container: relativeFolder || NEED_CONTAINER, relativeFolder, name, size: 0, checksum: '', disabled: false
-    };
-  };
-}
-
-function createAddedToConvertResource(resourcesInParent) {
-  return (uri) => {
-    const [container, fileName] = [formatContainer(path.dirname(uri)), path.basename(uri)];
-    const [id, name] = [uri, fileName];
-    const status = getAddStatus(uri, resourcesInParent);
-    return {
-      id, uri, status, mimeType: '', container, relativeFolder: container, name, size: '', checksum: '', disabled: false
     };
   };
 }
@@ -695,8 +699,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               resourcesInParent,
               discardableResources
             };
-          } else if ([addStatus, addAndOverwrite].includes(r.status)) {
-            return { ...acc, toAddResources: acc.toAddResources.push(r), resourcesInParent };
+          } else if (addStatuses.includes(r.status)) {
+            const toAddResources = acc.toAddResources.push(r);
+            return { ...acc, toAddResources, resourcesInParent };
           } else if (!r.stored) {
             return {
               ...acc,
@@ -967,13 +972,27 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.setAddedFilePathsAndSelectAll(allFullPaths, allFullToRelativePaths);
   };
 
+  filterBySelectedMappers = (inputMappers) => {
+    const { selectedIdsInputConverters } = this.state;
+    return Object.entries(inputMappers)
+      .filter(([mapperKey]) => selectedIdsInputConverters.includes(mapperKey))
+      .reduce((acc, [mapperKey, mapperValue]) => ({ ...acc, [mapperKey]: mapperValue }), {});
+  }
+
   updateTotalResources = (newAddedFilePaths, fullToRelativePaths) => () => {
-    const { manifestResources } = this.props;
+    const { manifestResources, mapperInputReport = {} } = this.props;
+    const { report: inputMappers = {}, overwrites: inputMappersOverwrites = {} } = mapperInputReport;
     const { tableData = manifestResources } = this.state;
     const parentRawManifestResourceUris =
       getRawManifestResourceUris(this.props.previousManifestResources);
     const otherResources = tableData.filter(r => !newAddedFilePaths.includes(r.id));
-    const newlyAddedResources = newAddedFilePaths.map(createAddedResource(fullToRelativePaths, parentRawManifestResourceUris));
+    const conversions = utilities.getUnionOfValues(this.filterBySelectedMappers(inputMappers));
+    const conversionOverwrites = Object.entries(this.filterBySelectedMappers(inputMappersOverwrites))
+      .reduce((acc, [, mapperOverwrites]) => acc.union(mapperOverwrites.map(a => a[0])), Set());
+    const newlyAddedResources = newAddedFilePaths.map(createAddedResource(
+      fullToRelativePaths, parentRawManifestResourceUris,
+      conversions, conversionOverwrites
+    ));
     this.setState(
       { tableData: [...otherResources, ...newlyAddedResources] },
       this.updateAddedResourcesWithFileStats(newAddedFilePaths)
@@ -1001,8 +1020,19 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       OkButtonLabel = `Delete from Manifest (${inEffectCount})`;
     } else if (toAddResources === inEffect) {
       const revisions = toAddResources.filter(r => r.status === addAndOverwrite);
-      const overwritesMsg = revisions.length ? ` / Revise (${revisions.length})` : '';
-      OkButtonLabel = `Add (${inEffectCount - revisions.length})${overwritesMsg}`;
+      const conversions = toAddResources.filter(r => r.status === addAndConvert);
+      const conversionOverwrites = toAddResources.filter(r => r.status === addAndConvertOverwrite);
+      const addMessageBuilder = [`Add ${inEffectCount}`];
+      if (revisions.length) {
+        addMessageBuilder.push(` (Revise ${revisions.length})`);
+      }
+      if (conversions.length || conversionOverwrites.length) {
+        addMessageBuilder.push(` / Convert ${conversions.length + conversionOverwrites.length}`);
+        if (conversionOverwrites.length) {
+          addMessageBuilder.push(` (Revise ${conversionOverwrites.length})`);
+        }
+      }
+      OkButtonLabel = addMessageBuilder.join('');
     }
     const OkButtonProps = {
       classes,

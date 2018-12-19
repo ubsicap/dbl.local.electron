@@ -1,5 +1,4 @@
 import path from 'path';
-import { Set } from 'immutable';
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
@@ -174,8 +173,7 @@ export function addManifestResources(_bundleId, _fileToContainerPaths, inputMapp
   return async (dispatch, getState) => {
     dispatch(request(_bundleId, _fileToContainerPaths));
     await bundleService.waitStartCreateMode(_bundleId);
-    const urisToConvert = Object.values(inputMappers).reduce((acc, mapperUris) =>
-      acc.union(mapperUris), Set());
+    const urisToConvert = utilities.getUnionOfValues(inputMappers);
     /* eslint-disable no-restricted-syntax */
     /* eslint-disable no-await-in-loop */
     for (const [filePath, containerPath] of Object.entries(_fileToContainerPaths)) {
