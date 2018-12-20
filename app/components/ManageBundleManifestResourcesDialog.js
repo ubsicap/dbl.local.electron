@@ -1001,7 +1001,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     ));
     this.setState(
       { tableData: [...otherResources, ...newlyAddedResources] },
-      this.updateAddedResourcesWithFileStats(newAddedFilePaths)
+      () => {
+        this.getMapperReport();
+        this.updateAddedResourcesWithFileStats(newAddedFilePaths);
+      }
     );
   }
 
