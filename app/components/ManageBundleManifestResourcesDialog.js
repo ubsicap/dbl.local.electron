@@ -628,11 +628,20 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         this.props.getManifestResources(this.props.bundlePreviousRevision.id);
       }
     }
+    /* todo: the following do setState, which is unorthodox/anti-pattern */
     if ((this.props.manifestResources.length !== prevProps.manifestResources.length) ||
       (this.props.mode === 'revisions' && this.props.entryRevisions !== prevProps.entryRevisions) ||
       !utilities.haveEqualKeys(this.props.previousManifestResources, this.props.previousManifestResources)) {
       this.updateTableData(this.props);
+    } else if (this.props.mapperInputData !== prevProps.mapperInputData ||
+      this.props.selectedIdsInputConverters !== prevProps.selectedIdsInputConverters) {
+      const tableData = this.getTableDataForAddedResources(this.state.addedFilePaths);
+      this.updateTableAsIs(tableData);
     }
+  }
+
+  updateTableAsIs(tableData) {
+    this.setState({ tableData });
   }
 
   /* todo: memoize tableData */
@@ -985,7 +994,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       .reduce((acc, [mapperKey, mapperValue]) => ({ ...acc, [mapperKey]: mapperValue }), {});
   }
 
-  updateTotalResources = (newAddedFilePaths, fullToRelativePaths) => () => {
+  getTableDataForAddedResources = (newAddedFilePaths, fullToRelativePaths) => {
     const { manifestResources, mapperInputData = {} } = this.props;
     const { report: inputMappers = {}, overwrites: inputMappersOverwrites = {} } = mapperInputData;
     const { tableData = manifestResources } = this.state;
@@ -999,8 +1008,13 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       fullToRelativePaths, parentRawManifestResourceUris,
       conversions, conversionOverwrites
     ));
+    return [...otherResources, ...newlyAddedResources];
+  }
+
+  updateTotalResources = (newAddedFilePaths, fullToRelativePaths) => () => {
+    const tableData = this.getTableDataForAddedResources(newAddedFilePaths, fullToRelativePaths);
     this.setState(
-      { tableData: [...otherResources, ...newlyAddedResources] },
+      { tableData },
       () => {
         this.getMapperReport();
         this.updateAddedResourcesWithFileStats(newAddedFilePaths);
@@ -1031,15 +1045,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       const revisions = toAddResources.filter(r => r.status === addAndOverwrite);
       const conversions = toAddResources.filter(r => r.status === addAndConvert);
       const conversionOverwrites = toAddResources.filter(r => r.status === addAndConvertOverwrite);
-      const addMessageBuilder = [`Add ${inEffectCount}`];
-      if (revisions.length) {
-        addMessageBuilder.push(` (Revise ${revisions.length})`);
-      }
+      const addCount = inEffectCount - conversions.length - conversionOverwrites.length;
+      const addCountMsg = addCount > 0 ? ` ${addCount}` : '';
+      const addMessageBuilder = [`Add${addCountMsg}`];
       if (conversions.length || conversionOverwrites.length) {
         addMessageBuilder.push(` / Convert ${conversions.length + conversionOverwrites.length}`);
-        if (conversionOverwrites.length) {
-          addMessageBuilder.push(` (Revise ${conversionOverwrites.length})`);
-        }
+      }
+      if (revisions.length || conversionOverwrites.length) {
+        addMessageBuilder.push(` (Revise ${revisions.length + conversionOverwrites.length})`);
       }
       OkButtonLabel = addMessageBuilder.join('');
     }
