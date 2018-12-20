@@ -5,6 +5,7 @@ import xml2js from 'xml2js';
 import log from 'electron-log';
 import dblDotLocalConstants from '../constants/dblDotLocal.constants';
 import { authHeader } from '../helpers';
+import { servicesHelpers } from '../helpers/services';
 // import { history } from '../store/configureStore';
 // import { navigationConstants } from '../constants/navigation.constants';
 
@@ -26,7 +27,9 @@ export const dblDotLocalService = {
   updateConfigXmlWithNewPaths,
   updateAndWriteConfigXmlSettings,
   startEventSource,
-  getEntryRevisions
+  getEntryRevisions,
+  getMapperReport,
+  getMappers
 };
 export default dblDotLocalService;
 
@@ -61,6 +64,41 @@ async function newBundleMedia() {
   };
   try {
     const response = await fetch(`${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/${UX_API}/new-bundle-media`, requestOptions);
+    return handlResponseAsReadable(response).json();
+  } catch (error) {
+    return handlResponseAsReadable(error);
+  }
+}
+
+async function getMappers(direction) {
+  const requestOptions = {
+    method: 'GET',
+    headers: { ...authHeader(), 'Content-Type': 'application/json' },
+  };
+  try {
+    const response =
+      await fetch(
+        `${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/${UX_API}/mapper/${direction}`,
+        requestOptions
+      );
+    return handlResponseAsReadable(response).json();
+  } catch (error) {
+    return handlResponseAsReadable(error);
+  }
+}
+
+async function getMapperReport(direction, uris) {
+  const requestOptions = {
+    method: 'POST',
+    headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `uris=${encodeURIComponent(JSON.stringify(uris))}`
+  };
+  try {
+    const response =
+      await fetch(
+        `${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/${UX_API}/mapper/${direction}/report`,
+        requestOptions
+      );
     return handlResponseAsReadable(response).json();
   } catch (error) {
     return handlResponseAsReadable(error);
@@ -104,14 +142,7 @@ function downloadMetadata(dblId, revision, license) {
 }
 
 function handlResponseAsReadable(response) {
-  if (!response.ok) {
-    if (response.message === 'Failed to fetch') {
-      const error = { text: () => response.message };
-      return Promise.reject(error);
-    }
-    return Promise.reject(response);
-  }
-  return response;
+  return servicesHelpers.handleResponseAsReadable(response);
 }
 
 async function getDblDotLocalExecStatus() {

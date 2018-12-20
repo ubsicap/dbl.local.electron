@@ -5,6 +5,7 @@ import rp from 'request-promise-native';
 import uuidv1 from 'uuid/v1';
 import waitUntil from 'node-wait-until';
 import { authHeader } from '../helpers';
+import { servicesHelpers } from '../helpers/services';
 import dblDotLocalConfigConstants from '../constants/dblDotLocal.constants';
 import download from './download-with-fetch.flow';
 
@@ -55,7 +56,8 @@ export const bundleService = {
   getSubSectionInstances,
   getSubsystemDownloadQueue,
   getSubsystemUploadQueue,
-  getRevisionOrParentRevision
+  getRevisionOrParentRevision,
+  getMapperInputOverwrites
 };
 export default bundleService;
 
@@ -525,12 +527,13 @@ function stopCreateContent(bundleId, mode = 'success') {
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }
 
-function postResource(bundleId, filePath, bundlePath) {
+function postResource(bundleId, filePath, bundlePath, mapper) {
   const filename = path.basename(filePath);
   const uri = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/resource/${bundlePath}`;
+  const fullUri = mapper ? `${uri}?mapper=${mapper}` : uri;
   const options = {
     method: 'POST',
-    uri,
+    uri: fullUri,
     formData: {
       // Like <input type="file" name="content">
       name: filename,
@@ -639,6 +642,25 @@ async function updatePublications(bundleId, publicationIds) {
       console.log(`Publication ${pubId} was updated by wizard ${wizard} for uri ${uri}`);
       console.log(bestWizard);
     }
+  }
+}
+
+/* /bundle/<local_id>/mapper/input/overwrites (POST) */
+async function getMapperInputOverwrites(bundleId, mappers, uris) {
+  const requestOptions = {
+    method: 'POST',
+    headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `uris=${encodeURIComponent(JSON.stringify(uris))}&mappers=${encodeURIComponent(JSON.stringify(mappers))}`
+  };
+  try {
+    const response =
+      await fetch(
+        `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/mapper/input/overwrites`,
+        requestOptions
+      );
+    return servicesHelpers.handleResponseAsReadable(response).json();
+  } catch (error) {
+    return servicesHelpers.handleResponseAsReadable(error).text();
   }
 }
 

@@ -7,12 +7,12 @@ import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
 import InfoIcon from '@material-ui/icons/Info';
 import FilterListIcon from '@material-ui/icons/FilterList';
-import { lighten } from '@material-ui/core/styles/colorManipulator';
 import Button from '@material-ui/core/Button';
 import AddIcon from '@material-ui/icons/Add';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import IntegrationAutosuggest from '../components/IntegrationAutosuggest';
+import { ux } from '../utils/ux';
 
 const toolbarStyles = theme => ({
   root: {
@@ -22,16 +22,7 @@ const toolbarStyles = theme => ({
     backgroundColor: 'white',
     zIndex: 2,
   },
-  highlight:
-    theme.palette.type === 'light'
-      ? {
-        color: theme.palette.secondary.main,
-        backgroundColor: lighten(theme.palette.secondary.light, 0.85),
-      }
-      : {
-        color: theme.palette.text.primary,
-        backgroundColor: theme.palette.secondary.dark,
-      },
+  highlight: ux.getHighlightTheme(theme, theme.palette.type),
   spacer: {
     flex: '1 1 100%',
   },
@@ -81,7 +72,9 @@ class EnhancedTableToolbar extends Component<Props> {
   }
 
   render() {
-    const { numSelected, classes, handleAddByFile, enableEditContainer } = this.props;
+    const {
+      numSelected, classes, handleAddByFile, enableEditContainer
+    } = this.props;
     const { anchorEl } = this.state;
     return (
       <Toolbar

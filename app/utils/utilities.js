@@ -1,4 +1,5 @@
 import sort from 'fast-sort';
+import { Set } from 'immutable';
 
 const { shell } = require('electron');
 
@@ -7,6 +8,8 @@ export const utilities = {
   areEqualArraysDeep,
   areEqualObjectsDeep,
   areEqualCollections,
+  getUnionOfValues,
+  haveEqualKeys,
   onOpenLink,
   sleep,
   union,
@@ -17,15 +20,13 @@ export const utilities = {
 export default utilities;
 
 export function union(arrayA, arrayB = []) {
-  const u = new Set(arrayA);
-  arrayB.forEach(item => u.add(item));
-  return [...u];
+  const u = Set(arrayA);
+  return u.union(arrayB).toArray();
 }
 
 export function difference(arrayA, arrayB = []) {
-  const diff = new Set(arrayA);
-  arrayB.forEach(item => diff.delete(item));
-  return diff;
+  const diff = Set(arrayA);
+  return diff.subtract(arrayB);
 }
 
 /* from https://stackoverflow.com/a/19746771 */
@@ -44,14 +45,23 @@ export function areEqualArraysDeep(a1, a2) {
   return a1 === a2 || (a1.length === a2.length && JSON.stringify(a1) === JSON.stringify(a2));
 }
 
+function haveEqualKeys(o1, o2) {
+  return areEqualArraysDeep(Object.keys(o1), Object.keys(o2));
+}
+
 export function areEqualObjectsDeep(o1, o2) {
   return o1 === o2 ||
-  (areEqualArraysDeep(Object.keys(o1), Object.keys(o2)) &&
+  (haveEqualKeys(o1, o2) &&
    areEqualArraysDeep(Object.values(o1), Object.values(o2)));
 }
 
 export function areEqualCollections(c1, c2) {
   return areEqualArrays(c1, c2, (c) => sort(c).asc());
+}
+
+function getUnionOfValues(obj) {
+  return Object.values(obj).reduce((acc, values) =>
+    acc.union(values), Set());
 }
 
 function onOpenLink(url) {

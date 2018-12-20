@@ -11,7 +11,9 @@ export const ux = {
   getMediumIcon,
   getFormattedRevision,
   getDblRowStyles,
-  getDblRowBackgroundColor
+  getDblRowBackgroundColor,
+  mapColumns,
+  getHighlightTheme
 };
 export default ux;
 
@@ -77,6 +79,11 @@ function getDblRowStyles(theme) {
   });
 }
 
+function mapColumns(columns, getIsNumeric, getColumnLabel) {
+  return Object.keys(columns)
+    .map(c => ({ name: c, type: getIsNumeric(c) ? 'numeric' : 'string', label: getColumnLabel(c) }));
+}
+
 function getDblRowBackgroundColor(isForRow, classes, status, revision, parent, dblId) {
   switch (status) {
     case 'DRAFT': {
@@ -90,4 +97,16 @@ function getDblRowBackgroundColor(isForRow, classes, status, revision, parent, d
     default:
       return classes.storedMode;
   }
+}
+
+function getHighlightTheme(theme, themeType) {
+  return (themeType === 'light'
+    ? {
+      color: theme.palette.secondary.main,
+      backgroundColor: lighten(theme.palette.secondary.light, 0.85),
+    }
+    : {
+      color: theme.palette.text.primary,
+      backgroundColor: theme.palette.secondary.dark,
+    });
 }

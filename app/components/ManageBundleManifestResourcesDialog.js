@@ -30,7 +30,8 @@ import Zoom from '@material-ui/core/Zoom';
 import path from 'path';
 import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
-  getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources
+  getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources,
+  getMapperReport
 } from '../actions/bundleManageResources.actions';
 import { downloadResources, removeResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
@@ -41,6 +42,7 @@ import { utilities } from '../utils/utilities';
 import { bundleService } from '../services/bundle.service';
 import { ux } from '../utils/ux';
 import ConfirmButton from '../components/ConfirmButton';
+import MapperTable from '../components/MapperTable';
 
 const { dialog } = require('electron').remote;
 const { shell } = require('electron');
@@ -58,7 +60,9 @@ type Props = {
   mode: string,
   showMetadataFile: ?string,
   manifestResources: [],
-  parentManifestResources: {},
+  previousEntryRevision: ?{},
+  bundlePreviousRevision: ?{},
+  previousManifestResources: {},
   entryRevisions: [],
   columnConfig: [],
   isOkToAddFiles: boolean,
@@ -66,6 +70,8 @@ type Props = {
   publicationsHealthMessage: ?string,
   publicationsHealthSuccessMessage: ?string,
   wizardsResults: ?{},
+  mapperInputData: ?{},
+  selectedIdsInputConverters: ?{},
   goFixPublications: ?() => {},
   entryPageUrl: string,
   closeResourceManager: () => {},
@@ -78,11 +84,15 @@ type Props = {
   checkPublicationsHealth: () => {},
   createBundleFromDBL: () => {},
   selectBundleEntryRevision: () => {},
-  removeResources: () => {}
+  removeResources: () => {},
+  getMapperReport: () => {}
 };
 
 const addStatus = 'add?';
 const addAndOverwrite = 'add (revise)?';
+const addAndConvert = 'add / convert?';
+const addAndConvertOverwrite = 'add / convert (revise)?';
+const addStatuses = [addStatus, addAndOverwrite, addAndConvert, addAndConvertOverwrite];
 
 function createUpdatedTotalResources(origTotalResources, filePath, updateFunc) {
   return origTotalResources.map(r => (r.id === filePath ? { ...r, ...updateFunc(r) } : r));
@@ -146,21 +156,29 @@ const [statusStored, statusAdded] = ['stored', 'added'];
 
 function getStatusResourceData(
   rawManifestResource,
-  isStored, isModifiedFromParent, parentManifestResource
+  isStored, isModifiedFromPrev, previousManifestResource,
+  { previousEntryRevision, bundlePreviousRevision, previousManifestResources }
 ) {
-  if (rawManifestResource === parentManifestResource) {
+  if (rawManifestResource === previousManifestResource) {
     return 'deleted';
   }
-  if (isModifiedFromParent) {
+  if (isModifiedFromPrev) {
     return 'revised';
   }
-  if (!parentManifestResource) {
+  if (previousEntryRevision && bundlePreviousRevision &&
+    Object.keys(previousManifestResources.rawManifestResources).length &&
+    !previousManifestResource) {
     return statusAdded;
   }
   return isStored ? statusStored : 'manifest';
 }
 
-function createResourceData(manifestResourceRaw, fileStoreInfo, parentManifesResource) {
+function createResourceData(
+  bundle, manifestResourceRaw, fileStoreInfo, prevManifestResource,
+  { previousEntryRevision, bundlePreviousRevision, previousManifestResources } = {
+    previousManifestResources: emptyBundleManifestResources
+  }
+) {
   const {
     uri = '', checksum = '', size: sizeRaw = 0, mimeType = ''
   } = manifestResourceRaw;
@@ -169,33 +187,47 @@ function createResourceData(manifestResourceRaw, fileStoreInfo, parentManifesRes
   /* const ext = path.extname(uri); */
   const size = formatBytesByKbs(sizeRaw);
   const id = uri;
-  const isModifiedFromParent = parentManifesResource ?
-    parentManifesResource.checksum !== checksum : false;
-  const isParentResource = manifestResourceRaw === parentManifesResource;
-  const isStored = Boolean(fileStoreInfo) && !isParentResource;
+  const isModifiedFromPrev = prevManifestResource ?
+    prevManifestResource.checksum !== checksum : false;
+  const isPrevResource = manifestResourceRaw === prevManifestResource;
+  const isDraft = bundle ? bundle.status === 'DRAFT' : false;
+  const isStored = Boolean(fileStoreInfo) && !isPrevResource;
   const stored = isStored ? '✓' : '';
   const status = getStatusResourceData(
     manifestResourceRaw,
-    isStored, isModifiedFromParent, parentManifesResource
+    isStored, isModifiedFromPrev, prevManifestResource,
+    { previousEntryRevision, bundlePreviousRevision, previousManifestResources }
   );
-  const disabled = isModifiedFromParent || isParentResource;
+  const disabled = (isDraft && isModifiedFromPrev) || isPrevResource;
   return {
     id, uri, stored, status, container, name, mimeType, size, checksum, disabled
   };
 }
 
-function getAddStatus(uri, resourcesInParent) {
-  return resourcesInParent.has(uri) ? addAndOverwrite : addStatus;
+function getAddStatus(uri, resourcesInParent, conversions = Set(), conversionOverwrites = Set()) {
+  if (conversionOverwrites.has(uri)) {
+    return addAndConvertOverwrite;
+  }
+  if (conversions.has(uri)) {
+    return addAndConvert;
+  }
+  if (resourcesInParent.has(uri)) {
+    return addAndOverwrite;
+  }
+  return addStatus;
 }
 
-function createAddedResource(fullToRelativePaths, resourcesInParent) {
+function createAddedResource(
+  fullToRelativePaths, resourcesInParent,
+  conversions, conversionOverwrites
+) {
   return (filePath) => {
     const fileName = path.basename(filePath);
     const relativePath = fullToRelativePaths ? upath.normalizeTrim(fullToRelativePaths[filePath]) : '';
     const relativeFolder = formatContainer(path.dirname(relativePath));
     const uri = formatUri(relativeFolder, fileName);
     const [id, name] = [filePath, fileName];
-    const status = getAddStatus(uri, resourcesInParent);
+    const status = getAddStatus(uri, resourcesInParent, conversions, conversionOverwrites);
     return {
       id, uri, status, mimeType: '', container: relativeFolder || NEED_CONTAINER, relativeFolder, name, size: 0, checksum: '', disabled: false
     };
@@ -212,18 +244,13 @@ function getLabel(columnName) {
 
 const secondarySorts = ['container', 'name', 'status'];
 
-function mapColumns(columns) {
-  return Object.keys(columns)
-    .map(c => ({ name: c, type: isNumeric(c) ? 'numeric' : 'string', label: getLabel(c) }));
-}
-
 function createColumnConfig(mode) {
   if (mode === 'revisions') {
     const { id, href, localBundle, disabled, ...columns } = createRevisionData();
-    return mapColumns(columns);
+    return ux.mapColumns(columns, isNumeric, getLabel);
   }
-  const { id, uri, disabled, ...columns } = createResourceData({}, {});
-  return mapColumns(columns);
+  const { id, uri, disabled, ...columns } = createResourceData(null, {}, {});
+  return ux.mapColumns(columns, isNumeric, getLabel);
 }
 
 const getAllManifestResources = (state) => state.bundleManageResources.manifestResources || {};
@@ -242,26 +269,30 @@ function getOrDefault(obj, prop, defaultValue) {
 const emptyBundleManifestResources = { rawManifestResources: {}, storedFiles: {} };
 
 const makeGetManifestResourcesData = () => createSelector(
-  [getAllManifestResources, getMode, getBundleId, getBundlesById],
-  (manifestResources, mode, bundleId, bundlesById) => {
+  [getAllManifestResources, getMode, getBundleId, getBundlesById, getAllEntryRevisions],
+  (manifestResources, mode, bundleId, bundlesById, allEntryRevisions) => {
     const bundleManifestResources = getOrDefault(
       manifestResources,
       bundleId,
       emptyBundleManifestResources
     );
     const { rawManifestResources, storedFiles } = bundleManifestResources;
-    const parentManifestResources =
-      getParentManifestResource(bundleId, bundlesById, manifestResources);
+    const { previousEntryRevision, bundlePreviousRevision, previousManifestResources } =
+      getPreviousManifestResource(bundleId, bundlesById, manifestResources, allEntryRevisions);
     const bundleManifestResourcesData = Object.values(rawManifestResources)
       .map(r => createResourceData(
+        bundleId[bundlesById],
         r, storedFiles[r.uri],
-        parentManifestResources.rawManifestResources[r.uri]
+        previousManifestResources.rawManifestResources[r.uri],
+        { previousEntryRevision, bundlePreviousRevision, previousManifestResources }
       ));
     const bundleManifestResourceUris = getRawManifestResourceUris(bundleManifestResources);
-    const { storedFiles: parentStoredFiles } = parentManifestResources;
-    const deletedParentBundleResources = Object.values(parentManifestResources.rawManifestResources)
-      .filter(pr => !bundleManifestResourceUris.has(pr.uri))
-      .map(pr => createResourceData(pr, parentStoredFiles[pr.uri], pr));
+    const { storedFiles: parentStoredFiles } = previousManifestResources;
+    const deletedParentBundleResources =
+      Object.values(previousManifestResources.rawManifestResources)
+        .filter(pr => !bundleManifestResourceUris.has(pr.uri) &&
+          Object.keys(rawManifestResources).length)
+        .map(pr => createResourceData(null, pr, parentStoredFiles[pr.uri], pr));
     return [...bundleManifestResourcesData, ...deletedParentBundleResources];
   }
 );
@@ -273,19 +304,63 @@ function getRawManifestResourceUris(manifestResources) {
   return rawManifestResourceUris;
 }
 
-function getParentManifestResource(bundleId, bundlesById, manifestResources) {
-  const bundle = bundlesById[bundleId];
-  const { parent } = bundle;
-  if (parent && parent.dblId === bundle.dblId) {
-    return manifestResources[parent.bundleId] || emptyBundleManifestResources;
-  }
-  return emptyBundleManifestResources;
+function getPrevEntryRevision(bundle, allEntryRevisions) {
+  const { dblId, revision } = bundle;
+  const entryRevisions = allEntryRevisions[dblId] || [];
+  const prevEntryRevision = entryRevisions.find((entryRevision, index) => {
+    const prevIndex = index - 1;
+    if (prevIndex < 0) {
+      return false;
+    }
+    const prev = entryRevisions[prevIndex];
+    return revision === `${prev.revision}`;
+  });
+  return prevEntryRevision;
 }
 
-const makeGetParentManifestResources = () => createSelector(
-  [getAllManifestResources, getBundleId, getBundlesById],
-  (manifestResources, bundleId, bundlesById) =>
-    getParentManifestResource(bundleId, bundlesById, manifestResources)
+function getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions) {
+  const bundle = bundlesById[bundleId];
+  const { dblId, parent } = bundle;
+  if (parent && parent.dblId === dblId) {
+    const bundleBundle = bundlesById[parent.bundleId];
+    const entryRevisions = allEntryRevisions[dblId];
+    return {
+      bundlePreviousRevision: bundleBundle,
+      previousEntryRevision: (entryRevisions || []).find(r => `${r.revision}` === bundleBundle.revision)
+    };
+  }
+  const previousEntryRevision = getPrevEntryRevision(bundle, allEntryRevisions);
+  const localEntryBundles = findLocalEntryBundles(bundlesById, dblId);
+  const bundlePreviousRevision = previousEntryRevision ?
+    localEntryBundles.find(b => b.revision === `${previousEntryRevision.revision}`) : null;
+  return { bundlePreviousRevision, previousEntryRevision };
+}
+
+function getPreviousManifestResource(bundleId, bundlesById, manifestResources, allEntryRevisions) {
+  const { previousEntryRevision, bundlePreviousRevision } =
+    getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions);
+  const previousManifestResources = bundlePreviousRevision ?
+    manifestResources[bundlePreviousRevision.id] || emptyBundleManifestResources :
+    emptyBundleManifestResources;
+  return { previousEntryRevision, bundlePreviousRevision, previousManifestResources };
+}
+
+const makeGetPrevManifestResources = () => createSelector(
+  [getAllManifestResources, getBundleId, getBundlesById, getAllEntryRevisions],
+  (manifestResources, bundleId, bundlesById, allEntryRevisions) =>
+    getPreviousManifestResource(bundleId, bundlesById, manifestResources, allEntryRevisions)
+);
+
+const makeGetBundlePrevRevision = () => createSelector(
+  [getAllEntryRevisions, getBundleId, getBundlesById],
+  (allEntryRevisions, bundleId, bundlesById) =>
+    getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions)
+);
+
+const makeGetPrevEntryRevision = () => createSelector(
+  [getAllEntryRevisions, getBundleId, getBundlesById],
+  (allEntryRevisions, bundleId, bundlesById) =>
+    getPrevEntryRevision(bundlesById[bundleId], allEntryRevisions)
 );
 
 /*
@@ -330,20 +405,24 @@ function findLocalEntryBundles(bundlesById, dblId) {
   return Object.values(bundlesById).filter(b => b.dblId === dblId);
 }
 
+function getIsCompatibleVersion(entryRevision) {
+  return entryRevision.version.startsWith('2.');
+}
+
 const makeGetEntryRevisionsData = () => createSelector(
   [getAllEntryRevisions, getAllManifestResources, getBundlesById, getBundleId],
   (allEntryRevisions, manifestResources, bundlesById, bundleId) => {
     const bundle = bundlesById[bundleId];
     const { dblId } = bundle;
     const localEntryBundles = findLocalEntryBundles(bundlesById, dblId);
-    const entryRevisions = allEntryRevisions[dblId] || {};
-    const entryRevData = Object.values(entryRevisions)
+    const entryRevisions = allEntryRevisions[dblId] || [];
+    const entryRevData = entryRevisions
       .map(entryRevision => {
         const revision = `${entryRevision.revision}`;
         const localEntryBundle = localEntryBundles.find(b => b.revision === revision);
         const { id: localBundleId } = localEntryBundle || {};
         const { [localBundleId]: bundleManifestResources = [] } = manifestResources;
-        const disabled = bundleId === localBundleId || !entryRevision.version.startsWith('2.');
+        const disabled = bundleId === localBundleId || !getIsCompatibleVersion(entryRevision);
         return createRevisionData(entryRevision, localEntryBundle, bundleManifestResources, disabled);
       });
     const draftData = Object.values(localEntryBundles).filter(localBundle => [0, '0'].includes(localBundle.revision)).map(localEntryBundle => {
@@ -381,7 +460,9 @@ const makeGetEntryPageUrl = () => createSelector(
 function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundleManageResources } = state;
   const {
-    publicationsHealth, progress = 100, loading = false, isStoreMode = false, fetchingMetadata = false
+    publicationsHealth, progress = 100, loading = false,
+    isStoreMode = false, fetchingMetadata = false,
+    mapperReports = {}, selectedMappers = {}
   } = bundleManageResources;
   const {
     errorMessage: publicationsHealthMessage,
@@ -393,11 +474,21 @@ function mapStateToProps(state, props) {
   const { showMetadataFile } = bundleEditMetadata;
   const columnConfig = createColumnConfig(mode);
   const getManifestResourceData = makeGetManifestResourcesData();
-  const getParentManifestResources = makeGetParentManifestResources();
+  const getPrevManifestResources = makeGetPrevManifestResources();
   const bundlesById = getBundlesById(state);
   const getEntryRevisionsData = makeGetEntryRevisionsData();
   const origBundle = bundleId ? bundlesById[bundleId] : {};
   const getEntryPageUrl = makeGetEntryPageUrl();
+  const {
+    previousEntryRevision,
+    bundlePreviousRevision,
+    previousManifestResources
+  } = (mode !== 'revisions' ? getPrevManifestResources(state, props) :
+    { previousManifestResources: emptyBundleManifestResources });
+  const { input: mapperInputData } = mapperReports;
+  const { report: mapperReport = {} } = mapperInputData || {};
+  const selectedIdsInputConverters =
+    selectedMappers.input || Object.keys(mapperReport);
   return {
     open: Boolean(bundleId),
     loading: loading || fetchingMetadata || !isStoreMode,
@@ -407,8 +498,12 @@ function mapStateToProps(state, props) {
     origBundle,
     mode,
     showMetadataFile,
+    mapperInputData,
+    selectedIdsInputConverters,
     manifestResources: getManifestResourceData(state, props),
-    parentManifestResources: getParentManifestResources(state, props),
+    previousEntryRevision,
+    bundlePreviousRevision,
+    previousManifestResources,
     entryRevisions: mode === 'revisions' ? getEntryRevisionsData(state, props) : [],
     columnConfig,
     isOkToAddFiles: !publicationsHealthMessage,
@@ -432,7 +527,8 @@ const mapDispatchToProps = {
   checkPublicationsHealth,
   createBundleFromDBL,
   selectBundleEntryRevision,
-  removeResources
+  removeResources,
+  getMapperReport
 };
 
 const materialStyles = theme => ({
@@ -488,8 +584,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   componentDidMount() {
     const { bundleId, mode } = this.props;
+    this.props.getEntryRevisions(bundleId);
     if (mode === 'revisions') {
-      this.props.getEntryRevisions(bundleId);
       const { bundlesById } = this.props;
       const { [bundleId]: bundle } = bundlesById;
       const { dblId } = bundle;
@@ -505,28 +601,59 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
   }
 
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.progress !== this.props.progress &&
-      (nextProps.progress === 100)) {
-      const { bundleId } = this.props;
-      this.props.getManifestResources(bundleId);
-    }
-    if ((nextProps.manifestResources !== this.props.manifestResources) ||
-      (this.props.mode === 'revisions' && nextProps.entryRevisions !== this.entryRevisions)) {
-      this.updateTableData(nextProps);
-    }
-  }
-
   componentDidUpdate(prevProps) {
+    if (this.state.closing) {
+      return;
+    }
     if (this.props.showMetadataFile && !prevProps.showMetadataFile) {
       shell.openExternal(this.props.showMetadataFile);
     }
+    if (this.props.progress !== prevProps.progress &&
+      (this.props.progress === 100)) {
+      const { bundleId } = this.props;
+      this.props.getManifestResources(bundleId);
+    }
+    if (this.props.mode !== 'revisions') {
+      if (!prevProps.previousEntryRevision &&
+        this.props.previousEntryRevision && !this.props.bundlePreviousRevision &&
+        getIsCompatibleVersion(this.props.previousEntryRevision)) {
+        const { origBundle } = this.props;
+        this.props.createBundleFromDBL(
+          origBundle.dblId,
+          this.props.previousEntryRevision.revision,
+          origBundle.license
+        );
+      }
+      if (!prevProps.bundlePreviousRevision && this.props.bundlePreviousRevision) {
+        this.props.getManifestResources(this.props.bundlePreviousRevision.id);
+      }
+    }
+    /* todo: the following do setState, which is unorthodox/anti-pattern */
+    if ((this.props.manifestResources.length !== prevProps.manifestResources.length) ||
+      (this.props.mode === 'revisions' && this.props.entryRevisions !== prevProps.entryRevisions) ||
+      !utilities.haveEqualKeys(this.props.previousManifestResources, this.props.previousManifestResources)) {
+      this.updateTableData(this.props);
+    } else if (this.props.mapperInputData !== prevProps.mapperInputData ||
+      this.props.selectedIdsInputConverters !== prevProps.selectedIdsInputConverters) {
+      const tableData = this.getTableDataForAddedResources(
+        this.state.addedFilePaths,
+        this.state.fullToRelativePaths
+      );
+      this.updateTableAsIs(tableData);
+    }
   }
 
+  updateTableAsIs(tableData) {
+    this.setState({ tableData });
+  }
+
+  /* todo: memoize tableData */
   updateTableData = (props) => {
     const tableData = props.mode === 'revisions' ? props.entryRevisions : props.manifestResources;
     const selectedIds = this.getSelectedIds(tableData, props.mode);
-    this.setState({ tableData, selectedIds });
+    this.setState({
+      tableData, selectedIds, addedFilePaths: [], fullToRelativePaths: undefined
+    }, this.getMapperReport);
   }
 
   getSelectedIds = (tableData, mode) => {
@@ -540,7 +667,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   handleDownloadOrClean = () => {
     const {
       storedResources, manifestResources, inEffect
-    } = this.getResourcesByStatus();
+    } = this.getSelectedResourcesByStatus();
     const { bundleId } = this.props;
     const effectiveSelectedIds = inEffect.map(row => row.id);
     if (manifestResources === inEffect) {
@@ -565,10 +692,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.handleClose();
   }
 
-  getResourcesByStatus = () => {
+  getSelectedResourcesByStatus = () => {
     const selectedResources = this.getSelectedRowData();
     const parentRawManifestResourceUris =
-      getRawManifestResourceUris(this.props.parentManifestResources);
+      getRawManifestResourceUris(this.props.previousManifestResources);
     const filteredResources
       = List(selectedResources).reduce(
         (acc, r) => {
@@ -590,8 +717,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               resourcesInParent,
               discardableResources
             };
-          } else if ([addStatus, addAndOverwrite].includes(r.status)) {
-            return { ...acc, toAddResources: acc.toAddResources.push(r), resourcesInParent };
+          } else if (addStatuses.includes(r.status)) {
+            const toAddResources = acc.toAddResources.push(r);
+            return { ...acc, toAddResources, resourcesInParent };
           } else if (!r.stored) {
             return {
               ...acc,
@@ -638,7 +766,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { bundleId } = this.props;
     const {
       storedResources, manifestResources, toAddResources, discardableResources, inEffect
-    } = this.getResourcesByStatus();
+    } = this.getSelectedResourcesByStatus();
     const discardableUris = discardableResources.map(r => r.uri);
     if (storedResources === inEffect || discardableUris.length > 0) {
       if (discardableUris.length > 0) {
@@ -655,14 +783,21 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       const inEffectUris = inEffect.map(r => r.uri);
       this.props.deleteManifestResources(bundleId, inEffectUris);
     } else if (toAddResources === inEffect) {
+      const { mapperInputData = {} } = this.props;
+      const { report: inputMappers = {} } = mapperInputData;
+      const { selectedIdsInputConverters: selectedMapperKeys = [] } = this.props;
+      const selectedMappers = Object.keys(inputMappers)
+        .filter(mapperKey => selectedMapperKeys.includes(mapperKey))
+        .reduce((acc, mapperKey) => ({ ...acc, [mapperKey]: inputMappers[mapperKey] }), {});
       const filesToContainers = toAddResources.reduce((acc, selectedResource) =>
         ({ ...acc, [selectedResource.id]: formatUriForApi(selectedResource) }), {});
-      this.props.addManifestResources(bundleId, filesToContainers);
+      this.props.addManifestResources(bundleId, filesToContainers, selectedMappers);
       this.setState({ selectedIds: [] });
     }
   }
 
   handleClose = () => {
+    this.setState({ closing: true });
     this.props.closeResourceManager(this.props.bundleId);
   };
 
@@ -674,8 +809,21 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.props.goFixPublications();
   }
 
-  onSelectedIds = (selectedIds) => {
-    this.setState({ selectedIds, selectAll: false });
+  getMapperReport = () => {
+    if (!this.isModifyFilesMode()) {
+      return;
+    }
+    const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
+    if (toAddResources !== inEffect && inEffect) {
+      return;
+    }
+    const { bundleId } = this.props;
+    const uris = (toAddResources || []).map(r => r.uri);
+    this.props.getMapperReport('input', uris, bundleId);
+  }
+
+  handleSelectedResourceIds = (selectedIds) => {
+    this.setState({ selectedIds, selectAll: false }, this.getMapperReport);
   }
 
   getSelectedCountMessage = (shouldDisableOk) => {
@@ -686,7 +834,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const allMsg = selectAll ? 'All ' : '';
     const {
       inEffect = []
-    } = this.getResourcesByStatus();
+    } = this.getSelectedResourcesByStatus();
     return ` (${allMsg}${inEffect.length})`;
   }
 
@@ -727,7 +875,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { isOkToRemoveFromManifest, isOkToAddFiles } = this.props;
     const {
       manifestResources, toAddResources, inEffect
-    } = this.getResourcesByStatus();
+    } = this.getSelectedResourcesByStatus();
     if (manifestResources === inEffect && !isOkToRemoveFromManifest) {
       return true;
     }
@@ -755,12 +903,12 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   getUpdateSelectedResourcesContainers = (newContainer) => {
     const { tableData: origTotalResources } = this.state;
-    const { toAddResources, inEffect } = this.getResourcesByStatus();
+    const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
     if (toAddResources !== inEffect) {
       return origTotalResources;
     }
     const parentRawManifestResourceUris =
-      getRawManifestResourceUris(this.props.parentManifestResources);
+      getRawManifestResourceUris(this.props.previousManifestResources);
     const tableData = toAddResources.map(resource => resource.id).reduce((acc, filePath) => {
       const container = formatContainer(newContainer);
       const updatedTotalResources = createUpdatedTotalResources(
@@ -795,14 +943,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     if (!newAddedFilePaths) {
       return;
     }
-    this.setAddedFilePathsAndSelectAll(newAddedFilePaths);
+    this.setAddedFilePathsAndSelectAll(newAddedFilePaths, this.state.fullToRelativePaths);
   };
 
   setAddedFilePathsAndSelectAll = (newAddedFilePaths, fullToRelativePaths) => {
     const addedFilePaths = this.getUnionWithAddedFiles(newAddedFilePaths);
     const selectedIds = this.getUnionWithSelectedIds(addedFilePaths);
     this.setState(
-      { addedFilePaths, selectedIds },
+      { addedFilePaths, selectedIds, fullToRelativePaths },
       this.updateTotalResources(newAddedFilePaths, fullToRelativePaths)
     );
     // this.setState({ selectAll: true });
@@ -842,16 +990,38 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.setAddedFilePathsAndSelectAll(allFullPaths, allFullToRelativePaths);
   };
 
-  updateTotalResources = (newAddedFilePaths, fullToRelativePaths) => () => {
-    const { manifestResources } = this.props;
+  filterBySelectedMappers = (inputMappers) => {
+    const { selectedIdsInputConverters } = this.props;
+    return Object.entries(inputMappers)
+      .filter(([mapperKey]) => selectedIdsInputConverters.includes(mapperKey))
+      .reduce((acc, [mapperKey, mapperValue]) => ({ ...acc, [mapperKey]: mapperValue }), {});
+  }
+
+  getTableDataForAddedResources = (newAddedFilePaths, fullToRelativePaths) => {
+    const { manifestResources, mapperInputData = {} } = this.props;
+    const { report: inputMappers = {}, overwrites: inputMappersOverwrites = {} } = mapperInputData;
     const { tableData = manifestResources } = this.state;
     const parentRawManifestResourceUris =
-      getRawManifestResourceUris(this.props.parentManifestResources);
+      getRawManifestResourceUris(this.props.previousManifestResources);
     const otherResources = tableData.filter(r => !newAddedFilePaths.includes(r.id));
-    const newlyAddedResources = newAddedFilePaths.map(createAddedResource(fullToRelativePaths, parentRawManifestResourceUris));
+    const conversions = utilities.getUnionOfValues(this.filterBySelectedMappers(inputMappers));
+    const conversionOverwrites = Object.entries(this.filterBySelectedMappers(inputMappersOverwrites))
+      .reduce((acc, [, mapperOverwrites]) => acc.union(mapperOverwrites.map(a => a[0])), Set());
+    const newlyAddedResources = newAddedFilePaths.map(createAddedResource(
+      fullToRelativePaths, parentRawManifestResourceUris,
+      conversions, conversionOverwrites
+    ));
+    return [...otherResources, ...newlyAddedResources];
+  }
+
+  updateTotalResources = (newAddedFilePaths, fullToRelativePaths) => () => {
+    const tableData = this.getTableDataForAddedResources(newAddedFilePaths, fullToRelativePaths);
     this.setState(
-      { tableData: [...otherResources, ...newlyAddedResources] },
-      this.updateAddedResourcesWithFileStats(newAddedFilePaths)
+      { tableData },
+      () => {
+        this.getMapperReport();
+        this.updateAddedResourcesWithFileStats(newAddedFilePaths);
+      }
     );
   }
 
@@ -862,7 +1032,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { classes } = this.props;
     const {
       discardableResources, storedResources, manifestResources, toAddResources, inEffect = []
-    } = this.getResourcesByStatus();
+    } = this.getSelectedResourcesByStatus();
     const toAddReourcesInEffect = toAddResources === inEffect;
     const OkButtonIcon = toAddReourcesInEffect ?
       <CheckIcon className={classNames(classes.leftIcon)} /> :
@@ -876,8 +1046,18 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       OkButtonLabel = `Delete from Manifest (${inEffectCount})`;
     } else if (toAddResources === inEffect) {
       const revisions = toAddResources.filter(r => r.status === addAndOverwrite);
-      const overwritesMsg = revisions.length ? ` / Revise (${revisions.length})` : '';
-      OkButtonLabel = `Add (${inEffectCount - revisions.length})${overwritesMsg}`;
+      const conversions = toAddResources.filter(r => r.status === addAndConvert);
+      const conversionOverwrites = toAddResources.filter(r => r.status === addAndConvertOverwrite);
+      const addCount = inEffectCount - conversions.length - conversionOverwrites.length;
+      const addCountMsg = addCount > 0 ? ` ${addCount}` : '';
+      const addMessageBuilder = [`Add${addCountMsg}`];
+      if (conversions.length || conversionOverwrites.length) {
+        addMessageBuilder.push(` / Convert ${conversions.length + conversionOverwrites.length}`);
+      }
+      if (revisions.length || conversionOverwrites.length) {
+        addMessageBuilder.push(` (Revise ${revisions.length + conversionOverwrites.length})`);
+      }
+      OkButtonLabel = addMessageBuilder.join('');
     }
     const OkButtonProps = {
       classes,
@@ -893,7 +1073,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { classes } = this.props;
     const {
       storedResources, manifestResources, inEffect
-    } = this.getResourcesByStatus();
+    } = this.getSelectedResourcesByStatus();
     const isManifestResourcesInEffect = manifestResources === inEffect;
     const OkButtonIcon = isManifestResourcesInEffect ?
       <FileDownload className={classNames(classes.leftIcon)} /> :
@@ -934,7 +1114,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           }
         };
       } case 'addFiles': {
-        const { OkButtonLabel, OkButtonIcon, OkButtonProps } = this.getOkButtonDataModifyResources();
+        const { OkButtonLabel, OkButtonIcon, OkButtonProps } =
+          this.getOkButtonDataModifyResources();
         return {
           mode,
           appBar: {
@@ -970,11 +1151,13 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   getHandleAddByFile = () => (
-    (!this.props.loading && this.isModifyFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFile : undefined
+    (!this.props.loading && this.isModifyFilesMode() && this.props.isOkToAddFiles) ?
+      this.handleAddByFile : undefined
   )
 
   getHandleAddByFolder = () => (
-    (!this.props.loading && this.isModifyFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFolder : undefined
+    (!this.props.loading && this.isModifyFilesMode() && this.props.isOkToAddFiles) ?
+      this.handleAddByFolder : undefined
   )
 
   getAllSuggestions = (tableData) => {
@@ -1050,19 +1233,38 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   renderTableToolbar = () => {
-    const { mode } = this.props;
+    const { mode, mapperInputData } = this.props;
     const { selectedIds } = this.state;
-    const { toAddResources, inEffect } = this.getResourcesByStatus();
+    const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
     const addModeProps = mode === 'addFiles' ? {
       enableEditContainer: toAddResources === inEffect,
       handleAddByFile: this.getHandleAddByFile(),
       handleAddByFolder: this.getHandleAddByFolder(),
       getSuggestions: this.getSuggestions,
+      mapperInputData,
       onAutosuggestInputChanged: this.handleAutosuggestInputChanged
     } : {};
-    return (<EnhancedTableToolbar
-      numSelected={selectedIds.length}
-      {...addModeProps}
+    return (
+      <React.Fragment>
+        <EnhancedTableToolbar
+          numSelected={selectedIds.length}
+          {...addModeProps}
+        />
+        {this.renderInputMapperReportTable()}
+      </React.Fragment>);
+  }
+
+  renderInputMapperReportTable = () => {
+    const { mapperInputData = {} } = this.props;
+    const { report = {} } = mapperInputData;
+    const mapperKeys = Object.keys(report);
+    if (mapperKeys.length === 0) {
+      return (null);
+    }
+    const { selectedIdsInputConverters = [] } = this.props;
+    return (<MapperTable
+      direction="input"
+      selectedIds={selectedIdsInputConverters}
     />);
   }
 
@@ -1081,7 +1283,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               columnConfig={columnConfig}
               secondarySorts={secondarySorts}
               defaultOrderBy="container"
-              onSelectedRowIds={this.onSelectedIds}
+              onSelectedRowIds={this.handleSelectedResourceIds}
               multiSelections
               selectedIds={selectedIds}
             />
@@ -1099,7 +1301,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               secondarySorts={['revision']}
               defaultOrderBy="revision"
               orderDirection="desc"
-              onSelectedRowIds={this.onSelectedIds}
+              onSelectedRowIds={this.handleSelectedResourceIds}
               selectedIds={selectedIds}
             />
           </React.Fragment>
@@ -1114,7 +1316,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               columnConfig={columnConfig}
               secondarySorts={secondarySorts}
               defaultOrderBy="container"
-              onSelectedRowIds={this.onSelectedIds}
+              onSelectedRowIds={this.handleSelectedResourceIds}
               multiSelections
               selectedIds={selectedIds}
             />

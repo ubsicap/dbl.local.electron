@@ -1,7 +1,9 @@
+import path from 'path';
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
 import { bundleService } from '../services/bundle.service';
+import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { utilities } from '../utils/utilities';
 import { openEditMetadata } from './bundleEditMetadata.actions';
 import { bundleActions } from './bundle.actions';
@@ -167,16 +169,27 @@ async function updatePublications(getState, bundleId) {
   await bundleService.updatePublications(bundleId, publications);
 }
 
-export function addManifestResources(_bundleId, _fileToContainerPaths) {
+export function addManifestResources(_bundleId, _fileToContainerPaths, inputMappers) {
   return async (dispatch, getState) => {
     dispatch(request(_bundleId, _fileToContainerPaths));
     await bundleService.waitStartCreateMode(_bundleId);
+    const urisToConvert = utilities.getUnionOfValues(inputMappers);
     /* eslint-disable no-restricted-syntax */
     /* eslint-disable no-await-in-loop */
     for (const [filePath, containerPath] of Object.entries(_fileToContainerPaths)) {
       try {
-        await bundleService.postResource(_bundleId, filePath, containerPath);
-        dispatch(success(_bundleId, filePath, containerPath));
+        if (!urisToConvert.has(containerPath)) {
+          await bundleService.postResource(_bundleId, filePath, containerPath);
+          dispatch(success(_bundleId, filePath, containerPath));
+        } else {
+          const applicableInputMappers = Object.entries(inputMappers)
+            .filter(([, mapperUris]) => mapperUris
+              .includes(containerPath)).map(([mapperKey]) => mapperKey);
+          for (const mapper of applicableInputMappers) {
+            await bundleService.postResource(_bundleId, filePath, containerPath, mapper);
+            dispatch(success(_bundleId, filePath, containerPath, mapper));
+          }
+        }
       } catch (error) {
         dispatch(failure(_bundleId, error));
       }
@@ -204,12 +217,13 @@ export function addManifestResources(_bundleId, _fileToContainerPaths) {
       fileToContainerPaths
     };
   }
-  function success(bundleId, filePath, containerPath) {
+  function success(bundleId, filePath, containerPath, mapper) {
     return {
       type: bundleResourceManagerConstants.UPDATE_MANIFEST_RESOURCE_RESPONSE,
       bundleId,
       filePath,
-      containerPath
+      containerPath,
+      mapper
     };
   }
   function done(bundleId) {
@@ -262,4 +276,54 @@ export function deleteManifestResources(_bundleId, _uris) {
   function failure(bundleId, error, uri) {
     return { type: bundleResourceManagerConstants.DELETE_MANIFEST_RESOURCES_FAILURE, error, uri };
   }
+}
+
+async function getOverwritesPerMapper(direction, report, bundleId) {
+  if (direction !== 'input') {
+    return undefined;
+  }
+  const overwrites = {};
+  /* eslint-disable no-restricted-syntax */
+  /* eslint-disable no-await-in-loop */
+  for (const [mapperKey, mapperUris] of Object.entries(report)) {
+    const mapperOverwrites =
+      await bundleService.getMapperInputOverwrites(bundleId, { [mapperKey]: mapperUris }, []);
+    overwrites[mapperKey] = mapperOverwrites;
+  }
+  return overwrites;
+}
+
+export function getMapperReport(_direction, _uris, _bundleId) {
+  return async dispatch => {
+    dispatch(request(_direction, _uris));
+    const options = await dblDotLocalService.getMappers(_direction);
+    const report = await dblDotLocalService.getMapperReport(_direction, _uris);
+    const overwrites = await getOverwritesPerMapper(_direction, report, _bundleId);
+    dispatch(success(_direction, _uris, report, options, overwrites));
+  };
+  function request(direction, uris) {
+    return {
+      type: bundleResourceManagerConstants.MAPPER_REPORT_REQUEST,
+      direction,
+      uris
+    };
+  }
+  function success(direction, uris, report, options, overwrites) {
+    return {
+      type: bundleResourceManagerConstants.MAPPER_REPORT_SUCCESS,
+      direction,
+      uris,
+      report,
+      options,
+      overwrites
+    };
+  }
+}
+
+export function selectMappers(direction, mapperIds) {
+  return {
+    type: bundleResourceManagerConstants.MAPPERS_SELECTED,
+    direction,
+    mapperIds
+  };
 }

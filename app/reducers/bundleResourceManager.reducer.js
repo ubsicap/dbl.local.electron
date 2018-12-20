@@ -127,10 +127,37 @@ export function bundleManageResources(state = initialState, action) {
       };
     }
     case bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_SUCCESS: {
-      const { publications, medium, message, wizardsResults } = action;
+      const {
+        publications, medium, message, wizardsResults
+      } = action;
       return {
         ...state,
-        publicationsHealth: { publications, medium, message, wizardsResults }
+        publicationsHealth: {
+          publications, medium, message, wizardsResults
+        }
+      };
+    }
+    case bundleResourceManagerConstants.MAPPER_REPORT_SUCCESS: {
+      const {
+        uris, direction, report, options, overwrites
+      } = action;
+      const { mapperReports: mapperReportsOrig } = state;
+      return {
+        ...state,
+        mapperReports: {
+          ...mapperReportsOrig,
+          [direction]: {
+            uris, report, options, overwrites
+          }
+        }
+      };
+    }
+    case bundleResourceManagerConstants.MAPPERS_SELECTED: {
+      const { direction, mapperIds } = action;
+      const { selectedMappers: selectedMappersOrig } = state;
+      return {
+        ...state,
+        selectedMappers: { ...selectedMappersOrig, [direction]: mapperIds }
       };
     }
     default: {
