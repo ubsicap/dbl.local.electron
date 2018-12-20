@@ -1,3 +1,13 @@
+### Version 0.21.0
+#### Features (Manage Resources Dialog - mapping converters)
+- show/select available mapping converters
+- show Rev badge after users selects row when there are later revisions
+- update dbl_dot_local_app to 12/18/2018
+#### Fixes
+- fix medium icon for Save As options
+- fix status for previous manifest resources
+- only disable selecting revised resources in drafts.
+
 ### Version 0.20.0
 #### Features (Manage Resources Dialog - discard / revision status)
 - added `Clean () / Discard ()` button to indicate how many newly added resources will be discarded from manifest
