@@ -319,3 +319,11 @@ export function getMapperReport(_direction, _uris, _bundleId) {
     };
   }
 }
+
+export function selectMappers(direction, mapperIds) {
+  return {
+    type: bundleResourceManagerConstants.MAPPERS_SELECTED,
+    direction,
+    mapperIds
+  };
+}

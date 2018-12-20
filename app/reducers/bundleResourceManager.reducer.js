@@ -152,6 +152,14 @@ export function bundleManageResources(state = initialState, action) {
         }
       };
     }
+    case bundleResourceManagerConstants.MAPPERS_SELECTED: {
+      const { direction, mapperIds } = action;
+      const { selectedMappers: selectedMappersOrig } = state;
+      return {
+        ...state,
+        selectedMappers: { ...selectedMappersOrig, [direction]: mapperIds }
+      };
+    }
     default: {
       return state;
     }

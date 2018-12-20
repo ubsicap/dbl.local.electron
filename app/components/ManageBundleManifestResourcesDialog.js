@@ -70,7 +70,8 @@ type Props = {
   publicationsHealthMessage: ?string,
   publicationsHealthSuccessMessage: ?string,
   wizardsResults: ?{},
-  mapperInputReport: ?{},
+  mapperInputData: ?{},
+  selectedIdsInputConverters: ?{},
   goFixPublications: ?() => {},
   entryPageUrl: string,
   closeResourceManager: () => {},
@@ -461,7 +462,7 @@ function mapStateToProps(state, props) {
   const {
     publicationsHealth, progress = 100, loading = false,
     isStoreMode = false, fetchingMetadata = false,
-    mapperReports = {}
+    mapperReports = {}, selectedMappers = {}
   } = bundleManageResources;
   const {
     errorMessage: publicationsHealthMessage,
@@ -484,6 +485,10 @@ function mapStateToProps(state, props) {
     previousManifestResources
   } = (mode !== 'revisions' ? getPrevManifestResources(state, props) :
     { previousManifestResources: emptyBundleManifestResources });
+  const { input: mapperInputData } = mapperReports;
+  const { report: mapperReport = {} } = mapperInputData || {};
+  const selectedIdsInputConverters =
+    selectedMappers.input || Object.keys(mapperReport);
   return {
     open: Boolean(bundleId),
     loading: loading || fetchingMetadata || !isStoreMode,
@@ -493,7 +498,8 @@ function mapStateToProps(state, props) {
     origBundle,
     mode,
     showMetadataFile,
-    mapperInputReport: mapperReports.input,
+    mapperInputData,
+    selectedIdsInputConverters,
     manifestResources: getManifestResourceData(state, props),
     previousEntryRevision,
     bundlePreviousRevision,
@@ -634,7 +640,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const tableData = props.mode === 'revisions' ? props.entryRevisions : props.manifestResources;
     const selectedIds = this.getSelectedIds(tableData, props.mode);
     this.setState({
-      tableData, selectedIds, selectedIdsInputConverters: [], addedFilePaths: []
+      tableData, selectedIds, addedFilePaths: []
     }, this.getMapperReport);
   }
 
@@ -765,9 +771,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       const inEffectUris = inEffect.map(r => r.uri);
       this.props.deleteManifestResources(bundleId, inEffectUris);
     } else if (toAddResources === inEffect) {
-      const { mapperInputReport = {} } = this.props;
-      const { report: inputMappers = {} } = mapperInputReport;
-      const { selectedIdsInputConverters: selectedMapperKeys = [] } = this.state;
+      const { mapperInputData = {} } = this.props;
+      const { report: inputMappers = {} } = mapperInputData;
+      const { selectedIdsInputConverters: selectedMapperKeys = [] } = this.props;
       const selectedMappers = Object.keys(inputMappers)
         .filter(mapperKey => selectedMapperKeys.includes(mapperKey))
         .reduce((acc, mapperKey) => ({ ...acc, [mapperKey]: inputMappers[mapperKey] }), {});
@@ -973,15 +979,15 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   };
 
   filterBySelectedMappers = (inputMappers) => {
-    const { selectedIdsInputConverters } = this.state;
+    const { selectedIdsInputConverters } = this.props;
     return Object.entries(inputMappers)
       .filter(([mapperKey]) => selectedIdsInputConverters.includes(mapperKey))
       .reduce((acc, [mapperKey, mapperValue]) => ({ ...acc, [mapperKey]: mapperValue }), {});
   }
 
   updateTotalResources = (newAddedFilePaths, fullToRelativePaths) => () => {
-    const { manifestResources, mapperInputReport = {} } = this.props;
-    const { report: inputMappers = {}, overwrites: inputMappersOverwrites = {} } = mapperInputReport;
+    const { manifestResources, mapperInputData = {} } = this.props;
+    const { report: inputMappers = {}, overwrites: inputMappersOverwrites = {} } = mapperInputData;
     const { tableData = manifestResources } = this.state;
     const parentRawManifestResourceUris =
       getRawManifestResourceUris(this.props.previousManifestResources);
@@ -1089,7 +1095,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           }
         };
       } case 'addFiles': {
-        const { OkButtonLabel, OkButtonIcon, OkButtonProps } = this.getOkButtonDataModifyResources();
+        const { OkButtonLabel, OkButtonIcon, OkButtonProps } =
+          this.getOkButtonDataModifyResources();
         return {
           mode,
           appBar: {
@@ -1125,11 +1132,13 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   getHandleAddByFile = () => (
-    (!this.props.loading && this.isModifyFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFile : undefined
+    (!this.props.loading && this.isModifyFilesMode() && this.props.isOkToAddFiles) ?
+      this.handleAddByFile : undefined
   )
 
   getHandleAddByFolder = () => (
-    (!this.props.loading && this.isModifyFilesMode() && this.props.isOkToAddFiles) ? this.handleAddByFolder : undefined
+    (!this.props.loading && this.isModifyFilesMode() && this.props.isOkToAddFiles) ?
+      this.handleAddByFolder : undefined
   )
 
   getAllSuggestions = (tableData) => {
@@ -1205,7 +1214,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   renderTableToolbar = () => {
-    const { mode, mapperInputReport } = this.props;
+    const { mode, mapperInputData } = this.props;
     const { selectedIds } = this.state;
     const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
     const addModeProps = mode === 'addFiles' ? {
@@ -1213,7 +1222,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       handleAddByFile: this.getHandleAddByFile(),
       handleAddByFolder: this.getHandleAddByFolder(),
       getSuggestions: this.getSuggestions,
-      mapperInputReport,
+      mapperInputData,
       onAutosuggestInputChanged: this.handleAutosuggestInputChanged
     } : {};
     return (
@@ -1222,19 +1231,20 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           numSelected={selectedIds.length}
           {...addModeProps}
         />
-        {mapperInputReport && this.renderInputMapperReportTable()}
+        {this.renderInputMapperReportTable()}
       </React.Fragment>);
   }
 
-  handleSelectedIdsInputConverters = (selectedIdsInputConverters) => {
-    this.setState({ selectedIdsInputConverters });
-  }
-
   renderInputMapperReportTable = () => {
-    const { selectedIdsInputConverters = [] } = this.state;
+    const { mapperInputData = {} } = this.props;
+    const { report = {} } = mapperInputData;
+    const mapperKeys = Object.keys(report);
+    if (mapperKeys.length === 0) {
+      return (null);
+    }
+    const { selectedIdsInputConverters = [] } = this.props;
     return (<MapperTable
       direction="input"
-      onSelectedIds={this.handleSelectedIdsInputConverters}
       selectedIds={selectedIdsInputConverters}
     />);
   }

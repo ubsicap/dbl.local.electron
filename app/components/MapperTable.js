@@ -8,6 +8,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import EnhancedTable from './EnhancedTable';
 import { ux } from '../utils/ux';
+import { selectMappers } from '../actions/bundleManageResources.actions';
 
 type Props = {
   classes: {},
@@ -16,7 +17,7 @@ type Props = {
   tableData: [],
   selectedIds: [],
   columnConfig: [],
-  onSelectedIds: () => {}
+  selectMappers: () => {}
 };
 
 function createColumnConfig() {
@@ -49,6 +50,9 @@ const styles = theme => ({
 class MapperTable extends Component<Props> {
   props: Props;
 
+  componentDidMount() {
+    this.props.selectMappers(this.props.direction, this.props.selectedIds);
+  }
 
   getMapperData = () => {
     const { mapperData, selectedIds } = this.props;
@@ -81,9 +85,13 @@ class MapperTable extends Component<Props> {
     return `${selectedMapperUris.length} of ${mappersUris.length} matches in ${selectedIds.length} converters`;
   }
 
+  handleSelectedIds = (selectedIds) => {
+    this.props.selectMappers(this.props.direction, selectedIds);
+  }
+
   render() {
     const {
-      columnConfig, tableData, selectedIds, onSelectedIds, classes
+      columnConfig, tableData, selectedIds, classes
     } = this.props;
     const mapperMessage = this.getMapperMessage();
     return (
@@ -109,7 +117,7 @@ class MapperTable extends Component<Props> {
             columnConfig={columnConfig}
             secondarySorts={secondarySorts}
             defaultOrderBy="description"
-            onSelectedRowIds={onSelectedIds}
+            onSelectedRowIds={this.handleSelectedIds}
             multiSelections
             selectedIds={selectedIds}
           />
@@ -136,6 +144,7 @@ function mapStateToProps(state, props) {
 }
 
 const mapDispatchToProps = {
+  selectMappers
 };
 
 export default compose(
