@@ -635,7 +635,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       this.updateTableData(this.props);
     } else if (this.props.mapperInputData !== prevProps.mapperInputData ||
       this.props.selectedIdsInputConverters !== prevProps.selectedIdsInputConverters) {
-      const tableData = this.getTableDataForAddedResources(this.state.addedFilePaths);
+      const tableData = this.getTableDataForAddedResources(
+        this.state.addedFilePaths,
+        this.state.fullToRelativePaths
+      );
       this.updateTableAsIs(tableData);
     }
   }
@@ -649,7 +652,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const tableData = props.mode === 'revisions' ? props.entryRevisions : props.manifestResources;
     const selectedIds = this.getSelectedIds(tableData, props.mode);
     this.setState({
-      tableData, selectedIds, addedFilePaths: []
+      tableData, selectedIds, addedFilePaths: [], fullToRelativePaths: undefined
     }, this.getMapperReport);
   }
 
@@ -940,14 +943,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     if (!newAddedFilePaths) {
       return;
     }
-    this.setAddedFilePathsAndSelectAll(newAddedFilePaths);
+    this.setAddedFilePathsAndSelectAll(newAddedFilePaths, this.state.fullToRelativePaths);
   };
 
   setAddedFilePathsAndSelectAll = (newAddedFilePaths, fullToRelativePaths) => {
     const addedFilePaths = this.getUnionWithAddedFiles(newAddedFilePaths);
     const selectedIds = this.getUnionWithSelectedIds(addedFilePaths);
     this.setState(
-      { addedFilePaths, selectedIds },
+      { addedFilePaths, selectedIds, fullToRelativePaths },
       this.updateTotalResources(newAddedFilePaths, fullToRelativePaths)
     );
     // this.setState({ selectAll: true });
