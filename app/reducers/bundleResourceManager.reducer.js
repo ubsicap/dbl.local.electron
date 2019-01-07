@@ -160,6 +160,13 @@ export function bundleManageResources(state = initialState, action) {
         selectedMappers: { ...selectedMappersOrig, [direction]: mapperIds }
       };
     }
+    case bundleResourceManagerConstants.SELECT_STORED_RESOURCES_TO_PASTE: {
+      const { bundleId, uris } = action;
+      return {
+        ...state,
+        selectedResourcesToPaste: { bundleId, uris }
+      };
+    }
     default: {
       return state;
     }

@@ -32,7 +32,7 @@ import path from 'path';
 import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources,
-  getMapperReport
+  getMapperReport, selectResourcesToPaste
 } from '../actions/bundleManageResources.actions';
 import { downloadResources, removeResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
@@ -86,7 +86,8 @@ type Props = {
   createBundleFromDBL: () => {},
   selectBundleEntryRevision: () => {},
   removeResources: () => {},
-  getMapperReport: () => {}
+  getMapperReport: () => {},
+  selectResourcesToPaste: () => {}
 };
 
 const addStatus = 'add?';
@@ -529,7 +530,8 @@ const mapDispatchToProps = {
   createBundleFromDBL,
   selectBundleEntryRevision,
   removeResources,
-  getMapperReport
+  getMapperReport,
+  selectResourcesToPaste
 };
 
 const materialStyles = theme => ({
@@ -764,6 +766,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   };
 
   handleCopyFiles = () => {
+    const { storedResources } = this.getSelectedResourcesByStatus();
+    const uris = storedResources.map(r => r.uri);
+    this.props.selectResourcesToPaste(this.props.bundleId, uris);
     this.handleClose();
   }
 

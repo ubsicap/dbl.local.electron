@@ -14,7 +14,8 @@ export const bundleManageResourceActions = {
   getManifestResources,
   addManifestResources,
   deleteManifestResources,
-  checkPublicationsHealth
+  checkPublicationsHealth,
+  selectResourcesToPaste
 };
 
 export function openResourceManager(_bundleId, _mode) {
@@ -276,6 +277,14 @@ export function deleteManifestResources(_bundleId, _uris) {
   function failure(bundleId, error, uri) {
     return { type: bundleResourceManagerConstants.DELETE_MANIFEST_RESOURCES_FAILURE, error, uri };
   }
+}
+
+export function selectResourcesToPaste(bundleId, uris) {
+  return {
+    type: bundleResourceManagerConstants.SELECT_STORED_RESOURCES_TO_PASTE,
+    bundleId,
+    uris
+  };
 }
 
 async function getOverwritesPerMapper(direction, report, bundleId) {
