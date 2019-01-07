@@ -19,6 +19,7 @@ import FolderOpen from '@material-ui/icons/FolderOpen';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import Delete from '@material-ui/icons/Delete';
+import FileCopyIcon from '@material-ui/icons/FileCopy';
 import CloseIcon from '@material-ui/icons/Close';
 import CheckIcon from '@material-ui/icons/Check';
 import OpenInNew from '@material-ui/icons/OpenInNew';
@@ -762,6 +763,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     };
   };
 
+  handleCopyFiles = () => {
+    this.handleClose();
+  }
+
   handleModifyFiles = () => {
     const { bundleId } = this.props;
     const {
@@ -1341,6 +1346,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       classes, open, origBundle = {},
       publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading, progress,
     } = this.props;
+    const { storedResources } = this.getSelectedResourcesByStatus();
     const { displayAs = {} } = origBundle;
     const { languageAndCountry, name, revision } = displayAs;
     const modeUi = this.modeUi();
@@ -1372,6 +1378,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
                 Review
               </Button>
+              <ConfirmButton
+                key="btnCopyForPaste"
+                classes
+                color="inherit"
+                onClick={this.handleCopyFiles}
+                disabled={storedResources.length === 0}
+              >
+                <FileCopyIcon className={classNames(classes.leftIcon)} />
+                Copy For Paste {storedResources.length ? `(${storedResources.length})` : ''}
+              </ConfirmButton>
               <ConfirmButton
                 key="btnOk"
                 {...modeUi.appBar.OkButtonProps}
