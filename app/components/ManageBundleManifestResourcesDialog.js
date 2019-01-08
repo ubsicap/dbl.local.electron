@@ -20,6 +20,7 @@ import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import Delete from '@material-ui/icons/Delete';
 import FileCopyIcon from '@material-ui/icons/FileCopy';
+import AssignmentTurnedInIcon from '@material-ui/icons/AssignmentTurnedIn';
 import CloseIcon from '@material-ui/icons/Close';
 import CheckIcon from '@material-ui/icons/Check';
 import OpenInNew from '@material-ui/icons/OpenInNew';
@@ -75,6 +76,7 @@ type Props = {
   selectedIdsInputConverters: ?{},
   goFixPublications: ?() => {},
   entryPageUrl: string,
+  selectedResourcesToPaste: ?{},
   closeResourceManager: () => {},
   openMetadataFile: () => {},
   getManifestResources: () => {},
@@ -464,7 +466,7 @@ function mapStateToProps(state, props) {
   const {
     publicationsHealth, progress = 100, loading = false,
     isStoreMode = false, fetchingMetadata = false,
-    mapperReports = {}, selectedMappers = {}
+    mapperReports = {}, selectedMappers = {}, selectedResourcesToPaste = {}
   } = bundleManageResources;
   const {
     errorMessage: publicationsHealthMessage,
@@ -515,6 +517,7 @@ function mapStateToProps(state, props) {
     publicationsHealthSuccessMessage,
     wizardsResults,
     entryPageUrl: getEntryPageUrl(state, props),
+    selectedResourcesToPaste
   };
 }
 
@@ -772,6 +775,19 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.handleClose();
   }
 
+  handlePasteResources = () => {
+    this.clearResourceSelectionsForPaste();
+  }
+
+  clearResourceSelectionsForPaste = (urisChanged) => {
+    const { bundleId, selectedResourcesToPaste } = this.props;
+    const { bundleId: bundleIdPasteSource, uris: urisToPaste } = selectedResourcesToPaste;
+    if (bundleId === bundleIdPasteSource &&
+      Set(urisToPaste).subtract(urisChanged).length !== urisToPaste.length) {
+      this.props.selectResourcesToPaste(null, []); // clear resource selections for paste
+    }
+  }
+
   handleModifyFiles = () => {
     const { bundleId } = this.props;
     const {
@@ -780,13 +796,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const discardableUris = discardableResources.map(r => r.uri);
     if (storedResources === inEffect || discardableUris.length > 0) {
       if (discardableUris.length > 0) {
+        this.clearResourceSelectionsForPaste(discardableUris);
         this.props.deleteManifestResources(bundleId, discardableUris);
       }
       const justCleanThese = storedResources.filter(r => !discardableUris.includes(r.uri));
       if (justCleanThese.length > 0) {
+        const uris = justCleanThese.map(r => r.uri);
+        this.clearResourceSelectionsForPaste(uris);
         this.props.removeResources(
           bundleId,
-          justCleanThese.map(r => r.uri)
+          uris
         );
       }
     } else if (manifestResources === inEffect) {
@@ -1346,10 +1365,50 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     utilities.onOpenLink(this.props.entryPageUrl)(event);
   }
 
+  renderOkOrPasteResourcesButton = () => {
+    const {
+      classes, loading, progress, bundleId, selectedResourcesToPaste
+    } = this.props;
+    const { bundleId: bundleIdPasteSource, uris: urisToPaste } = selectedResourcesToPaste;
+    const modeUi = this.modeUi();
+    const isNothingSelected = this.isNothingSelected();
+    if (bundleIdPasteSource && isNothingSelected && bundleId !== bundleIdPasteSource) {
+      return (
+        <ConfirmButton
+          key="btnPasteResources"
+          classes
+          color="secondary"
+          variant="contained"
+          onClick={this.handlePasteResources}
+          disabled={urisToPaste.length === 0}
+        >
+          <AssignmentTurnedInIcon className={classNames(classes.leftIcon)} />
+          Paste {urisToPaste.length ? `(${urisToPaste.length})` : ''} Resources
+        </ConfirmButton>
+      );
+    }
+    return (
+      <ConfirmButton
+        key="btnOk"
+        {...modeUi.appBar.OkButtonProps}
+      >
+        {modeUi.appBar.OkButtonIcon}
+        {modeUi.appBar.OkButtonLabel}
+        {loading &&
+        <CircularProgress
+          className={classes.buttonProgress}
+          size={50}
+          color="secondary"
+          variant="indeterminate"
+          value={progress}
+        />}
+      </ConfirmButton>);
+  }
+
   render() {
     const {
       classes, open, origBundle = {},
-      publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading, progress,
+      publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading
     } = this.props;
     const { storedResources } = this.getSelectedResourcesByStatus();
     const { displayAs = {} } = origBundle;
@@ -1393,21 +1452,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                 <FileCopyIcon className={classNames(classes.leftIcon)} />
                 Copy For Paste {storedResources.length ? `(${storedResources.length})` : ''}
               </ConfirmButton>
-              <ConfirmButton
-                key="btnOk"
-                {...modeUi.appBar.OkButtonProps}
-              >
-                {modeUi.appBar.OkButtonIcon}
-                {modeUi.appBar.OkButtonLabel}
-                {loading &&
-                <CircularProgress
-                  className={classes.buttonProgress}
-                  size={50}
-                  color="secondary"
-                  variant="indeterminate"
-                  value={progress}
-                />}
-              </ConfirmButton>
+              {this.renderOkOrPasteResourcesButton()}
             </Toolbar>
           </AppBar>
           {isModifyFilesMode && publicationsHealthMessage &&

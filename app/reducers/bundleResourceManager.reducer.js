@@ -161,11 +161,16 @@ export function bundleManageResources(state = initialState, action) {
       };
     }
     case bundleResourceManagerConstants.SELECT_STORED_RESOURCES_TO_PASTE: {
+      const { selectedResourcesToPaste: selectedResourcesToPasteOrig, ...restState } = state;
       const { bundleId, uris } = action;
-      return {
-        ...state,
-        selectedResourcesToPaste: { bundleId, uris }
-      };
+      if (bundleId) {
+        return {
+          ...restState,
+          selectedResourcesToPaste: { bundleId, uris }
+        };
+      }
+      /* remove selectedResourcesToPaste */
+      return restState;
     }
     default: {
       return state;
