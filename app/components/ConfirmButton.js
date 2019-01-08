@@ -60,11 +60,7 @@ export default class ConfirmButton extends Component<Props> {
         {buttonLabel ? 'Confirm' : ''}
       </Button>
     );
-    return (
-      <Tooltip title={`Click again to confirm ${buttonLabel || ''}`}>
-        {renderButton()}
-      </Tooltip>
-    );
+    return renderButton();
   }
 
   render() {
