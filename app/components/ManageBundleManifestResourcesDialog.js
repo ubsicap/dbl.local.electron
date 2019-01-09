@@ -623,8 +623,11 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         this.props.getManifestResources(localBundle.id);
       });
       return;
+    } else if (this.props.bundlePreviousRevision) {
+      this.props.getManifestResources(this.props.bundlePreviousRevision.id);
     }
     this.props.getManifestResources(bundleId);
+
     if (this.isModifyFilesMode()) {
       this.props.checkPublicationsHealth(bundleId);
     }
