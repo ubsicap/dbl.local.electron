@@ -1394,13 +1394,13 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   renderOkOrPasteResourcesButton = () => {
     const {
-      classes, loading, progress, bundleId, selectedResourcesToPaste
+      classes, loading, progress, bundleId, selectedResourcesToPaste, isOkToAddFiles
     } = this.props;
     const { bundleId: bundleIdPasteSource, uris: urisToPaste } = selectedResourcesToPaste;
     const modeUi = this.modeUi();
     const isModifyFilesMode = this.isModifyFilesMode();
     const isNothingSelected = this.isNothingSelected();
-    if (isModifyFilesMode &&
+    if (isModifyFilesMode && isOkToAddFiles &&
       bundleIdPasteSource && isNothingSelected &&
       bundleId !== bundleIdPasteSource) {
       return (
