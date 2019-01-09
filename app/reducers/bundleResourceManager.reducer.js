@@ -16,11 +16,15 @@ export function bundleManageResources(state = initialState, action) {
       return {
         ...initialState,
         bundleId,
-        mode
+        mode,
+        selectedResourcesToPaste: state.selectedResourcesToPaste
       };
     }
     case bundleResourceManagerConstants.CLOSE_RESOURCE_MANAGER: {
-      return initialState;
+      return {
+        ...initialState,
+        selectedResourcesToPaste: state.selectedResourcesToPaste
+      };
     }
     case bundleConstants.UPDATE_BUNDLE: {
       const {

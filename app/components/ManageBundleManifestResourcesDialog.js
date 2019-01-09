@@ -776,7 +776,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   handlePasteResources = () => {
-    this.clearResourceSelectionsForPaste();
+    this.props.selectResourcesToPaste(null, []);
   }
 
   clearResourceSelectionsForPaste = (urisChanged) => {
@@ -1371,8 +1371,11 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     } = this.props;
     const { bundleId: bundleIdPasteSource, uris: urisToPaste } = selectedResourcesToPaste;
     const modeUi = this.modeUi();
+    const isModifyFilesMode = this.isModifyFilesMode();
     const isNothingSelected = this.isNothingSelected();
-    if (bundleIdPasteSource && isNothingSelected && bundleId !== bundleIdPasteSource) {
+    if (isModifyFilesMode &&
+      bundleIdPasteSource && isNothingSelected &&
+      bundleId !== bundleIdPasteSource) {
       return (
         <ConfirmButton
           key="btnPasteResources"
