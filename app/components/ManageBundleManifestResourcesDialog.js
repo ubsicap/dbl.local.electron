@@ -33,7 +33,7 @@ import path from 'path';
 import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources,
-  getMapperReport, selectResourcesToPaste
+  getMapperReport, selectResourcesToPaste, pasteResources
 } from '../actions/bundleManageResources.actions';
 import { downloadResources, removeResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
@@ -89,7 +89,8 @@ type Props = {
   selectBundleEntryRevision: () => {},
   removeResources: () => {},
   getMapperReport: () => {},
-  selectResourcesToPaste: () => {}
+  selectResourcesToPaste: () => {},
+  pasteResources: () => {}
 };
 
 const addStatus = 'add?';
@@ -555,7 +556,8 @@ const mapDispatchToProps = {
   selectBundleEntryRevision,
   removeResources,
   getMapperReport,
-  selectResourcesToPaste
+  selectResourcesToPaste,
+  pasteResources
 };
 
 const materialStyles = theme => ({
@@ -797,6 +799,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   handlePasteResources = () => {
+    this.props.pasteResources(this.props.bundleId);
     this.props.selectResourcesToPaste(null, []);
   }
 
