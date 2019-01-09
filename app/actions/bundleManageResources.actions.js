@@ -288,6 +288,14 @@ export function selectResourcesToPaste(bundleId, uris) {
   };
 }
 
+export function clearClipboard() {
+  return {
+    type: bundleResourceManagerConstants.SELECT_STORED_RESOURCES_TO_PASTE,
+    bundleId: null,
+    uris: []
+  };
+}
+
 export function pasteResources(bundleId) {
   return async (dispatch, getState) => {
     if (!bundleId) {
@@ -307,7 +315,7 @@ export function pasteResources(bundleId) {
     );
     await bundleService.waitStopCreateMode(bundleId);
     dispatch(success(bundleId, selectedResourcesToPaste.uris));
-    dispatch(selectResourcesToPaste(null, [])); // clear it after pasting
+    dispatch(clearClipboard()); // clear it after pasting
     function success(_bundleId, uris) {
       return {
         type: bundleResourceManagerConstants.PASTE_SELECTED_STORED_RESOURCES_TO_BUNDLE,

@@ -33,7 +33,7 @@ import path from 'path';
 import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources,
-  getMapperReport, selectResourcesToPaste, pasteResources
+  getMapperReport, selectResourcesToPaste, pasteResources, clearClipboard
 } from '../actions/bundleManageResources.actions';
 import { downloadResources, removeResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
@@ -90,7 +90,8 @@ type Props = {
   removeResources: () => {},
   getMapperReport: () => {},
   selectResourcesToPaste: () => {},
-  pasteResources: () => {}
+  pasteResources: () => {},
+  clearClipboard: () => {}
 };
 
 const addStatus = 'add?';
@@ -557,7 +558,8 @@ const mapDispatchToProps = {
   removeResources,
   getMapperReport,
   selectResourcesToPaste,
-  pasteResources
+  pasteResources,
+  clearClipboard
 };
 
 const materialStyles = theme => ({
@@ -809,7 +811,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { bundleId: bundleIdPasteSource, uris: urisToPaste } = selectedResourcesToPaste;
     if (bundleId === bundleIdPasteSource &&
       Set(urisToPaste).subtract(urisChanged).length !== urisToPaste.length) {
-      this.props.selectResourcesToPaste(null, []); // clear resource selections for paste
+      this.props.clearClipboard(); // clear resource selections for paste
     }
   }
 
