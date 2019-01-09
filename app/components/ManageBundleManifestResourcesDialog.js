@@ -627,7 +627,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       this.props.getManifestResources(this.props.bundlePreviousRevision.id);
     }
     this.props.getManifestResources(bundleId);
-
     if (this.isModifyFilesMode()) {
       this.props.checkPublicationsHealth(bundleId);
     }
@@ -691,7 +690,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   getSelectedIds = (tableData, mode) => {
     const isDownloadMode = mode === 'download';
     const selectedIds = this.state.selectAll ?
-      tableData.filter(row => !isDownloadMode || !row.stored).map(row => row.id) :
+      tableData.filter(row => !isDownloadMode || (!row.stored && !row.disabled)).map(row => row.id) :
       this.state.selectedIds.filter(id => tableData.some(row => row.id === id && !row.disabled));
     return selectedIds;
   }
