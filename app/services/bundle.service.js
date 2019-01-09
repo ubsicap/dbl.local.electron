@@ -43,6 +43,7 @@ export const bundleService = {
   waitStopCreateMode,
   waitMode,
   postResource,
+  copyResources,
   forkBundle,
   updateManifestResource,
   getApplicableWizards,
@@ -345,6 +346,12 @@ function removeResources(bundleId, pathsToRemove = []) {
 
 function removeBundle(bundleId) {
   return bundleAddTasks(bundleId, '<deleteBundle/>');
+}
+
+function copyResources(bundleId, fromBundleId, uris, merge = true) {
+  const resourceList = uris.map(uri => `<resource uri="${uri}"/>`).join('');
+  const copyResourcesTask = `<copyResources><fromBundleId>${fromBundleId}</fromBundleId>${resourceList}<merge>${merge}</merge></copyResources>`;
+  return bundleAddTasks(bundleId, copyResourcesTask);
 }
 
 function bundleAddTasks(bundleId, innerTasks) {

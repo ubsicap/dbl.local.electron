@@ -15,7 +15,8 @@ export const bundleManageResourceActions = {
   addManifestResources,
   deleteManifestResources,
   checkPublicationsHealth,
-  selectResourcesToPaste
+  selectResourcesToPaste,
+  pasteResources
 };
 
 export function openResourceManager(_bundleId, _mode) {
@@ -284,6 +285,35 @@ export function selectResourcesToPaste(bundleId, uris) {
     type: bundleResourceManagerConstants.SELECT_STORED_RESOURCES_TO_PASTE,
     bundleId,
     uris
+  };
+}
+
+export function pasteResources(bundleId) {
+  return async (dispatch, getState) => {
+    if (!bundleId) {
+      return;
+    }
+    const { selectedResourcesToPaste = null } = getState().bundleManageResources;
+    if (!selectResourcesToPaste) {
+      return;
+    }
+    if (bundleId === selectedResourcesToPaste.bundleId) {
+      return;
+    }
+    await bundleService.waitStartCreateMode(bundleId);
+    await bundleService.copyResources(
+      bundleId, selectedResourcesToPaste.bundleId,
+      selectedResourcesToPaste.uris
+    );
+    await bundleService.waitStopCreateMode(bundleId);
+    dispatch(success(bundleId, selectedResourcesToPaste.uris));
+    function success(_bundleId, uris) {
+      return {
+        type: bundleResourceManagerConstants.PASTE_SELECTED_STORED_RESOURCES_TO_BUNDLE,
+        bundleId: _bundleId,
+        uris
+      };
+    }
   };
 }
 
