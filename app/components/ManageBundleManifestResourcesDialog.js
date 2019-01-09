@@ -802,7 +802,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   handlePasteResources = () => {
     this.props.pasteResources(this.props.bundleId);
-    this.props.selectResourcesToPaste(null, []);
   }
 
   clearResourceSelectionsForPaste = (urisChanged) => {
