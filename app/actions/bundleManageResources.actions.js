@@ -289,11 +289,7 @@ export function selectResourcesToPaste(bundleId, uris) {
 }
 
 export function clearClipboard() {
-  return {
-    type: bundleResourceManagerConstants.SELECT_STORED_RESOURCES_TO_PASTE,
-    bundleId: null,
-    uris: []
-  };
+  return selectResourcesToPaste(null, []);
 }
 
 export function pasteResources(bundleId) {
