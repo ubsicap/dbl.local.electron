@@ -98,6 +98,25 @@ const addAndConvert = 'add / convert?';
 const addAndConvertOverwrite = 'add / convert (revise)?';
 const addStatuses = [addStatus, addAndOverwrite, addAndConvert, addAndConvertOverwrite];
 
+function hasResourceDataChanged(prevManifestResources, currentManifestResources) {
+  if (prevManifestResources === currentManifestResources) {
+    return false;
+  }
+  if (prevManifestResources.length !== currentManifestResources.length) {
+    return true;
+  }
+  // id, uri, stored, status, container, name, mimeType, size, checksum, disabled
+  // eslint-disable-next-line no-plusplus
+  for (let index = 0; index < currentManifestResources.length; index++) {
+    const currentResource = currentManifestResources[index];
+    const prevResource = prevManifestResources[index];
+    if (Object.entries(currentResource).some(([prop, value]) => value !== prevResource[prop])) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function createUpdatedTotalResources(origTotalResources, filePath, updateFunc) {
   return origTotalResources.map(r => (r.id === filePath ? { ...r, ...updateFunc(r) } : r));
 }
@@ -635,7 +654,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       }
     }
     /* todo: the following do setState, which is unorthodox/anti-pattern */
-    if ((this.props.manifestResources.length !== prevProps.manifestResources.length) ||
+    if (hasResourceDataChanged(prevProps.manifestResources, this.props.manifestResources) ||
       (this.props.mode === 'revisions' && this.props.entryRevisions !== prevProps.entryRevisions) ||
       !utilities.haveEqualKeys(this.props.previousManifestResources, prevProps.previousManifestResources)) {
       this.updateTableData(this.props);
