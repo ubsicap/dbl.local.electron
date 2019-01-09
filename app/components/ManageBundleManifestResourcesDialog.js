@@ -282,7 +282,7 @@ const makeGetManifestResourcesData = () => createSelector(
     );
     const { rawManifestResources, storedFiles } = bundleManifestResources;
     const { previousEntryRevision, bundlePreviousRevision, previousManifestResources } =
-      getPreviousManifestResource(bundleId, bundlesById, manifestResources, allEntryRevisions);
+      getPreviousRevisionManifestResources(bundleId, bundlesById, manifestResources, allEntryRevisions);
     const bundleManifestResourcesData = Object.values(rawManifestResources)
       .map(r => createResourceData(
         bundleId[bundlesById],
@@ -340,7 +340,7 @@ function getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions) {
   return { bundlePreviousRevision, previousEntryRevision };
 }
 
-function getPreviousManifestResource(bundleId, bundlesById, manifestResources, allEntryRevisions) {
+function getPreviousRevisionManifestResources(bundleId, bundlesById, manifestResources, allEntryRevisions) {
   const { previousEntryRevision, bundlePreviousRevision } =
     getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions);
   const previousManifestResources = bundlePreviousRevision ?
@@ -352,7 +352,7 @@ function getPreviousManifestResource(bundleId, bundlesById, manifestResources, a
 const makeGetPrevManifestResources = () => createSelector(
   [getAllManifestResources, getBundleId, getBundlesById, getAllEntryRevisions],
   (manifestResources, bundleId, bundlesById, allEntryRevisions) =>
-    getPreviousManifestResource(bundleId, bundlesById, manifestResources, allEntryRevisions)
+    getPreviousRevisionManifestResources(bundleId, bundlesById, manifestResources, allEntryRevisions)
 );
 
 const makeGetBundlePrevRevision = () => createSelector(
@@ -637,7 +637,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     /* todo: the following do setState, which is unorthodox/anti-pattern */
     if ((this.props.manifestResources.length !== prevProps.manifestResources.length) ||
       (this.props.mode === 'revisions' && this.props.entryRevisions !== prevProps.entryRevisions) ||
-      !utilities.haveEqualKeys(this.props.previousManifestResources, this.props.previousManifestResources)) {
+      !utilities.haveEqualKeys(this.props.previousManifestResources, prevProps.previousManifestResources)) {
       this.updateTableData(this.props);
     } else if (this.props.mapperInputData !== prevProps.mapperInputData ||
       this.props.selectedIdsInputConverters !== prevProps.selectedIdsInputConverters) {
