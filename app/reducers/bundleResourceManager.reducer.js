@@ -165,21 +165,34 @@ export function bundleManageResources(state = initialState, action) {
       };
     }
     case bundleResourceManagerConstants.SELECT_STORED_RESOURCES_TO_PASTE: {
-      const { selectedResourcesToPaste: selectedResourcesToPasteOrig, ...restState } = state;
       const { bundleId, uris } = action;
-      if (bundleId) {
-        return {
-          ...restState,
-          selectedResourcesToPaste: { bundleId, uris }
-        };
+      return getNewStateWithSelectedResourcesToPaste(bundleId, uris);
+    }
+    case bundleConstants.DELETE_SUCCESS: {
+      const { selectedResourcesToPaste: selectedResourcesToPasteOrig = {} } = state;
+      const { id: bundleIdToRemove } = action;
+      if (bundleIdToRemove === selectedResourcesToPasteOrig.bundleId) {
+        return getNewStateWithSelectedResourcesToPaste(null, []);
       }
-      /* remove selectedResourcesToPaste */
-      return restState;
+      return state;
     }
     default: {
       return state;
     }
   }
+
+  function getNewStateWithSelectedResourcesToPaste(bundleId, uris) {
+    const { selectedResourcesToPaste: selectedResourcesToPasteOrig, ...restState } = state;
+    if (bundleId) {
+      return {
+        ...restState,
+        selectedResourcesToPaste: { bundleId, uris }
+      };
+    }
+    /* remove selectedResourcesToPaste */
+    return restState;
+  }
 }
 
 export default bundleManageResources;
+
