@@ -347,7 +347,7 @@ class WorkspacesPage extends PureComponent<Props> {
     return (
       <React.Fragment>
         <CssBaseline />
-        <MenuAppBar showSearch={false} />
+        <MenuAppBar />
         {this.renderWorkspaceCards()}
       </React.Fragment>
     );

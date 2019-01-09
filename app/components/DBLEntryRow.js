@@ -360,7 +360,7 @@ class DBLEntryRow extends PureComponent<Props> {
     const formsErrorCount = Object.keys(formsErrors).length;
     if (status === 'DRAFT') {
       return [
-        conditionallyRenderBadge({ className: classes.badge, color: 'error' }, formsErrorCount, <Edit key="btnEdit" className={classNames(classes.leftIcon, classes.iconSmall)} />),
+        ux.conditionallyRenderBadge({ className: classes.badge, color: 'error' }, formsErrorCount, <Edit key="btnEdit" className={classNames(classes.leftIcon, classes.iconSmall)} />),
         'Edit'
       ];
     }
@@ -432,7 +432,7 @@ class DBLEntryRow extends PureComponent<Props> {
                 disabled={dblId === undefined}
                 onClick={this.onClickManageResources('revisions')}
               >
-                {conditionallyRenderBadge(
+                {ux.conditionallyRenderBadge(
                   { classes: { badge: classes.badgeTight }, color: 'primary' }, laterRevisionsBadge,
                   <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
                   )}
@@ -610,12 +610,4 @@ function getBundleExportInfo(bundleId, savedToHistory) {
 function stopPropagation(event) {
   event.stopPropagation();
   return null;
-}
-
-
-function conditionallyRenderBadge(props, content, node) {
-  if (!content) {
-    return node;
-  }
-  return <Badge key="badge" {...props} badgeContent={content}>{node}</Badge>;
 }

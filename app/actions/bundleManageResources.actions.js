@@ -294,7 +294,7 @@ export function pasteResources(bundleId) {
       return;
     }
     const { selectedResourcesToPaste = null } = getState().bundleManageResources;
-    if (!selectResourcesToPaste) {
+    if (!selectedResourcesToPaste) {
       return;
     }
     if (bundleId === selectedResourcesToPaste.bundleId) {
@@ -307,6 +307,7 @@ export function pasteResources(bundleId) {
     );
     await bundleService.waitStopCreateMode(bundleId);
     dispatch(success(bundleId, selectedResourcesToPaste.uris));
+    dispatch(selectResourcesToPaste(null, [])); // clear it after pasting
     function success(_bundleId, uris) {
       return {
         type: bundleResourceManagerConstants.PASTE_SELECTED_STORED_RESOURCES_TO_BUNDLE,

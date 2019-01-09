@@ -4,6 +4,7 @@ import Headset from '@material-ui/icons/Headset';
 import Videocam from '@material-ui/icons/Videocam';
 import Print from '@material-ui/icons/Print';
 import Grain from '@material-ui/icons/Grain';
+import Badge from '@material-ui/core/Badge';
 import { lighten } from '@material-ui/core/styles/colorManipulator';
 import { bundleService } from '../services/bundle.service';
 
@@ -13,7 +14,8 @@ export const ux = {
   getDblRowStyles,
   getDblRowBackgroundColor,
   mapColumns,
-  getHighlightTheme
+  getHighlightTheme,
+  conditionallyRenderBadge
 };
 export default ux;
 
@@ -109,4 +111,11 @@ function getHighlightTheme(theme, themeType) {
       color: theme.palette.text.primary,
       backgroundColor: theme.palette.secondary.dark,
     });
+}
+
+function conditionallyRenderBadge(props, content, node) {
+  if (!content) {
+    return node;
+  }
+  return <Badge key="badge" {...props} badgeContent={content}>{node}</Badge>;
 }
