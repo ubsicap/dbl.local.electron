@@ -105,11 +105,13 @@ function hasResourceDataChanged(prevManifestResources, currentManifestResources)
   if (prevManifestResources.length !== currentManifestResources.length) {
     return true;
   }
+  const sortedCurrent = sort(currentManifestResources).asc('id');
+  const sortedPrev = sort(prevManifestResources).asc('id');
   // id, uri, stored, status, container, name, mimeType, size, checksum, disabled
   // eslint-disable-next-line no-plusplus
   for (let index = 0; index < currentManifestResources.length; index++) {
-    const currentResource = currentManifestResources[index];
-    const prevResource = prevManifestResources[index];
+    const currentResource = sortedCurrent[index];
+    const prevResource = sortedPrev[index];
     if (Object.entries(currentResource).some(([prop, value]) => value !== prevResource[prop])) {
       return true;
     }
