@@ -1437,7 +1437,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   render() {
     const {
-      classes, open, origBundle = {},
+      classes, open, origBundle = {}, mode,
       publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading
     } = this.props;
     const { storedResources } = this.getSelectedResourcesByStatus();
@@ -1472,6 +1472,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
                 Review
               </Button>
+              {mode !== 'revisions' &&
               <ConfirmButton
                 key="btnCopyForPaste"
                 classes={classes}
@@ -1481,7 +1482,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               >
                 <FileCopyIcon className={classNames(classes.leftIcon)} />
                 Copy For Paste {storedResources.length ? `(${storedResources.length})` : ''}
-              </ConfirmButton>
+              </ConfirmButton>}
               {this.renderOkOrPasteResourcesButton()}
             </Toolbar>
           </AppBar>
