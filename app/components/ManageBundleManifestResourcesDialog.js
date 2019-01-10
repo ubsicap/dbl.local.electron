@@ -1076,7 +1076,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       { tableData },
       () => {
         this.getMapperReport();
-        this.updateAddedResourcesWithFileStats(newAddedFilePaths);
+        this.updateAddedResourcesWithFileStats(newAddedFilePaths)();
       }
     );
   }
