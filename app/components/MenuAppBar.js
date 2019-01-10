@@ -149,7 +149,6 @@ class MenuAppBar extends React.PureComponent {
           <div style={{ marginLeft: '10px', marginRight: '10px' }}>
             <Button
               key="btnClipboard"
-              classes
               color="inherit"
               // onClick={this.handlePasteResources}
             >

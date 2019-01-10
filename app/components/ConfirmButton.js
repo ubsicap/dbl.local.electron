@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import classNames from 'classnames';
 import Warning from '@material-ui/icons/Warning';
 import Button from '@material-ui/core/Button';
-import Tooltip from '@material-ui/core/Tooltip';
 import { utilities } from '../utils/utilities';
 
 type Props = {

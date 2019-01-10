@@ -1406,7 +1406,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       return (
         <ConfirmButton
           key="btnPasteResources"
-          classes
+          classes={classes}
           color="secondary"
           variant="contained"
           onClick={this.handlePasteResources}
@@ -1474,7 +1474,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               </Button>
               <ConfirmButton
                 key="btnCopyForPaste"
-                classes
+                classes={classes}
                 color="inherit"
                 onClick={this.handleCopyFiles}
                 disabled={storedResources.length === 0}
