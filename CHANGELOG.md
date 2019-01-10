@@ -2,6 +2,7 @@
 #### Features
 - Add `Copy for Paste` button in Resources dialog
 - Add clipboard icon to bundles appbar when copy has happened
+- update dbl_dot_local_app (1/10/2019 copyResources, braille)
 #### Fixes
 - remove tooltip from ConfirmButton (so it doesn't interfere with clicks)
 - fix some table update issues (including size/checksums for added files)
