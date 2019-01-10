@@ -1,3 +1,14 @@
+### Version 0.22.0 (Copy/Paste resources)
+#### Features
+- Add `Copy for Paste` button in Resources dialog
+- Add clipboard icon to bundles appbar when copy has happened
+#### Fixes
+- remove tooltip from ConfirmButton (so it doesn't interfere with clicks)
+- fix some table update issues (including size/checksums for added files)
+- fix fetch manifest resources for previous revision
+- fix Download dialog to not auto-select disabled rows
+- don't clear clipboard after pasting
+
 ### Version 0.21.0
 #### Features (Manage Resources Dialog - mapping converters)
 - show/select available mapping converters
