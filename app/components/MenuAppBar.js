@@ -10,18 +10,24 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
+import AssignmentIcon from '@material-ui/icons/Assignment';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
-import NavigateBefore from '@material-ui/icons/NavigateBefore';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
-
+import { ux } from '../utils/ux';
 import { updateSearchInput, clearSearch } from '../actions/bundleFilter.actions';
 
 
 function mapStateToProps(state, props) {
-  const { bundlesFilter, authentication } = state;
+  const { bundlesFilter, authentication, bundleManageResources } = state;
+  const { selectedResourcesToPaste = {} } = bundleManageResources;
+  const clipboard = {
+    bundleId: selectedResourcesToPaste.bundleId,
+    description: 'Resources',
+    items: selectedResourcesToPaste.uris || []
+  };
   const { isLoading: isLoadingSearch } = bundlesFilter;
   const { isSearchActive } = bundlesFilter;
   const { searchInputRaw } = bundlesFilter;
@@ -33,7 +39,8 @@ function mapStateToProps(state, props) {
     isLoadingSearch,
     isSearchActive,
     searchInputRaw,
-    workspaceName
+    workspaceName,
+    clipboard
   };
 }
 
@@ -49,7 +56,9 @@ type Props = {
     isSearchActive: boolean,
     searchInputRaw: ?string,
     workspaceName: ?string,
-    showSearch: boolean,
+    showSearch?: boolean,
+    showClipboard?: boolean,
+    clipboard: ?{},
     updateSearchInput: () => {},
     clearSearch: () => {}
 };
@@ -111,7 +120,9 @@ class MenuAppBar extends React.PureComponent {
   }
 
   render() {
-    const { classes, loggedIn, userName, workspaceName, showSearch } = this.props;
+    const {
+      classes, loggedIn, userName, workspaceName, showSearch, showClipboard, clipboard
+    } = this.props;
     const { anchorEl } = this.state;
     const open = Boolean(anchorEl);
 
@@ -134,6 +145,22 @@ class MenuAppBar extends React.PureComponent {
               onChange={(event) => this.onChangeSearchInput(event, event.target.value)}
             />
           </div>}
+          {showClipboard && clipboard.bundleId &&
+          <div style={{ marginLeft: '10px', marginRight: '10px' }}>
+            <Button
+              key="btnClipboard"
+              classes
+              color="inherit"
+              // onClick={this.handlePasteResources}
+            >
+              <AssignmentIcon className={classNames(classes.leftIcon)} />
+              {ux.conditionallyRenderBadge(
+                  { classes: { badge: classes.badgeTight }, color: 'secondary' }, clipboard.items.length,
+                  ''
+                  )}
+            </Button>
+          </div>
+          }
           {workspaceName && (
             <div>
               <Button color="inherit" onClick={this.handleMenu}>
@@ -163,6 +190,11 @@ class MenuAppBar extends React.PureComponent {
     );
   }
 }
+
+MenuAppBar.defaultProps = {
+  showSearch: false,
+  showClipboard: false
+};
 
 export default compose(
   withStyles(styles, { name: 'MenuAppBar' }),

@@ -19,6 +19,7 @@ import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import { gotoWorkspaceLoginPage, getDblDotLocalExecStatus } from '../actions/dblDotLocalConfig.actions';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
+import { clearClipboard } from '../actions/bundleManageResources.actions';
 import { logout } from '../actions/user.actions';
 import MenuAppBar from '../components/MenuAppBar';
 import WorkspaceEditDialog from '../components/WorkspaceEditDialog';
@@ -31,7 +32,8 @@ type Props = {
   isRequestingStopDblDotLocalExecProcess: boolean,
   getDblDotLocalExecStatus: () => {},
   gotoWorkspaceLoginPage: () => {},
-  logout: () => {}
+  logout: () => {},
+  clearClipboard: () => {}
 };
 
 function mapStateToProps(state) {
@@ -49,7 +51,8 @@ function mapStateToProps(state) {
 const mapDispatchToProps = {
   getDblDotLocalExecStatus,
   gotoWorkspaceLoginPage,
-  logout
+  logout,
+  clearClipboard
 };
 
 const styles = theme => ({
@@ -127,6 +130,7 @@ class WorkspacesPage extends PureComponent<Props> {
   componentDidMount() {
     this.props.logout();
     this.props.getDblDotLocalExecStatus();
+    this.props.clearClipboard();
     this.updateAllWorkspaceCards();
   }
 
@@ -347,7 +351,7 @@ class WorkspacesPage extends PureComponent<Props> {
     return (
       <React.Fragment>
         <CssBaseline />
-        <MenuAppBar showSearch={false} />
+        <MenuAppBar />
         {this.renderWorkspaceCards()}
       </React.Fragment>
     );

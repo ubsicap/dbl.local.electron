@@ -19,6 +19,8 @@ import FolderOpen from '@material-ui/icons/FolderOpen';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import Delete from '@material-ui/icons/Delete';
+import FileCopyIcon from '@material-ui/icons/FileCopy';
+import AssignmentTurnedInIcon from '@material-ui/icons/AssignmentTurnedIn';
 import CloseIcon from '@material-ui/icons/Close';
 import CheckIcon from '@material-ui/icons/Check';
 import OpenInNew from '@material-ui/icons/OpenInNew';
@@ -31,7 +33,7 @@ import path from 'path';
 import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources,
-  getMapperReport
+  getMapperReport, selectResourcesToPaste, pasteResources, clearClipboard
 } from '../actions/bundleManageResources.actions';
 import { downloadResources, removeResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
@@ -74,6 +76,7 @@ type Props = {
   selectedIdsInputConverters: ?{},
   goFixPublications: ?() => {},
   entryPageUrl: string,
+  selectedResourcesToPaste: ?{},
   closeResourceManager: () => {},
   openMetadataFile: () => {},
   getManifestResources: () => {},
@@ -85,7 +88,10 @@ type Props = {
   createBundleFromDBL: () => {},
   selectBundleEntryRevision: () => {},
   removeResources: () => {},
-  getMapperReport: () => {}
+  getMapperReport: () => {},
+  selectResourcesToPaste: () => {},
+  pasteResources: () => {},
+  clearClipboard: () => {}
 };
 
 const addStatus = 'add?';
@@ -93,6 +99,27 @@ const addAndOverwrite = 'add (revise)?';
 const addAndConvert = 'add / convert?';
 const addAndConvertOverwrite = 'add / convert (revise)?';
 const addStatuses = [addStatus, addAndOverwrite, addAndConvert, addAndConvertOverwrite];
+
+function hasResourceDataChanged(prevManifestResources, currentManifestResources) {
+  if (prevManifestResources === currentManifestResources) {
+    return false;
+  }
+  if (prevManifestResources.length !== currentManifestResources.length) {
+    return true;
+  }
+  const sortedCurrent = sort(currentManifestResources).asc('id');
+  const sortedPrev = sort(prevManifestResources).asc('id');
+  // id, uri, stored, status, container, name, mimeType, size, checksum, disabled
+  // eslint-disable-next-line no-plusplus
+  for (let index = 0; index < currentManifestResources.length; index++) {
+    const currentResource = sortedCurrent[index];
+    const prevResource = sortedPrev[index];
+    if (Object.entries(currentResource).some(([prop, value]) => value !== prevResource[prop])) {
+      return true;
+    }
+  }
+  return false;
+}
 
 function createUpdatedTotalResources(origTotalResources, filePath, updateFunc) {
   return origTotalResources.map(r => (r.id === filePath ? { ...r, ...updateFunc(r) } : r));
@@ -278,7 +305,7 @@ const makeGetManifestResourcesData = () => createSelector(
     );
     const { rawManifestResources, storedFiles } = bundleManifestResources;
     const { previousEntryRevision, bundlePreviousRevision, previousManifestResources } =
-      getPreviousManifestResource(bundleId, bundlesById, manifestResources, allEntryRevisions);
+      getPreviousRevisionManifestResources(bundleId, bundlesById, manifestResources, allEntryRevisions);
     const bundleManifestResourcesData = Object.values(rawManifestResources)
       .map(r => createResourceData(
         bundleId[bundlesById],
@@ -336,7 +363,7 @@ function getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions) {
   return { bundlePreviousRevision, previousEntryRevision };
 }
 
-function getPreviousManifestResource(bundleId, bundlesById, manifestResources, allEntryRevisions) {
+function getPreviousRevisionManifestResources(bundleId, bundlesById, manifestResources, allEntryRevisions) {
   const { previousEntryRevision, bundlePreviousRevision } =
     getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions);
   const previousManifestResources = bundlePreviousRevision ?
@@ -348,7 +375,7 @@ function getPreviousManifestResource(bundleId, bundlesById, manifestResources, a
 const makeGetPrevManifestResources = () => createSelector(
   [getAllManifestResources, getBundleId, getBundlesById, getAllEntryRevisions],
   (manifestResources, bundleId, bundlesById, allEntryRevisions) =>
-    getPreviousManifestResource(bundleId, bundlesById, manifestResources, allEntryRevisions)
+    getPreviousRevisionManifestResources(bundleId, bundlesById, manifestResources, allEntryRevisions)
 );
 
 const makeGetBundlePrevRevision = () => createSelector(
@@ -462,7 +489,7 @@ function mapStateToProps(state, props) {
   const {
     publicationsHealth, progress = 100, loading = false,
     isStoreMode = false, fetchingMetadata = false,
-    mapperReports = {}, selectedMappers = {}
+    mapperReports = {}, selectedMappers = {}, selectedResourcesToPaste = {}
   } = bundleManageResources;
   const {
     errorMessage: publicationsHealthMessage,
@@ -513,6 +540,7 @@ function mapStateToProps(state, props) {
     publicationsHealthSuccessMessage,
     wizardsResults,
     entryPageUrl: getEntryPageUrl(state, props),
+    selectedResourcesToPaste
   };
 }
 
@@ -528,7 +556,10 @@ const mapDispatchToProps = {
   createBundleFromDBL,
   selectBundleEntryRevision,
   removeResources,
-  getMapperReport
+  getMapperReport,
+  selectResourcesToPaste,
+  pasteResources,
+  clearClipboard
 };
 
 const materialStyles = theme => ({
@@ -594,6 +625,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         this.props.getManifestResources(localBundle.id);
       });
       return;
+    } else if (this.props.bundlePreviousRevision) {
+      this.props.getManifestResources(this.props.bundlePreviousRevision.id);
     }
     this.props.getManifestResources(bundleId);
     if (this.isModifyFilesMode()) {
@@ -629,9 +662,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       }
     }
     /* todo: the following do setState, which is unorthodox/anti-pattern */
-    if ((this.props.manifestResources.length !== prevProps.manifestResources.length) ||
+    if (hasResourceDataChanged(prevProps.manifestResources, this.props.manifestResources) ||
       (this.props.mode === 'revisions' && this.props.entryRevisions !== prevProps.entryRevisions) ||
-      !utilities.haveEqualKeys(this.props.previousManifestResources, this.props.previousManifestResources)) {
+      !utilities.haveEqualKeys(this.props.previousManifestResources, prevProps.previousManifestResources)) {
       this.updateTableData(this.props);
     } else if (this.props.mapperInputData !== prevProps.mapperInputData ||
       this.props.selectedIdsInputConverters !== prevProps.selectedIdsInputConverters) {
@@ -659,7 +692,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   getSelectedIds = (tableData, mode) => {
     const isDownloadMode = mode === 'download';
     const selectedIds = this.state.selectAll ?
-      tableData.filter(row => !isDownloadMode || !row.stored).map(row => row.id) :
+      tableData.filter(row => !isDownloadMode || (!row.stored && !row.disabled)).map(row => row.id) :
       this.state.selectedIds.filter(id => tableData.some(row => row.id === id && !row.disabled));
     return selectedIds;
   }
@@ -762,6 +795,26 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     };
   };
 
+  handleCopyFiles = () => {
+    const { storedResources } = this.getSelectedResourcesByStatus();
+    const uris = storedResources.map(r => r.uri);
+    this.props.selectResourcesToPaste(this.props.bundleId, uris);
+    this.handleClose();
+  }
+
+  handlePasteResources = () => {
+    this.props.pasteResources(this.props.bundleId);
+  }
+
+  clearResourceSelectionsForPaste = (urisChanged) => {
+    const { bundleId, selectedResourcesToPaste } = this.props;
+    const { bundleId: bundleIdPasteSource, uris: urisToPaste } = selectedResourcesToPaste;
+    if (bundleId === bundleIdPasteSource &&
+      Set(urisToPaste).subtract(urisChanged).length !== urisToPaste.length) {
+      this.props.clearClipboard(); // clear resource selections for paste
+    }
+  }
+
   handleModifyFiles = () => {
     const { bundleId } = this.props;
     const {
@@ -770,13 +823,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const discardableUris = discardableResources.map(r => r.uri);
     if (storedResources === inEffect || discardableUris.length > 0) {
       if (discardableUris.length > 0) {
+        this.clearResourceSelectionsForPaste(discardableUris);
         this.props.deleteManifestResources(bundleId, discardableUris);
       }
       const justCleanThese = storedResources.filter(r => !discardableUris.includes(r.uri));
       if (justCleanThese.length > 0) {
+        const uris = justCleanThese.map(r => r.uri);
+        this.clearResourceSelectionsForPaste(uris);
         this.props.removeResources(
           bundleId,
-          justCleanThese.map(r => r.uri)
+          uris
         );
       }
     } else if (manifestResources === inEffect) {
@@ -1020,7 +1076,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       { tableData },
       () => {
         this.getMapperReport();
-        this.updateAddedResourcesWithFileStats(newAddedFilePaths);
+        this.updateAddedResourcesWithFileStats(newAddedFilePaths)();
       }
     );
   }
@@ -1336,11 +1392,55 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     utilities.onOpenLink(this.props.entryPageUrl)(event);
   }
 
+  renderOkOrPasteResourcesButton = () => {
+    const {
+      classes, loading, progress, bundleId, selectedResourcesToPaste, isOkToAddFiles
+    } = this.props;
+    const { bundleId: bundleIdPasteSource, uris: urisToPaste } = selectedResourcesToPaste;
+    const modeUi = this.modeUi();
+    const isModifyFilesMode = this.isModifyFilesMode();
+    const isNothingSelected = this.isNothingSelected();
+    if (isModifyFilesMode && isOkToAddFiles &&
+      bundleIdPasteSource && isNothingSelected &&
+      bundleId !== bundleIdPasteSource) {
+      return (
+        <ConfirmButton
+          key="btnPasteResources"
+          classes
+          color="secondary"
+          variant="contained"
+          onClick={this.handlePasteResources}
+          disabled={urisToPaste.length === 0}
+        >
+          <AssignmentTurnedInIcon className={classNames(classes.leftIcon)} />
+          Paste {urisToPaste.length ? `(${urisToPaste.length})` : ''} Resources
+        </ConfirmButton>
+      );
+    }
+    return (
+      <ConfirmButton
+        key="btnOk"
+        {...modeUi.appBar.OkButtonProps}
+      >
+        {modeUi.appBar.OkButtonIcon}
+        {modeUi.appBar.OkButtonLabel}
+        {loading &&
+        <CircularProgress
+          className={classes.buttonProgress}
+          size={50}
+          color="secondary"
+          variant="indeterminate"
+          value={progress}
+        />}
+      </ConfirmButton>);
+  }
+
   render() {
     const {
       classes, open, origBundle = {},
-      publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading, progress,
+      publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading
     } = this.props;
+    const { storedResources } = this.getSelectedResourcesByStatus();
     const { displayAs = {} } = origBundle;
     const { languageAndCountry, name, revision } = displayAs;
     const modeUi = this.modeUi();
@@ -1373,20 +1473,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                 Review
               </Button>
               <ConfirmButton
-                key="btnOk"
-                {...modeUi.appBar.OkButtonProps}
+                key="btnCopyForPaste"
+                classes
+                color="inherit"
+                onClick={this.handleCopyFiles}
+                disabled={storedResources.length === 0}
               >
-                {modeUi.appBar.OkButtonIcon}
-                {modeUi.appBar.OkButtonLabel}
-                {loading &&
-                <CircularProgress
-                  className={classes.buttonProgress}
-                  size={50}
-                  color="secondary"
-                  variant="indeterminate"
-                  value={progress}
-                />}
+                <FileCopyIcon className={classNames(classes.leftIcon)} />
+                Copy For Paste {storedResources.length ? `(${storedResources.length})` : ''}
               </ConfirmButton>
+              {this.renderOkOrPasteResourcesButton()}
             </Toolbar>
           </AppBar>
           {isModifyFilesMode && publicationsHealthMessage &&

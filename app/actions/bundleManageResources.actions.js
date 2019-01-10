@@ -14,7 +14,9 @@ export const bundleManageResourceActions = {
   getManifestResources,
   addManifestResources,
   deleteManifestResources,
-  checkPublicationsHealth
+  checkPublicationsHealth,
+  selectResourcesToPaste,
+  pasteResources
 };
 
 export function openResourceManager(_bundleId, _mode) {
@@ -276,6 +278,48 @@ export function deleteManifestResources(_bundleId, _uris) {
   function failure(bundleId, error, uri) {
     return { type: bundleResourceManagerConstants.DELETE_MANIFEST_RESOURCES_FAILURE, error, uri };
   }
+}
+
+export function selectResourcesToPaste(bundleId, uris) {
+  return {
+    type: bundleResourceManagerConstants.SELECT_STORED_RESOURCES_TO_PASTE,
+    bundleId,
+    uris
+  };
+}
+
+export function clearClipboard() {
+  return selectResourcesToPaste(null, []);
+}
+
+export function pasteResources(bundleId) {
+  return async (dispatch, getState) => {
+    if (!bundleId) {
+      return;
+    }
+    const { selectedResourcesToPaste = null } = getState().bundleManageResources;
+    if (!selectedResourcesToPaste) {
+      return;
+    }
+    if (bundleId === selectedResourcesToPaste.bundleId) {
+      return;
+    }
+    await bundleService.waitStartCreateMode(bundleId);
+    await bundleService.copyResources(
+      bundleId, selectedResourcesToPaste.bundleId,
+      selectedResourcesToPaste.uris
+    );
+    await bundleService.waitStopCreateMode(bundleId);
+    dispatch(success(bundleId, selectedResourcesToPaste.uris));
+    dispatch(clearClipboard()); // clear it after pasting
+    function success(_bundleId, uris) {
+      return {
+        type: bundleResourceManagerConstants.PASTE_SELECTED_STORED_RESOURCES_TO_BUNDLE,
+        bundleId: _bundleId,
+        uris
+      };
+    }
+  };
 }
 
 async function getOverwritesPerMapper(direction, report, bundleId) {
