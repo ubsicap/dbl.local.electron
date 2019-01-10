@@ -1,3 +1,7 @@
+### Version 0.22.1
+#### Fixes
+- Fix revisions dialog to not have `Copy For Paste` button
+
 ### Version 0.22.0 (Copy/Paste resources)
 #### Features
 - Add `Copy for Paste` button in Resources dialog
