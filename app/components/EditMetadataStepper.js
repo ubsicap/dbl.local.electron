@@ -1,6 +1,5 @@
 import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
-import { Map } from 'immutable';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { createSelector } from 'reselect';
@@ -194,13 +193,15 @@ type Props = {
     deleteForm: () => {},
     setArchivistStatusOverrides: () => {},
     updateFormFieldIssues: () => {},
+    onClickSectionSelection?: () => {},
     bundleId: string,
     formStructure: [],
+    sectionSelections?: {},
     steps: [],
     myStructurePath: string,
     activeFormInputs: {},
     activeFormEdits: {},
-    shouldLoadDetails: boolean,
+    shouldLoadDetails?: boolean,
     requestingSaveMetadata: boolean,
     wasMetadataSaved: boolean,
     moveNext: ?{},
@@ -246,7 +247,6 @@ class _EditMetadataStepper extends React.Component<Props> {
     super(props);
     this.state = {
       activeStepIndex: -1,
-      sectionSelections: {},
       completed: {}
     };
     const { moveNext } = this.props;
@@ -545,32 +545,13 @@ class _EditMetadataStepper extends React.Component<Props> {
     return addBtn;
   }
 
-  handleClickCheckBox = event => {
-    event.stopPropagation();
-    event.preventDefault();
-    const { value, checked } = event.target;
-    const sectionSelections = { ...this.state.sectionSelections, [value]: checked };
-    this.setState({ sectionSelections });
-  };
-
-  handleClickSelectAll = () => {
-    const { steps } = this.props;
-    const { sectionSelections: sectionSelectionsOrig = {} } = this.state;
-    const areAllSelected = Object.keys(sectionSelectionsOrig).length === steps.length;
-    const valueToSet = !areAllSelected;
-    const sectionSelectionsMap =
-      steps.map(step => step.id).reduce((acc, k) => acc.set(k, valueToSet), Map());
-    const sectionSelections = sectionSelectionsMap.toObject();
-    this.setState({ sectionSelections });
-  }
-
   renderStepLabel = (step) =>
     (<React.Fragment>{step.label}{getDecorateRequired(step)}</React.Fragment>);
 
   renderOptionalCheckbox = (step) => {
-    const { myStructurePath } = this.props;
+    const { myStructurePath, sectionSelections } = this.props;
     const isRootSectionLevel = myStructurePath.length === 0;
-    const isChecked = this.state.sectionSelections[step.id] || false;
+    const isChecked = sectionSelections[step.id] || false;
     if (isRootSectionLevel) {
       return (
         <FormControlLabel
@@ -578,7 +559,7 @@ class _EditMetadataStepper extends React.Component<Props> {
           control={
             <Checkbox
               checked={isChecked}
-              onChange={this.handleClickCheckBox}
+              onChange={this.props.onClickSectionSelection}
               value={step.id}
             />
           }
@@ -594,25 +575,10 @@ class _EditMetadataStepper extends React.Component<Props> {
     if (!bundleId) {
       return (null);
     }
-    const { activeStepIndex, sectionSelections } = this.state;
+    const { activeStepIndex } = this.state;
     const getStepBackground = (step, index) => (index === activeStepIndex && (step.template && (!step.contains || step.isFactory)) ? { background: '#F8F6AE' } : {});
-    const sectionsSelected = Object.values(sectionSelections).filter(s => s);
-    const { myStructurePath } = this.props;
-    const isRootSectionLevel = myStructurePath.length === 0;
     return (
       <div className={classes.root}>
-        {isRootSectionLevel && <FormControlLabel
-          style={{ paddingTop: '8px', paddingLeft: '55px' }}
-          control={
-            <Checkbox
-              onChange={this.handleClickSelectAll}
-              value="master"
-              checked={sectionsSelected.length === steps.length}
-              indeterminate={sectionsSelected.length > 0 && sectionsSelected.length < steps.length}
-            />
-          }
-          label={`Selected Sections (${sectionsSelected.length})`}
-        />}
         <Stepper nonLinear activeStep={activeStepIndex} orientation="vertical">
           {steps.map((step, index) =>
             (
@@ -646,6 +612,12 @@ function getDecorateRequired(step) {
     (step.instances && shouldDisableDelete(step));
   return showAsRequired ? ' *' : '';
 }
+
+_EditMetadataStepper.defaultProps = {
+  shouldLoadDetails: false,
+  sectionSelections: {},
+  onClickSectionSelection: undefined
+};
 
 const EditMetadataStepperComposed = compose(
   withStyles(materialStyles, { name: '_EditMetadataStepper' }),
