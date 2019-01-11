@@ -1,5 +1,6 @@
 import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
+import { Map } from 'immutable';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { createSelector } from 'reselect';
@@ -552,6 +553,17 @@ class _EditMetadataStepper extends React.Component<Props> {
     this.setState({ sectionSelections });
   };
 
+  handleClickSelectAll = () => {
+    const { steps } = this.props;
+    const { sectionSelections: sectionSelectionsOrig = {} } = this.state;
+    const areAllSelected = Object.keys(sectionSelectionsOrig).length === steps.length;
+    const valueToSet = !areAllSelected;
+    const sectionSelectionsMap =
+      steps.map(step => step.id).reduce((acc, k) => acc.set(k, valueToSet), Map());
+    const sectionSelections = sectionSelectionsMap.toObject();
+    this.setState({ sectionSelections });
+  }
+
   renderStepLabel = (step) =>
     (<React.Fragment>{step.label}{getDecorateRequired(step)}</React.Fragment>);
 
@@ -582,10 +594,25 @@ class _EditMetadataStepper extends React.Component<Props> {
     if (!bundleId) {
       return (null);
     }
-    const { activeStepIndex } = this.state;
+    const { activeStepIndex, sectionSelections } = this.state;
     const getStepBackground = (step, index) => (index === activeStepIndex && (step.template && (!step.contains || step.isFactory)) ? { background: '#F8F6AE' } : {});
+    const sectionsSelected = Object.values(sectionSelections).filter(s => s);
+    const { myStructurePath } = this.props;
+    const isRootSectionLevel = myStructurePath.length === 0;
     return (
       <div className={classes.root}>
+        {isRootSectionLevel && <FormControlLabel
+          style={{ paddingTop: '8px', paddingLeft: '55px' }}
+          control={
+            <Checkbox
+              onChange={this.handleClickSelectAll}
+              value="master"
+              checked={sectionsSelected.length === steps.length}
+              indeterminate={sectionsSelected.length > 0 && sectionsSelected.length < steps.length}
+            />
+          }
+          label={`Selected Sections (${sectionsSelected.length})`}
+        />}
         <Stepper nonLinear activeStep={activeStepIndex} orientation="vertical">
           {steps.map((step, index) =>
             (
