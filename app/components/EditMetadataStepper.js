@@ -6,15 +6,14 @@ import { createSelector } from 'reselect';
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
-import StepIcon from '@material-ui/core/StepIcon';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Checkbox from '@material-ui/core/Checkbox';
 import StepContent from '@material-ui/core/StepContent';
 import Button from '@material-ui/core/Button';
 import Save from '@material-ui/icons/Save';
 import Undo from '@material-ui/icons/Undo';
 import Delete from '@material-ui/icons/Delete';
-import Build from '@material-ui/icons/Build';
 import Tooltip from '@material-ui/core/Tooltip';
-import Warning from '@material-ui/icons/Warning';
 import NavigateNext from '@material-ui/icons/NavigateNext';
 import NavigateBefore from '@material-ui/icons/NavigateBefore';
 import Check from '@material-ui/icons/Check';
@@ -544,6 +543,30 @@ class _EditMetadataStepper extends React.Component<Props> {
     return addBtn;
   }
 
+  renderStepLabel = (step) =>
+    (<React.Fragment>{step.label}{getDecorateRequired(step)}</React.Fragment>);
+
+  renderOptionalCheckbox = (step) => {
+    const { myStructurePath } = this.props;
+    const isRootSectionLevel = myStructurePath.length === 0;
+    if (isRootSectionLevel) {
+      return (
+        <FormControlLabel
+          style={{ paddingTop: '7px' }}
+          control={
+            <Checkbox
+              checked={false}
+              // onChange={this.handleChange('checkedA')}
+              value={step.id}
+            />
+          }
+          label={this.renderStepLabel(step)}
+        />
+      );
+    }
+    return this.renderStepLabel(step);
+  }
+
   render() {
     const { bundleId, classes, steps = [] } = this.props;
     if (!bundleId) {
@@ -561,10 +584,9 @@ class _EditMetadataStepper extends React.Component<Props> {
                   onClick={this.handleStep(index)}
                   completed={this.state.completed[index]}
                   error={this.hasErrorsInStepsOrForms(step)}
+                  optional={this.renderOptionalCheckbox(step)}
                   /* icon={<StepIcon icon={<Build />} className={classNames(classes.root, classes.error)} error={this.hasErrorsInStepsOrForms(step)} />} */
-                >
-                  {step.label}{getDecorateRequired(step)}
-                </StepLabel>
+                />
                 <StepContent>
                   {this.getStepContent(index)}
                   <div className={classes.actionsContainer}>
