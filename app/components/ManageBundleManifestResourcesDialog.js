@@ -33,8 +33,9 @@ import path from 'path';
 import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources,
-  getMapperReport, selectResourcesToPaste, pasteResources, clearClipboard
+  getMapperReport
 } from '../actions/bundleManageResources.actions';
+import { selectItemsToPaste, pasteResources, clearClipboard } from '../actions/clipboard.actions';
 import { downloadResources, removeResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
@@ -77,7 +78,7 @@ type Props = {
   selectedIdsInputConverters: ?{},
   goFixPublications: ?() => {},
   entryPageUrl: string,
-  selectedResourcesToPaste: ?{},
+  selectedItemsToPaste: ?{},
   closeResourceManager: () => {},
   openMetadataFile: () => {},
   getManifestResources: () => {},
@@ -90,7 +91,7 @@ type Props = {
   selectBundleEntryRevision: () => {},
   removeResources: () => {},
   getMapperReport: () => {},
-  selectResourcesToPaste: () => {},
+  selectItemsToPaste: () => {},
   pasteResources: () => {},
   clearClipboard: () => {}
 };
@@ -486,12 +487,13 @@ const makeGetEntryPageUrl = () => createSelector(
 
 
 function mapStateToProps(state, props) {
-  const { bundleEditMetadata, bundleManageResources } = state;
+  const { bundleEditMetadata, bundleManageResources, clipboard } = state;
   const {
     publicationsHealth, progress = 100, loading = false,
     isStoreMode = false, fetchingMetadata = false,
-    mapperReports = {}, selectedMappers = {}, selectedResourcesToPaste = {}
+    mapperReports = {}, selectedMappers = {}
   } = bundleManageResources;
+  const { selectedItemsToPaste = {} } = clipboard;
   const {
     errorMessage: publicationsHealthMessage,
     goFix: goFixPublications,
@@ -541,7 +543,7 @@ function mapStateToProps(state, props) {
     publicationsHealthSuccessMessage,
     wizardsResults,
     entryPageUrl: getEntryPageUrl(state, props),
-    selectedResourcesToPaste
+    selectedItemsToPaste
   };
 }
 
@@ -558,7 +560,7 @@ const mapDispatchToProps = {
   selectBundleEntryRevision,
   removeResources,
   getMapperReport,
-  selectResourcesToPaste,
+  selectItemsToPaste,
   pasteResources,
   clearClipboard
 };
@@ -799,7 +801,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   handleCopyFiles = () => {
     const { storedResources } = this.getSelectedResourcesByStatus();
     const uris = storedResources.map(r => r.uri);
-    this.props.selectResourcesToPaste(this.props.bundleId, uris);
+    this.props.selectItemsToPaste(this.props.bundleId, uris);
     this.handleClose();
   }
 
@@ -808,8 +810,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   clearResourceSelectionsForPaste = (urisChanged) => {
-    const { bundleId, selectedResourcesToPaste } = this.props;
-    const { bundleId: bundleIdPasteSource, uris: urisToPaste } = selectedResourcesToPaste;
+    const { bundleId, selectedItemsToPaste } = this.props;
+    const { bundleId: bundleIdPasteSource, uris: urisToPaste } = selectedItemsToPaste;
     if (bundleId === bundleIdPasteSource &&
       Set(urisToPaste).subtract(urisChanged).length !== urisToPaste.length) {
       this.props.clearClipboard(); // clear resource selections for paste
@@ -1395,9 +1397,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   renderOkOrPasteResourcesButton = () => {
     const {
-      classes, loading, progress, bundleId, selectedResourcesToPaste, isOkToAddFiles
+      classes, loading, progress, bundleId, selectedItemsToPaste, isOkToAddFiles
     } = this.props;
-    const { bundleId: bundleIdPasteSource, uris: urisToPaste } = selectedResourcesToPaste;
+    const { bundleId: bundleIdPasteSource, uris: urisToPaste } = selectedItemsToPaste;
     const modeUi = this.modeUi();
     const isModifyFilesMode = this.isModifyFilesMode();
     const isNothingSelected = this.isNothingSelected();

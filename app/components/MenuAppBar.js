@@ -21,12 +21,12 @@ import { updateSearchInput, clearSearch } from '../actions/bundleFilter.actions'
 
 
 function mapStateToProps(state, props) {
-  const { bundlesFilter, authentication, bundleManageResources } = state;
-  const { selectedResourcesToPaste = {} } = bundleManageResources;
+  const { bundlesFilter, authentication, clipboard: clipboardState } = state;
+  const { selectedItemsToPaste = {} } = clipboardState;
   const clipboard = {
-    bundleId: selectedResourcesToPaste.bundleId,
+    bundleId: selectedItemsToPaste.bundleId,
     description: 'Resources',
-    items: selectedResourcesToPaste.uris || []
+    items: selectedItemsToPaste.uris || []
   };
   const { isLoading: isLoadingSearch } = bundlesFilter;
   const { isSearchActive } = bundlesFilter;
@@ -59,8 +59,7 @@ type Props = {
     showSearch?: boolean,
     showClipboard?: boolean,
     clipboard: ?{},
-    updateSearchInput: () => {},
-    clearSearch: () => {}
+    updateSearchInput: () => {}
 };
 
 const styles = theme => ({

@@ -22,7 +22,6 @@ import { updateBundle } from '../actions/bundle.actions';
 import { closeEditMetadata, saveFieldValuesForActiveForm, openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import editMetadataService from '../services/editMetadata.service';
 import EditMetadataStepper from './EditMetadataStepper';
-import ConfirmButton from '../components/ConfirmButton';
 import rowStyles from './DBLEntryRow.css';
 import CopyForPasteButton from './CopyForPasteButton';
 

@@ -16,15 +16,11 @@ export function bundleManageResources(state = initialState, action) {
       return {
         ...initialState,
         bundleId,
-        mode,
-        selectedResourcesToPaste: state.selectedResourcesToPaste
+        mode
       };
     }
     case bundleResourceManagerConstants.CLOSE_RESOURCE_MANAGER: {
-      return {
-        ...initialState,
-        selectedResourcesToPaste: state.selectedResourcesToPaste
-      };
+      return initialState;
     }
     case bundleConstants.UPDATE_BUNDLE: {
       const {
@@ -164,33 +160,9 @@ export function bundleManageResources(state = initialState, action) {
         selectedMappers: { ...selectedMappersOrig, [direction]: mapperIds }
       };
     }
-    case bundleResourceManagerConstants.SELECT_STORED_RESOURCES_TO_PASTE: {
-      const { bundleId, uris } = action;
-      return getNewStateWithSelectedResourcesToPaste(bundleId, uris);
-    }
-    case bundleConstants.DELETE_SUCCESS: {
-      const { selectedResourcesToPaste: selectedResourcesToPasteOrig = {} } = state;
-      const { id: bundleIdToRemove } = action;
-      if (bundleIdToRemove === selectedResourcesToPasteOrig.bundleId) {
-        return getNewStateWithSelectedResourcesToPaste(null, []);
-      }
-      return state;
-    }
     default: {
       return state;
     }
-  }
-
-  function getNewStateWithSelectedResourcesToPaste(bundleId, uris) {
-    const { selectedResourcesToPaste: selectedResourcesToPasteOrig, ...restState } = state;
-    if (bundleId) {
-      return {
-        ...restState,
-        selectedResourcesToPaste: { bundleId, uris }
-      };
-    }
-    /* remove selectedResourcesToPaste */
-    return restState;
   }
 }
 
