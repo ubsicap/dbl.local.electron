@@ -22,7 +22,9 @@ import { updateBundle } from '../actions/bundle.actions';
 import { closeEditMetadata, saveFieldValuesForActiveForm, openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import editMetadataService from '../services/editMetadata.service';
 import EditMetadataStepper from './EditMetadataStepper';
+import ConfirmButton from '../components/ConfirmButton';
 import rowStyles from './DBLEntryRow.css';
+import CopyForPasteButton from './CopyForPasteButton';
 
 const { shell } = require('electron');
 
@@ -188,6 +190,10 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     this.setState({ sectionSelections });
   }
 
+  handleCopySections = () => {
+
+  }
+
   render() {
     const {
       classes, open, selectedBundle = {}, bundleId, formStructure
@@ -211,6 +217,14 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
                 Review
               </Button>
+              <CopyForPasteButton
+                key="btnCopyForPaste"
+                classes={classes}
+                color="inherit"
+                onClick={this.handleCopySections}
+                disabled={sectionsSelected.length === 0}
+                selectedItems={sectionsSelected}
+              />
               {this.conditionallyRenderSaveOrGotoErrorButton()}
             </Toolbar>
           </AppBar>

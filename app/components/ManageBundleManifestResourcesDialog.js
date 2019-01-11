@@ -44,6 +44,7 @@ import { utilities } from '../utils/utilities';
 import { bundleService } from '../services/bundle.service';
 import { ux } from '../utils/ux';
 import ConfirmButton from '../components/ConfirmButton';
+import CopyForPasteButton from './CopyForPasteButton';
 import MapperTable from '../components/MapperTable';
 
 const { dialog } = require('electron').remote;
@@ -1473,16 +1474,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                 Review
               </Button>
               {mode !== 'revisions' &&
-              <ConfirmButton
+              <CopyForPasteButton
                 key="btnCopyForPaste"
                 classes={classes}
                 color="inherit"
                 onClick={this.handleCopyFiles}
                 disabled={storedResources.length === 0}
-              >
-                <FileCopyIcon className={classNames(classes.leftIcon)} />
-                Copy For Paste {storedResources.length ? `(${storedResources.length})` : ''}
-              </ConfirmButton>}
+                selectedItems={storedResources}
+              />}
               {this.renderOkOrPasteResourcesButton()}
             </Toolbar>
           </AppBar>
