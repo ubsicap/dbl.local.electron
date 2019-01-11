@@ -48,7 +48,7 @@ const materialStyles = theme => ({
   },
   iconSmall: {
     fontSize: 20,
-  },
+  }
 });
 
 const detailsStep = {
@@ -245,6 +245,7 @@ class _EditMetadataStepper extends React.Component<Props> {
     super(props);
     this.state = {
       activeStepIndex: -1,
+      sectionSelections: {},
       completed: {}
     };
     const { moveNext } = this.props;
@@ -543,20 +544,29 @@ class _EditMetadataStepper extends React.Component<Props> {
     return addBtn;
   }
 
+  handleClickCheckBox = event => {
+    event.stopPropagation();
+    event.preventDefault();
+    const { value, checked } = event.target;
+    const sectionSelections = { ...this.state.sectionSelections, [value]: checked };
+    this.setState({ sectionSelections });
+  };
+
   renderStepLabel = (step) =>
     (<React.Fragment>{step.label}{getDecorateRequired(step)}</React.Fragment>);
 
   renderOptionalCheckbox = (step) => {
     const { myStructurePath } = this.props;
     const isRootSectionLevel = myStructurePath.length === 0;
+    const isChecked = this.state.sectionSelections[step.id] || false;
     if (isRootSectionLevel) {
       return (
         <FormControlLabel
-          style={{ paddingTop: '7px' }}
+          style={{ paddingTop: '8px' }}
           control={
             <Checkbox
-              checked={false}
-              // onChange={this.handleChange('checkedA')}
+              checked={isChecked}
+              onChange={this.handleClickCheckBox}
               value={step.id}
             />
           }
