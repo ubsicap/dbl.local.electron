@@ -20,6 +20,7 @@ import Zoom from '@material-ui/core/Zoom';
 import Tooltip from '@material-ui/core/Tooltip';
 import { updateBundle } from '../actions/bundle.actions';
 import { closeEditMetadata, saveFieldValuesForActiveForm, openMetadataFile } from '../actions/bundleEditMetadata.actions';
+import { selectItemsToPaste } from '../actions/clipboard.actions';
 import editMetadataService from '../services/editMetadata.service';
 import EditMetadataStepper from './EditMetadataStepper';
 import rowStyles from './DBLEntryRow.css';
@@ -64,7 +65,8 @@ const mapDispatchToProps = {
   closeEditMetadata,
   saveFieldValuesForActiveForm,
   updateBundle,
-  openMetadataFile
+  openMetadataFile,
+  selectItemsToPaste
 };
 
 const materialStyles = theme => ({
@@ -101,6 +103,7 @@ type Props = {
   classes: {},
   saveFieldValuesForActiveForm: () => {},
   openMetadataFile: () => {},
+  selectItemsToPaste: () => {},
   wasMetadataSaved: boolean,
   showMetadataFile: ?string,
   moveNext: ?{},
@@ -190,7 +193,10 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   }
 
   handleCopySections = () => {
-
+    const { sectionSelections } = this.state;
+    const sectionsSelected = Object.values(sectionSelections).filter(s => s);
+    this.props.selectItemsToPaste(this.props.bundleId, sectionsSelected, 'metadata sections');
+    this.handleClose();
   }
 
   render() {

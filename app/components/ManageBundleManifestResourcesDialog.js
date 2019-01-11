@@ -35,7 +35,7 @@ import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources,
   getMapperReport
 } from '../actions/bundleManageResources.actions';
-import { selectItemsToPaste, pasteResources, clearClipboard } from '../actions/clipboard.actions';
+import { selectItemsToPaste, pasteItems, clearClipboard } from '../actions/clipboard.actions';
 import { downloadResources, removeResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
@@ -92,7 +92,7 @@ type Props = {
   removeResources: () => {},
   getMapperReport: () => {},
   selectItemsToPaste: () => {},
-  pasteResources: () => {},
+  pasteItems: () => {},
   clearClipboard: () => {}
 };
 
@@ -561,7 +561,7 @@ const mapDispatchToProps = {
   removeResources,
   getMapperReport,
   selectItemsToPaste,
-  pasteResources,
+  pasteItems,
   clearClipboard
 };
 
@@ -801,18 +801,18 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   handleCopyFiles = () => {
     const { storedResources } = this.getSelectedResourcesByStatus();
     const uris = storedResources.map(r => r.uri);
-    this.props.selectItemsToPaste(this.props.bundleId, uris);
+    this.props.selectItemsToPaste(this.props.bundleId, uris, 'resources');
     this.handleClose();
   }
 
   handlePasteResources = () => {
-    this.props.pasteResources(this.props.bundleId);
+    this.props.pasteItems(this.props.bundleId);
   }
 
   clearResourceSelectionsForPaste = (urisChanged) => {
     const { bundleId, selectedItemsToPaste } = this.props;
-    const { bundleId: bundleIdPasteSource, uris: urisToPaste } = selectedItemsToPaste;
-    if (bundleId === bundleIdPasteSource &&
+    const { bundleId: bundleIdPasteSource, uris: urisToPaste, itemsType } = selectedItemsToPaste;
+    if (bundleId === bundleIdPasteSource && itemsType === 'resources' &&
       Set(urisToPaste).subtract(urisChanged).length !== urisToPaste.length) {
       this.props.clearClipboard(); // clear resource selections for paste
     }
@@ -1399,12 +1399,13 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const {
       classes, loading, progress, bundleId, selectedItemsToPaste, isOkToAddFiles
     } = this.props;
-    const { bundleId: bundleIdPasteSource, uris: urisToPaste } = selectedItemsToPaste;
+    const { bundleId: bundleIdPasteSource, uris: urisToPaste, itemsType } = selectedItemsToPaste;
     const modeUi = this.modeUi();
     const isModifyFilesMode = this.isModifyFilesMode();
     const isNothingSelected = this.isNothingSelected();
     if (isModifyFilesMode && isOkToAddFiles &&
       bundleIdPasteSource && isNothingSelected &&
+      itemsType === 'resources' &&
       bundleId !== bundleIdPasteSource) {
       return (
         <ConfirmButton

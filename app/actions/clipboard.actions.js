@@ -3,15 +3,16 @@ import { bundleService } from '../services/bundle.service';
 
 export const clipboardActions = {
   selectItemsToPaste,
-  pasteResources,
+  pasteItems,
   clearClipboard
 };
 
-export function selectItemsToPaste(bundleId, uris) {
+export function selectItemsToPaste(bundleId, uris, type) {
   return {
     type: clipboardConstants.SELECT_STORED_RESOURCES_TO_PASTE,
     bundleId,
-    uris
+    uris,
+    itemsType: type
   };
 }
 
@@ -19,7 +20,7 @@ export function clearClipboard() {
   return selectItemsToPaste(null, []);
 }
 
-export function pasteResources(bundleId) {
+export function pasteItems(bundleId) {
   return async (dispatch, getState) => {
     if (!bundleId) {
       return;
