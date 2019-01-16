@@ -7,11 +7,11 @@ export const clipboardActions = {
   clearClipboard
 };
 
-export function selectItemsToPaste(bundleId, uris, type) {
+export function selectItemsToPaste(bundleId, items, type) {
   return {
     type: clipboardConstants.SELECT_STORED_RESOURCES_TO_PASTE,
     bundleId,
-    uris,
+    items,
     itemsType: type
   };
 }
@@ -35,16 +35,16 @@ export function pasteItems(bundleId) {
     await bundleService.waitStartCreateMode(bundleId);
     await bundleService.copyResources(
       bundleId, selectedItemsToPaste.bundleId,
-      selectedItemsToPaste.uris
+      selectedItemsToPaste.items
     );
     await bundleService.waitStopCreateMode(bundleId);
-    dispatch(success(bundleId, selectedItemsToPaste.uris));
+    dispatch(success(bundleId, selectedItemsToPaste.items));
     dispatch(clearClipboard()); // clear it after pasting
-    function success(_bundleId, uris) {
+    function success(_bundleId, items) {
       return {
         type: clipboardConstants.PASTE_SELECTED_STORED_RESOURCES_TO_BUNDLE,
         bundleId: _bundleId,
-        uris
+        items
       };
     }
   };

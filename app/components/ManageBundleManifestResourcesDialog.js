@@ -811,7 +811,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   clearResourceSelectionsForPaste = (urisChanged) => {
     const { bundleId, selectedItemsToPaste } = this.props;
-    const { bundleId: bundleIdPasteSource, uris: urisToPaste, itemsType } = selectedItemsToPaste;
+    const { bundleId: bundleIdPasteSource, items: urisToPaste, itemsType } = selectedItemsToPaste;
     if (bundleId === bundleIdPasteSource && itemsType === 'resources' &&
       Set(urisToPaste).subtract(urisChanged).length !== urisToPaste.length) {
       this.props.clearClipboard(); // clear resource selections for paste
@@ -1399,7 +1399,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const {
       classes, loading, progress, bundleId, selectedItemsToPaste, isOkToAddFiles
     } = this.props;
-    const { bundleId: bundleIdPasteSource, uris: urisToPaste, itemsType } = selectedItemsToPaste;
+    const { bundleId: bundleIdPasteSource, items: urisToPaste, itemsType } = selectedItemsToPaste;
     const modeUi = this.modeUi();
     const isModifyFilesMode = this.isModifyFilesMode();
     const isNothingSelected = this.isNothingSelected();

@@ -26,7 +26,7 @@ function mapStateToProps(state, props) {
   const clipboard = {
     bundleId: selectedItemsToPaste.bundleId,
     description: 'Resources',
-    items: selectedItemsToPaste.uris || []
+    items: selectedItemsToPaste.items || []
   };
   const { isLoading: isLoadingSearch } = bundlesFilter;
   const { isSearchActive } = bundlesFilter;

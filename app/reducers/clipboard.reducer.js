@@ -6,8 +6,8 @@ const initialState = {};
 export function clipboard(state = initialState, action) {
   switch (action.type) {
     case clipboardConstants.SELECT_STORED_RESOURCES_TO_PASTE: {
-      const { bundleId, uris, itemsType } = action;
-      return getNewStateWithSelectedResourcesToPaste(bundleId, uris, itemsType);
+      const { bundleId, items, itemsType } = action;
+      return getNewStateWithSelectedResourcesToPaste(bundleId, items, itemsType);
     }
     case bundleConstants.DELETE_SUCCESS: {
       const { selectedItemsToPaste: selectedResourcesToPasteOrig = {} } = state;
@@ -22,12 +22,12 @@ export function clipboard(state = initialState, action) {
     }
   }
 
-  function getNewStateWithSelectedResourcesToPaste(bundleId, uris, itemsType) {
+  function getNewStateWithSelectedResourcesToPaste(bundleId, items, itemsType) {
     const { selectedItemsToPaste: selectedResourcesToPasteOrig, ...restState } = state;
     if (bundleId) {
       return {
         ...restState,
-        selectedItemsToPaste: { bundleId, uris, itemsType }
+        selectedItemsToPaste: { bundleId, items, itemsType }
       };
     }
     /* remove selectedItemsToPaste */
