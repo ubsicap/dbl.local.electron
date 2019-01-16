@@ -20,17 +20,19 @@ import Zoom from '@material-ui/core/Zoom';
 import Tooltip from '@material-ui/core/Tooltip';
 import { updateBundle } from '../actions/bundle.actions';
 import { closeEditMetadata, saveFieldValuesForActiveForm, openMetadataFile } from '../actions/bundleEditMetadata.actions';
-import { selectItemsToPaste } from '../actions/clipboard.actions';
+import { selectItemsToPaste, pasteItems } from '../actions/clipboard.actions';
 import editMetadataService from '../services/editMetadata.service';
 import EditMetadataStepper from './EditMetadataStepper';
 import rowStyles from './DBLEntryRow.css';
 import CopyForPasteButton from './CopyForPasteButton';
+import PasteButton from './PasteButton';
 
 const { shell } = require('electron');
 
 function mapStateToProps(state, props) {
-  const { bundleEditMetadata, bundles } = state;
+  const { bundleEditMetadata, bundles, clipboard } = state;
   const { bundleId } = props.match.params;
+  const { selectedItemsToPaste } = clipboard;
   const {
     showMetadataFile, currentFormWithErrors, nextFormWithErrors, formStructure
   } = bundleEditMetadata;
@@ -57,7 +59,8 @@ function mapStateToProps(state, props) {
     formsErrors,
     currentFormNumWithErrors,
     nextFormWithErrors,
-    formStructure
+    formStructure,
+    selectedItemsToPaste
   };
 }
 
@@ -66,7 +69,8 @@ const mapDispatchToProps = {
   saveFieldValuesForActiveForm,
   updateBundle,
   openMetadataFile,
-  selectItemsToPaste
+  selectItemsToPaste,
+  pasteItems
 };
 
 const materialStyles = theme => ({
@@ -109,7 +113,9 @@ type Props = {
   moveNext: ?{},
   couldNotSaveMetadataMessage: ?string,
   requestingSaveMetadata: boolean,
-  formStructure: {}
+  formStructure: {},
+  selectedItemsToPaste: ?{},
+  pasteItems: () => {}
 };
 
 class EditEntryMetadataDialog extends PureComponent<Props> {
@@ -148,8 +154,30 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     this.props.openMetadataFile(this.props.bundleId);
   }
 
-  conditionallyRenderSaveOrGotoErrorButton = () => {
-    const { classes, formsErrors } = this.props;
+  handlePasteMetadataSections = () => {
+    this.props.pasteItems(this.props.bundleId);
+  }
+
+  conditionallyRenderPrimaryActionButton = () => {
+    const {
+      classes, formsErrors, selectedItemsToPaste, bundleId
+    } = this.props;
+    const { items: sectionsToPaste = [], itemsType, bundleId: bundleIdOnClipboard } = selectedItemsToPaste || {};
+    if (selectedItemsToPaste &&
+      itemsType === 'metadata sections' &&
+      bundleId !== bundleIdOnClipboard && sectionsToPaste.length > 0) {
+      return (
+        <PasteButton
+          key="btnPasteMetadataSections"
+          classes={classes}
+          color="secondary"
+          variant="contained"
+          onClick={this.handlePasteMetadataSections}
+          itemsToPaste={sectionsToPaste}
+          itemsType={itemsType}
+        />
+      );
+    }
     const formsErrorsCount = Object.keys(formsErrors).length;
     if (!formsErrorsCount) {
       return (
@@ -194,7 +222,8 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
 
   handleCopySections = () => {
     const { sectionSelections } = this.state;
-    const sectionsSelected = Object.values(sectionSelections).filter(s => s);
+    const sectionsSelected = Object.entries(sectionSelections)
+      .filter(([, isSelected]) => isSelected).map(([s]) => s);
     this.props.selectItemsToPaste(this.props.bundleId, sectionsSelected, 'metadata sections');
     this.handleClose();
   }
@@ -230,7 +259,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
                 disabled={sectionsSelected.length === 0}
                 selectedItems={sectionsSelected}
               />
-              {this.conditionallyRenderSaveOrGotoErrorButton()}
+              {this.conditionallyRenderPrimaryActionButton()}
             </Toolbar>
           </AppBar>
           <FormControlLabel

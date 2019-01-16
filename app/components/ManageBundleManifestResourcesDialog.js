@@ -19,8 +19,6 @@ import FolderOpen from '@material-ui/icons/FolderOpen';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import Delete from '@material-ui/icons/Delete';
-import FileCopyIcon from '@material-ui/icons/FileCopy';
-import AssignmentTurnedInIcon from '@material-ui/icons/AssignmentTurnedIn';
 import CloseIcon from '@material-ui/icons/Close';
 import CheckIcon from '@material-ui/icons/Check';
 import OpenInNew from '@material-ui/icons/OpenInNew';
@@ -46,6 +44,7 @@ import { bundleService } from '../services/bundle.service';
 import { ux } from '../utils/ux';
 import ConfirmButton from '../components/ConfirmButton';
 import CopyForPasteButton from './CopyForPasteButton';
+import PasteButton from './PasteButton';
 import MapperTable from '../components/MapperTable';
 
 const { dialog } = require('electron').remote;
@@ -1408,17 +1407,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       itemsType === 'resources' &&
       bundleId !== bundleIdPasteSource) {
       return (
-        <ConfirmButton
+        <PasteButton
           key="btnPasteResources"
           classes={classes}
           color="secondary"
           variant="contained"
           onClick={this.handlePasteResources}
           disabled={urisToPaste.length === 0}
-        >
-          <AssignmentTurnedInIcon className={classNames(classes.leftIcon)} />
-          Paste {urisToPaste.length ? `(${urisToPaste.length})` : ''} Resources
-        </ConfirmButton>
+          itemsToPaste={urisToPaste}
+          itemsType={itemsType}
+        />
       );
     }
     return (

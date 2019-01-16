@@ -33,10 +33,17 @@ export function pasteItems(bundleId) {
       return;
     }
     await bundleService.waitStartCreateMode(bundleId);
-    await bundleService.copyResources(
-      bundleId, selectedItemsToPaste.bundleId,
-      selectedItemsToPaste.items
-    );
+    if (selectedItemsToPaste.itemsType === 'resources') {
+      await bundleService.copyResources(
+        bundleId, selectedItemsToPaste.bundleId,
+        selectedItemsToPaste.items
+      );
+    } else if (selectedItemsToPaste.itemsType === 'metadata sections') {
+      await bundleService.copyMetadata(
+        bundleId, selectedItemsToPaste.bundleId,
+        selectedItemsToPaste.items
+      );
+    }
     await bundleService.waitStopCreateMode(bundleId);
     dispatch(success(bundleId, selectedItemsToPaste.items));
     dispatch(clearClipboard()); // clear it after pasting

@@ -44,6 +44,7 @@ export const bundleService = {
   waitMode,
   postResource,
   copyResources,
+  copyMetadata,
   forkBundle,
   updateManifestResource,
   getApplicableWizards,
@@ -351,6 +352,12 @@ function removeBundle(bundleId) {
 function copyResources(bundleId, fromBundleId, uris, merge = true) {
   const resourceList = uris.map(uri => `<resource uri="${uri}"/>`).join('');
   const copyResourcesTask = `<copyResources><fromBundleId>${fromBundleId}</fromBundleId>${resourceList}<merge>${merge}</merge></copyResources>`;
+  return bundleAddTasks(bundleId, copyResourcesTask);
+}
+
+function copyMetadata(bundleId, fromBundleId, sections, preserveExisting = true) {
+  const sectionsList = sections.map(section => `<section>${section}</section> />`).join('');
+  const copyResourcesTask = `<copyMetadata><fromBundleId>${fromBundleId}</fromBundleId>${sectionsList}<preserveExisting>${preserveExisting}</preserveExisting></copyMetadata>`;
   return bundleAddTasks(bundleId, copyResourcesTask);
 }
 
