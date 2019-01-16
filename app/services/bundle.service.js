@@ -356,7 +356,7 @@ function copyResources(bundleId, fromBundleId, uris, merge = true) {
 }
 
 function copyMetadata(bundleId, fromBundleId, sections, preserveExisting = true) {
-  const sectionsList = sections.map(section => `<section>${section}</section> />`).join('');
+  const sectionsList = sections.map(section => `<section>${section}</section>`).join('');
   const copyResourcesTask = `<copyMetadata><fromBundleId>${fromBundleId}</fromBundleId>${sectionsList}<preserveExisting>${preserveExisting}</preserveExisting></copyMetadata>`;
   return bundleAddTasks(bundleId, copyResourcesTask);
 }
