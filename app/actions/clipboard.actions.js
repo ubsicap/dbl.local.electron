@@ -34,12 +34,10 @@ export function pasteItems(bundleId) {
       return;
     }
     if (selectedItemsToPaste.itemsType === 'resources') {
-      await bundleService.waitStartCreateMode(bundleId);
       await bundleService.copyResources(
         bundleId, selectedItemsToPaste.bundleId,
         selectedItemsToPaste.items
       );
-      await bundleService.waitStopCreateMode(bundleId);
     } else if (selectedItemsToPaste.itemsType === 'metadata sections') {
       await bundleService.waitStopCreateMode(bundleId);
       await bundleService.copyMetadata(
