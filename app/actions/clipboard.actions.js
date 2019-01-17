@@ -1,5 +1,6 @@
 import { clipboardConstants } from '../constants/clipboard.constants';
 import { bundleService } from '../services/bundle.service';
+import { fetchFormStructure } from '../actions/bundleEditMetadata.actions';
 
 export const clipboardActions = {
   selectItemsToPaste,
@@ -43,6 +44,7 @@ export function pasteItems(bundleId) {
         bundleId, selectedItemsToPaste.bundleId,
         selectedItemsToPaste.items
       );
+      // todo, wait for SSE then dispatch(fetchFormStructure(bundleId));
     }
     await bundleService.waitStopCreateMode(bundleId);
     dispatch(success(bundleId, selectedItemsToPaste.items));
