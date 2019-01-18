@@ -210,10 +210,13 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     this.setState({ sectionSelections });
   };
 
-  handleClickSelectAll = () => {
+  handleClickSelectAll = (event) => {
+    event.stopPropagation();
+    event.preventDefault();
     const { formStructure } = this.props;
     const { sectionSelections: sectionSelectionsOrig = {} } = this.state;
-    const areAllSelected = Object.keys(sectionSelectionsOrig).length === formStructure.length;
+    const areAllSelected = Object.keys(sectionSelectionsOrig).length === formStructure.length &&
+      Object.values(sectionSelectionsOrig).every(value => value);
     const valueToSet = !areAllSelected;
     const sectionSelectionsMap =
       formStructure.map(step => step.id).reduce((acc, k) => acc.set(k, valueToSet), Map());
@@ -267,7 +270,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
             style={{ paddingTop: '8px', paddingLeft: '55px' }}
             control={
               <Checkbox
-                onChange={this.handleClickSelectAll}
+                onClick={this.handleClickSelectAll}
                 value="master"
                 checked={formStructure.length > 0 && sectionsSelected.length === formStructure.length}
                 indeterminate={sectionsSelected.length > 0 && sectionsSelected.length < formStructure.length}
