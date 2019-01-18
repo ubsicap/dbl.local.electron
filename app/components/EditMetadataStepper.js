@@ -559,10 +559,12 @@ class _EditMetadataStepper extends React.Component<Props> {
           control={
             <Checkbox
               checked={isChecked}
-              onChange={this.props.onClickSectionSelection}
+              onClick={this.props.onClickSectionSelection}
+              onChange={e => { e.stopPropagation(); }}
               value={step.id}
             />
           }
+          onClick={e => { e.preventDefault(); }}
           label={this.renderStepLabel(step)}
         />
       );

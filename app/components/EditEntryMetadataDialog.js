@@ -204,8 +204,9 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   handleClickSectionSelection = event => {
     event.stopPropagation();
     event.preventDefault();
-    const { value, checked } = event.target;
-    const sectionSelections = { ...this.state.sectionSelections, [value]: checked };
+    const { value } = event.target;
+    const newCheckedState = !this.state.sectionSelections[value];
+    const sectionSelections = { ...this.state.sectionSelections, [value]: newCheckedState };
     this.setState({ sectionSelections });
   };
 
