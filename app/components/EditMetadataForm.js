@@ -83,8 +83,9 @@ class EditMetadataForm extends React.PureComponent<Props> {
     }
   }
 
-  componentDidUpdate() {
-    if (this.props.isActiveForm && this.props.requestingSaveMetadata) {
+  componentDidUpdate(prevProps) {
+    if (this.props.isActiveForm && this.props.requestingSaveMetadata &&
+      !prevProps.requestingSaveMetadata) {
       const {
         inputs = {}, bundleId, formKey, isFactory, activeFormEdits, forceSave
       } = this.props;
