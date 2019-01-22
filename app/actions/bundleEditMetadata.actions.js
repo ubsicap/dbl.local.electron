@@ -29,10 +29,7 @@ function buildEditMetadataUrl(routeUrl, bundleId) {
 }
 
 async function getFormStructure(_bundleId) {
-  const isDemoMode = getIsDemoMode();
-  const response = isDemoMode ?
-    await getMockStructure() :
-    await bundleService.getFormBundleTree(_bundleId);
+  const response = await bundleService.getFormBundleTree(_bundleId);
   return response;
 }
 
@@ -93,10 +90,7 @@ export function fetchActiveFormInputs(bundleId, _formKey, doUpdateBundleFormFiel
   return async dispatch => {
     dispatch(request(_formKey));
     try {
-      const isDemoMode = getIsDemoMode();
-      const response = isDemoMode ?
-        await getMockFormInputs(bundleId, _formKey) :
-        await bundleService.getFormFields(bundleId, _formKey);
+      const response = await bundleService.getFormFields(bundleId, _formKey);
       if (doUpdateBundleFormFieldErrors) {
         dispatch(updateFormFieldIssues(bundleId));
       }
@@ -159,10 +153,6 @@ function getUserMetadataOverrides(whoami) {
   };
 }
 
-function getIsDemoMode() {
-  return history.location.pathname.includes('/demo');
-}
-
 export function openEditMetadata(_bundleId, _moveNextStep) {
   return async (dispatch, getState) => {
     const bundleToEdit = bundleService.getCurrentBundleState(getState, _bundleId);
@@ -178,7 +168,6 @@ export function openEditMetadata(_bundleId, _moveNextStep) {
     }
     try {
       try {
-        await bundleService.waitStartCreateMode(_bundleId);
         const bundleReady = bundleService.getCurrentBundleState(getState, _bundleId);
         dispatch(navigate(bundleReady, _moveNextStep));
       } catch (error) {
@@ -261,6 +250,7 @@ export function deleteForm(bundleId, formKey, reloadActiveForm) {
   return async dispatch => {
     dispatch(request());
     try {
+      await bundleService.waitStartCreateMode(bundleId);
       await bundleService.deleteForm(bundleId, formKey);
       dispatch(fetchFormStructure(bundleId));
       if (reloadActiveForm) {
@@ -270,6 +260,8 @@ export function deleteForm(bundleId, formKey, reloadActiveForm) {
     } catch (errorReadable) {
       const error = await errorReadable.text();
       dispatch(failure(error));
+    } finally {
+      await bundleService.waitStopCreateMode(bundleId);
     }
   };
   function request() {
@@ -360,7 +352,7 @@ export function saveMetadata({
       postFormArgs = {
         bundleId, formKey, payload: { formId: bundleId, fields }, keyField: keyFieldValue
       };
-      await bundleService.postFormFields({ ...postFormArgs });
+      await bundleService.waitUntilPostFormFields({ ...postFormArgs }, getState);
       if (saveOverrides) {
         // reset state so that saving overrides does not result in infinite loop when errors occur
         dispatch(fetchActiveFormInputs(bundleId, formKey));
@@ -419,11 +411,13 @@ function tryUpdatePublications(formKey, bundleId) {
       if (formKey.startsWith('/publications/publication/') && formKey.endsWith('/canonSpec')) {
         const { bundleEditMetadata: { formStructure } } = getState();
         const publicationInstances = bundleService.getPublicationsInstances(formStructure);
+        await bundleService.waitStartCreateMode(bundleId);
         await bundleService.updatePublications(bundleId, Object.keys(publicationInstances));
         return;
       }
     } catch (error) {
       log.error(`publication wizards error: ${error}`);
+      await bundleService.waitStopCreateMode(bundleId);
     }
   };
 }
@@ -472,432 +466,4 @@ function saveAllOverrides(bundleId) {
       }
     });
   };
-}
-
-function getMockStructure() {
-  const mockStructure = [
-    {
-      id: 'identification',
-      name: 'Identification',
-      template: true,
-      contains: [
-        {
-          id: 'systemId',
-          name: 'System IDs',
-          contains: [
-            {
-              arity: '?',
-              id: 'gbc',
-              name: 'GBC',
-              template: true,
-              present: false
-            },
-            {
-              arity: '?',
-              id: 'paratext',
-              name: 'PT',
-              template: true,
-              present: false
-            },
-            {
-              arity: '?',
-              id: 'ptReg',
-              name: 'PT Registry',
-              template: true,
-              present: false
-            },
-            {
-              arity: '?',
-              id: 'tms',
-              name: 'TMS',
-              template: true,
-              present: false
-            },
-            {
-              arity: '?',
-              id: 'reap',
-              name: 'REAP',
-              template: true,
-              present: false
-            },
-            {
-              arity: '?',
-              id: 'biblica',
-              name: 'Biblica',
-              template: true,
-              present: false
-            },
-            {
-              arity: '?',
-              id: 'dbp',
-              name: 'DBP',
-              template: true,
-              present: false
-            }
-          ]
-        },
-        {
-          arity: '?',
-          id: 'canonSpec',
-          name: 'Canon Specification',
-          template: true,
-          present: false
-        }
-      ]
-    },
-    {
-      id: 'relationships',
-      name: 'Relationships',
-      contains: [
-        {
-          arity: '*',
-          id: 'relation',
-          name: '{0}',
-          has_key: true,
-          template: true,
-          instances: {}
-        }
-      ]
-    },
-    {
-      id: 'agencies',
-      name: 'Agencies',
-      contains: [
-        {
-          arity: '+',
-          id: 'rightsHolder',
-          name: '{0}',
-          has_key: true,
-          template: true,
-          instances: {
-            d41b7b7e1c41d27efc13f05f: {
-              has_key: true
-            }
-          }
-        },
-        {
-          arity: '+',
-          id: 'contributor',
-          name: '{0}',
-          has_key: true,
-          template: true,
-          instances: {
-            '54650cd05117ad67b3826e99': {
-              has_key: true
-            }
-          }
-        },
-        {
-          arity: '?',
-          id: 'rightsAdmin',
-          name: '{0}',
-          has_key: true,
-          template: true,
-          instances: {}
-        }
-      ]
-    },
-    {
-      id: 'fullLanguage',
-      name: 'Language',
-      template: true
-    },
-    {
-      id: 'countries',
-      name: 'Countries',
-      contains: [
-        {
-          arity: '+',
-          id: 'country',
-          name: '{0}',
-          has_key: true,
-          template: true,
-          instances: {
-            US: {
-              has_key: true
-            }
-          }
-        }
-      ]
-    },
-    {
-      id: 'textType',
-      name: 'Type',
-      template: true
-    },
-    {
-      id: 'textFormat',
-      name: 'Format',
-      template: true
-    },
-    {
-      id: 'names',
-      name: 'Names',
-      contains: [
-        {
-          arity: '*',
-          id: 'name',
-          name: '{0}',
-          has_key: true,
-          template: true,
-          instances: {
-            'book-mat': {
-              has_key: true
-            },
-            'book-mrk': {
-              has_key: true
-            },
-            'book-luk': {
-              has_key: true
-            },
-            'book-jhn': {
-              has_key: true
-            }
-          }
-        }
-      ]
-    },
-    {
-      id: 'publications',
-      name: 'Publications',
-      contains: [
-        {
-          arity: '+',
-          id: 'publication',
-          name: '{0}',
-          has_key: true,
-          template: true,
-          contains: [
-            {
-              id: 'countries',
-              arity: '?',
-              name: 'Countries',
-              contains: [
-                {
-                  arity: '+',
-                  id: 'country',
-                  name: '{0}',
-                  has_key: true,
-                  template: true
-                }
-              ],
-              present: false
-            },
-            {
-              arity: '?',
-              id: 'canonSpec',
-              name: 'Canon Specification',
-              template: true,
-              present: false
-            }
-          ],
-          instances: {
-            p1: {
-              has_key: true,
-              contains: [
-                {
-                  id: 'countries',
-                  arity: '?',
-                  name: 'Countries',
-                  contains: [
-                    {
-                      arity: '+',
-                      id: 'country',
-                      name: '{0}',
-                      has_key: true,
-                      template: true,
-                      instances: {}
-                    }
-                  ],
-                  present: false
-                },
-                {
-                  arity: '?',
-                  id: 'canonSpec',
-                  name: 'Canon Specification',
-                  template: true,
-                  present: false
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      id: 'copyright',
-      name: 'Copyright',
-      contains: [
-        {
-          arity: '?',
-          id: 'fullStatement',
-          name: 'Full Statement',
-          template: true,
-          present: true
-        },
-        {
-          arity: '?',
-          id: 'shortStatement',
-          name: 'Short Statement',
-          template: true,
-          present: false
-        }
-      ]
-    },
-    {
-      arity: '?',
-      id: 'promotion',
-      name: 'Promotion',
-      template: true,
-      present: true
-    },
-    {
-      arity: '1',
-      id: 'archiveStatus',
-      name: 'Archive Status',
-      template: true
-    },
-    {
-      arity: '?',
-      id: 'progress',
-      name: 'Progress',
-      contains: [
-        {
-          arity: '+',
-          id: 'book',
-          name: 'Book',
-          template: true,
-          has_key: true,
-          instances: {}
-        }
-      ],
-      present: false
-    }
-  ];
-  return new Promise(resolve => resolve(mockStructure));
-}
-
-function getMockFormInputs() {
-  const mockFormInputs = {
-    id: 'e9257364-21f5-4678-a6ce-fc07ef9b11e3',
-    category: 'information',
-    fields: [
-      {
-        type: 'label',
-        level: '1',
-        text: 'Identification'
-      },
-      {
-        name: 'name',
-        nValues: '1',
-        type: 'string',
-        label: 'Name',
-        help: "The entry's name, in English",
-        regex: '\\S.*\\S',
-        default: [
-          'TEST Audio Bundles'
-        ]
-      },
-      {
-        name: 'nameLocal',
-        nValues: '?',
-        type: 'string',
-        label: 'Local Name',
-        help: "The entry's localized name",
-        regex: '\\S.*\\S',
-        default: [
-          'TEST Audio Bible - Local'
-        ]
-      },
-      {
-        name: 'abbreviation',
-        nValues: '?',
-        type: 'string',
-        label: 'Abbreviation',
-        help: "The entry's abbreviation, in English (no exotic characters). This is not required for non-text media, but is strongly recommended.",
-        regex: '[\\-A-Za-z0-9]{2,12}',
-        default: [
-          'DBLTD'
-        ]
-      },
-      {
-        name: 'abbreviationLocal',
-        nValues: '?',
-        type: 'string',
-        label: 'Local Abbreviation',
-        help: "The entry's localized abbreviation",
-        regex: '\\S.{0,10}\\S',
-        default: [
-          ''
-        ]
-      },
-      {
-        name: 'description',
-        nValues: '1',
-        type: 'string',
-        label: 'Description',
-        help: "The entry's description, in English",
-        regex: '\\S.*\\S',
-        default: [
-          'TEST Audio Bible - Description'
-        ]
-      },
-      {
-        name: 'descriptionLocal',
-        nValues: '?',
-        type: 'string',
-        label: 'Local Description',
-        help: "The entry's localized description",
-        regex: '\\S.*\\S',
-        default: [
-          ''
-        ]
-      },
-      {
-        name: 'scope',
-        nValues: '1',
-        type: 'string',
-        label: 'Scope',
-        help: "The entry's scope (across all publications)",
-        default: [
-          'New Testament'
-        ],
-        options: [
-          'Bible',
-          'Bible with Deuterocanon',
-          'New Testament',
-          'New Testament+',
-          'Old Testament',
-          'Old Testament + Deuterocanon',
-          'Old Testament+',
-          'Portions',
-          'Selections',
-          'Shorter Bible'
-        ]
-      },
-      {
-        name: 'dateCompleted',
-        nValues: '?',
-        type: 'string',
-        label: 'Completion Date',
-        help: 'The date on which this entry was completed',
-        regex: '[12]\\d{3}(-[01]\\d(-[0-3]\\d(T[012]\\d:[0-5]\\d:[0-5]\\d)?)?)?',
-        default: [
-          ''
-        ]
-      },
-      {
-        name: 'bundleProducer',
-        nValues: '1',
-        type: 'string',
-        label: 'Bundle Producer',
-        help: 'The client and client version that produced this bundle',
-        regex: '\\S.*\\S',
-        default: [
-          'nathanael/0.9.0'
-        ]
-      }
-    ]
-  };
-  return new Promise(resolve => resolve(mockFormInputs));
 }

@@ -39,14 +39,16 @@ export function pasteItems(bundleId) {
         selectedItemsToPaste.items
       );
     } else if (selectedItemsToPaste.itemsType === 'metadata sections') {
-      await bundleService.waitStopCreateMode(bundleId);
       await bundleService.copyMetadata(
         bundleId, selectedItemsToPaste.bundleId,
         selectedItemsToPaste.items
       );
-      await bundleService.waitMode(getState, bundleId, 'store');
-      dispatch(fetchFormStructure(bundleId));
-      await bundleService.waitStartCreateMode(bundleId);
+      try {
+        await bundleService.waitMode(getState, bundleId, 'store');
+        dispatch(fetchFormStructure(bundleId));
+      } catch (error) {
+        console.log(error);
+      }
     }
     dispatch(success(bundleId, selectedItemsToPaste.items));
     dispatch(clearClipboard()); // clear it after pasting

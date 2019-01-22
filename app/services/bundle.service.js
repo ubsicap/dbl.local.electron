@@ -35,6 +35,7 @@ export const bundleService = {
   getFormFields,
   deleteForm,
   postFormFields,
+  waitUntilPostFormFields,
   startUploadBundle,
   startCreateContent,
   stopCreateContent,
@@ -435,6 +436,17 @@ function getFormFields(bundleId, formKey) {
     "response_valid": false
   }
  */
+async function waitUntilPostFormFields(postFormFieldArgs) {
+  const { bundleId } = postFormFieldArgs;
+  try {
+    await bundleService.waitStartCreateMode(bundleId);
+    const response = await postFormFields(postFormFieldArgs);
+    return response;
+  } finally {
+    await bundleService.waitStopCreateMode(bundleId);
+  }
+}
+
 function postFormFields({
   bundleId, formKey, payload, keyField
 }) {
