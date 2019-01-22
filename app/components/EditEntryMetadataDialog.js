@@ -219,7 +219,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
       Object.values(sectionSelectionsOrig).every(value => value);
     const valueToSet = !areAllSelected;
     const sectionSelectionsMap =
-      formStructure.map(step => step.id).reduce((acc, k) => acc.set(k, valueToSet), Map());
+      formStructure.map(step => step.section).reduce((acc, k) => acc.set(k, valueToSet), Map());
     const sectionSelections = sectionSelectionsMap.toObject();
     this.setState({ sectionSelections });
   }

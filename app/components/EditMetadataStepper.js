@@ -551,7 +551,8 @@ class _EditMetadataStepper extends React.Component<Props> {
   renderOptionalCheckbox = (step) => {
     const { myStructurePath, sectionSelections } = this.props;
     const isRootSectionLevel = myStructurePath.length === 0;
-    const isChecked = sectionSelections[step.id] || false;
+    const sectionName = step.section;
+    const isChecked = sectionSelections[sectionName] || false;
     if (isRootSectionLevel) {
       return (
         <FormControlLabel
@@ -561,7 +562,7 @@ class _EditMetadataStepper extends React.Component<Props> {
               checked={isChecked}
               onClick={this.props.onClickSectionSelection}
               onChange={e => { e.stopPropagation(); }}
-              value={step.id}
+              value={sectionName}
             />
           }
           onClick={e => { e.preventDefault(); }}
