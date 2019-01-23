@@ -260,8 +260,6 @@ export function deleteForm(bundleId, formKey, reloadActiveForm) {
     } catch (errorReadable) {
       const error = await errorReadable.text();
       dispatch(failure(error));
-    } finally {
-      await bundleService.waitStopCreateMode(bundleId);
     }
   };
   function request() {

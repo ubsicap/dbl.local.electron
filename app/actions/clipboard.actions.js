@@ -39,6 +39,7 @@ export function pasteItems(bundleId) {
         selectedItemsToPaste.items
       );
     } else if (selectedItemsToPaste.itemsType === 'metadata sections') {
+      await bundleService.waitStopCreateMode(bundleId);
       await bundleService.copyMetadata(
         bundleId, selectedItemsToPaste.bundleId,
         selectedItemsToPaste.items
