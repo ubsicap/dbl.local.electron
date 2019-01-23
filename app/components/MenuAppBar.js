@@ -72,7 +72,12 @@ const styles = theme => ({
     fontSize: 20,
   },
   iconSmaller: {
-    fontSize: 10,
+    fontSize: 12,
+  },
+  badge: {
+    marginRight: 7,
+    height: 18,
+    width: 18
   },
   root: {
     flexGrow: 1,
@@ -154,7 +159,7 @@ class MenuAppBar extends React.PureComponent {
                 <AssignmentIcon className={classNames(classes.leftIcon)} />
               </Badge>
               {ux.conditionallyRenderBadge(
-                  { classes: { badge: classes.badgeTight }, color: 'secondary' }, clipboard.items.length,
+                  { classes: { badge: classes.badge }, color: 'secondary' }, clipboard.items.length,
                   ''
                   )}
             </Button>
