@@ -5,7 +5,33 @@ const initialState = {};
 
 export function clipboard(state = initialState, action) {
   switch (action.type) {
-    case clipboardConstants.SELECT_STORED_RESOURCES_TO_PASTE: {
+    case clipboardConstants.CLIPBOARD_LISTENERS: {
+      return {
+        ...state,
+        listeners: action.listeners
+      };
+    }
+    case clipboardConstants.PASTE_SELECTED_ITEMS_TO_BUNDLE_REQUEST: {
+      return {
+        ...state,
+        bundleIdTarget: action.bundleId
+      };
+    }
+    case clipboardConstants.CLIPBOARD_HAS_STARTED_PASTE_ITEMS: {
+      return {
+        ...state,
+        isPastingSelectedItems: true,
+        hasPastedSelectedItems: false
+      };
+    }
+    case clipboardConstants.CLIPBOARD_HAS_FINISHED_PASTE_ITEMS: {
+      return {
+        ...state,
+        isPastingSelectedItems: false,
+        hasPastedSelectedItems: true
+      };
+    }
+    case clipboardConstants.SELECT_ITEMS_TO_PASTE: {
       const { bundleId, items, itemsType, getMedium, getDisplayAs } = action;
       return getNewStateWithSelectedResourcesToPaste(bundleId, items, itemsType, getMedium, getDisplayAs);
     }

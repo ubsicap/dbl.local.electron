@@ -42,7 +42,7 @@ export const bundleService = {
   bundleIsInCreateMode,
   waitStartCreateMode,
   waitStopCreateMode,
-  waitMode,
+  waitUntilBundleCondition,
   postResource,
   copyResources,
   copyMetadata,
@@ -515,9 +515,9 @@ function getCurrentBundleState(getState, bundleId) {
   return bundleId ? addedByBundleIds[bundleId] : null;
 }
 
-async function waitMode(getState, bundleId, mode) {
+async function waitUntilBundleCondition(getState, bundleId, condition) {
   const bundleCurrentState = bundleService.getCurrentBundleState(getState, bundleId);
-  await waitUntil(async () => bundleCurrentState.mode === mode, 60000, 500);
+  await waitUntil(async () => condition(bundleCurrentState), 60000, 500);
   return bundleCurrentState;
 }
 
