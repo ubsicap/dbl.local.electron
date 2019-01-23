@@ -9,11 +9,15 @@ export const clipboardActions = {
 };
 
 export function selectItemsToPaste(bundleId, items, type) {
-  return {
-    type: clipboardConstants.SELECT_STORED_RESOURCES_TO_PASTE,
-    bundleId,
-    items,
-    itemsType: type
+  return (dispatch, getState) => {
+    dispatch({
+      type: clipboardConstants.SELECT_STORED_RESOURCES_TO_PASTE,
+      bundleId,
+      items,
+      itemsType: type,
+      getMedium: () => getState().bundles.addedByBundleIds[bundleId].medium,
+      getDisplayAs: () => getState().bundles.addedByBundleIds[bundleId].displayAs
+    });
   };
 }
 

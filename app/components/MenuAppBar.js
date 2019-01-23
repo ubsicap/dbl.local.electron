@@ -7,6 +7,7 @@ import { DebounceInput } from 'react-debounce-input';
 import { compose } from 'recompose';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
+import Badge from '@material-ui/core/Badge';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
@@ -22,12 +23,7 @@ import { updateSearchInput, clearSearch } from '../actions/bundleFilter.actions'
 
 function mapStateToProps(state, props) {
   const { bundlesFilter, authentication, clipboard: clipboardState } = state;
-  const { selectedItemsToPaste = {} } = clipboardState;
-  const clipboard = {
-    bundleId: selectedItemsToPaste.bundleId,
-    description: 'Resources',
-    items: selectedItemsToPaste.items || []
-  };
+  const { selectedItemsToPaste: clipboard = {} } = clipboardState;
   const { isLoading: isLoadingSearch } = bundlesFilter;
   const { isSearchActive } = bundlesFilter;
   const { searchInputRaw } = bundlesFilter;
@@ -74,6 +70,9 @@ const styles = theme => ({
   },
   iconSmall: {
     fontSize: 20,
+  },
+  iconSmaller: {
+    fontSize: 10,
   },
   root: {
     flexGrow: 1,
@@ -124,7 +123,7 @@ class MenuAppBar extends React.PureComponent {
     } = this.props;
     const { anchorEl } = this.state;
     const open = Boolean(anchorEl);
-
+    const clipboardMedium = clipboard.bundleId ? clipboard.getMedium() : '';
     return (
       <AppBar position="sticky">
         <Toolbar>
@@ -151,7 +150,9 @@ class MenuAppBar extends React.PureComponent {
               color="inherit"
               // onClick={this.handlePasteResources}
             >
-              <AssignmentIcon className={classNames(classes.leftIcon)} />
+              <Badge badgeContent={ux.getMediumIcon(clipboardMedium, { className: classNames(classes.rightIcon, classes.iconSmaller) })} >
+                <AssignmentIcon className={classNames(classes.leftIcon)} />
+              </Badge>
               {ux.conditionallyRenderBadge(
                   { classes: { badge: classes.badgeTight }, color: 'secondary' }, clipboard.items.length,
                   ''
