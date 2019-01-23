@@ -7,6 +7,7 @@ import { DebounceInput } from 'react-debounce-input';
 import { compose } from 'recompose';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
+import Tooltip from '@material-ui/core/Tooltip';
 import Badge from '@material-ui/core/Badge';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
@@ -129,6 +130,7 @@ class MenuAppBar extends React.PureComponent {
     const { anchorEl } = this.state;
     const open = Boolean(anchorEl);
     const clipboardMedium = clipboard.bundleId ? clipboard.getMedium() : '';
+    const clipboardTooltip = clipboard.bundleId ? `${clipboard.itemsType} from ${clipboard.getDisplayAs().name}` : '';
     return (
       <AppBar position="sticky">
         <Toolbar>
@@ -150,19 +152,21 @@ class MenuAppBar extends React.PureComponent {
           </div>}
           {showClipboard && clipboard.bundleId &&
           <div style={{ marginLeft: '10px', marginRight: '10px' }}>
-            <Button
-              key="btnClipboard"
-              color="inherit"
-              // onClick={this.handlePasteResources}
-            >
-              <Badge badgeContent={ux.getMediumIcon(clipboardMedium, { className: classNames(classes.rightIcon, classes.iconSmaller) })} >
-                <AssignmentIcon className={classNames(classes.leftIcon)} />
-              </Badge>
-              {ux.conditionallyRenderBadge(
-                  { classes: { badge: classes.badge }, color: 'secondary' }, clipboard.items.length,
-                  ''
-                  )}
-            </Button>
+            <Tooltip title={clipboardTooltip}>
+              <Button
+                key="btnClipboard"
+                color="inherit"
+                // onClick={this.handlePasteResources}
+              >
+                <Badge badgeContent={ux.getMediumIcon(clipboardMedium, { className: classNames(classes.rightIcon, classes.iconSmaller) })} >
+                  <AssignmentIcon className={classNames(classes.leftIcon)} />
+                </Badge>
+                {ux.conditionallyRenderBadge(
+                    { classes: { badge: classes.badge }, color: 'secondary' }, clipboard.items.length,
+                    ''
+                    )}
+              </Button>
+            </Tooltip>
           </div>
           }
           {workspaceName && (
