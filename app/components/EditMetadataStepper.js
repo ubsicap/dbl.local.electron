@@ -563,6 +563,7 @@ class _EditMetadataStepper extends React.Component<Props> {
               onClick={this.props.onClickSectionSelection}
               onChange={e => { e.stopPropagation(); }}
               value={sectionName}
+              disabled={sectionName === 'publications'}
             />
           }
           onClick={e => { e.preventDefault(); }}
