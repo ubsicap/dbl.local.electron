@@ -23,6 +23,7 @@ import { closeEditMetadata, saveFieldValuesForActiveForm, openMetadataFile } fro
 import { selectItemsToPaste, pasteItems } from '../actions/clipboard.actions';
 import editMetadataService from '../services/editMetadata.service';
 import EditMetadataStepper from './EditMetadataStepper';
+import { clipboardHelpers } from '../helpers/clipboard';
 import rowStyles from './DBLEntryRow.css';
 import CopyForPasteButton from './CopyForPasteButton';
 import PasteButton from './PasteButton';
@@ -210,16 +211,31 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     this.setState({ sectionSelections });
   };
 
+  getAreAllSectionsSelected = () => {
+    const { formStructure } = this.props;
+    if (formStructure.length === 0) {
+      return false;
+    }
+    const { sectionSelections = {} } = this.state;
+    const incompatibleSections = clipboardHelpers.getUnsupportedMetadataSections();
+    const areAllSelected =
+      Object.keys(sectionSelections).length ===
+        (formStructure.length - incompatibleSections.length) &&
+      Object.values(sectionSelections).every(value => value);
+    return areAllSelected;
+  }
+
   handleClickSelectAll = (event) => {
     event.stopPropagation();
     event.preventDefault();
     const { formStructure } = this.props;
-    const { sectionSelections: sectionSelectionsOrig = {} } = this.state;
-    const areAllSelected = Object.keys(sectionSelectionsOrig).length === formStructure.length &&
-      Object.values(sectionSelectionsOrig).every(value => value);
+    const incompatibleSections = clipboardHelpers.getUnsupportedMetadataSections();
+    const areAllSelected = this.getAreAllSectionsSelected();
     const valueToSet = !areAllSelected;
     const sectionSelectionsMap =
-      formStructure.map(step => step.section).reduce((acc, k) => acc.set(k, valueToSet), Map());
+      formStructure.map(step => step.section)
+        .filter(sectionName => !incompatibleSections.includes(sectionName))
+        .reduce((acc, k) => acc.set(k, valueToSet), Map());
     const sectionSelections = sectionSelectionsMap.toObject();
     this.setState({ sectionSelections });
   }
@@ -238,6 +254,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     } = this.props;
     const { sectionSelections } = this.state;
     const sectionsSelected = Object.values(sectionSelections).filter(s => s);
+    const areAllSelected = this.getAreAllSectionsSelected();
     const { displayAs = {} } = selectedBundle;
     const { languageAndCountry, name } = displayAs;
     return (
@@ -272,8 +289,8 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
               <Checkbox
                 onClick={this.handleClickSelectAll}
                 value="master"
-                checked={formStructure.length > 0 && sectionsSelected.length === formStructure.length}
-                indeterminate={sectionsSelected.length > 0 && sectionsSelected.length < formStructure.length}
+                checked={areAllSelected}
+                indeterminate={sectionsSelected.length > 0 && !areAllSelected}
               />
             }
             label={`Selected Sections (${sectionsSelected.length})`}

@@ -25,6 +25,7 @@ import { fetchFormStructure, saveMetadataSuccess, setArchivistStatusOverrides,
 import EditMetadataForm from './EditMetadataForm';
 import editMetadataService from '../services/editMetadata.service';
 import { utilities } from '../utils/utilities';
+import { clipboardHelpers } from '../helpers/clipboard';
 import ConfirmButton from './ConfirmButton';
 
 const materialStyles = theme => ({
@@ -553,7 +554,7 @@ class _EditMetadataStepper extends React.Component<Props> {
     const isRootSectionLevel = myStructurePath.length === 0;
     const sectionName = step.section;
     const isChecked = sectionSelections[sectionName] || false;
-    if (isRootSectionLevel) {
+    if (isRootSectionLevel && !clipboardHelpers.getUnsupportedMetadataSections().includes(sectionName)) {
       return (
         <FormControlLabel
           style={{ paddingTop: '8px' }}
@@ -563,7 +564,6 @@ class _EditMetadataStepper extends React.Component<Props> {
               onClick={this.props.onClickSectionSelection}
               onChange={e => { e.stopPropagation(); }}
               value={sectionName}
-              disabled={sectionName === 'publications'}
             />
           }
           onClick={e => { e.preventDefault(); }}
