@@ -288,7 +288,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
             control={
               <Checkbox
                 onClick={this.handleClickSelectAll}
-                value="master"
+                value="selectAllSectionCheckboxes"
                 checked={areAllSelected}
                 indeterminate={sectionsSelected.length > 0 && !areAllSelected}
               />
