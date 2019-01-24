@@ -21,7 +21,7 @@ import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import classNames from 'classnames';
 import { fetchFormStructure, saveMetadataSuccess, setArchivistStatusOverrides,
   saveFieldValuesForActiveForm, fetchActiveFormInputs,
-  deleteForm, updateFormFieldIssues } from '../actions/bundleEditMetadata.actions';
+  deleteForm, updateFormFieldIssues, setMoveNextStep } from '../actions/bundleEditMetadata.actions';
 import EditMetadataForm from './EditMetadataForm';
 import editMetadataService from '../services/editMetadata.service';
 import { utilities } from '../utils/utilities';
@@ -170,7 +170,8 @@ const mapDispatchToProps = {
   saveFieldValuesForActiveForm,
   fetchActiveFormInputs,
   deleteForm,
-  updateFormFieldIssues
+  updateFormFieldIssues,
+  setMoveNextStep
 };
 
 function getStepFormKey(stepId, structurePath) {
@@ -195,6 +196,7 @@ type Props = {
     setArchivistStatusOverrides: () => {},
     updateFormFieldIssues: () => {},
     onClickSectionSelection?: () => {},
+    setMoveNextStep: () => {},
     bundleId: string,
     formStructure: [],
     sectionSelections?: {},
@@ -290,6 +292,9 @@ class _EditMetadataStepper extends React.Component<Props> {
         const nextStepIndex = (nextMoveNext.newStepIndex !==
           this.state.activeStepIndex ? nextMoveNext.newStepIndex : null);
         this.setState({ activeStepIndex: nextStepIndex });
+        if (nextStepIndex === null) {
+          this.props.setMoveNextStep();
+        }
       } else if (this.props.myStructurePath === nextMoveNext.formKey) {
         this.setState({ activeStepIndex: this.props.steps.length });
       }
