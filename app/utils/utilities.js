@@ -10,6 +10,7 @@ export const utilities = {
   areEqualCollections,
   getUnionOfValues,
   haveEqualKeys,
+  haveEqualKeysLength,
   onOpenLink,
   sleep,
   union,
@@ -43,6 +44,10 @@ export function areEqualArrays(a1, a2, funcSort) {
 
 export function areEqualArraysDeep(a1, a2) {
   return a1 === a2 || (a1.length === a2.length && JSON.stringify(a1) === JSON.stringify(a2));
+}
+
+export function haveEqualKeysLength(o1, o2) {
+  return Object.keys(o1).length === Object.keys(o2).length;
 }
 
 function haveEqualKeys(o1, o2) {
