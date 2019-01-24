@@ -18,7 +18,7 @@ export const bundleEditMetadataActions = {
   deleteForm,
   saveMetadata,
   saveFieldValuesForActiveForm,
-  reloadFieldValues,
+  reloadActiveForm,
   setArchivistStatusOverrides
 };
 
@@ -33,7 +33,11 @@ async function getFormStructure(_bundleId) {
   return response;
 }
 
-export function fetchFormStructure(_bundleId) {
+export function fetchFormStructure(
+  _bundleId,
+  shouldReloadActiveForm = false,
+  shouldUpdateBundleFormErrors = false
+) {
   return async dispatch => {
     dispatch(request(_bundleId));
     try {
@@ -43,6 +47,9 @@ export function fetchFormStructure(_bundleId) {
       // dispatch(tryUpdateMetadataSources(_bundleId, formStructure));
     } catch (error) {
       dispatch(failure(error));
+    }
+    if (shouldReloadActiveForm) {
+      dispatch(reloadActiveForm(shouldUpdateBundleFormErrors));
     }
   };
   function request(bundleId) {
@@ -246,16 +253,13 @@ function getActiveFormKey(getState) {
   return formKey;
 }
 
-export function deleteForm(bundleId, formKey, reloadActiveForm) {
+export function deleteForm(bundleId, formKey, shouldReloadActiveForm) {
   return async dispatch => {
     dispatch(request());
     try {
       await bundleService.waitStartCreateMode(bundleId);
       await bundleService.deleteForm(bundleId, formKey);
-      dispatch(fetchFormStructure(bundleId));
-      if (reloadActiveForm) {
-        dispatch(fetchActiveFormInputs(bundleId, formKey, true));
-      }
+      dispatch(fetchFormStructure(bundleId, shouldReloadActiveForm, true));
       dispatch(success(bundleId, formKey));
     } catch (errorReadable) {
       const error = await errorReadable.text();
@@ -286,13 +290,17 @@ function switchBackToBundlesPage() {
   history.push(bundlesPage);
 }
 
-export function reloadFieldValues(bundleId, formKey) {
+export function reloadActiveForm(shouldUpdateBundleFormErrors = false) {
   return (dispatch, getState) => {
     const { bundleEditMetadata } = getState();
-    const { moveNext: moveNextStep } = bundleEditMetadata;
+    const { bundleToEdit, moveNext: moveNextStep, activeFormInputs } = bundleEditMetadata;
+    const [activeFormKey] = Object.keys(activeFormInputs || {});
+    if (!bundleToEdit || !activeFormKey) {
+      return; // no active form
+    }
     dispatch(saveMetadataRequest({ moveNextStep }));
-    dispatch(fetchActiveFormInputs(bundleId, formKey, true));
-    return dispatch(saveMetadataSuccess(bundleId, formKey));
+    dispatch(fetchActiveFormInputs(bundleToEdit.id, activeFormKey, shouldUpdateBundleFormErrors));
+    return dispatch(saveMetadataSuccess(bundleToEdit.id, activeFormKey));
   };
 }
 

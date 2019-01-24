@@ -61,7 +61,7 @@ export function pasteItems(bundleId) {
       );
       // wait for eventSource listeners to change the state
       await waitUntil(async () => getState().clipboard.hasPastedSelectedItems);
-      dispatch(fetchFormStructure(bundleId));
+      dispatch(fetchFormStructure(bundleId, true, false));
     }
     dispatch(success(bundleId, selectedItemsToPaste.items));
     dispatch(clearClipboard()); // clear it after pasting
