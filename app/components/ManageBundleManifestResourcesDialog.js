@@ -122,6 +122,21 @@ function hasResourceDataChanged(prevManifestResources, currentManifestResources)
   return false;
 }
 
+function hasMapperInputDataChanged(prevMapperInputData, currentMapperInputData) {
+  if (prevMapperInputData === currentMapperInputData) {
+    return false;
+  }
+  if (currentMapperInputData && !prevMapperInputData) {
+    return true;
+  }
+  const { report: currentReport = {} } = currentMapperInputData || {};
+  const { report: previousReport = {} } = prevMapperInputData || {};
+  if (!utilities.areEqualObjectsDeep(currentReport, previousReport)) {
+    return true;
+  }
+  return false;
+}
+
 function createUpdatedTotalResources(origTotalResources, filePath, updateFunc) {
   return origTotalResources.map(r => (r.id === filePath ? { ...r, ...updateFunc(r) } : r));
 }
@@ -665,16 +680,22 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
     /* todo: the following do setState, which is unorthodox/anti-pattern */
     if (hasResourceDataChanged(prevProps.manifestResources, this.props.manifestResources) ||
-      (this.props.mode === 'revisions' && this.props.entryRevisions !== prevProps.entryRevisions) ||
-      !utilities.haveEqualKeys(this.props.previousManifestResources, prevProps.previousManifestResources)) {
+      (this.props.mode === 'revisions' && !utilities.areEqualArrays(this.props.entryRevisions, prevProps.entryRevisions)) ||
+      !utilities.haveEqualKeys(
+        this.props.previousManifestResources,
+        prevProps.previousManifestResources
+      )) {
       this.updateTableData(this.props);
-    } else if (this.props.mapperInputData !== prevProps.mapperInputData ||
-      this.props.selectedIdsInputConverters !== prevProps.selectedIdsInputConverters) {
-      const tableData = this.getTableDataForAddedResources(
+    } else if (hasMapperInputDataChanged(prevProps.mapperInputData, this.props.mapperInputData) ||
+      !utilities.areEqualObjectsDeep(
+        prevProps.selectedIdsInputConverters,
+        this.props.selectedIdsInputConverters
+      )) {
+      this.updateTotalResources(
         this.state.addedFilePaths,
-        this.state.fullToRelativePaths
+        this.state.fullToRelativePaths,
+        false
       );
-      this.updateTableAsIs(tableData);
     }
   }
 
@@ -1009,7 +1030,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const selectedIds = this.getUnionWithSelectedIds(addedFilePaths);
     this.setState(
       { addedFilePaths, selectedIds, fullToRelativePaths },
-      this.updateTotalResources(newAddedFilePaths, fullToRelativePaths)
+      this.updateTotalResources(newAddedFilePaths, fullToRelativePaths, true)
     );
     // this.setState({ selectAll: true });
   };
@@ -1072,12 +1093,18 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return [...otherResources, ...newlyAddedResources];
   }
 
-  updateTotalResources = (newAddedFilePaths, fullToRelativePaths) => () => {
+  updateTotalResources = (
+    newAddedFilePaths,
+    fullToRelativePaths,
+    shouldRunMapperReport = false
+  ) => () => {
     const tableData = this.getTableDataForAddedResources(newAddedFilePaths, fullToRelativePaths);
     this.setState(
       { tableData },
       () => {
-        this.getMapperReport();
+        if (shouldRunMapperReport) {
+          this.getMapperReport();
+        }
         this.updateAddedResourcesWithFileStats(newAddedFilePaths)();
       }
     );
