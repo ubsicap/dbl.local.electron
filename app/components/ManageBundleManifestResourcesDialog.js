@@ -257,7 +257,7 @@ function createAddedResource(
     const [id, name] = [filePath, fileName];
     const status = getAddStatus(uri, resourcesInParent, conversions, conversionOverwrites);
     return {
-      id, uri, status, mimeType: '', container: relativeFolder || NEED_CONTAINER, relativeFolder, name, size: 0, checksum: '', disabled: false
+      id, uri, status, mimeType: '', container: relativeFolder || NEED_CONTAINER, relativeFolder, name, size: '', checksum: '', disabled: false
     };
   };
 }
@@ -277,7 +277,7 @@ function createColumnConfig(mode) {
     const { id, href, localBundle, disabled, ...columns } = createRevisionData();
     return ux.mapColumns(columns, isNumeric, getLabel);
   }
-  const { id, uri, disabled, ...columns } = createResourceData(null, {}, {});
+  const { id, uri, disabled, checksum, ...columns } = createResourceData(null, {}, {});
   return ux.mapColumns(columns, isNumeric, getLabel);
 }
 
@@ -953,8 +953,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       const stats = await fs.stat(filePath);
       const { size: sizeRaw } = stats;
       const size = formatBytesByKbs(sizeRaw);
-      const checksum = size < 268435456 ? await md5File(filePath) : '(too expensive)';
-      const tableData = this.getUpdatedTotalResources(filePath, { size, checksum });
+      // const checksum = size < 268435456 ? await md5File(filePath) : '(too expensive)';
+      const tableData = this.getUpdatedTotalResources(filePath, { size });
       this.setState({ tableData });
     });
   }
