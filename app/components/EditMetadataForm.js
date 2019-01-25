@@ -13,6 +13,7 @@ import editMetadataService from '../services/editMetadata.service';
 type Props = {
   classes: {},
   bundleId: string,
+  bundleStatus: string,
   formKey: string,
   isFactory: boolean,
   inputs: {},
@@ -31,13 +32,14 @@ function mapStateToProps(state) {
   const { bundleEditMetadata } = state;
   const {
     requestingSaveMetadata = false, formFieldIssues = {}, activeFormEdits = {},
-    forceSave = false
+    forceSave = false, bundleToEdit
   } = bundleEditMetadata;
   return {
     requestingSaveMetadata,
     formFieldIssues,
     activeFormEdits,
-    forceSave
+    forceSave,
+    bundleStatus: bundleToEdit.status
   };
 }
 
@@ -135,6 +137,10 @@ class EditMetadataForm extends React.PureComponent<Props> {
   }
 
   getIsReadonly = (field) => {
+    const { bundleStatus } = this.props;
+    if (bundleStatus !== 'DRAFT') {
+      return true;
+    }
     if (field.isOverridden) {
       return true;
     }
@@ -188,6 +194,7 @@ class EditMetadataForm extends React.PureComponent<Props> {
           key={id}
           id={id}
           name={field.name}
+          disabled={this.getIsReadonly(field)}
           multiple
           floatingLabel={`${field.label}${isRequired ? ' *' : ''}`}
           errorText={helperText}

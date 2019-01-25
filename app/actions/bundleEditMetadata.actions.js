@@ -168,11 +168,6 @@ export function openEditMetadata(_bundleId, _moveNextStep) {
       dispatch(navigate(bundleToEdit, _moveNextStep));
       return;
     }
-    const isDraft = bundleToEdit.status === 'DRAFT';
-    if (!isDraft) {
-      dispatch(failure(_bundleId, 'not yet in draft mode', _moveNextStep));
-      return;
-    }
     try {
       try {
         const bundleReady = bundleService.getCurrentBundleState(getState, _bundleId);

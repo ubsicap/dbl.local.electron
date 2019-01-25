@@ -17,7 +17,7 @@ import Folder from '@material-ui/icons/Folder';
 import Copyright from '@material-ui/icons/Copyright';
 import Save from '@material-ui/icons/Save';
 import CreateNewFolder from '@material-ui/icons/CreateNewFolder';
-import Edit from '@material-ui/icons/Edit';
+import Description from '@material-ui/icons/Description';
 import CloudUpload from '@material-ui/icons/CloudUpload';
 import styles from './DBLEntryRow.css';
 import ControlledHighlighter from './ControlledHighlighter';
@@ -358,13 +358,10 @@ class DBLEntryRow extends PureComponent<Props> {
   renderEditIcon = () => {
     const { status, classes, formsErrors } = this.props;
     const formsErrorCount = Object.keys(formsErrors).length;
-    if (status === 'DRAFT') {
-      return [
-        ux.conditionallyRenderBadge({ className: classes.badge, color: 'error' }, formsErrorCount, <Edit key="btnEdit" className={classNames(classes.leftIcon, classes.iconSmall)} />),
-        'Edit'
-      ];
-    }
-    return (null);
+    return [
+      ux.conditionallyRenderBadge({ className: classes.badge, color: 'error' }, formsErrorCount, <Description key="btnEditView" className={classNames(classes.leftIcon, classes.iconSmall)} />),
+      status === 'DRAFT' ? 'Edit' : 'View'
+    ];
   };
 
   pickBackgroundColor = (isForRow) => {
@@ -498,15 +495,15 @@ class DBLEntryRow extends PureComponent<Props> {
         )}
         {isSelected && (
           <Toolbar style={{ minHeight: '36px' }} className={this.pickBackgroundColor()}>
-            {this.shouldShowEdit() &&
-            <Button
-              disabled={this.shouldDisableDraftRevisionOrEdit()}
-              variant="text" size="small" className={classes.button}
-              onKeyPress={this.onClickEditMetadata}
-              onClick={this.onClickEditMetadata}
-            >
-              {this.renderEditIcon()}
-            </Button>}
+            {
+              <Button
+                disabled={this.shouldDisableDraftRevisionOrEdit()}
+                variant="text" size="small" className={classes.button}
+                onKeyPress={this.onClickEditMetadata}
+                onClick={this.onClickEditMetadata}
+              >
+                {this.renderEditIcon()}
+              </Button>}
             {this.shouldShowDraftRevision() &&
             <Button
               color="secondary"
