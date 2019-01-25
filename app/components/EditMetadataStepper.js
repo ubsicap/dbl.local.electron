@@ -447,7 +447,9 @@ class _EditMetadataStepper extends React.Component<Props> {
     const hasFieldContent = activeStepIndex === stepIndex ?
       this.getActiveFormFields().some(f => f.default && f.default.length) : false;
     const step = this.getStep(stepIndex);
-    const { contains, isInstance = false, present } = step;
+    const {
+      contains, isInstance = false, present, isFactory
+    } = step;
     const isNotYetPresent = present !== undefined && !present;
     // if form has errors but there are no changes, it's possible that
     // we just need to clear the errors. However, it is possible
@@ -456,7 +458,7 @@ class _EditMetadataStepper extends React.Component<Props> {
     // and clear recent errors (or continue to show the original errors.)
     // const hasFormErrors = this.hasStepFormErrors(step);
     const isLastStep = this.isLastStep(activeStepIndex, steps);
-    if ((hasFormChanged /* ||  hasFormErrors */) && !contains) {
+    if ((hasFormChanged /* ||  hasFormErrors */) && (!contains || isFactory)) {
       return (
         <div>
           <Button
