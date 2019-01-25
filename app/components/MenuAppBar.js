@@ -130,7 +130,7 @@ class MenuAppBar extends React.PureComponent {
     const { anchorEl } = this.state;
     const open = Boolean(anchorEl);
     const clipboardMedium = clipboard.bundleId ? clipboard.getMedium() : '';
-    const clipboardTooltip = clipboard.bundleId ? `${clipboard.itemsType} from ${clipboard.getDisplayAs().name}` : '';
+    const clipboardTooltip = clipboard.bundleId ? `${clipboard.itemsType} from ${clipboard.getDisplayAs().name} ${clipboard.getDisplayAs().revision}` : '';
     return (
       <AppBar position="sticky">
         <Toolbar>
