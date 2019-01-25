@@ -567,6 +567,7 @@ class _EditMetadataStepper extends React.Component<Props> {
           style={{ paddingTop: '8px' }}
           control={
             <Checkbox
+              style={{ paddingTop: 0, paddingBottom: 0 }}
               checked={isChecked}
               onClick={this.props.onClickSectionSelection}
               onChange={e => { e.stopPropagation(); }}
