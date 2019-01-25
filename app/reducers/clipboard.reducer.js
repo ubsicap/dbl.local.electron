@@ -14,7 +14,8 @@ export function clipboard(state = initialState, action) {
     case clipboardConstants.PASTE_SELECTED_ITEMS_TO_BUNDLE_REQUEST: {
       return {
         ...state,
-        bundleIdTarget: action.bundleId
+        bundleIdTarget: action.bundleId,
+        hasPastedSelectedItems: false
       };
     }
     case clipboardConstants.CLIPBOARD_HAS_STARTED_PASTE_ITEMS: {
@@ -32,8 +33,16 @@ export function clipboard(state = initialState, action) {
       };
     }
     case clipboardConstants.SELECT_ITEMS_TO_PASTE: {
-      const { bundleId, items, itemsType, getMedium, getDisplayAs } = action;
-      return getNewStateWithSelectedResourcesToPaste(bundleId, items, itemsType, getMedium, getDisplayAs);
+      const {
+        bundleId, items, itemsType, getMedium, getDisplayAs
+      } = action;
+      return getNewStateWithSelectedResourcesToPaste(
+        bundleId,
+        items,
+        itemsType,
+        getMedium,
+        getDisplayAs
+      );
     }
     case bundleConstants.DELETE_SUCCESS: {
       const { selectedItemsToPaste: selectedResourcesToPasteOrig = {} } = state;
@@ -48,7 +57,13 @@ export function clipboard(state = initialState, action) {
     }
   }
 
-  function getNewStateWithSelectedResourcesToPaste(bundleId, items, itemsType, getMedium, getDisplayAs) {
+  function getNewStateWithSelectedResourcesToPaste(
+    bundleId,
+    items,
+    itemsType,
+    getMedium,
+    getDisplayAs
+  ) {
     const { selectedItemsToPaste: selectedResourcesToPasteOrig, ...restState } = state;
     if (bundleId) {
       return {
