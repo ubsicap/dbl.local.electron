@@ -695,7 +695,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         this.state.addedFilePaths,
         this.state.fullToRelativePaths,
         false
-      );
+      )();
     }
   }
 
