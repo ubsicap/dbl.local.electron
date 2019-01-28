@@ -6,15 +6,14 @@ import { createSelector } from 'reselect';
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
-import StepIcon from '@material-ui/core/StepIcon';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Checkbox from '@material-ui/core/Checkbox';
 import StepContent from '@material-ui/core/StepContent';
 import Button from '@material-ui/core/Button';
 import Save from '@material-ui/icons/Save';
 import Undo from '@material-ui/icons/Undo';
 import Delete from '@material-ui/icons/Delete';
-import Build from '@material-ui/icons/Build';
 import Tooltip from '@material-ui/core/Tooltip';
-import Warning from '@material-ui/icons/Warning';
 import NavigateNext from '@material-ui/icons/NavigateNext';
 import NavigateBefore from '@material-ui/icons/NavigateBefore';
 import Check from '@material-ui/icons/Check';
@@ -22,10 +21,11 @@ import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import classNames from 'classnames';
 import { fetchFormStructure, saveMetadataSuccess, setArchivistStatusOverrides,
   saveFieldValuesForActiveForm, fetchActiveFormInputs,
-  deleteForm, updateFormFieldIssues } from '../actions/bundleEditMetadata.actions';
+  deleteForm, updateFormFieldIssues, setMoveNextStep } from '../actions/bundleEditMetadata.actions';
 import EditMetadataForm from './EditMetadataForm';
 import editMetadataService from '../services/editMetadata.service';
 import { utilities } from '../utils/utilities';
+import { clipboardHelpers } from '../helpers/clipboard';
 import ConfirmButton from './ConfirmButton';
 
 const materialStyles = theme => ({
@@ -49,7 +49,7 @@ const materialStyles = theme => ({
   },
   iconSmall: {
     fontSize: 20,
-  },
+  }
 });
 
 const detailsStep = {
@@ -170,7 +170,8 @@ const mapDispatchToProps = {
   saveFieldValuesForActiveForm,
   fetchActiveFormInputs,
   deleteForm,
-  updateFormFieldIssues
+  updateFormFieldIssues,
+  setMoveNextStep
 };
 
 function getStepFormKey(stepId, structurePath) {
@@ -194,13 +195,16 @@ type Props = {
     deleteForm: () => {},
     setArchivistStatusOverrides: () => {},
     updateFormFieldIssues: () => {},
+    onClickSectionSelection?: () => {},
+    setMoveNextStep: () => {},
     bundleId: string,
     formStructure: [],
+    sectionSelections?: {},
     steps: [],
     myStructurePath: string,
     activeFormInputs: {},
     activeFormEdits: {},
-    shouldLoadDetails: boolean,
+    shouldLoadDetails?: boolean,
     requestingSaveMetadata: boolean,
     wasMetadataSaved: boolean,
     moveNext: ?{},
@@ -288,6 +292,9 @@ class _EditMetadataStepper extends React.Component<Props> {
         const nextStepIndex = (nextMoveNext.newStepIndex !==
           this.state.activeStepIndex ? nextMoveNext.newStepIndex : null);
         this.setState({ activeStepIndex: nextStepIndex });
+        if (nextStepIndex === null) {
+          this.props.setMoveNextStep();
+        }
       } else if (this.props.myStructurePath === nextMoveNext.formKey) {
         this.setState({ activeStepIndex: this.props.steps.length });
       }
@@ -440,7 +447,9 @@ class _EditMetadataStepper extends React.Component<Props> {
     const hasFieldContent = activeStepIndex === stepIndex ?
       this.getActiveFormFields().some(f => f.default && f.default.length) : false;
     const step = this.getStep(stepIndex);
-    const { contains, isInstance = false, present } = step;
+    const {
+      contains, isInstance = false, present, isFactory
+    } = step;
     const isNotYetPresent = present !== undefined && !present;
     // if form has errors but there are no changes, it's possible that
     // we just need to clear the errors. However, it is possible
@@ -449,7 +458,7 @@ class _EditMetadataStepper extends React.Component<Props> {
     // and clear recent errors (or continue to show the original errors.)
     // const hasFormErrors = this.hasStepFormErrors(step);
     const isLastStep = this.isLastStep(activeStepIndex, steps);
-    if ((hasFormChanged /* ||  hasFormErrors */) && !contains) {
+    if ((hasFormChanged /* ||  hasFormErrors */) && (!contains || isFactory)) {
       return (
         <div>
           <Button
@@ -544,6 +553,35 @@ class _EditMetadataStepper extends React.Component<Props> {
     return addBtn;
   }
 
+  renderStepLabel = (step) =>
+    (<React.Fragment>{step.label}{getDecorateRequired(step)}</React.Fragment>);
+
+  renderOptionalCheckbox = (step) => {
+    const { myStructurePath, sectionSelections } = this.props;
+    const isRootSectionLevel = myStructurePath.length === 0;
+    const sectionName = step.section;
+    const isChecked = sectionSelections[sectionName] || false;
+    if (isRootSectionLevel && !clipboardHelpers.getUnsupportedMetadataSections().includes(sectionName)) {
+      return (
+        <FormControlLabel
+          style={{ paddingTop: '8px' }}
+          control={
+            <Checkbox
+              style={{ paddingTop: 0, paddingBottom: 0 }}
+              checked={isChecked}
+              onClick={this.props.onClickSectionSelection}
+              onChange={e => { e.stopPropagation(); }}
+              value={sectionName}
+            />
+          }
+          onClick={e => { e.preventDefault(); }}
+          label={this.renderStepLabel(step)}
+        />
+      );
+    }
+    return this.renderStepLabel(step);
+  }
+
   render() {
     const { bundleId, classes, steps = [] } = this.props;
     if (!bundleId) {
@@ -561,10 +599,9 @@ class _EditMetadataStepper extends React.Component<Props> {
                   onClick={this.handleStep(index)}
                   completed={this.state.completed[index]}
                   error={this.hasErrorsInStepsOrForms(step)}
+                  optional={this.renderOptionalCheckbox(step)}
                   /* icon={<StepIcon icon={<Build />} className={classNames(classes.root, classes.error)} error={this.hasErrorsInStepsOrForms(step)} />} */
-                >
-                  {step.label}{getDecorateRequired(step)}
-                </StepLabel>
+                />
                 <StepContent>
                   {this.getStepContent(index)}
                   <div className={classes.actionsContainer}>
@@ -587,6 +624,12 @@ function getDecorateRequired(step) {
     (step.instances && shouldDisableDelete(step));
   return showAsRequired ? ' *' : '';
 }
+
+_EditMetadataStepper.defaultProps = {
+  shouldLoadDetails: false,
+  sectionSelections: {},
+  onClickSectionSelection: undefined
+};
 
 const EditMetadataStepperComposed = compose(
   withStyles(materialStyles, { name: '_EditMetadataStepper' }),

@@ -19,8 +19,6 @@ import FolderOpen from '@material-ui/icons/FolderOpen';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import Delete from '@material-ui/icons/Delete';
-import FileCopyIcon from '@material-ui/icons/FileCopy';
-import AssignmentTurnedInIcon from '@material-ui/icons/AssignmentTurnedIn';
 import CloseIcon from '@material-ui/icons/Close';
 import CheckIcon from '@material-ui/icons/Check';
 import OpenInNew from '@material-ui/icons/OpenInNew';
@@ -33,8 +31,9 @@ import path from 'path';
 import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources,
-  getMapperReport, selectResourcesToPaste, pasteResources, clearClipboard
+  getMapperReport
 } from '../actions/bundleManageResources.actions';
+import { selectItemsToPaste, pasteItems, clearClipboard } from '../actions/clipboard.actions';
 import { downloadResources, removeResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import rowStyles from './DBLEntryRow.css';
@@ -44,6 +43,8 @@ import { utilities } from '../utils/utilities';
 import { bundleService } from '../services/bundle.service';
 import { ux } from '../utils/ux';
 import ConfirmButton from '../components/ConfirmButton';
+import CopyForPasteButton from './CopyForPasteButton';
+import PasteButton from './PasteButton';
 import MapperTable from '../components/MapperTable';
 
 const { dialog } = require('electron').remote;
@@ -76,7 +77,7 @@ type Props = {
   selectedIdsInputConverters: ?{},
   goFixPublications: ?() => {},
   entryPageUrl: string,
-  selectedResourcesToPaste: ?{},
+  selectedItemsToPaste: ?{},
   closeResourceManager: () => {},
   openMetadataFile: () => {},
   getManifestResources: () => {},
@@ -89,8 +90,8 @@ type Props = {
   selectBundleEntryRevision: () => {},
   removeResources: () => {},
   getMapperReport: () => {},
-  selectResourcesToPaste: () => {},
-  pasteResources: () => {},
+  selectItemsToPaste: () => {},
+  pasteItems: () => {},
   clearClipboard: () => {}
 };
 
@@ -117,6 +118,21 @@ function hasResourceDataChanged(prevManifestResources, currentManifestResources)
     if (Object.entries(currentResource).some(([prop, value]) => value !== prevResource[prop])) {
       return true;
     }
+  }
+  return false;
+}
+
+function hasMapperInputDataChanged(prevMapperInputData, currentMapperInputData) {
+  if (prevMapperInputData === currentMapperInputData) {
+    return false;
+  }
+  if (currentMapperInputData && !prevMapperInputData) {
+    return true;
+  }
+  const { report: currentReport = {} } = currentMapperInputData || {};
+  const { report: previousReport = {} } = prevMapperInputData || {};
+  if (!utilities.areEqualObjectsDeep(currentReport, previousReport)) {
+    return true;
   }
   return false;
 }
@@ -250,13 +266,13 @@ function createAddedResource(
 ) {
   return (filePath) => {
     const fileName = path.basename(filePath);
-    const relativePath = fullToRelativePaths ? upath.normalizeTrim(fullToRelativePaths[filePath]) : '';
+    const relativePath = upath.normalizeTrim(getOrDefault(fullToRelativePaths, filePath, ''));
     const relativeFolder = formatContainer(path.dirname(relativePath));
     const uri = formatUri(relativeFolder, fileName);
     const [id, name] = [filePath, fileName];
     const status = getAddStatus(uri, resourcesInParent, conversions, conversionOverwrites);
     return {
-      id, uri, status, mimeType: '', container: relativeFolder || NEED_CONTAINER, relativeFolder, name, size: 0, checksum: '', disabled: false
+      id, uri, status, mimeType: '', container: relativeFolder || NEED_CONTAINER, relativeFolder, name, size: '', checksum: '', disabled: false
     };
   };
 }
@@ -276,7 +292,7 @@ function createColumnConfig(mode) {
     const { id, href, localBundle, disabled, ...columns } = createRevisionData();
     return ux.mapColumns(columns, isNumeric, getLabel);
   }
-  const { id, uri, disabled, ...columns } = createResourceData(null, {}, {});
+  const { id, uri, disabled, checksum, ...columns } = createResourceData(null, {}, {});
   return ux.mapColumns(columns, isNumeric, getLabel);
 }
 
@@ -485,12 +501,13 @@ const makeGetEntryPageUrl = () => createSelector(
 
 
 function mapStateToProps(state, props) {
-  const { bundleEditMetadata, bundleManageResources } = state;
+  const { bundleEditMetadata, bundleManageResources, clipboard } = state;
   const {
     publicationsHealth, progress = 100, loading = false,
     isStoreMode = false, fetchingMetadata = false,
-    mapperReports = {}, selectedMappers = {}, selectedResourcesToPaste = {}
+    mapperReports = {}, selectedMappers = {}
   } = bundleManageResources;
+  const { selectedItemsToPaste = {} } = clipboard;
   const {
     errorMessage: publicationsHealthMessage,
     goFix: goFixPublications,
@@ -540,7 +557,7 @@ function mapStateToProps(state, props) {
     publicationsHealthSuccessMessage,
     wizardsResults,
     entryPageUrl: getEntryPageUrl(state, props),
-    selectedResourcesToPaste
+    selectedItemsToPaste
   };
 }
 
@@ -557,8 +574,8 @@ const mapDispatchToProps = {
   selectBundleEntryRevision,
   removeResources,
   getMapperReport,
-  selectResourcesToPaste,
-  pasteResources,
+  selectItemsToPaste,
+  pasteItems,
   clearClipboard
 };
 
@@ -663,16 +680,23 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
     /* todo: the following do setState, which is unorthodox/anti-pattern */
     if (hasResourceDataChanged(prevProps.manifestResources, this.props.manifestResources) ||
-      (this.props.mode === 'revisions' && this.props.entryRevisions !== prevProps.entryRevisions) ||
-      !utilities.haveEqualKeys(this.props.previousManifestResources, prevProps.previousManifestResources)) {
+      (this.props.mode === 'revisions' && !utilities.areEqualArrays(this.props.entryRevisions, prevProps.entryRevisions)) ||
+      !utilities.haveEqualKeys(
+        this.props.previousManifestResources,
+        prevProps.previousManifestResources
+      )) {
       this.updateTableData(this.props);
-    } else if (this.props.mapperInputData !== prevProps.mapperInputData ||
-      this.props.selectedIdsInputConverters !== prevProps.selectedIdsInputConverters) {
-      const tableData = this.getTableDataForAddedResources(
+    } else if (hasMapperInputDataChanged(prevProps.mapperInputData, this.props.mapperInputData) ||
+      !utilities.areEqualObjectsDeep(
+        prevProps.selectedIdsInputConverters,
+        this.props.selectedIdsInputConverters
+      )) {
+      this.updateTotalResources(
         this.state.addedFilePaths,
-        this.state.fullToRelativePaths
-      );
-      this.updateTableAsIs(tableData);
+        this.state.fullToRelativePaths,
+        false,
+        false
+      )();
     }
   }
 
@@ -798,18 +822,18 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   handleCopyFiles = () => {
     const { storedResources } = this.getSelectedResourcesByStatus();
     const uris = storedResources.map(r => r.uri);
-    this.props.selectResourcesToPaste(this.props.bundleId, uris);
+    this.props.selectItemsToPaste(this.props.bundleId, uris, 'resources');
     this.handleClose();
   }
 
   handlePasteResources = () => {
-    this.props.pasteResources(this.props.bundleId);
+    this.props.pasteItems(this.props.bundleId);
   }
 
   clearResourceSelectionsForPaste = (urisChanged) => {
-    const { bundleId, selectedResourcesToPaste } = this.props;
-    const { bundleId: bundleIdPasteSource, uris: urisToPaste } = selectedResourcesToPaste;
-    if (bundleId === bundleIdPasteSource &&
+    const { bundleId, selectedItemsToPaste } = this.props;
+    const { bundleId: bundleIdPasteSource, items: urisToPaste, itemsType } = selectedItemsToPaste;
+    if (bundleId === bundleIdPasteSource && itemsType === 'resources' &&
       Set(urisToPaste).subtract(urisChanged).length !== urisToPaste.length) {
       this.props.clearClipboard(); // clear resource selections for paste
     }
@@ -941,20 +965,20 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return false;
   }
 
-  getUpdatedTotalResources(filePath, update) {
-    const { tableData } = this.state;
-    return createUpdatedTotalResources(tableData, filePath, () => update);
-  }
-
-  updateAddedResourcesWithFileStats = (newlyAddedFilePaths) => () => {
-    newlyAddedFilePaths.forEach(async filePath => {
+  updateAddedResourcesWithFileStats = (newlyAddedFilePaths) => async () => {
+    const fileSizesPromises = newlyAddedFilePaths.map(async (filePath) => {
       const stats = await fs.stat(filePath);
       const { size: sizeRaw } = stats;
       const size = formatBytesByKbs(sizeRaw);
-      const checksum = size < 268435456 ? await md5File(filePath) : '(too expensive)';
-      const tableData = this.getUpdatedTotalResources(filePath, { size, checksum });
-      this.setState({ tableData });
+      return { filePath, size };
+      // const checksum = size < 268435456 ? await md5File(filePath) : '(too expensive)';
     });
+    const fileSizesList = await Promise.all(fileSizesPromises);
+    const fileSizes = fileSizesList.reduce((acc, data) => { acc[data.filePath] = data.size; return acc; }, {});
+    const updatedTotalResources = Object.entries(fileSizes)
+      .reduce((acc, [filePath, size]) =>
+        (createUpdatedTotalResources(acc, filePath, () => ({ size }))), this.state.tableData);
+    this.setState({ tableData: updatedTotalResources });
   }
 
   getUpdateSelectedResourcesContainers = (newContainer) => {
@@ -1007,7 +1031,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const selectedIds = this.getUnionWithSelectedIds(addedFilePaths);
     this.setState(
       { addedFilePaths, selectedIds, fullToRelativePaths },
-      this.updateTotalResources(newAddedFilePaths, fullToRelativePaths)
+      this.updateTotalResources(newAddedFilePaths, fullToRelativePaths, true, true)
     );
     // this.setState({ selectAll: true });
   };
@@ -1070,13 +1094,22 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return [...otherResources, ...newlyAddedResources];
   }
 
-  updateTotalResources = (newAddedFilePaths, fullToRelativePaths) => () => {
+  updateTotalResources = (
+    newAddedFilePaths,
+    fullToRelativePaths,
+    shouldRunMapperReport = false,
+    shouldUpdateWithFileStats = false
+  ) => () => {
     const tableData = this.getTableDataForAddedResources(newAddedFilePaths, fullToRelativePaths);
     this.setState(
       { tableData },
       () => {
-        this.getMapperReport();
-        this.updateAddedResourcesWithFileStats(newAddedFilePaths)();
+        if (shouldRunMapperReport) {
+          this.getMapperReport();
+        }
+        if (shouldUpdateWithFileStats) {
+          this.updateAddedResourcesWithFileStats(newAddedFilePaths)();
+        }
       }
     );
   }
@@ -1394,27 +1427,27 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   renderOkOrPasteResourcesButton = () => {
     const {
-      classes, loading, progress, bundleId, selectedResourcesToPaste, isOkToAddFiles
+      classes, loading, progress, bundleId, selectedItemsToPaste, isOkToAddFiles
     } = this.props;
-    const { bundleId: bundleIdPasteSource, uris: urisToPaste } = selectedResourcesToPaste;
+    const { bundleId: bundleIdPasteSource, items: urisToPaste, itemsType } = selectedItemsToPaste;
     const modeUi = this.modeUi();
     const isModifyFilesMode = this.isModifyFilesMode();
     const isNothingSelected = this.isNothingSelected();
     if (isModifyFilesMode && isOkToAddFiles &&
       bundleIdPasteSource && isNothingSelected &&
+      itemsType === 'resources' &&
       bundleId !== bundleIdPasteSource) {
       return (
-        <ConfirmButton
+        <PasteButton
           key="btnPasteResources"
           classes={classes}
           color="secondary"
           variant="contained"
           onClick={this.handlePasteResources}
           disabled={urisToPaste.length === 0}
-        >
-          <AssignmentTurnedInIcon className={classNames(classes.leftIcon)} />
-          Paste {urisToPaste.length ? `(${urisToPaste.length})` : ''} Resources
-        </ConfirmButton>
+          itemsToPaste={urisToPaste}
+          itemsType={itemsType}
+        />
       );
     }
     return (
@@ -1473,16 +1506,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                 Review
               </Button>
               {mode !== 'revisions' &&
-              <ConfirmButton
+              <CopyForPasteButton
                 key="btnCopyForPaste"
                 classes={classes}
                 color="inherit"
                 onClick={this.handleCopyFiles}
                 disabled={storedResources.length === 0}
-              >
-                <FileCopyIcon className={classNames(classes.leftIcon)} />
-                Copy For Paste {storedResources.length ? `(${storedResources.length})` : ''}
-              </ConfirmButton>}
+                selectedItems={storedResources}
+              />}
               {this.renderOkOrPasteResourcesButton()}
             </Toolbar>
           </AppBar>

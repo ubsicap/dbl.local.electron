@@ -9,6 +9,7 @@ import { bundleEditMetadata } from './bundleEditMetadata.reducer';
 import { bundleManageResources } from './bundleResourceManager.reducer';
 import { dblDotLocalConfig } from './dblDotLocalConfig.reducer';
 import { alert } from './alert.reducer';
+import { clipboard } from './clipboard.reducer';
 
 const rootReducer = combineReducers({
   router,
@@ -20,6 +21,7 @@ const rootReducer = combineReducers({
   bundleManageResources,
   bundlesSaveTo,
   alert,
+  clipboard
 });
 
 export default rootReducer;

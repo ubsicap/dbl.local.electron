@@ -289,6 +289,7 @@ export function setupBundlesEventSource() {
       const handler = listeners[evType];
       eventSource.addEventListener(evType, handler);
     });
+    dispatch({ type: 'BUNDLES_SSE_LISTENERS', listeners });
   };
 
   /*

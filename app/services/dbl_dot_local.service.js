@@ -6,8 +6,6 @@ import log from 'electron-log';
 import dblDotLocalConstants from '../constants/dblDotLocal.constants';
 import { authHeader } from '../helpers';
 import { servicesHelpers } from '../helpers/services';
-// import { history } from '../store/configureStore';
-// import { navigationConstants } from '../constants/navigation.constants';
 
 export const dblDotLocalService = {
   health,
@@ -29,7 +27,8 @@ export const dblDotLocalService = {
   startEventSource,
   getEntryRevisions,
   getMapperReport,
-  getMappers
+  getMappers,
+  getIsClosedEventSource
 };
 export default dblDotLocalService;
 
@@ -222,18 +221,26 @@ const electron = require('electron');
 
 const { remote = {} } = electron;
 
+function getElectronShared() {
+  if (remote.app) {
+    return remote;
+  } else if (electron.app) {
+    return electron;
+  }
+}
+
 function getApp() {
   const app = remote.app || electron.app;
   return app;
 }
 
 function getCurrentWindow() {
-  const func = remote.getCurrentWindow || electron.getCurrentWindow;
+  const func = getElectronShared().getCurrentWindow;
   return func();
 }
 
 function getDialog() {
-  const dialog = remote.dialog || electron.dialog;
+  const { dialog } = getElectronShared();
   return dialog;
 }
 
@@ -377,12 +384,16 @@ function startEventSource(authToken, getState) {
       log.error(error);
     }
     const evtSource = error.currentTarget;
-    const IS_CLOSED = 2;
     const { dblDotLocalConfig: { dblDotLocalExecProcess } } = getState();
-    if (!dblDotLocalExecProcess && evtSource.readyState !== IS_CLOSED) {
+    if (!dblDotLocalExecProcess && !getIsClosedEventSource(evtSource)) {
       evtSource.close();
       console.log('session EventSource closed');
     }
   };
   return eventSource;
+}
+
+function getIsClosedEventSource(eventSource) {
+  const IS_CLOSED = 2;
+  return eventSource.readyState === IS_CLOSED;
 }

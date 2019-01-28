@@ -19,7 +19,7 @@ import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import { gotoWorkspaceLoginPage, getDblDotLocalExecStatus } from '../actions/dblDotLocalConfig.actions';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
-import { clearClipboard } from '../actions/bundleManageResources.actions';
+import { clearClipboard } from '../actions/clipboard.actions';
 import { logout } from '../actions/user.actions';
 import MenuAppBar from '../components/MenuAppBar';
 import WorkspaceEditDialog from '../components/WorkspaceEditDialog';

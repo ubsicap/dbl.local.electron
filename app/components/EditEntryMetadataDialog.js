@@ -5,6 +5,9 @@ import { withStyles } from '@material-ui/core/styles';
 import Badge from '@material-ui/core/Badge';
 import Button from '@material-ui/core/Button';
 import AppBar from '@material-ui/core/AppBar';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import { Map } from 'immutable';
+import Checkbox from '@material-ui/core/Checkbox';
 import Toolbar from '@material-ui/core/Toolbar';
 import NavigateNext from '@material-ui/icons/NavigateNext';
 import IconButton from '@material-ui/core/IconButton';
@@ -17,16 +20,23 @@ import Zoom from '@material-ui/core/Zoom';
 import Tooltip from '@material-ui/core/Tooltip';
 import { updateBundle } from '../actions/bundle.actions';
 import { closeEditMetadata, saveFieldValuesForActiveForm, openMetadataFile } from '../actions/bundleEditMetadata.actions';
+import { selectItemsToPaste, pasteItems } from '../actions/clipboard.actions';
 import editMetadataService from '../services/editMetadata.service';
 import EditMetadataStepper from './EditMetadataStepper';
+import { clipboardHelpers } from '../helpers/clipboard';
 import rowStyles from './DBLEntryRow.css';
+import CopyForPasteButton from './CopyForPasteButton';
+import PasteButton from './PasteButton';
 
 const { shell } = require('electron');
 
 function mapStateToProps(state, props) {
-  const { bundleEditMetadata, bundles } = state;
+  const { bundleEditMetadata, bundles, clipboard } = state;
   const { bundleId } = props.match.params;
-  const { showMetadataFile, currentFormWithErrors, nextFormWithErrors } = bundleEditMetadata;
+  const { selectedItemsToPaste } = clipboard;
+  const {
+    showMetadataFile, currentFormWithErrors, nextFormWithErrors, formStructure
+  } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
   const getFormsErrors = editMetadataService.makeGetFormsErrors();
@@ -49,7 +59,9 @@ function mapStateToProps(state, props) {
     showMetadataFile,
     formsErrors,
     currentFormNumWithErrors,
-    nextFormWithErrors
+    nextFormWithErrors,
+    formStructure,
+    selectedItemsToPaste
   };
 }
 
@@ -57,7 +69,9 @@ const mapDispatchToProps = {
   closeEditMetadata,
   saveFieldValuesForActiveForm,
   updateBundle,
-  openMetadataFile
+  openMetadataFile,
+  selectItemsToPaste,
+  pasteItems
 };
 
 const materialStyles = theme => ({
@@ -94,15 +108,22 @@ type Props = {
   classes: {},
   saveFieldValuesForActiveForm: () => {},
   openMetadataFile: () => {},
+  selectItemsToPaste: () => {},
   wasMetadataSaved: boolean,
   showMetadataFile: ?string,
   moveNext: ?{},
   couldNotSaveMetadataMessage: ?string,
-  requestingSaveMetadata: boolean
+  requestingSaveMetadata: boolean,
+  formStructure: {},
+  selectedItemsToPaste: ?{},
+  pasteItems: () => {}
 };
 
 class EditEntryMetadataDialog extends PureComponent<Props> {
   props: Props;
+  state = {
+    sectionSelections: {},
+  };
 
   componentDidUpdate(prevProps) {
     if (this.props.moveNext && this.props.moveNext.exit
@@ -134,8 +155,30 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     this.props.openMetadataFile(this.props.bundleId);
   }
 
-  conditionallyRenderSaveOrGotoErrorButton = () => {
-    const { classes, formsErrors } = this.props;
+  handlePasteMetadataSections = () => {
+    this.props.pasteItems(this.props.bundleId);
+  }
+
+  conditionallyRenderPrimaryActionButton = () => {
+    const {
+      classes, formsErrors, selectedItemsToPaste, bundleId
+    } = this.props;
+    const { items: sectionsToPaste = [], itemsType, bundleId: bundleIdOnClipboard } = selectedItemsToPaste || {};
+    if (selectedItemsToPaste &&
+      itemsType === 'metadata sections' &&
+      bundleId !== bundleIdOnClipboard && sectionsToPaste.length > 0) {
+      return (
+        <PasteButton
+          key="btnPasteMetadataSections"
+          classes={classes}
+          color="secondary"
+          variant="contained"
+          onClick={this.handlePasteMetadataSections}
+          itemsToPaste={sectionsToPaste}
+          itemsType={itemsType}
+        />
+      );
+    }
     const formsErrorsCount = Object.keys(formsErrors).length;
     if (!formsErrorsCount) {
       return (
@@ -159,8 +202,59 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     );
   }
 
+  handleClickSectionSelection = event => {
+    event.stopPropagation();
+    event.preventDefault();
+    const { value } = event.target;
+    const newCheckedState = !this.state.sectionSelections[value];
+    const sectionSelections = { ...this.state.sectionSelections, [value]: newCheckedState };
+    this.setState({ sectionSelections });
+  };
+
+  getAreAllSectionsSelected = () => {
+    const { formStructure } = this.props;
+    if (formStructure.length === 0) {
+      return false;
+    }
+    const { sectionSelections = {} } = this.state;
+    const incompatibleSections = clipboardHelpers.getUnsupportedMetadataSections();
+    const areAllSelected =
+      Object.keys(sectionSelections).length ===
+        (formStructure.length - incompatibleSections.length) &&
+      Object.values(sectionSelections).every(value => value);
+    return areAllSelected;
+  }
+
+  handleClickSelectAll = (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    const { formStructure } = this.props;
+    const incompatibleSections = clipboardHelpers.getUnsupportedMetadataSections();
+    const areAllSelected = this.getAreAllSectionsSelected();
+    const valueToSet = !areAllSelected;
+    const sectionSelectionsMap =
+      formStructure.map(step => step.section)
+        .filter(sectionName => !incompatibleSections.includes(sectionName))
+        .reduce((acc, k) => acc.set(k, valueToSet), Map());
+    const sectionSelections = sectionSelectionsMap.toObject();
+    this.setState({ sectionSelections });
+  }
+
+  handleCopySections = () => {
+    const { sectionSelections } = this.state;
+    const sectionsSelected = Object.entries(sectionSelections)
+      .filter(([, isSelected]) => isSelected).map(([s]) => s);
+    this.props.selectItemsToPaste(this.props.bundleId, sectionsSelected, 'metadata sections');
+    this.handleClose();
+  }
+
   render() {
-    const { classes, open, selectedBundle = {}, bundleId } = this.props;
+    const {
+      classes, open, selectedBundle = {}, bundleId, formStructure
+    } = this.props;
+    const { sectionSelections } = this.state;
+    const sectionsSelected = Object.values(sectionSelections).filter(s => s);
+    const areAllSelected = this.getAreAllSectionsSelected();
     const { displayAs = {} } = selectedBundle;
     const { languageAndCountry, name } = displayAs;
     return (
@@ -178,10 +272,35 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
                 Review
               </Button>
-              {this.conditionallyRenderSaveOrGotoErrorButton()}
+              <CopyForPasteButton
+                key="btnCopyForPaste"
+                classes={classes}
+                color="inherit"
+                onClick={this.handleCopySections}
+                disabled={sectionsSelected.length === 0}
+                selectedItems={sectionsSelected}
+              />
+              {this.conditionallyRenderPrimaryActionButton()}
             </Toolbar>
           </AppBar>
-          <EditMetadataStepper bundleId={bundleId} myStructurePath="" shouldLoadDetails={false} />
+          <FormControlLabel
+            style={{ paddingTop: '8px', paddingLeft: '55px' }}
+            control={
+              <Checkbox
+                onClick={this.handleClickSelectAll}
+                value="selectAllSectionCheckboxes"
+                checked={areAllSelected}
+                indeterminate={sectionsSelected.length > 0 && !areAllSelected}
+              />
+            }
+            label={`Selected Sections (${sectionsSelected.length})`}
+          />
+          <EditMetadataStepper
+            bundleId={bundleId}
+            myStructurePath=""
+            sectionSelections={sectionSelections}
+            onClickSectionSelection={this.handleClickSectionSelection}
+          />
         </div>
       </Zoom>
     );

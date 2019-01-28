@@ -6,6 +6,11 @@ import { history } from '../store/configureStore';
 import dblDotLocalConstants from '../constants/dblDotLocal.constants';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { navigationConstants } from '../constants/navigation.constants';
+import { setupBundlesEventSource } from '../actions/bundle.actions';
+
+const electron = require('electron');
+
+const { remote = {} } = electron;
 
 export const userActions = {
   login,
@@ -41,6 +46,7 @@ function login(username, password, _workspaceName) {
       const whoami = await userService.whoami();
       dispatch(success(user, whoami, _workspaceName));
       dispatch(connectSSE(user.auth_token));
+      dispatch(startPowerMonitor());
       history.push(navigationConstants.NAVIGATION_BUNDLES);
     } catch (error) {
       dispatch(failure(error));
@@ -54,17 +60,36 @@ function login(username, password, _workspaceName) {
     return { type: userConstants.LOGIN_REQUEST, user, workspaceName };
   }
   function success(user, whoami, workspaceName) {
-    return { type: userConstants.LOGIN_SUCCESS, user, whoami, workspaceName };
+    return {
+      type: userConstants.LOGIN_SUCCESS, user, whoami, workspaceName
+    };
   }
   function failure(error) {
     return { type: userConstants.LOGIN_FAILURE, error };
   }
-  function connectSSE(authToken) {
-    return (dispatch, getState) => {
-      const eventSource = dblDotLocalService.startEventSource(authToken, getState);
-      dispatch({ type: userConstants.SERVER_SENT_EVENTS_SOURCE_CREATED, eventSource });
-    };
-  }
+}
+
+function connectSSE(authToken) {
+  return (dispatch, getState) => {
+    const eventSource = dblDotLocalService.startEventSource(authToken, getState);
+    dispatch({ type: userConstants.SERVER_SENT_EVENTS_SOURCE_CREATED, eventSource });
+  };
+}
+
+function startPowerMonitor() {
+  return (dispatch, getState) => {
+    remote.powerMonitor.on('resume', () => {
+      console.log('The system is resuming. Checking SSE...');
+      const { authentication } = getState();
+      const { user, eventSource } = authentication;
+      if (user && user.auth_token && eventSource &&
+          dblDotLocalService.getIsClosedEventSource(eventSource)) {
+        console.log('SSE eventSource was closed. Re-establishing');
+        dispatch(connectSSE(user.auth_token));
+        dispatch(setupBundlesEventSource());
+      }
+    });
+  };
 }
 
 function killSpawnedDblDotLocalExecProcess() {

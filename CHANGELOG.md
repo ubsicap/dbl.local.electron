@@ -1,3 +1,20 @@
+### Version 0.23.0 (Copy metadata)
+#### Features
+- Added View metadata for non-draft bundles
+- In View/Edit metadata, added checkboxes for copying/pasting metadata sections via Copy button
+- In Edit metadata, added Paste button
+- show medium icon on clipboard
+- show tooltip with name and revision information on clipboard
+- In Resources dialog, removed checksum column
+- In Resources dialog, fixed multiple table update issues
+- In Resources dialog, improved performance when adding several files (e.g. by Folder)
+
+- dbl_dot_local_app 1/28/2019 (including more print bundle support)
+
+#### Fixes
+- fixed button behaviors via power monitor to resume SSE connection when system comes back from sleep etc...
+- In Edit metadata, fixed publication Save/Undo button for factories
+
 ### Version 0.22.1
 #### Fixes
 - Fix revisions dialog to not have `Copy For Paste` button
