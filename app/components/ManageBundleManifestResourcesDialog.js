@@ -168,9 +168,11 @@ function ignoreHiddenFunc(file, stats) {
   // `file` is the path to the file, and `stats` is an `fs.Stats`
   // object returned from `fs.lstat()`.
   // return stats.isDirectory() && path.basename(file) == "test";
+  console.log('ignoreHiddenFun');
   if (!stats.isFile()) {
     return false;
   }
+  console.log('ignoreHiddenFun: stats.isFile()');
   // const stat = winattr.getSync(upath.normalizeSafe(file));
   try {
     // currently crashes due to this issue: https://github.com/stevenvachon/winattr/issues/4
@@ -707,6 +709,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   updateTableData = (props) => {
     const tableData = props.mode === 'revisions' ? props.entryRevisions : props.manifestResources;
     const selectedIds = this.getSelectedIds(tableData, props.mode);
+    console.log('updateTableData');
     this.setState({
       tableData, selectedIds, addedFilePaths: [], fullToRelativePaths: undefined
     }, this.getMapperReport);
@@ -964,20 +967,20 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return false;
   }
 
-  getUpdatedTotalResources(filePath, update) {
-    const { tableData } = this.state;
-    return createUpdatedTotalResources(tableData, filePath, () => update);
-  }
-
-  updateAddedResourcesWithFileStats = (newlyAddedFilePaths) => () => {
-    newlyAddedFilePaths.forEach(async filePath => {
+  updateAddedResourcesWithFileStats = (newlyAddedFilePaths) => async () => {
+    const fileSizesPromises = newlyAddedFilePaths.map(async (filePath) => {
       const stats = await fs.stat(filePath);
       const { size: sizeRaw } = stats;
       const size = formatBytesByKbs(sizeRaw);
+      return { filePath, size };
       // const checksum = size < 268435456 ? await md5File(filePath) : '(too expensive)';
-      const tableData = this.getUpdatedTotalResources(filePath, { size });
-      this.setState({ tableData });
     });
+    const fileSizes = await Promise.all(fileSizesPromises)
+      .reduce((acc, data) => { acc[data.filePath] = data.size; return acc; }, {});
+    const updatedTotalResources = Object.entries(fileSizes)
+      .reduce((acc, [filePath, size]) =>
+        (createUpdatedTotalResources(acc, filePath, () => ({ size }))), this.state.tableData);
+    this.setState({ tableData: updatedTotalResources });
   }
 
   getUpdateSelectedResourcesContainers = (newContainer) => {
@@ -1098,7 +1101,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     fullToRelativePaths,
     shouldRunMapperReport = false
   ) => () => {
+    console.log('updateTotalResources');
     const tableData = this.getTableDataForAddedResources(newAddedFilePaths, fullToRelativePaths);
+    console.log('updateTotalResources: gotTableDataForAddedResources');
     this.setState(
       { tableData },
       () => {
