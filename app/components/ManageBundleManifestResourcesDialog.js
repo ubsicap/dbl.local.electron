@@ -168,11 +168,9 @@ function ignoreHiddenFunc(file, stats) {
   // `file` is the path to the file, and `stats` is an `fs.Stats`
   // object returned from `fs.lstat()`.
   // return stats.isDirectory() && path.basename(file) == "test";
-  console.log('ignoreHiddenFun');
   if (!stats.isFile()) {
     return false;
   }
-  console.log('ignoreHiddenFun: stats.isFile()');
   // const stat = winattr.getSync(upath.normalizeSafe(file));
   try {
     // currently crashes due to this issue: https://github.com/stevenvachon/winattr/issues/4
@@ -696,6 +694,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       this.updateTotalResources(
         this.state.addedFilePaths,
         this.state.fullToRelativePaths,
+        false,
         false
       )();
     }
@@ -709,7 +708,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   updateTableData = (props) => {
     const tableData = props.mode === 'revisions' ? props.entryRevisions : props.manifestResources;
     const selectedIds = this.getSelectedIds(tableData, props.mode);
-    console.log('updateTableData');
     this.setState({
       tableData, selectedIds, addedFilePaths: [], fullToRelativePaths: undefined
     }, this.getMapperReport);
@@ -975,8 +973,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       return { filePath, size };
       // const checksum = size < 268435456 ? await md5File(filePath) : '(too expensive)';
     });
-    const fileSizes = await Promise.all(fileSizesPromises)
-      .reduce((acc, data) => { acc[data.filePath] = data.size; return acc; }, {});
+    const fileSizesList = await Promise.all(fileSizesPromises);
+    const fileSizes = fileSizesList.reduce((acc, data) => { acc[data.filePath] = data.size; return acc; }, {});
     const updatedTotalResources = Object.entries(fileSizes)
       .reduce((acc, [filePath, size]) =>
         (createUpdatedTotalResources(acc, filePath, () => ({ size }))), this.state.tableData);
@@ -1033,7 +1031,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const selectedIds = this.getUnionWithSelectedIds(addedFilePaths);
     this.setState(
       { addedFilePaths, selectedIds, fullToRelativePaths },
-      this.updateTotalResources(newAddedFilePaths, fullToRelativePaths, true)
+      this.updateTotalResources(newAddedFilePaths, fullToRelativePaths, true, true)
     );
     // this.setState({ selectAll: true });
   };
@@ -1099,18 +1097,19 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   updateTotalResources = (
     newAddedFilePaths,
     fullToRelativePaths,
-    shouldRunMapperReport = false
+    shouldRunMapperReport = false,
+    shouldUpdateWithFileStats = false
   ) => () => {
-    console.log('updateTotalResources');
     const tableData = this.getTableDataForAddedResources(newAddedFilePaths, fullToRelativePaths);
-    console.log('updateTotalResources: gotTableDataForAddedResources');
     this.setState(
       { tableData },
       () => {
         if (shouldRunMapperReport) {
           this.getMapperReport();
         }
-        this.updateAddedResourcesWithFileStats(newAddedFilePaths)();
+        if (shouldUpdateWithFileStats) {
+          this.updateAddedResourcesWithFileStats(newAddedFilePaths)();
+        }
       }
     );
   }
