@@ -266,7 +266,7 @@ function createAddedResource(
 ) {
   return (filePath) => {
     const fileName = path.basename(filePath);
-    const relativePath = fullToRelativePaths ? upath.normalizeTrim(fullToRelativePaths[filePath]) : '';
+    const relativePath = upath.normalizeTrim(getOrDefault(fullToRelativePaths, filePath, ''));
     const relativeFolder = formatContainer(path.dirname(relativePath));
     const uri = formatUri(relativeFolder, fileName);
     const [id, name] = [filePath, fileName];
