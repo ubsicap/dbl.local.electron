@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
-import electronSettings from 'electron-settings';
 import fs from 'fs-extra';
 import path from 'path';
 import sort from 'fast-sort';
@@ -28,8 +27,7 @@ import WorkspaceEditDialog from '../components/WorkspaceEditDialog';
 import ConfirmButton from '../components/ConfirmButton';
 import { utilities } from '../utils/utilities';
 
-const { app, dialog } = require('electron').remote;
-const USER_DATA_WORKSPACE_FOLDER = path.join(app.getPath('userData'), 'workspaces');
+const { dialog } = require('electron').remote;
 
 type Props = {
   classes: {},
@@ -111,8 +109,6 @@ const styles = theme => ({
   },
 });
 
-const workspacesDir = dblDotLocalService.getWorkspacesDir();
-
 async function createWorkspace(fullPath) {
   const stats = fs.lstatSync(fullPath);
   if (!stats.isDirectory()) {
@@ -130,19 +126,18 @@ async function createWorkspace(fullPath) {
 
 class WorkspacesPage extends PureComponent<Props> {
   props: Props;
-  state = { cards: [], workspacesLocation: electronSettings.get('app.workspacesLocation', USER_DATA_WORKSPACE_FOLDER) }
+  state = { cards: [] }
 
   componentDidMount() {
     this.props.logout();
     this.props.getDblDotLocalExecStatus();
     this.props.clearClipboard();
     this.updateAllWorkspaceCards();
-    if (electronSettings.get('app.workspacesLocation') === undefined) {
-      electronSettings.set('app', { workspacesLocation: USER_DATA_WORKSPACE_FOLDER });
-    }
+    dblDotLocalService.ensureWorkspacesDir();
   }
 
   updateAllWorkspaceCards = async () => {
+    const workspacesDir = dblDotLocalService.getWorkspacesDir();
     await fs.ensureDir(workspacesDir);
     const files = await fs.readdir(workspacesDir);
     files.map(file => path.join(workspacesDir, file)).forEach(async fullPath => {
@@ -168,6 +163,7 @@ class WorkspacesPage extends PureComponent<Props> {
   }
 
   handleCreateWorkspace = async () => {
+    const workspacesDir = dblDotLocalService.getWorkspacesDir();
     const uuid1 = uuidv1();
     const name = `My Org ${uuid1.substr(0, 5)}`;
     const fullPath = path.join(workspacesDir, name);
@@ -231,26 +227,28 @@ class WorkspacesPage extends PureComponent<Props> {
     (this.state.openEditDialog && this.state.openEditDialog.workspace === card);
 
   handlePickWorkspacesFolder = () => {
-    const newFolder = dialog.showOpenDialog({ properties: ['openDirectory'] });
+    const [newFolder] = dialog.showOpenDialog({ properties: ['openDirectory'] });
     if (!newFolder) {
       return;
     }
-    electronSettings.set('app.workspacesLocation', newFolder);
-    this.setState({ workspacesLocation: newFolder });
+    dblDotLocalService.setWorkspacesDir(newFolder);
+    this.refreshAll();
   }
 
   shouldShowResetWorkspacesFolder = () => {
-    return this.state.workspacesLocation !== USER_DATA_WORKSPACE_FOLDER;
+    return dblDotLocalService.getWorkspacesDir()
+      !== dblDotLocalService.getDefaultUserDataWorkspacesFolder();
   }
 
   handleResetWorkspacesFolder = () => {
-    electronSettings.set('app.workspacesLocation', USER_DATA_WORKSPACE_FOLDER);
-    this.setState({ workspacesLocation: USER_DATA_WORKSPACE_FOLDER });
+    dblDotLocalService.setWorkspacesDir(dblDotLocalService.getDefaultUserDataWorkspacesFolder());
+    this.refreshAll();
   }
 
   renderWorkspaceCards = () => {
     const { classes, isRunningUnknownDblDotLocalProcess, isRequestingStopDblDotLocalExecProcess } = this.props;
-    const { cards, openEditDialog, workspacesLocation } = this.state;
+    const { cards, openEditDialog } = this.state;
+    const workspacesLocation = dblDotLocalService.getWorkspacesDir();
     return (
       <React.Fragment>
         <main>
