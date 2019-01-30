@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
+import electronSettings from 'electron-settings';
 import fs from 'fs-extra';
 import path from 'path';
 import sort from 'fast-sort';
@@ -129,13 +130,16 @@ async function createWorkspace(fullPath) {
 
 class WorkspacesPage extends PureComponent<Props> {
   props: Props;
-  state = { cards: [], workspacesLocation: USER_DATA_FOLDER }
+  state = { cards: [], workspacesLocation: electronSettings.get('app.workspacesLocation', USER_DATA_FOLDER) }
 
   componentDidMount() {
     this.props.logout();
     this.props.getDblDotLocalExecStatus();
     this.props.clearClipboard();
     this.updateAllWorkspaceCards();
+    if (electronSettings.get('app.workspacesLocation') === undefined) {
+      electronSettings.set('app', { workspacesLocation: USER_DATA_FOLDER });
+    }
   }
 
   updateAllWorkspaceCards = async () => {
@@ -231,6 +235,7 @@ class WorkspacesPage extends PureComponent<Props> {
     if (!newFolder) {
       return;
     }
+    electronSettings.set('app.workspacesLocation', newFolder);
     this.setState({ workspacesLocation: newFolder });
   }
 
@@ -239,8 +244,8 @@ class WorkspacesPage extends PureComponent<Props> {
   }
 
   handleResetWorkspacesFolder = () => {
-    const appUserData = USER_DATA_FOLDER;
-    this.setState({ workspacesLocation: appUserData });
+    electronSettings.set('app.workspacesLocation', USER_DATA_FOLDER);
+    this.setState({ workspacesLocation: USER_DATA_FOLDER });
   }
 
   renderWorkspaceCards = () => {
