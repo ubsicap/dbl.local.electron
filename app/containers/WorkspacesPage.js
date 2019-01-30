@@ -29,7 +29,7 @@ import ConfirmButton from '../components/ConfirmButton';
 import { utilities } from '../utils/utilities';
 
 const { app, dialog } = require('electron').remote;
-const USER_DATA_FOLDER = app.getPath('userData');
+const USER_DATA_WORKSPACE_FOLDER = path.join(app.getPath('userData'), 'workspaces');
 
 type Props = {
   classes: {},
@@ -130,7 +130,7 @@ async function createWorkspace(fullPath) {
 
 class WorkspacesPage extends PureComponent<Props> {
   props: Props;
-  state = { cards: [], workspacesLocation: electronSettings.get('app.workspacesLocation', USER_DATA_FOLDER) }
+  state = { cards: [], workspacesLocation: electronSettings.get('app.workspacesLocation', USER_DATA_WORKSPACE_FOLDER) }
 
   componentDidMount() {
     this.props.logout();
@@ -138,7 +138,7 @@ class WorkspacesPage extends PureComponent<Props> {
     this.props.clearClipboard();
     this.updateAllWorkspaceCards();
     if (electronSettings.get('app.workspacesLocation') === undefined) {
-      electronSettings.set('app', { workspacesLocation: USER_DATA_FOLDER });
+      electronSettings.set('app', { workspacesLocation: USER_DATA_WORKSPACE_FOLDER });
     }
   }
 
@@ -240,12 +240,12 @@ class WorkspacesPage extends PureComponent<Props> {
   }
 
   shouldShowResetWorkspacesFolder = () => {
-    return this.state.workspacesLocation !== USER_DATA_FOLDER;
+    return this.state.workspacesLocation !== USER_DATA_WORKSPACE_FOLDER;
   }
 
   handleResetWorkspacesFolder = () => {
-    electronSettings.set('app.workspacesLocation', USER_DATA_FOLDER);
-    this.setState({ workspacesLocation: USER_DATA_FOLDER });
+    electronSettings.set('app.workspacesLocation', USER_DATA_WORKSPACE_FOLDER);
+    this.setState({ workspacesLocation: USER_DATA_WORKSPACE_FOLDER });
   }
 
   renderWorkspaceCards = () => {
