@@ -285,16 +285,18 @@ class WorkspacesPage extends PureComponent<Props> {
                 </Grid>
                 <Grid container justify="center">
                   <Grid item>
-                      <Button size="small" color="primary" onClick={this.handlePickWorkspacesFolder}>
-                        <Settings className={classes.icon} />
-                        {workspacesLocation}
-                      </Button>
+                    <Button size="small" color="primary" onClick={this.handlePickWorkspacesFolder}>
+                      <Settings className={classes.icon} />
+                      {workspacesLocation}
+                    </Button>
                   </Grid>
                   <Grid item>
-                  {this.shouldShowResetWorkspacesFolder() &&
-                  <Button size="small" color="primary" onClick={this.handleResetWorkspacesFolder}>
-                      <CloseIcon className={classes.icon} />
-                    </Button>}
+                    {this.shouldShowResetWorkspacesFolder() &&
+                    <Tooltip title="Reset to Factory Default Workspaces Location">
+                      <Button size="small" color="primary" onClick={this.handleResetWorkspacesFolder}>
+                        <CloseIcon className={classes.icon} />
+                      </Button>
+                    </Tooltip>}
                   </Grid>
                 </Grid>
               </div>
