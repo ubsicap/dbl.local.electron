@@ -8,6 +8,7 @@ import uuidv1 from 'uuid/v1';
 import classNames from 'classnames';
 import Button from '@material-ui/core/Button';
 import { AddCircle, Refresh, Settings, Delete } from '@material-ui/icons';
+import CloseIcon from '@material-ui/icons/Close';
 import Tooltip from '@material-ui/core/Tooltip';
 import Link from '@material-ui/icons/Link';
 import Card from '@material-ui/core/Card';
@@ -25,6 +26,9 @@ import MenuAppBar from '../components/MenuAppBar';
 import WorkspaceEditDialog from '../components/WorkspaceEditDialog';
 import ConfirmButton from '../components/ConfirmButton';
 import { utilities } from '../utils/utilities';
+
+const { app, dialog } = require('electron').remote;
+const USER_DATA_FOLDER = app.getPath('userData');
 
 type Props = {
   classes: {},
@@ -125,7 +129,7 @@ async function createWorkspace(fullPath) {
 
 class WorkspacesPage extends PureComponent<Props> {
   props: Props;
-  state = { cards: [] }
+  state = { cards: [], workspacesLocation: USER_DATA_FOLDER }
 
   componentDidMount() {
     this.props.logout();
@@ -222,9 +226,26 @@ class WorkspacesPage extends PureComponent<Props> {
   shouldOpenEditDialog = (card) =>
     (this.state.openEditDialog && this.state.openEditDialog.workspace === card);
 
+  handlePickWorkspacesFolder = () => {
+    const newFolder = dialog.showOpenDialog({ properties: ['openDirectory'] });
+    if (!newFolder) {
+      return;
+    }
+    this.setState({ workspacesLocation: newFolder });
+  }
+
+  shouldShowResetWorkspacesFolder = () => {
+    return this.state.workspacesLocation !== USER_DATA_FOLDER;
+  }
+
+  handleResetWorkspacesFolder = () => {
+    const appUserData = USER_DATA_FOLDER;
+    this.setState({ workspacesLocation: appUserData });
+  }
+
   renderWorkspaceCards = () => {
     const { classes, isRunningUnknownDblDotLocalProcess, isRequestingStopDblDotLocalExecProcess } = this.props;
-    const { cards, openEditDialog } = this.state;
+    const { cards, openEditDialog, workspacesLocation } = this.state;
     return (
       <React.Fragment>
         <main>
@@ -257,6 +278,20 @@ class WorkspacesPage extends PureComponent<Props> {
                       <Refresh className={classes.icon} />
                       Refresh All
                     </Button>
+                  </Grid>
+                </Grid>
+                <Grid container justify="center">
+                  <Grid item>
+                      <Button size="small" color="primary" onClick={this.handlePickWorkspacesFolder}>
+                        <Settings className={classes.icon} />
+                        {workspacesLocation}
+                      </Button>
+                  </Grid>
+                  <Grid item>
+                  {this.shouldShowResetWorkspacesFolder() &&
+                  <Button size="small" color="primary" onClick={this.handleResetWorkspacesFolder}>
+                      <CloseIcon className={classes.icon} />
+                    </Button>}
                   </Grid>
                 </Grid>
               </div>
