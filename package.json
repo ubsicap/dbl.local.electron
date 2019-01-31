@@ -195,6 +195,7 @@
     "@material-ui/core": "^3.4.0",
     "@material-ui/icons": "^3.0.1",
     "bootstrap": "4.0.0",
+    "conf": "^2.2.0",
     "devtron": "^1.4.0",
     "electron-debug": "^1.5.0",
     "electron-log": "^2.2.14",
