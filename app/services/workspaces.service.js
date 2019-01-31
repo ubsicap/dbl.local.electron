@@ -2,7 +2,7 @@ import Conf from 'conf';
 
 export const workspacesService = {
   saveUserLogin,
-  getLastUserLogin
+  getLastUserLoginSettings
 };
 export default workspacesService;
 
@@ -23,10 +23,10 @@ function saveUserLogin(workspaceFullPath, email) {
   userSettings.set(encodeEmailAddress(email), { email, lastLogin: Date.now() });
 }
 
-function getLastUserLogin(workspaceFullPath) {
+function getLastUserLoginSettings(workspaceFullPath) {
   const userSettings = getWorkspaceUserSettings(workspaceFullPath);
-  const latstLogin = Object.values(userSettings.store)
+  const lastLogin = Object.values(userSettings.store)
     .reduce((acc, userData) =>
-      (userData.lastLogin > acc.lastLogin ? userData : acc), { lastLogin: 0 });
-  return latstLogin;
+      (!acc || userData.lastLogin > acc.lastLogin ? userData : acc), undefined);
+  return lastLogin;
 }
