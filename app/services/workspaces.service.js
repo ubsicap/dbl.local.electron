@@ -15,7 +15,8 @@ function getWorkspaceUserSettings(workspaceFullPath) {
 }
 
 function encodeEmailAddress(email) {
-  return email.replace('.', ' DOT ');
+  // avoid dot-notation feature https://github.com/sindresorhus/conf/issues/44
+  return email.replace('.', '\\.');
 }
 
 function saveUserLogin(workspaceFullPath, email) {
