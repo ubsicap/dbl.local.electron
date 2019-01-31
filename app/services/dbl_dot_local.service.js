@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
-import electronSettings from 'electron-settings';
+import Store from 'electron-store';
 import childProcess from 'child_process';
 import xml2js from 'xml2js';
 import log from 'electron-log';
@@ -313,8 +313,16 @@ function getConfigXmlFullPath(workspace) {
   return path.join(workspaceFullPath, 'config.xml');
 }
 
+function getAppSettings() {
+  const store = new Store({
+    name: 'appSettings',
+    data: { workspacesLocation: getDefaultUserDataWorkspacesFolder() }
+  });
+  return store;
+}
+
 function setWorkspacesDir(newFolder) {
-  electronSettings.set('workspacesLocation', newFolder);
+  getAppSettings().set('workspacesLocation', newFolder);
 }
 
 function getAppUserData() {
@@ -326,7 +334,7 @@ function getDefaultUserDataWorkspacesFolder() {
 }
 
 function getWorkspacesDir(defaultFolder) {
-  const workspacesLocation = electronSettings.get('workspacesLocation');
+  const workspacesLocation = getAppSettings().get('workspacesLocation');
   return workspacesLocation || defaultFolder;
 }
 

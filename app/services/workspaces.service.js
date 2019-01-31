@@ -1,4 +1,4 @@
-import Conf from 'conf';
+import Store from 'electron-store';
 
 export const workspacesService = {
   saveUserLogin,
@@ -7,11 +7,11 @@ export const workspacesService = {
 export default workspacesService;
 
 function getWorkspaceUserSettings(workspaceFullPath) {
-  const config = new Conf({
+  const store = new Store({
     cwd: workspaceFullPath,
-    configName: 'userSettings'
+    name: 'userSettings'
   });
-  return config;
+  return store;
 }
 
 function encodeEmailAddress(email) {

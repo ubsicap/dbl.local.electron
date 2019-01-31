@@ -133,7 +133,6 @@ class WorkspacesPage extends PureComponent<Props> {
     this.props.getDblDotLocalExecStatus();
     this.props.clearClipboard();
     this.updateAllWorkspaceCards();
-    dblDotLocalService.ensureWorkspacesDir();
   }
 
   updateAllWorkspaceCards = async () => {
