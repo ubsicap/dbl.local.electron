@@ -314,7 +314,7 @@ function getConfigXmlFullPath(workspace) {
 }
 
 function setWorkspacesDir(newFolder) {
-  electronSettings.set('app', { workspacesLocation: newFolder });
+  electronSettings.set('workspacesLocation', newFolder);
 }
 
 function getDefaultUserDataWorkspacesFolder() {
@@ -322,7 +322,7 @@ function getDefaultUserDataWorkspacesFolder() {
 }
 
 function getWorkspacesDir(defaultFolder) {
-  const workspacesLocation = electronSettings.get('app.workspacesLocation');
+  const workspacesLocation = electronSettings.get('workspacesLocation');
   return workspacesLocation || defaultFolder;
 }
 
@@ -330,7 +330,7 @@ function ensureWorkspacesDir() {
   const workspacesLocation = getWorkspacesDir(undefined);
   const defaultWorkspacesLocation = getDefaultUserDataWorkspacesFolder();
   if (workspacesLocation === undefined) {
-    electronSettings.set('app', { workspacesLocation: defaultWorkspacesLocation });
+    setWorkspacesDir(defaultWorkspacesLocation);
   }
 }
 
