@@ -1,10 +1,12 @@
 import log from 'electron-log';
+import path from 'path';
 import { userConstants } from '../constants';
 import { userService } from '../services';
 import { alertActions } from './';
 import { history } from '../store/configureStore';
 import dblDotLocalConstants from '../constants/dblDotLocal.constants';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
+import { workspacesService } from '../services/workspaces.service';
 import { navigationConstants } from '../constants/navigation.constants';
 import { setupBundlesEventSource } from '../actions/bundle.actions';
 
@@ -44,6 +46,9 @@ function login(username, password, _workspaceName) {
     try {
       const user = await userService.login(username, password);
       const whoami = await userService.whoami();
+      const workspacesLocation = dblDotLocalService.getWorkspacesDir();
+      const workspaceFullPath = path.join(workspacesLocation, _workspaceName);
+      workspacesService.saveUserLogin(workspaceFullPath, username);
       dispatch(success(user, whoami, _workspaceName));
       dispatch(connectSSE(user.auth_token));
       dispatch(startPowerMonitor());

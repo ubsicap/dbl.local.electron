@@ -317,8 +317,12 @@ function setWorkspacesDir(newFolder) {
   electronSettings.set('workspacesLocation', newFolder);
 }
 
+function getAppUserData() {
+  return getApp().getPath('userData');
+}
+
 function getDefaultUserDataWorkspacesFolder() {
-  return path.join(getApp().getPath('userData'), 'workspaces');
+  return path.join(getAppUserData(), 'workspaces');
 }
 
 function getWorkspacesDir(defaultFolder) {
