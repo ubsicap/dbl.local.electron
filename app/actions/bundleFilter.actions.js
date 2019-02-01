@@ -1,6 +1,7 @@
 import split from 'split-string';
 import { findChunks } from 'highlight-words-core';
 import { bundleFilterConstants } from '../constants/bundleFilter.constants';
+import { workspaceUserSettingsStoreServices } from '../services/workspaces.service';
 
 export const bundleFilterActions = {
   updateSearchInput,
@@ -27,6 +28,9 @@ export function updateSearchInput(searchInput) {
         willRecomputeAllSearchResults,
         bundles
       });
+      const { workspaceFullPath, email } = workspaceUserSettingsStoreServices
+        .getCurrentWorkspaceFullPath(getState());
+      workspaceUserSettingsStoreServices.saveBundlesSearchInput(workspaceFullPath, email, searchInput);
       if (!willRecomputeAllSearchResults) {
         return; // don't try to find new results yet
       }

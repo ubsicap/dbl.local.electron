@@ -1,12 +1,28 @@
 import Store from 'electron-store';
+import path from 'path';
+import { dblDotLocalService } from '../services/dbl_dot_local.service';
 
 export const workspaceUserSettingsStoreServices = {
   saveUserLogin,
   loadLastUserLoginSettings,
   saveBundlesSearchInput,
   loadBundlesSearchInput,
+  getCurrentWorkspaceFullPath,
 };
 export default workspaceUserSettingsStoreServices;
+
+function getCurrentWorkspaceFullPath(state) {
+  const { workspaceName, user: { username: email = undefined } = undefined } = state.authentication;
+  if (!workspaceName) {
+    return undefined;
+  }
+  const workspacesLocation = dblDotLocalService.getWorkspacesDir();
+  if (!workspacesLocation) {
+    return undefined;
+  }
+  const workspaceFullPath = path.join(workspacesLocation, workspaceName);
+  return { workspaceFullPath, email };
+}
 
 function getWorkspaceUserSettings(workspaceFullPath) {
   const store = new Store({
@@ -35,12 +51,12 @@ function loadLastUserLoginSettings(workspaceFullPath) {
 }
 
 
-function saveBundlesSearchInput(workspaceFullPath, searchInputRaw) {
+function saveBundlesSearchInput(workspaceFullPath, email, searchInputRaw) {
   const userSettings = getWorkspaceUserSettings(workspaceFullPath);
-  userSettings.set('bundles.search', searchInputRaw);
+  userSettings.set(`${encodeEmailAddress(email)}.bundles.search`, searchInputRaw);
 }
 
-function loadBundlesSearchInput(workspaceFullPath) {
+function loadBundlesSearchInput(workspaceFullPath, email) {
   const userSettings = getWorkspaceUserSettings(workspaceFullPath);
-  userSettings.get('bundles.search', '');
+  userSettings.get(`${encodeEmailAddress(email)}.bundles.search`, '');
 }

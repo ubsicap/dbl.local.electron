@@ -20,6 +20,7 @@ import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
 import { ux } from '../utils/ux';
 import { updateSearchInput, clearSearch } from '../actions/bundleFilter.actions';
+import { workspaceUserSettingsStoreServices } from '../services/workspaces.service';
 
 
 function mapStateToProps(state, props) {
@@ -29,6 +30,7 @@ function mapStateToProps(state, props) {
   const { isSearchActive } = bundlesFilter;
   const { searchInputRaw } = bundlesFilter;
   const { loggedIn, whoami, workspaceName = props.workspaceName } = authentication;
+  const { workspaceFullPath } = workspaceUserSettingsStoreServices.getCurrentWorkspaceFullPath(state);
   const { display_name: userName = 'DEMO USER' } = whoami || {};
   return {
     loggedIn,
@@ -37,7 +39,8 @@ function mapStateToProps(state, props) {
     isSearchActive,
     searchInputRaw,
     workspaceName,
-    clipboard
+    clipboard,
+    workspaceFullPath
   };
 }
 
@@ -56,6 +59,7 @@ type Props = {
     showSearch?: boolean,
     showClipboard?: boolean,
     clipboard: ?{},
+    workspaceFullPath?: string,
     updateSearchInput: () => {}
 };
 
@@ -97,6 +101,16 @@ class MenuAppBar extends React.PureComponent {
   state = {
     anchorEl: null,
   };
+
+  componentDidMount() {
+    if (this.props.workspaceFullPath) {
+      const savedSearchInput = workspaceUserSettingsStoreServices
+        .loadBundlesSearchInput(this.props.workspaceFullPath);
+      if (savedSearchInput && savedSearchInput.length > 0) {
+        this.props.updateSearchInput(savedSearchInput);
+      }
+    }
+  }
 
   handleChange = (event, checked) => {
   };
@@ -201,7 +215,8 @@ class MenuAppBar extends React.PureComponent {
 
 MenuAppBar.defaultProps = {
   showSearch: false,
-  showClipboard: false
+  showClipboard: false,
+  workspaceFullPath: undefined
 };
 
 export default compose(
