@@ -226,7 +226,10 @@ class WorkspacesPage extends PureComponent<Props> {
     (this.state.openEditDialog && this.state.openEditDialog.workspace === card);
 
   handlePickWorkspacesFolder = () => {
-    const [newFolder] = dialog.showOpenDialog({ properties: ['openDirectory'] }) || [];
+    const [newFolder] = dialog.showOpenDialog({
+      defaultPath: dblDotLocalService.getWorkspacesDir(),
+      properties: ['openDirectory']
+    }) || [];
     if (!newFolder) {
       return;
     }
