@@ -1,5 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
+import Store from 'electron-store';
 import childProcess from 'child_process';
 import xml2js from 'xml2js';
 import log from 'electron-log';
@@ -20,7 +21,10 @@ export const dblDotLocalService = {
   getDblDotLocalExecCwd,
   getConfigXmlFullPath,
   getDblDotLocalExecStatus,
+  setWorkspacesDir,
   getWorkspacesDir,
+  ensureWorkspacesDir,
+  getDefaultUserDataWorkspacesFolder,
   convertConfigXmlToJson,
   updateConfigXmlWithNewPaths,
   updateAndWriteConfigXmlSettings,
@@ -309,9 +313,37 @@ function getConfigXmlFullPath(workspace) {
   return path.join(workspaceFullPath, 'config.xml');
 }
 
-function getWorkspacesDir() {
-  const app = getApp();
-  return path.join(app.getPath('userData'), 'workspaces');
+function getAppSettings() {
+  const store = new Store({
+    name: 'appSettings',
+    defaults: { workspacesLocation: getDefaultUserDataWorkspacesFolder() }
+  });
+  return store;
+}
+
+function setWorkspacesDir(newFolder) {
+  getAppSettings().set('workspacesLocation', newFolder);
+}
+
+function getAppUserData() {
+  return getApp().getPath('userData');
+}
+
+function getDefaultUserDataWorkspacesFolder() {
+  return path.join(getAppUserData(), 'workspaces');
+}
+
+function getWorkspacesDir(defaultFolder) {
+  const workspacesLocation = getAppSettings().get('workspacesLocation');
+  return workspacesLocation || defaultFolder;
+}
+
+function ensureWorkspacesDir() {
+  const workspacesLocation = getWorkspacesDir(undefined);
+  const defaultWorkspacesLocation = getDefaultUserDataWorkspacesFolder();
+  if (workspacesLocation === undefined) {
+    setWorkspacesDir(defaultWorkspacesLocation);
+  }
 }
 
 function parseAsJson(configFile) {

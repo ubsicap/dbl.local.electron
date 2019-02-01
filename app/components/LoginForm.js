@@ -2,6 +2,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { DebounceInput } from 'react-debounce-input';
+import path from 'path';
 import wait from 'wait-promise';
 import Tooltip from '@material-ui/core/Tooltip';
 import Button from '@material-ui/core/Button';
@@ -10,16 +11,21 @@ import { alertActions } from '../actions/alert.actions';
 import { loadHtmlBaseUrl } from '../actions/dblDotLocalConfig.actions';
 import { utilities } from '../utils/utilities';
 import MenuAppBar from '../components/MenuAppBar';
+import { dblDotLocalService } from '../services/dbl_dot_local.service';
+import { workspacesService } from '../services/workspaces.service';
 
 function mapStateToProps(state, props) {
   const { workspaceName } = props.match.params;
   const { authentication, alert, dblDotLocalConfig } = state;
   const loggingIn = Boolean(authentication.loggingIn);
+  const lastUserSettings = getLastUsersLoginSettings(workspaceName) || {};
+  const lastWorkspaceUserEmail = lastUserSettings.email || '';
   return {
     workspaceName: workspaceName || '(Unknown Workspace)',
     loggingIn,
     alert,
     dblBaseUrl: dblDotLocalConfig.dblBaseUrl,
+    lastWorkspaceUserEmail
   };
 }
 
@@ -29,6 +35,15 @@ const mapDispatchToProps = {
   loadHtmlBaseUrl
 };
 
+function getLastUsersLoginSettings(workspaceName) {
+  if (!workspaceName) {
+    return undefined;
+  }
+  const workspacePath = path.join(dblDotLocalService.getWorkspacesDir(), workspaceName);
+  const lastLoginSettings = workspacesService.getLastUserLoginSettings(workspacePath);
+  return lastLoginSettings;
+}
+
 type Props = {
   login: () => {},
   clearAlerts: () => {},
@@ -36,7 +51,8 @@ type Props = {
   loggingIn: boolean,
   alert: {},
   dblBaseUrl: ?string,
-  workspaceName: string
+  workspaceName: string,
+  lastWorkspaceUserEmail: string
 };
 
 /*
@@ -48,7 +64,7 @@ class LoginForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      username: '',
+      username: props.lastWorkspaceUserEmail,
       password: '',
       submitted: false
     };
@@ -58,12 +74,20 @@ class LoginForm extends React.Component {
   }
 
   componentDidMount() {
+    this.mounted = true;
     this.startWaitUntil();
   }
 
+  componentWillUnmount() {
+    this.mounted = false;
+  }
+
+  getIsUrlReadyOrUnmounted = () => {
+    return this.isDblBaseUrlReady() || !this.mounted;
+  }
 
   startWaitUntil = async () => {
-    await wait.every(3000).and(this.ensureLoadHtmlBaseUrl).until(this.isDblBaseUrlReady);
+    await wait.every(3000).and(this.ensureLoadHtmlBaseUrl).until(this.getIsUrlReadyOrUnmounted);
   }
 
   isDblBaseUrlReady = () => Boolean(this.props.dblBaseUrl);

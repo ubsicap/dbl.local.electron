@@ -8,6 +8,7 @@ import uuidv1 from 'uuid/v1';
 import classNames from 'classnames';
 import Button from '@material-ui/core/Button';
 import { AddCircle, Refresh, Settings, Delete } from '@material-ui/icons';
+import CloseIcon from '@material-ui/icons/Close';
 import Tooltip from '@material-ui/core/Tooltip';
 import Link from '@material-ui/icons/Link';
 import Card from '@material-ui/core/Card';
@@ -25,6 +26,8 @@ import MenuAppBar from '../components/MenuAppBar';
 import WorkspaceEditDialog from '../components/WorkspaceEditDialog';
 import ConfirmButton from '../components/ConfirmButton';
 import { utilities } from '../utils/utilities';
+
+const { dialog } = require('electron').remote;
 
 type Props = {
   classes: {},
@@ -106,7 +109,7 @@ const styles = theme => ({
   },
 });
 
-const workspacesDir = dblDotLocalService.getWorkspacesDir();
+const NEW_WORKSPACE_PREFIX = 'My Org ';
 
 async function createWorkspace(fullPath) {
   const stats = fs.lstatSync(fullPath);
@@ -135,6 +138,7 @@ class WorkspacesPage extends PureComponent<Props> {
   }
 
   updateAllWorkspaceCards = async () => {
+    const workspacesDir = dblDotLocalService.getWorkspacesDir();
     await fs.ensureDir(workspacesDir);
     const files = await fs.readdir(workspacesDir);
     files.map(file => path.join(workspacesDir, file)).forEach(async fullPath => {
@@ -160,8 +164,9 @@ class WorkspacesPage extends PureComponent<Props> {
   }
 
   handleCreateWorkspace = async () => {
+    const workspacesDir = dblDotLocalService.getWorkspacesDir();
     const uuid1 = uuidv1();
-    const name = `My Org ${uuid1.substr(0, 5)}`;
+    const name = `${NEW_WORKSPACE_PREFIX}${uuid1.substr(0, 5)}`;
     const fullPath = path.join(workspacesDir, name);
     fs.ensureDirSync(fullPath);
     const workspace = await createWorkspace(fullPath);
@@ -222,9 +227,32 @@ class WorkspacesPage extends PureComponent<Props> {
   shouldOpenEditDialog = (card) =>
     (this.state.openEditDialog && this.state.openEditDialog.workspace === card);
 
+  handlePickWorkspacesFolder = () => {
+    const [newFolder] = dialog.showOpenDialog({
+      defaultPath: dblDotLocalService.getWorkspacesDir(),
+      properties: ['openDirectory']
+    }) || [];
+    if (!newFolder) {
+      return;
+    }
+    dblDotLocalService.setWorkspacesDir(newFolder);
+    this.refreshAll();
+  }
+
+  shouldShowResetWorkspacesFolder = () => {
+    return dblDotLocalService.getWorkspacesDir()
+      !== dblDotLocalService.getDefaultUserDataWorkspacesFolder();
+  }
+
+  handleResetWorkspacesFolder = () => {
+    dblDotLocalService.setWorkspacesDir(dblDotLocalService.getDefaultUserDataWorkspacesFolder());
+    this.refreshAll();
+  }
+
   renderWorkspaceCards = () => {
     const { classes, isRunningUnknownDblDotLocalProcess, isRequestingStopDblDotLocalExecProcess } = this.props;
     const { cards, openEditDialog } = this.state;
+    const workspacesLocation = dblDotLocalService.getWorkspacesDir();
     return (
       <React.Fragment>
         <main>
@@ -257,6 +285,20 @@ class WorkspacesPage extends PureComponent<Props> {
                       <Refresh className={classes.icon} />
                       Refresh All
                     </Button>
+                  </Grid>
+                </Grid>
+                <Grid container justify="center">
+                  <Grid item>
+                    <Button size="small" color="primary" onClick={this.handlePickWorkspacesFolder}>
+                      <Settings className={classes.icon} />
+                      {workspacesLocation}
+                    </Button>
+                    {this.shouldShowResetWorkspacesFolder() &&
+                    <Tooltip title="Reset to Factory Default Workspaces Location">
+                      <Button size="small" color="primary" onClick={this.handleResetWorkspacesFolder}>
+                        <CloseIcon className={classes.icon} />
+                      </Button>
+                    </Tooltip>}
                   </Grid>
                 </Grid>
               </div>
@@ -302,6 +344,7 @@ class WorkspacesPage extends PureComponent<Props> {
                         </Typography>
                       </div>}
                     </CardContent>
+                    {(card.configXmlSettings || card.name.startsWith(NEW_WORKSPACE_PREFIX)) &&
                     <CardActions>
                       <Button size="small" color="primary" onClick={this.handleEdit(card)}>
                         <Settings className={classes.icon} />
@@ -329,7 +372,7 @@ class WorkspacesPage extends PureComponent<Props> {
                           <Delete className={classNames(classes.leftIcon, classes.iconSmall)} />
                         </Tooltip>
                       </ConfirmButton>
-                    </CardActions>
+                    </CardActions>}
                   </Card>
                 </Grid>
               ))}
