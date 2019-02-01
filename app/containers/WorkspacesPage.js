@@ -291,8 +291,6 @@ class WorkspacesPage extends PureComponent<Props> {
                       <Settings className={classes.icon} />
                       {workspacesLocation}
                     </Button>
-                  </Grid>
-                  <Grid item>
                     {this.shouldShowResetWorkspacesFolder() &&
                     <Tooltip title="Reset to Factory Default Workspaces Location">
                       <Button size="small" color="primary" onClick={this.handleResetWorkspacesFolder}>
