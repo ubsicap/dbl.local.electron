@@ -109,6 +109,8 @@ const styles = theme => ({
   },
 });
 
+const NEW_WORKSPACE_PREFIX = 'My Org ';
+
 async function createWorkspace(fullPath) {
   const stats = fs.lstatSync(fullPath);
   if (!stats.isDirectory()) {
@@ -164,7 +166,7 @@ class WorkspacesPage extends PureComponent<Props> {
   handleCreateWorkspace = async () => {
     const workspacesDir = dblDotLocalService.getWorkspacesDir();
     const uuid1 = uuidv1();
-    const name = `My Org ${uuid1.substr(0, 5)}`;
+    const name = `${NEW_WORKSPACE_PREFIX}${uuid1.substr(0, 5)}`;
     const fullPath = path.join(workspacesDir, name);
     fs.ensureDirSync(fullPath);
     const workspace = await createWorkspace(fullPath);
@@ -342,6 +344,7 @@ class WorkspacesPage extends PureComponent<Props> {
                         </Typography>
                       </div>}
                     </CardContent>
+                    {(card.configXmlSettings || card.name.startsWith(NEW_WORKSPACE_PREFIX)) &&
                     <CardActions>
                       <Button size="small" color="primary" onClick={this.handleEdit(card)}>
                         <Settings className={classes.icon} />
@@ -369,7 +372,7 @@ class WorkspacesPage extends PureComponent<Props> {
                           <Delete className={classNames(classes.leftIcon, classes.iconSmall)} />
                         </Tooltip>
                       </ConfirmButton>
-                    </CardActions>
+                    </CardActions>}
                   </Card>
                 </Grid>
               ))}
