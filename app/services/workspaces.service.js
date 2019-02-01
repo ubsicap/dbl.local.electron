@@ -1,10 +1,12 @@
 import Store from 'electron-store';
 
-export const workspacesService = {
+export const workspaceUserSettingsStoreServices = {
   saveUserLogin,
-  getLastUserLoginSettings
+  loadLastUserLoginSettings,
+  saveBundlesSearchInput,
+  loadBundlesSearchInput,
 };
-export default workspacesService;
+export default workspaceUserSettingsStoreServices;
 
 function getWorkspaceUserSettings(workspaceFullPath) {
   const store = new Store({
@@ -24,10 +26,21 @@ function saveUserLogin(workspaceFullPath, email) {
   userSettings.set(encodeEmailAddress(email), { email, lastLogin: Date.now() });
 }
 
-function getLastUserLoginSettings(workspaceFullPath) {
+function loadLastUserLoginSettings(workspaceFullPath) {
   const userSettings = getWorkspaceUserSettings(workspaceFullPath);
   const lastLogin = Object.values(userSettings.store)
     .reduce((acc, userData) =>
       (!acc || userData.lastLogin > acc.lastLogin ? userData : acc), undefined);
   return lastLogin;
+}
+
+
+function saveBundlesSearchInput(workspaceFullPath, searchInputRaw) {
+  const userSettings = getWorkspaceUserSettings(workspaceFullPath);
+  userSettings.set('bundles.search', searchInputRaw);
+}
+
+function loadBundlesSearchInput(workspaceFullPath) {
+  const userSettings = getWorkspaceUserSettings(workspaceFullPath);
+  userSettings.get('bundles.search', '');
 }
