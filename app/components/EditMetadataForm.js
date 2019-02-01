@@ -184,6 +184,9 @@ class EditMetadataForm extends React.PureComponent<Props> {
           {option}
         </div>
       )));
+      if (field.name === 'component') {
+        options.reverse();
+      }
       const greyish = 'rgba(0, 0, 0, 0.54)';
       const floatingLabelStyle = { color: greyish };
       const errorStyle = hasError ? {} : { errorStyle: floatingLabelStyle };
@@ -195,6 +198,7 @@ class EditMetadataForm extends React.PureComponent<Props> {
           id={id}
           name={field.name}
           disabled={this.getIsReadonly(field)}
+          checkPosition="left"
           multiple
           floatingLabel={`${field.label}${isRequired ? ' *' : ''}`}
           errorText={helperText}
