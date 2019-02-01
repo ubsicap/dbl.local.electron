@@ -316,7 +316,7 @@ function getConfigXmlFullPath(workspace) {
 function getAppSettings() {
   const store = new Store({
     name: 'appSettings',
-    data: { workspacesLocation: getDefaultUserDataWorkspacesFolder() }
+    defaults: { workspacesLocation: getDefaultUserDataWorkspacesFolder() }
   });
   return store;
 }
