@@ -11,13 +11,11 @@ import Bundles from '../components/Bundles';
 import MenuAppBar from '../components/MenuAppBar';
 import DblDotLocalAppBar from '../components/DblDotLocalAppBar';
 import { ux } from '../utils/ux';
-import { loadHtmlBaseUrl } from '../actions/dblDotLocalConfig.actions';
 import { createNewBundle } from '../actions/bundle.actions';
 
 type Props = {
   classes: {},
   newMediaTypes: [],
-  loadHtmlBaseUrl: () => {},
   createNewBundle: () => {}
 };
 
@@ -38,7 +36,6 @@ const materialStyles = () => ({
 });
 
 const mapDispatchToProps = {
-  loadHtmlBaseUrl,
   createNewBundle
 };
 
@@ -46,9 +43,6 @@ class BundlesPage extends PureComponent<Props> {
   props: Props;
   state = {
     anchorEl: null
-  }
-  componentDidMount() {
-    this.props.loadHtmlBaseUrl();
   }
 
   handleClick = event => {
