@@ -1,3 +1,16 @@
+### Version 0.24.0 (Change Workspaces location)
+#### Features
+- Allow user to change workspaces location
+- Save user name (email) for login
+- Add checkboxes to multi-select control (Canonical Components) in edit forms
+- Reverse Canonical Component options (westernNT/OT at top)
+- Show order of selected components in options
+
+- dbl_dot_local_app 2/01/2019 (including more print bundle support)
+
+#### Fixes
+- turn off polling for dbl_dot_local_app connection after leaving login page
+
 ### Version 0.23.0 (Copy metadata)
 #### Features
 - Added View metadata for non-draft bundles
