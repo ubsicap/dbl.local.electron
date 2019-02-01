@@ -178,10 +178,11 @@ class EditMetadataForm extends React.PureComponent<Props> {
     const hasError = this.hasError(field);
     const isRequired = editMetadataService.getIsRequired(field);
     if (editMetadataService.getIsMulti(field)) {
-      const value = this.getMultiValues(field).filter(v => v).map(val => ({ value: val }));
-      const options = (field.options && field.options.map(option => (
-        <div key={`${formKey}/${field.name}/${option}`} value={option} >
-          {option}
+      const selectedValues = this.getMultiValues(field).filter(v => v);
+      const value = selectedValues.map(val => ({ value: val }));
+      const options = (field.options && field.options.map((option) => (
+        <div key={`${formKey}/${field.name}/${option}`} value={option}>
+          {getLabelWithOrderInSelectedValues(option, selectedValues)}
         </div>
       )));
       if (field.name === 'component') {
@@ -206,7 +207,7 @@ class EditMetadataForm extends React.PureComponent<Props> {
           {...underlineStyle}
           floatingLabelStyle={floatingLabelStyle}
           floatingLabelFocusStyle={{ color: '#303f9f' }}
-          onChange={this.handleChangeMulti(field)}
+          onSelect={this.handleChangeMulti(field)}
           useLayerForClickAway
           value={value}
           /* elementHeight={58} */
@@ -270,6 +271,12 @@ class EditMetadataForm extends React.PureComponent<Props> {
 
 function getHasError(fieldError) {
   return Boolean(Object.keys(fieldError).length > 0);
+}
+
+function getLabelWithOrderInSelectedValues(option, selectedValues) {
+  const valueOrder = selectedValues.indexOf(option) + 1;
+  const result = valueOrder > 0 ? `${valueOrder}. ${option}` : option;
+  return result;
 }
 
 export default compose(
