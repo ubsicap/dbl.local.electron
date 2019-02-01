@@ -74,12 +74,20 @@ class LoginForm extends React.Component {
   }
 
   componentDidMount() {
+    this.mounted = true;
     this.startWaitUntil();
   }
 
+  componentWillUnmount() {
+    this.mounted = false;
+  }
+
+  getIsUrlReadyOrUnmounted = () => {
+    return this.isDblBaseUrlReady() || !this.mounted;
+  }
 
   startWaitUntil = async () => {
-    await wait.every(3000).and(this.ensureLoadHtmlBaseUrl).until(this.isDblBaseUrlReady);
+    await wait.every(3000).and(this.ensureLoadHtmlBaseUrl).until(this.getIsUrlReadyOrUnmounted);
   }
 
   isDblBaseUrlReady = () => Boolean(this.props.dblBaseUrl);
