@@ -20,7 +20,6 @@ function getAreBundlesLoading(getState) {
     return true;
   }
   const areLoading = bundles.loading;
-  console.log(`bundles areLoading: ${areLoading}`);
   return areLoading;
 }
 
@@ -29,6 +28,9 @@ export function updateSearchInput(searchInput) {
     const trimmedSearchInput = searchInput.trim();
     const searchKeywords = split(trimmedSearchInput, { separator: ' ' });
     await waitUntil(async () => !getAreBundlesLoading(getState));
+    const { workspaceFullPath, email } = workspaceUserSettingsStoreServices
+      .getCurrentWorkspaceFullPath(getState());
+    workspaceUserSettingsStoreServices.saveBundlesSearchInput(workspaceFullPath, email, searchInput);
     const { bundles, bundlesFilter } = getState();
     if (trimmedSearchInput.length > 0) {
       const willRecomputeAllSearchResults = trimmedSearchInput !== bundlesFilter.searchInput;
@@ -40,9 +42,6 @@ export function updateSearchInput(searchInput) {
         willRecomputeAllSearchResults,
         bundles
       });
-      const { workspaceFullPath, email } = workspaceUserSettingsStoreServices
-        .getCurrentWorkspaceFullPath(getState());
-      workspaceUserSettingsStoreServices.saveBundlesSearchInput(workspaceFullPath, email, searchInput);
       if (!willRecomputeAllSearchResults) {
         return; // don't try to find new results yet
       }
