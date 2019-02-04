@@ -12,7 +12,7 @@ export const workspaceUserSettingsStoreServices = {
 export default workspaceUserSettingsStoreServices;
 
 function getCurrentWorkspaceFullPath(state) {
-  const { workspaceName, user: { username: email = undefined } = undefined } = state.authentication;
+  const { workspaceName, user } = state.authentication;
   if (!workspaceName) {
     return undefined;
   }
@@ -20,6 +20,7 @@ function getCurrentWorkspaceFullPath(state) {
   if (!workspacesLocation) {
     return undefined;
   }
+  const { username: email } = user || {};
   const workspaceFullPath = path.join(workspacesLocation, workspaceName);
   return { workspaceFullPath, email };
 }
@@ -53,10 +54,10 @@ function loadLastUserLoginSettings(workspaceFullPath) {
 
 function saveBundlesSearchInput(workspaceFullPath, email, searchInputRaw) {
   const userSettings = getWorkspaceUserSettings(workspaceFullPath);
-  userSettings.set(`${encodeEmailAddress(email)}.bundles.search`, searchInputRaw);
+  userSettings.set(`${encodeEmailAddress(email)}/bundles/search`, searchInputRaw);
 }
 
 function loadBundlesSearchInput(workspaceFullPath, email) {
   const userSettings = getWorkspaceUserSettings(workspaceFullPath);
-  userSettings.get(`${encodeEmailAddress(email)}.bundles.search`, '');
+  return userSettings.get(`${encodeEmailAddress(email)}/bundles/search`, '');
 }
