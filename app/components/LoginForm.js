@@ -12,7 +12,7 @@ import { loadHtmlBaseUrl } from '../actions/dblDotLocalConfig.actions';
 import { utilities } from '../utils/utilities';
 import MenuAppBar from '../components/MenuAppBar';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
-import { workspacesService } from '../services/workspaces.service';
+import { workspaceUserSettingsStoreServices } from '../services/workspaces.service';
 
 function mapStateToProps(state, props) {
   const { workspaceName } = props.match.params;
@@ -40,7 +40,7 @@ function getLastUsersLoginSettings(workspaceName) {
     return undefined;
   }
   const workspacePath = path.join(dblDotLocalService.getWorkspacesDir(), workspaceName);
-  const lastLoginSettings = workspacesService.getLastUserLoginSettings(workspacePath);
+  const lastLoginSettings = workspaceUserSettingsStoreServices.loadLastUserLoginSettings(workspacePath);
   return lastLoginSettings;
 }
 

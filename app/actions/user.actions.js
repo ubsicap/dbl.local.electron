@@ -6,7 +6,7 @@ import { alertActions } from './';
 import { history } from '../store/configureStore';
 import dblDotLocalConstants from '../constants/dblDotLocal.constants';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
-import { workspacesService } from '../services/workspaces.service';
+import { workspaceUserSettingsStoreServices } from '../services/workspaces.service';
 import { navigationConstants } from '../constants/navigation.constants';
 import { setupBundlesEventSource } from '../actions/bundle.actions';
 
@@ -48,7 +48,7 @@ function login(username, password, _workspaceName) {
       const whoami = await userService.whoami();
       const workspacesLocation = dblDotLocalService.getWorkspacesDir();
       const workspaceFullPath = path.join(workspacesLocation, _workspaceName);
-      workspacesService.saveUserLogin(workspaceFullPath, username);
+      workspaceUserSettingsStoreServices.saveUserLogin(workspaceFullPath, username);
       dispatch(success(user, whoami, _workspaceName));
       dispatch(connectSSE(user.auth_token));
       dispatch(startPowerMonitor());

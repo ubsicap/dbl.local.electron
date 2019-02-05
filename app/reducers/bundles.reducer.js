@@ -389,6 +389,7 @@ function formatDisplayAs(bundle) {
       rightsHolders: bundle.rightsHolders,
       license: ['owned', 'open-access'].includes(bundle.license) ? bundle.license : `#${bundle.license}`,
       revision: (bundle.dblId ? revision : 'New'),
+      dblId: bundle.dblId,
       status: formatStatus(bundle)
     }
   };
@@ -421,7 +422,7 @@ function formatStatus(bundle) {
     if (bundle.resourceCountStored) {
       newStatusDisplayAs = `Stored (${stored})`;
     } else {
-      newStatusDisplayAs = 'Stored (metadata)';
+      newStatusDisplayAs = 'Stored';
     }
   } else if (['SAVETO'].includes(bundle.task) && bundle.status === 'COMPLETED') {
     newStatusDisplayAs = 'Open in Folder';
@@ -429,7 +430,7 @@ function formatStatus(bundle) {
     if (bundle.resourceCountStored) {
       newStatusDisplayAs = `DRAFT (${stored})`;
     } else {
-      newStatusDisplayAs = 'DRAFT (metadata)';
+      newStatusDisplayAs = 'DRAFT';
     }
   } else {
     newStatusDisplayAs = bundle.statusDisplayAs || bundle.status;

@@ -6,6 +6,8 @@ import classNames from 'classnames';
 import { createSelector } from 'reselect';
 import LinearProgress from 'material-ui/LinearProgress';
 import { Menu, MenuItem, Toolbar, Tooltip } from '@material-ui/core';
+import Grid from '@material-ui/core/Grid';
+import Typography from '@material-ui/core/Typography';
 import Badge from '@material-ui/core/Badge';
 import VerifiedUserTwoTone from '@material-ui/icons/VerifiedUserTwoTone';
 import VerifiedUserOutlined from '@material-ui/icons/VerifiedUserOutlined';
@@ -408,64 +410,81 @@ class DBLEntryRow extends PureComponent<Props> {
         role="button"
         style={{ borderBottom: '1px solid lightgray' }}
       >
-        <div className={styles.bundleRowTop}>
-          <div className={styles.bundleRowTopLeftSideIcon}>
-            <Tooltip title={medium}>
-              { mediumIconMarginRight }
-            </Tooltip>
-          </div>
-          <div className={styles.bundleRowTopLeftSideLanguageAndCountry}>
-            <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.languageAndCountry)} className={styles.languageAndCountryLabel} />
-          </div>
-          <div className={styles.bundleRowTopLeftSideName}>
-            <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.name)} />
-          </div>
-          <div className={styles.bundleRowTopMiddle}>
-            <Tooltip title="Switch revision">
-              <Button
-                variant="outlined"
-                size="small"
-                className={classNames(classes.button, this.pickBackgroundColor())}
-                disabled={dblId === undefined}
-                onClick={this.onClickManageResources('revisions')}
-              >
-                {ux.conditionallyRenderBadge(
-                  { classes: { badge: classes.badgeTight }, color: 'primary' }, laterRevisionsBadge,
-                  <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
-                  )}
-              </Button>
-            </Tooltip>
-          </div>
-          <div className={styles.bundleRowTopMiddle}>
+        <Grid container justify="space-between" alignItems="center" wrap="nowrap">
+          <Grid container justify="center" lg={1} md={1} sm={1}>
+            <Grid item>
+              <Tooltip title={medium}>
+                { mediumIconMarginRight }
+              </Tooltip>
+            </Grid>
+          </Grid>
+          <Grid item lg={1} md={1} sm={1}>
+            <div className={styles.bundleRowTopLeftSideLanguageAndCountry}>
+              <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.languageAndCountry)} className={styles.languageAndCountryLabel} />
+            </div>
+          </Grid>
+          <Grid item lg={2} md={2} sm={2}>
+            <Grid container direction="column">
+              <Grid item>
+                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.name)} />
+              </Grid>
+              <Grid item>
+                <Typography variant="caption">
+                  <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.dblId)} />
+                </Typography>
+              </Grid>
+            </Grid>
+          </Grid>
+          <Grid container lg={2} md={2} sm={2} justify="flex-end">
+            <Grid item>
+              <Tooltip title="Switch revision">
+                <Button
+                  variant="outlined"
+                  size="small"
+                  className={classNames(classes.button, this.pickBackgroundColor())}
+                  disabled={dblId === undefined}
+                  onClick={this.onClickManageResources('revisions')}
+                >
+                  {ux.conditionallyRenderBadge(
+                    { classes: { badge: classes.badgeTight }, color: 'primary' }, laterRevisionsBadge,
+                    <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
+                    )}
+                </Button>
+              </Tooltip>
+            </Grid>
+          </Grid>
+          <Grid item>
             <Tooltip title="license">
               <div>
                 {this.renderLicenseIcon(license)}
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.license)} />
               </div>
             </Tooltip>
-          </div>
-          <div className={styles.bundleRowTopLeftSideName}>
+          </Grid>
+          <Grid item lg={2} md={2} sm={2}>
             <Tooltip title="Rightsholders">
               <div>
                 <Copyright className={classNames(classes.leftIcon, classes.iconSmall)} />
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.rightsHolders)} />
               </div>
             </Tooltip>
-          </div>
-          <div className={styles.bundleRowTopRightSide}>
-            {this.showStoredButton() && (
-              <Button
-                variant="text"
-                size="small"
-                className={classNames(classes.button, this.pickBackgroundColor())}
-                onClick={this.onClickManageResources(resourceManagerMode)}
-              >
-                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
-                <Badge badgeContent={ux.getMediumIcon(medium, { className: classNames(classes.rightIcon, classes.iconSmaller) })} >
-                  <Folder className={classNames(classes.rightIcon, classes.iconSmall)} />
-                </Badge>
-              </Button>
-            )}
+          </Grid>
+          <Grid container lg={2} md={2} sm={2} justify="flex-end">
+            <Grid item>
+              {this.showStoredButton() && (
+                <Button
+                  variant="text"
+                  size="small"
+                  className={classNames(classes.button, this.pickBackgroundColor())}
+                  onClick={this.onClickManageResources(resourceManagerMode)}
+                >
+                  <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
+                  <Badge badgeContent={ux.getMediumIcon(medium, { className: classNames(classes.rightIcon, classes.iconSmaller) })} >
+                    <Folder className={classNames(classes.rightIcon, classes.iconSmall)} />
+                  </Badge>
+                </Button>
+              )}
+            </Grid>
             {this.showStatusAsText() && (
               <div style={{ paddingRight: '20px', paddingTop: '6px' }}>
                 {<ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
@@ -483,8 +502,8 @@ class DBLEntryRow extends PureComponent<Props> {
                 <FileDownload className={classNames(classes.rightIcon, classes.iconSmall)} />
               </Button>
             )}
-          </div>
-        </div>
+          </Grid>
+        </Grid>
         {status === 'IN_PROGRESS' && (
           <div
             className="row"

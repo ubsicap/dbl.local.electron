@@ -1,6 +1,8 @@
 import split from 'split-string';
 import { findChunks } from 'highlight-words-core';
+import waitUntil from 'node-wait-until';
 import { bundleFilterConstants } from '../constants/bundleFilter.constants';
+import { workspaceUserSettingsStoreServices } from '../services/workspaces.service';
 
 export const bundleFilterActions = {
   updateSearchInput,
@@ -12,12 +14,25 @@ export default bundleFilterActions;
 
 const canceledState = { isCanceled: true };
 
+function getAreBundlesLoading(getState) {
+  const { bundles } = getState();
+  if (bundles === undefined || bundles.loading === undefined) {
+    return true;
+  }
+  const areLoading = bundles.loading;
+  return areLoading;
+}
+
 export function updateSearchInput(searchInput) {
-  return (dispatch, getState) => {
+  return async (dispatch, getState) => {
     const trimmedSearchInput = searchInput.trim();
     const searchKeywords = split(trimmedSearchInput, { separator: ' ' });
+    await waitUntil(async () => !getAreBundlesLoading(getState));
+    const { workspaceFullPath, email } = workspaceUserSettingsStoreServices
+      .getCurrentWorkspaceFullPath(getState());
+    workspaceUserSettingsStoreServices.saveBundlesSearchInput(workspaceFullPath, email, searchInput);
     const { bundles, bundlesFilter } = getState();
-    if (trimmedSearchInput.length > 0 && !bundles.loading) {
+    if (trimmedSearchInput.length > 0) {
       const willRecomputeAllSearchResults = trimmedSearchInput !== bundlesFilter.searchInput;
       dispatch({
         type: bundleFilterConstants.UPDATE_SEARCH_INPUT,
