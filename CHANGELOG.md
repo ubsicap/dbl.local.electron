@@ -1,3 +1,12 @@
+### Version 0.25.0 (Show Entry DBL Id)
+#### Features
+- Show searchable DBL Id in entries
+- Save user's workspace entry search results
+
+#### Fixes
+- fit entry rows into responsive grid
+- fix wait until all entries are loaded before updating search input 
+
 ### Version 0.24.0 (Change Workspaces location)
 #### Features
 - Allow user to change workspaces location
