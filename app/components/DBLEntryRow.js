@@ -410,32 +410,30 @@ class DBLEntryRow extends PureComponent<Props> {
         role="button"
         style={{ borderBottom: '1px solid lightgray' }}
       >
-        <div className={styles.bundleRowTop}>
-          <div className={styles.bundleRowTopLeftSideIcon}>
+        <Grid container justify="space-between" alignItems="center" wrap="nowrap">
+          <Grid item lg={1} md={1} sm={1}>
             <Tooltip title={medium}>
               { mediumIconMarginRight }
             </Tooltip>
-          </div>
-          <div className={styles.bundleRowTopLeftSideLanguageAndCountry}>
-            <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.languageAndCountry)} className={styles.languageAndCountryLabel} />
-          </div>
-          <div className={styles.bundleRowTopLeftSideName}>
-            <Grid container>
-              <Grid container>
-                <Grid item>
-                  <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.name)} />
-                </Grid>
+          </Grid>
+          <Grid item lg={1} md={1} sm={1}>
+            <div className={styles.bundleRowTopLeftSideLanguageAndCountry}>
+              <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.languageAndCountry)} className={styles.languageAndCountryLabel} />
+            </div>
+          </Grid>
+          <Grid item lg={3} md={3} sm={3}>
+            <Grid container direction="column">
+              <Grid item>
+                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.name)} />
               </Grid>
-              <Grid container>
-                <Grid item>
-                  <Typography variant="caption">
-                    <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.dblId)} />
-                  </Typography>
-                </Grid>
+              <Grid item>
+                <Typography variant="caption">
+                  <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.dblId)} />
+                </Typography>
               </Grid>
             </Grid>
-          </div>
-          <div className={styles.bundleRowTopMiddle}>
+          </Grid>
+          <Grid item lg={2} md={2} sm={2} justify="right">
             <Tooltip title="Switch revision">
               <Button
                 variant="outlined"
@@ -450,24 +448,24 @@ class DBLEntryRow extends PureComponent<Props> {
                   )}
               </Button>
             </Tooltip>
-          </div>
-          <div className={styles.bundleRowTopMiddle}>
+          </Grid>
+          <Grid item justify="left">
             <Tooltip title="license">
               <div>
                 {this.renderLicenseIcon(license)}
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.license)} />
               </div>
             </Tooltip>
-          </div>
-          <div className={styles.bundleRowTopLeftSideName}>
+          </Grid>
+          <Grid item lg={2} md={2} sm={2} justify="left">
             <Tooltip title="Rightsholders">
               <div>
                 <Copyright className={classNames(classes.leftIcon, classes.iconSmall)} />
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.rightsHolders)} />
               </div>
             </Tooltip>
-          </div>
-          <div className={styles.bundleRowTopRightSide}>
+          </Grid>
+          <Grid item lg={2} md={2} sm={2}>
             {this.showStoredButton() && (
               <Button
                 variant="text"
@@ -498,8 +496,8 @@ class DBLEntryRow extends PureComponent<Props> {
                 <FileDownload className={classNames(classes.rightIcon, classes.iconSmall)} />
               </Button>
             )}
-          </div>
-        </div>
+          </Grid>
+        </Grid>
         {status === 'IN_PROGRESS' && (
           <div
             className="row"
