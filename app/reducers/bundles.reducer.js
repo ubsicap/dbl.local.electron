@@ -389,6 +389,7 @@ function formatDisplayAs(bundle) {
       rightsHolders: bundle.rightsHolders,
       license: ['owned', 'open-access'].includes(bundle.license) ? bundle.license : `#${bundle.license}`,
       revision: (bundle.dblId ? revision : 'New'),
+      dblId: bundle.dblId,
       status: formatStatus(bundle)
     }
   };

@@ -6,6 +6,8 @@ import classNames from 'classnames';
 import { createSelector } from 'reselect';
 import LinearProgress from 'material-ui/LinearProgress';
 import { Menu, MenuItem, Toolbar, Tooltip } from '@material-ui/core';
+import Grid from '@material-ui/core/Grid';
+import Typography from '@material-ui/core/Typography';
 import Badge from '@material-ui/core/Badge';
 import VerifiedUserTwoTone from '@material-ui/icons/VerifiedUserTwoTone';
 import VerifiedUserOutlined from '@material-ui/icons/VerifiedUserOutlined';
@@ -418,7 +420,20 @@ class DBLEntryRow extends PureComponent<Props> {
             <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.languageAndCountry)} className={styles.languageAndCountryLabel} />
           </div>
           <div className={styles.bundleRowTopLeftSideName}>
-            <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.name)} />
+            <Grid container>
+              <Grid container>
+                <Grid item>
+                  <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.name)} />
+                </Grid>
+              </Grid>
+              <Grid container>
+                <Grid item>
+                  <Typography variant="caption">
+                    <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.dblId)} />
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Grid>
           </div>
           <div className={styles.bundleRowTopMiddle}>
             <Tooltip title="Switch revision">
