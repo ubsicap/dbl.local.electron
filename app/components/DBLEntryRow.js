@@ -411,17 +411,19 @@ class DBLEntryRow extends PureComponent<Props> {
         style={{ borderBottom: '1px solid lightgray' }}
       >
         <Grid container justify="space-between" alignItems="center" wrap="nowrap">
-          <Grid item lg={1} md={1} sm={1}>
-            <Tooltip title={medium}>
-              { mediumIconMarginRight }
-            </Tooltip>
+          <Grid container justify="center" lg={1} md={1} sm={1}>
+            <Grid item>
+              <Tooltip title={medium}>
+                { mediumIconMarginRight }
+              </Tooltip>
+            </Grid>
           </Grid>
           <Grid item lg={1} md={1} sm={1}>
             <div className={styles.bundleRowTopLeftSideLanguageAndCountry}>
               <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.languageAndCountry)} className={styles.languageAndCountryLabel} />
             </div>
           </Grid>
-          <Grid item lg={3} md={3} sm={3}>
+          <Grid item lg={2} md={2} sm={2}>
             <Grid container direction="column">
               <Grid item>
                 <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.name)} />
@@ -433,23 +435,25 @@ class DBLEntryRow extends PureComponent<Props> {
               </Grid>
             </Grid>
           </Grid>
-          <Grid item lg={2} md={2} sm={2} justify="right">
-            <Tooltip title="Switch revision">
-              <Button
-                variant="outlined"
-                size="small"
-                className={classNames(classes.button, this.pickBackgroundColor())}
-                disabled={dblId === undefined}
-                onClick={this.onClickManageResources('revisions')}
-              >
-                {ux.conditionallyRenderBadge(
-                  { classes: { badge: classes.badgeTight }, color: 'primary' }, laterRevisionsBadge,
-                  <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
-                  )}
-              </Button>
-            </Tooltip>
+          <Grid container lg={2} md={2} sm={2} justify="flex-end">
+            <Grid item>
+              <Tooltip title="Switch revision">
+                <Button
+                  variant="outlined"
+                  size="small"
+                  className={classNames(classes.button, this.pickBackgroundColor())}
+                  disabled={dblId === undefined}
+                  onClick={this.onClickManageResources('revisions')}
+                >
+                  {ux.conditionallyRenderBadge(
+                    { classes: { badge: classes.badgeTight }, color: 'primary' }, laterRevisionsBadge,
+                    <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.revision)} />
+                    )}
+                </Button>
+              </Tooltip>
+            </Grid>
           </Grid>
-          <Grid item justify="left">
+          <Grid item>
             <Tooltip title="license">
               <div>
                 {this.renderLicenseIcon(license)}
@@ -457,7 +461,7 @@ class DBLEntryRow extends PureComponent<Props> {
               </div>
             </Tooltip>
           </Grid>
-          <Grid item lg={2} md={2} sm={2} justify="left">
+          <Grid item lg={2} md={2} sm={2}>
             <Tooltip title="Rightsholders">
               <div>
                 <Copyright className={classNames(classes.leftIcon, classes.iconSmall)} />
@@ -465,20 +469,22 @@ class DBLEntryRow extends PureComponent<Props> {
               </div>
             </Tooltip>
           </Grid>
-          <Grid item lg={2} md={2} sm={2}>
-            {this.showStoredButton() && (
-              <Button
-                variant="text"
-                size="small"
-                className={classNames(classes.button, this.pickBackgroundColor())}
-                onClick={this.onClickManageResources(resourceManagerMode)}
-              >
-                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
-                <Badge badgeContent={ux.getMediumIcon(medium, { className: classNames(classes.rightIcon, classes.iconSmaller) })} >
-                  <Folder className={classNames(classes.rightIcon, classes.iconSmall)} />
-                </Badge>
-              </Button>
-            )}
+          <Grid container lg={2} md={2} sm={2} justify="flex-end">
+            <Grid item>
+              {this.showStoredButton() && (
+                <Button
+                  variant="text"
+                  size="small"
+                  className={classNames(classes.button, this.pickBackgroundColor())}
+                  onClick={this.onClickManageResources(resourceManagerMode)}
+                >
+                  <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
+                  <Badge badgeContent={ux.getMediumIcon(medium, { className: classNames(classes.rightIcon, classes.iconSmaller) })} >
+                    <Folder className={classNames(classes.rightIcon, classes.iconSmall)} />
+                  </Badge>
+                </Button>
+              )}
+            </Grid>
             {this.showStatusAsText() && (
               <div style={{ paddingRight: '20px', paddingTop: '6px' }}>
                 {<ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}
