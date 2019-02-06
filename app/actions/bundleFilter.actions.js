@@ -7,7 +7,8 @@ import { workspaceUserSettingsStoreServices } from '../services/workspaces.servi
 export const bundleFilterActions = {
   updateSearchInput,
   updateSearchResultsForBundleId,
-  clearSearch
+  clearSearch,
+  toggleBundleStar
 };
 
 export default bundleFilterActions;
@@ -173,4 +174,14 @@ function combineSearchResults(searchResults, bundle, chunks, matches) {
 
 export function clearSearch() {
   return { type: bundleFilterConstants.CLEAR_SEARCH_RESULTS };
+}
+
+
+export function toggleBundleStar(bundleId) {
+  return async dispatch => {
+    dispatch({
+      type: bundleFilterConstants.TOGGLE_BUNDLE_STAR,
+      bundleId
+    });
+  };
 }

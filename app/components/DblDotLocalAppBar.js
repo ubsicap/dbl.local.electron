@@ -2,6 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import { compose } from 'recompose';
+import { Set } from 'immutable';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
@@ -22,7 +23,7 @@ function mapStateToProps(state) {
     uploadQueue = { nSpecs: 0, nAtoms: 0 },
     allBundles
   } = bundles;
-  const { isSearchActive, searchResults } = bundlesFilter;
+  const { isSearchActive, searchResults, starredBundles } = bundlesFilter;
   const entriesMatching = (isSearchActive && searchResults) ? Object.keys(searchResults.bundlesMatching) : [];
   const entries = bundles.items;
   return {
@@ -31,7 +32,8 @@ function mapStateToProps(state) {
     entriesMatching,
     isSearchActive,
     downloadQueue,
-    uploadQueue
+    uploadQueue,
+    starredBundles
   };
 }
 
@@ -49,6 +51,7 @@ type Props = {
     isSearchActive: boolean,
     downloadQueue: {},
     uploadQueue: {},
+    starredBundles: Set,
     fetchDownloadQueueCounts: () => {},
     fetchUploadQueueCounts: () => {},
     removeExcessBundles: () => {}
@@ -99,7 +102,8 @@ class DblDotLocalAppBar extends React.PureComponent {
 
   render() {
     const {
-      classes, entries, entriesMatching, isSearchActive, downloadQueue, uploadQueue, allBundles
+      classes, entries, entriesMatching, isSearchActive, downloadQueue, uploadQueue, allBundles,
+      starredBundles
     } = this.props;
     const { anchorElBundlesMenu } = this.state;
     return (
@@ -110,7 +114,7 @@ class DblDotLocalAppBar extends React.PureComponent {
               <div>
                 <StarIcon className={classes.iconSmall} />
                 <Typography variant="title" color="inherit" className={classes.textSmall}>
-                0
+                  {starredBundles.count()}
                 </Typography>
               </div>
             </Button>

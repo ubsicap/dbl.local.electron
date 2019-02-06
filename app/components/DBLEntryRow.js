@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
+import { Set } from 'immutable';
 import classNames from 'classnames';
 import { createSelector } from 'reselect';
 import LinearProgress from 'material-ui/LinearProgress';
@@ -17,6 +18,7 @@ import Button from '@material-ui/core/Button';
 import FileDownload from 'material-ui/svg-icons/file/file-download';
 import Folder from '@material-ui/icons/Folder';
 import StarBorderIcon from '@material-ui/icons/StarBorder';
+import StarIcon from '@material-ui/icons/Star';
 import Copyright from '@material-ui/icons/Copyright';
 import Save from '@material-ui/icons/Save';
 import CreateNewFolder from '@material-ui/icons/CreateNewFolder';
@@ -24,6 +26,7 @@ import Description from '@material-ui/icons/Description';
 import CloudUpload from '@material-ui/icons/CloudUpload';
 import styles from './DBLEntryRow.css';
 import ControlledHighlighter from './ControlledHighlighter';
+import { toggleBundleStar } from '../actions/bundleFilter.actions';
 import { toggleSelectEntry, requestSaveBundleTo, forkIntoNewBundle,
   downloadResources, uploadBundle, updateBundle, createDraftRevision } from '../actions/bundle.actions';
 import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
@@ -56,6 +59,7 @@ type Props = {
   isUploading?: ?boolean,
   isDownloading?: ?boolean,
   isSelected: ?boolean,
+  isStarred: ?boolean,
   shouldShowRow: boolean,
   classes: {},
   isRequestingRevision: boolean,
@@ -71,7 +75,8 @@ type Props = {
   openEditMetadata: () => {},
   uploadBundle: () => {},
   updateBundle: () => {},
-  createDraftRevision: () => {}
+  createDraftRevision: () => {},
+  toggleBundleStar: () => {}
 };
 
 const mapDispatchToProps = {
@@ -83,12 +88,14 @@ const mapDispatchToProps = {
   openEditMetadata,
   uploadBundle,
   updateBundle,
-  createDraftRevision
+  createDraftRevision,
+  toggleBundleStar
 };
 
 const getTask = (state, props) => props.task;
 const getStatus = (state, props) => props.status;
 const getIsSearchActive = (state) => state.bundlesFilter.isSearchActive;
+const getStarredBundles = (state) => state.bundlesFilter.starredBundles;
 const emptyBundleMatches = {};
 const emptyObj = {};
 const getEmptryBundleMatches = () => emptyBundleMatches;
@@ -156,9 +163,15 @@ const makeGetLaterEntryRevisions = () => createSelector(
   }
 );
 
+const makeGetIsBundleStarred = () => createSelector(
+  [getStarredBundles, getBundleId],
+  (starredBundles, bundleId) => (starredBundles || Set()).has(bundleId)
+);
+
 const makeMapStateToProps = () => {
   const shouldShowRow = makeShouldShowRow();
   const getMatches = makeGetBundleMatches();
+  const getIsBundleStarred = makeGetIsBundleStarred();
   const getIsRequestingRevision = makeGetIsRequestingRevision();
   const getIsDownloading = makeGetIsDownloading();
   const getFormsErrors = editMetadataService.makeGetFormsErrors();
@@ -170,6 +183,7 @@ const makeMapStateToProps = () => {
       laterEntryRevisions: getLaterEntryRevisions(state, props),
       shouldShowRow: shouldShowRow(state, props),
       bundleMatches: getMatches(state, props),
+      isStarred: getIsBundleStarred(state, props),
       bundlesSaveTo,
       newMediaTypes,
       isDownloading: getIsDownloading(state, props),
@@ -218,6 +232,12 @@ class DBLEntryRow extends PureComponent<Props> {
   onClickBundleRow = () => {
     const { bundleId: id, dblId, displayAs } = this.props;
     this.props.toggleSelectEntry({ id, dblId, displayAs });
+  }
+
+  handleClickStar = (event) => {
+    const { bundleId } = this.props;
+    event.stopPropagation();
+    this.props.toggleBundleStar(bundleId);
   }
 
   showStatusAsText = () => {
@@ -389,7 +409,7 @@ class DBLEntryRow extends PureComponent<Props> {
     const {
       bundleId, dblId, revision, medium, status, license,
       displayAs, progress,
-      isSelected, shouldShowRow,
+      isSelected, shouldShowRow, isStarred,
       classes,
       newMediaTypes
     } = this.props;
@@ -400,7 +420,7 @@ class DBLEntryRow extends PureComponent<Props> {
     const resourceManagerMode = status === 'DRAFT' ? 'addFiles' : 'download';
     const laterEntryRevisionsCount = this.props.laterEntryRevisions.length;
     const laterRevisionsBadge = laterEntryRevisionsCount ? `${laterEntryRevisionsCount}+` : '';
-    const mediumIconMarginRight = ux.getMediumIcon(medium);
+    const mediumIcon = ux.getMediumIcon(medium, { style: { marginRight: '0px' } });
     return (
       <div
         className={classNames(styles.bundleRow, this.pickBackgroundColor(true))}
@@ -412,15 +432,22 @@ class DBLEntryRow extends PureComponent<Props> {
         style={{ borderBottom: '1px solid lightgray' }}
       >
         <Grid container justify="space-between" alignItems="center" wrap="nowrap">
-          <Grid container justify="space-around" lg={1} md={1} sm={1}>
+          <Grid container lg={1} md={1} sm={1}>
             <Grid item>
               <Tooltip title="Star entry">
-                <StarBorderIcon className={classNames(classes.iconSmall)} />
+                <Button size="small" style={{ minWidth: '16px' }} onClick={this.handleClickStar}>
+                  {isStarred ?
+                    <StarIcon className={classNames(classes.iconSmall)} /> :
+                    <StarBorderIcon className={classNames(classes.iconSmall)} />
+                  }
+                </Button>
               </Tooltip>
             </Grid>
             <Grid item>
               <Tooltip title={medium}>
-                { mediumIconMarginRight }
+                <Button size="small" style={{ minWidth: '16px' }}>
+                  { mediumIcon }
+                </Button>
               </Tooltip>
             </Grid>
           </Grid>
