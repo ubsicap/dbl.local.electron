@@ -59,6 +59,7 @@ type Props = {
   isUploading?: ?boolean,
   isDownloading?: ?boolean,
   isSelected: ?boolean,
+  shouldShowStarred: ?boolean,
   isStarred: ?boolean,
   shouldShowRow: boolean,
   classes: {},
@@ -187,7 +188,8 @@ const makeMapStateToProps = () => {
       bundlesSaveTo,
       newMediaTypes,
       isDownloading: getIsDownloading(state, props),
-      formsErrors: getFormsErrors(state, props)
+      formsErrors: getFormsErrors(state, props),
+      shouldShowStarred: state.bundlesFilter.showStarredBundles
     };
   };
   return mapStateToProps;
@@ -409,12 +411,12 @@ class DBLEntryRow extends PureComponent<Props> {
     const {
       bundleId, dblId, revision, medium, status, license,
       displayAs, progress,
-      isSelected, shouldShowRow, isStarred,
+      isSelected, shouldShowRow, isStarred, shouldShowStarred,
       classes,
       newMediaTypes
     } = this.props;
     const { anchorEl } = this.state;
-    if (!shouldShowRow) {
+    if (!shouldShowRow || (shouldShowStarred && !isStarred)) {
       return (null);
     }
     const resourceManagerMode = status === 'DRAFT' ? 'addFiles' : 'download';
