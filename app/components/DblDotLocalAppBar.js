@@ -6,6 +6,7 @@ import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
+import StarIcon from '@material-ui/icons/Star';
 import ListIcon from '@material-ui/icons/List';
 import ListAltIcon from '@material-ui/icons/FormatListNumberedRtl';
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
@@ -104,6 +105,16 @@ class DblDotLocalAppBar extends React.PureComponent {
     return (
       <AppBar position="sticky" className={classes.appBar}>
         <Toolbar>
+          <Tooltip title="Starred entries">
+            <Button color="inherit" className={classes.textSmall}>
+              <div>
+                <StarIcon className={classes.iconSmall} />
+                <Typography variant="title" color="inherit" className={classes.textSmall}>
+                0
+                </Typography>
+              </div>
+            </Button>
+          </Tooltip>
           <Tooltip title={`Entries${isSearchActive ? ' (Matching/Total)' : ''}`}>
             <Button color="inherit" className={classes.textSmall}>
               <div>

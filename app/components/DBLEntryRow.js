@@ -16,6 +16,7 @@ import AddCircle from '@material-ui/icons/AddCircle';
 import Button from '@material-ui/core/Button';
 import FileDownload from 'material-ui/svg-icons/file/file-download';
 import Folder from '@material-ui/icons/Folder';
+import StarBorderIcon from '@material-ui/icons/StarBorder';
 import Copyright from '@material-ui/icons/Copyright';
 import Save from '@material-ui/icons/Save';
 import CreateNewFolder from '@material-ui/icons/CreateNewFolder';
@@ -376,7 +377,7 @@ class DBLEntryRow extends PureComponent<Props> {
   renderLicenseIcon = (license) => {
     const { classes } = this.props;
     if (license === 'owned') {
-      return <VerifiedUser className={classNames(classes.leftIcon, classes.iconSmall)} />;  
+      return <VerifiedUser className={classNames(classes.leftIcon, classes.iconSmall)} />;
     }
     if (license === 'open-access') {
       return <VerifiedUserTwoTone className={classNames(classes.leftIcon, classes.iconSmall)} />;
@@ -411,7 +412,12 @@ class DBLEntryRow extends PureComponent<Props> {
         style={{ borderBottom: '1px solid lightgray' }}
       >
         <Grid container justify="space-between" alignItems="center" wrap="nowrap">
-          <Grid container justify="center" lg={1} md={1} sm={1}>
+          <Grid container justify="space-around" lg={1} md={1} sm={1}>
+            <Grid item>
+              <Tooltip title="Star entry">
+                <StarBorderIcon className={classNames(classes.iconSmall)} />
+              </Tooltip>
+            </Grid>
             <Grid item>
               <Tooltip title={medium}>
                 { mediumIconMarginRight }
