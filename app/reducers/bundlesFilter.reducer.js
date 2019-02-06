@@ -77,6 +77,12 @@ export function bundlesFilter(state = { isSearchActive: false, starredBundles: S
         ...state,
         starredBundles
       };
+    } case bundleFilterConstants.TOGGLE_STAR_ENTRIES: {
+      const showStarredBundles = !state.showStarredBundles;
+      return {
+        ...state,
+        showStarredBundles
+      };
     } default: {
       return state;
     }

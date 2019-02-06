@@ -14,7 +14,9 @@ import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 import { Button, Menu, MenuItem } from '@material-ui/core';
 
-import { fetchDownloadQueueCounts, fetchUploadQueueCounts, removeExcessBundles } from '../actions/bundle.actions';
+import { fetchDownloadQueueCounts, fetchUploadQueueCounts, removeExcessBundles }
+  from '../actions/bundle.actions';
+import { toggleStarredEntries } from '../actions/bundleFilter.actions';
 
 function mapStateToProps(state) {
   const { bundlesFilter, bundles } = state;
@@ -23,8 +25,11 @@ function mapStateToProps(state) {
     uploadQueue = { nSpecs: 0, nAtoms: 0 },
     allBundles
   } = bundles;
-  const { isSearchActive, searchResults, starredBundles } = bundlesFilter;
-  const entriesMatching = (isSearchActive && searchResults) ? Object.keys(searchResults.bundlesMatching) : [];
+  const {
+    isSearchActive, searchResults, starredBundles, showStarredBundles = false
+  } = bundlesFilter;
+  const entriesMatching = (isSearchActive && searchResults) ?
+    Object.keys(searchResults.bundlesMatching) : [];
   const entries = bundles.items;
   return {
     entries,
@@ -33,14 +38,16 @@ function mapStateToProps(state) {
     isSearchActive,
     downloadQueue,
     uploadQueue,
-    starredBundles
+    starredBundles,
+    showStarredBundles
   };
 }
 
 const mapDispatchToProps = {
   fetchDownloadQueueCounts,
   fetchUploadQueueCounts,
-  removeExcessBundles
+  removeExcessBundles,
+  toggleStarredEntries
 };
 
 type Props = {
@@ -52,9 +59,11 @@ type Props = {
     downloadQueue: {},
     uploadQueue: {},
     starredBundles: Set,
+    showStarredBundles: boolean,
     fetchDownloadQueueCounts: () => {},
     fetchUploadQueueCounts: () => {},
-    removeExcessBundles: () => {}
+    removeExcessBundles: () => {},
+    toggleStarredEntries: () => {}
 };
 
 const styles = theme => ({
@@ -100,17 +109,26 @@ class DblDotLocalAppBar extends React.PureComponent {
     this.setState({ anchorElBundlesMenu: null });
   }
 
+  handleClickShowStarred = () => {
+    this.props.toggleStarredEntries();
+  }
+
   render() {
     const {
       classes, entries, entriesMatching, isSearchActive, downloadQueue, uploadQueue, allBundles,
-      starredBundles
+      starredBundles, showStarredBundles
     } = this.props;
     const { anchorElBundlesMenu } = this.state;
     return (
       <AppBar position="sticky" className={classes.appBar}>
         <Toolbar>
           <Tooltip title="Starred entries">
-            <Button color="inherit" className={classes.textSmall}>
+            <Button
+              color={showStarredBundles ? 'default' : 'inherit'}
+              className={classes.textSmall}
+              onClick={this.handleClickShowStarred}
+              style={showStarredBundles ? { backgroundColor: 'white' } : {}}
+            >
               <div>
                 <StarIcon className={classes.iconSmall} />
                 <Typography variant="title" color="inherit" className={classes.textSmall}>

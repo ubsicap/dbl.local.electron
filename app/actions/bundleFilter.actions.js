@@ -8,7 +8,8 @@ export const bundleFilterActions = {
   updateSearchInput,
   updateSearchResultsForBundleId,
   clearSearch,
-  toggleBundleStar
+  toggleBundleStar,
+  toggleStarredEntries
 };
 
 export default bundleFilterActions;
@@ -182,6 +183,14 @@ export function toggleBundleStar(bundleId) {
     dispatch({
       type: bundleFilterConstants.TOGGLE_BUNDLE_STAR,
       bundleId
+    });
+  };
+}
+
+export function toggleStarredEntries() {
+  return async dispatch => {
+    dispatch({
+      type: bundleFilterConstants.TOGGLE_STAR_ENTRIES
     });
   };
 }
