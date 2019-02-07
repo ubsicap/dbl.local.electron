@@ -8,8 +8,8 @@ export const bundleFilterActions = {
   updateSearchInput,
   updateSearchResultsForBundleId,
   clearSearch,
-  toggleBundleStar,
-  toggleStarredEntries
+  toggleEntryStar,
+  toggleShowStarredEntries
 };
 
 export default bundleFilterActions;
@@ -178,19 +178,19 @@ export function clearSearch() {
 }
 
 
-export function toggleBundleStar(bundleId) {
+export function toggleEntryStar(dblId) {
   return async dispatch => {
     dispatch({
-      type: bundleFilterConstants.TOGGLE_BUNDLE_STAR,
-      bundleId
+      type: bundleFilterConstants.TOGGLE_ENTRY_STAR,
+      dblId
     });
   };
 }
 
-export function toggleStarredEntries() {
+export function toggleShowStarredEntries() {
   return async dispatch => {
     dispatch({
-      type: bundleFilterConstants.TOGGLE_STAR_ENTRIES
+      type: bundleFilterConstants.TOGGLE_SHOW_STAR_ENTRIES
     });
   };
 }

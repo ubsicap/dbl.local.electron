@@ -10,7 +10,7 @@ const initialSearchResults = {
   matches: {}
 };
 
-export function bundlesFilter(state = { isSearchActive: false, starredBundles: Set() }, action) {
+export function bundlesFilter(state = { isSearchActive: false, starredEntries: Set() }, action) {
   switch (action.type) {
     case bundleFilterConstants.UPDATE_SEARCH_INPUT: {
       const hasKeywordsChanged = !areArraysEqual(state.searchKeywords, action.searchKeywords);
@@ -68,20 +68,20 @@ export function bundlesFilter(state = { isSearchActive: false, starredBundles: S
         searchKeywords: [],
         searchResults: {}
       };
-    } case bundleFilterConstants.TOGGLE_BUNDLE_STAR: {
-      const { bundleId } = action;
-      const { starredBundles: starredBundlesOrig } = state;
-      const starredBundles = starredBundlesOrig.has(bundleId) ?
-        starredBundlesOrig.delete(bundleId) : starredBundlesOrig.add(bundleId);
+    } case bundleFilterConstants.TOGGLE_ENTRY_STAR: {
+      const { dblId } = action;
+      const { starredEntries: starredEntriesOrig } = state;
+      const starredEntries = starredEntriesOrig.has(dblId) ?
+        starredEntriesOrig.delete(dblId) : starredEntriesOrig.add(dblId);
       return {
         ...state,
-        starredBundles
+        starredEntries
       };
-    } case bundleFilterConstants.TOGGLE_STAR_ENTRIES: {
-      const showStarredBundles = !state.showStarredBundles;
+    } case bundleFilterConstants.TOGGLE_SHOW_STAR_ENTRIES: {
+      const showStarredEntries = !state.showStarredEntries;
       return {
         ...state,
-        showStarredBundles
+        showStarredEntries
       };
     } default: {
       return state;

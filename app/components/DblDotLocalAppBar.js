@@ -16,7 +16,7 @@ import { Button, Menu, MenuItem } from '@material-ui/core';
 
 import { fetchDownloadQueueCounts, fetchUploadQueueCounts, removeExcessBundles }
   from '../actions/bundle.actions';
-import { toggleStarredEntries } from '../actions/bundleFilter.actions';
+import { toggleShowStarredEntries } from '../actions/bundleFilter.actions';
 
 function mapStateToProps(state) {
   const { bundlesFilter, bundles } = state;
@@ -26,7 +26,7 @@ function mapStateToProps(state) {
     allBundles
   } = bundles;
   const {
-    isSearchActive, searchResults, starredBundles, showStarredBundles = false
+    isSearchActive, searchResults, starredEntries, showStarredEntries = false
   } = bundlesFilter;
   const entriesMatching = (isSearchActive && searchResults) ?
     Object.keys(searchResults.bundlesMatching) : [];
@@ -38,8 +38,8 @@ function mapStateToProps(state) {
     isSearchActive,
     downloadQueue,
     uploadQueue,
-    starredBundles,
-    showStarredBundles
+    starredEntries,
+    showStarredEntries
   };
 }
 
@@ -47,7 +47,7 @@ const mapDispatchToProps = {
   fetchDownloadQueueCounts,
   fetchUploadQueueCounts,
   removeExcessBundles,
-  toggleStarredEntries
+  toggleShowStarredEntries
 };
 
 type Props = {
@@ -58,12 +58,12 @@ type Props = {
     isSearchActive: boolean,
     downloadQueue: {},
     uploadQueue: {},
-    starredBundles: Set,
-    showStarredBundles: boolean,
+    starredEntries: Set,
+    showStarredEntries: boolean,
     fetchDownloadQueueCounts: () => {},
     fetchUploadQueueCounts: () => {},
     removeExcessBundles: () => {},
-    toggleStarredEntries: () => {}
+    toggleShowStarredEntries: () => {}
 };
 
 const styles = theme => ({
@@ -110,13 +110,13 @@ class DblDotLocalAppBar extends React.PureComponent {
   }
 
   handleClickShowStarred = () => {
-    this.props.toggleStarredEntries();
+    this.props.toggleShowStarredEntries();
   }
 
   render() {
     const {
       classes, entries, entriesMatching, isSearchActive, downloadQueue, uploadQueue, allBundles,
-      starredBundles, showStarredBundles
+      starredEntries, showStarredEntries
     } = this.props;
     const { anchorElBundlesMenu } = this.state;
     return (
@@ -124,15 +124,15 @@ class DblDotLocalAppBar extends React.PureComponent {
         <Toolbar>
           <Tooltip title="Starred entries">
             <Button
-              color={showStarredBundles ? 'default' : 'inherit'}
+              color={showStarredEntries ? 'default' : 'inherit'}
               className={classes.textSmall}
               onClick={this.handleClickShowStarred}
-              style={showStarredBundles ? { backgroundColor: 'white' } : {}}
+              style={showStarredEntries ? { backgroundColor: 'white' } : {}}
             >
               <div>
                 <StarIcon className={classes.iconSmall} />
                 <Typography variant="title" color="inherit" className={classes.textSmall}>
-                  {starredBundles.count()}
+                  {starredEntries.count()}
                 </Typography>
               </div>
             </Button>

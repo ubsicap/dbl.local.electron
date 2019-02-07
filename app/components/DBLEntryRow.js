@@ -26,7 +26,7 @@ import Description from '@material-ui/icons/Description';
 import CloudUpload from '@material-ui/icons/CloudUpload';
 import styles from './DBLEntryRow.css';
 import ControlledHighlighter from './ControlledHighlighter';
-import { toggleBundleStar } from '../actions/bundleFilter.actions';
+import { toggleEntryStar } from '../actions/bundleFilter.actions';
 import { toggleSelectEntry, requestSaveBundleTo, forkIntoNewBundle,
   downloadResources, uploadBundle, updateBundle, createDraftRevision } from '../actions/bundle.actions';
 import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
@@ -77,7 +77,7 @@ type Props = {
   uploadBundle: () => {},
   updateBundle: () => {},
   createDraftRevision: () => {},
-  toggleBundleStar: () => {}
+  toggleEntryStar: () => {}
 };
 
 const mapDispatchToProps = {
@@ -90,13 +90,13 @@ const mapDispatchToProps = {
   uploadBundle,
   updateBundle,
   createDraftRevision,
-  toggleBundleStar
+  toggleEntryStar
 };
 
 const getTask = (state, props) => props.task;
 const getStatus = (state, props) => props.status;
 const getIsSearchActive = (state) => state.bundlesFilter.isSearchActive;
-const getStarredBundles = (state) => state.bundlesFilter.starredBundles;
+const getStarredEntries = (state) => state.bundlesFilter.starredEntries;
 const emptyBundleMatches = {};
 const emptyObj = {};
 const getEmptryBundleMatches = () => emptyBundleMatches;
@@ -164,15 +164,15 @@ const makeGetLaterEntryRevisions = () => createSelector(
   }
 );
 
-const makeGetIsBundleStarred = () => createSelector(
-  [getStarredBundles, getBundleId],
-  (starredBundles, bundleId) => (starredBundles || Set()).has(bundleId)
+const makeGetIsEntryStarred = () => createSelector(
+  [getStarredEntries, getDblId],
+  (starredEntries, dblId) => (starredEntries || Set()).has(dblId)
 );
 
 const makeMapStateToProps = () => {
   const shouldShowRow = makeShouldShowRow();
   const getMatches = makeGetBundleMatches();
-  const getIsBundleStarred = makeGetIsBundleStarred();
+  const getIsEntryStarred = makeGetIsEntryStarred();
   const getIsRequestingRevision = makeGetIsRequestingRevision();
   const getIsDownloading = makeGetIsDownloading();
   const getFormsErrors = editMetadataService.makeGetFormsErrors();
@@ -184,12 +184,12 @@ const makeMapStateToProps = () => {
       laterEntryRevisions: getLaterEntryRevisions(state, props),
       shouldShowRow: shouldShowRow(state, props),
       bundleMatches: getMatches(state, props),
-      isStarred: getIsBundleStarred(state, props),
+      isStarred: getIsEntryStarred(state, props),
       bundlesSaveTo,
       newMediaTypes,
       isDownloading: getIsDownloading(state, props),
       formsErrors: getFormsErrors(state, props),
-      shouldShowStarred: state.bundlesFilter.showStarredBundles
+      shouldShowStarred: state.bundlesFilter.showStarredEntries
     };
   };
   return mapStateToProps;
@@ -237,9 +237,9 @@ class DBLEntryRow extends PureComponent<Props> {
   }
 
   handleClickStar = (event) => {
-    const { bundleId } = this.props;
+    const { dblId } = this.props;
     event.stopPropagation();
-    this.props.toggleBundleStar(bundleId);
+    this.props.toggleEntryStar(dblId);
   }
 
   showStatusAsText = () => {
