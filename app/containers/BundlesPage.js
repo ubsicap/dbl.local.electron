@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import { Set } from 'immutable';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import { compose } from 'recompose';
@@ -12,18 +13,32 @@ import MenuAppBar from '../components/MenuAppBar';
 import DblDotLocalAppBar from '../components/DblDotLocalAppBar';
 import { ux } from '../utils/ux';
 import { createNewBundle } from '../actions/bundle.actions';
+import { setEntriesFilters, setStarredEntries } from '../actions/bundleFilter.actions';
+import { workspaceUserSettingsStoreServices } from '../services/workspaces.service';
+import { workspaceHelpers } from '../helpers/workspaces.helpers';
 
 type Props = {
   classes: {},
   newMediaTypes: [],
-  createNewBundle: () => {}
+  entriesFilters: {},
+  starredEntries: {},
+  createNewBundle: () => {},
+  setStarredEntries: () => {},
+  setEntriesFilters: () => {}
 };
 
 function mapStateToProps(state) {
   const { bundles } = state;
   const { newMediaTypes = [] } = bundles;
+  const { workspaceFullPath, email } = workspaceHelpers.getCurrentWorkspaceFullPath(state);
+  const entriesFilters =
+    workspaceUserSettingsStoreServices.loadEntriesFilters(workspaceFullPath, email);
+  const starredEntries =
+    workspaceUserSettingsStoreServices.loadStarredEntries(workspaceFullPath, email);
   return {
-    newMediaTypes
+    newMediaTypes,
+    entriesFilters,
+    starredEntries
   };
 }
 
@@ -36,13 +51,20 @@ const materialStyles = () => ({
 });
 
 const mapDispatchToProps = {
-  createNewBundle
+  createNewBundle,
+  setStarredEntries,
+  setEntriesFilters
 };
 
 class BundlesPage extends PureComponent<Props> {
   props: Props;
   state = {
     anchorEl: null
+  }
+
+  componentDidMount() {
+    this.props.setEntriesFilters(this.props.entriesFilters);
+    this.props.setStarredEntries(Set(this.props.starredEntries));
   }
 
   handleClick = event => {

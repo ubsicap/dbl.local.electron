@@ -1,29 +1,17 @@
 import Store from 'electron-store';
-import path from 'path';
-import { dblDotLocalService } from '../services/dbl_dot_local.service';
 
 export const workspaceUserSettingsStoreServices = {
   saveUserLogin,
   loadLastUserLoginSettings,
   saveBundlesSearchInput,
   loadBundlesSearchInput,
-  getCurrentWorkspaceFullPath,
+  loadEntriesFilters,
+  saveEntriesFilters,
+  loadStarredEntries,
+  saveStarredEntries
 };
 export default workspaceUserSettingsStoreServices;
 
-function getCurrentWorkspaceFullPath(state) {
-  const { workspaceName, user } = state.authentication;
-  if (!workspaceName) {
-    return undefined;
-  }
-  const workspacesLocation = dblDotLocalService.getWorkspacesDir();
-  if (!workspacesLocation) {
-    return undefined;
-  }
-  const { username: email } = user || {};
-  const workspaceFullPath = path.join(workspacesLocation, workspaceName);
-  return { workspaceFullPath, email };
-}
 
 function getWorkspaceUserSettings(workspaceFullPath) {
   const store = new Store({
@@ -52,6 +40,7 @@ function loadLastUserLoginSettings(workspaceFullPath) {
 }
 
 
+/* todo: change /bundles/search to /entries/search? when we move to entry model */
 function saveBundlesSearchInput(workspaceFullPath, email, searchInputRaw) {
   const userSettings = getWorkspaceUserSettings(workspaceFullPath);
   userSettings.set(`${encodeEmailAddress(email)}/bundles/search`, searchInputRaw);
@@ -60,4 +49,24 @@ function saveBundlesSearchInput(workspaceFullPath, email, searchInputRaw) {
 function loadBundlesSearchInput(workspaceFullPath, email) {
   const userSettings = getWorkspaceUserSettings(workspaceFullPath);
   return userSettings.get(`${encodeEmailAddress(email)}/bundles/search`, '');
+}
+
+function loadEntriesFilters(workspaceFullPath, email) {
+  const userSettings = getWorkspaceUserSettings(workspaceFullPath);
+  return userSettings.get(`${encodeEmailAddress(email)}/entries/filters`, {});
+}
+
+function saveEntriesFilters(workspaceFullPath, email, filters) {
+  const userSettings = getWorkspaceUserSettings(workspaceFullPath);
+  userSettings.set(`${encodeEmailAddress(email)}/entries/filters`, filters);
+}
+
+function loadStarredEntries(workspaceFullPath, email) {
+  const userSettings = getWorkspaceUserSettings(workspaceFullPath);
+  return userSettings.get(`${encodeEmailAddress(email)}/entries/starred`, []);
+}
+
+function saveStarredEntries(workspaceFullPath, email, ids) {
+  const userSettings = getWorkspaceUserSettings(workspaceFullPath);
+  userSettings.set(`${encodeEmailAddress(email)}/entries/starred`, ids);
 }

@@ -21,6 +21,7 @@ import { navigationConstants } from '../constants/navigation.constants';
 import { ux } from '../utils/ux';
 import { updateSearchInput, clearSearch } from '../actions/bundleFilter.actions';
 import { workspaceUserSettingsStoreServices } from '../services/workspaces.service';
+import { workspaceHelpers } from '../helpers/workspaces.helpers';
 
 
 function mapStateToProps(state, props) {
@@ -30,7 +31,7 @@ function mapStateToProps(state, props) {
   const { isSearchActive } = bundlesFilter;
   const { searchInputRaw } = bundlesFilter;
   const { loggedIn, whoami, workspaceName = props.workspaceName } = authentication;
-  const { workspaceFullPath } = workspaceUserSettingsStoreServices.getCurrentWorkspaceFullPath(state) || {};
+  const { workspaceFullPath } = workspaceHelpers.getCurrentWorkspaceFullPath(state) || {};
   const { display_name: userName = 'DEMO USER', email: userEmail } = whoami || {};
   return {
     loggedIn,
