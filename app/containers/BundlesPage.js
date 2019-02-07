@@ -21,7 +21,7 @@ type Props = {
   classes: {},
   newMediaTypes: [],
   entriesFilters: {},
-  starredEntries: {},
+  starredEntries: [],
   createNewBundle: () => {},
   setStarredEntries: () => {},
   setEntriesFilters: () => {}

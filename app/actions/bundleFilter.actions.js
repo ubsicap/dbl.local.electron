@@ -196,9 +196,7 @@ function persistStarredEntries(state, starredEntries) {
   workspaceHelpers.getCurrentWorkspaceFullPath(state);
   workspaceUserSettingsStoreServices.saveStarredEntries(
     workspaceFullPath, email,
-    {
-      starredEntries: starredEntries.toArray()
-    }
+    starredEntries.toArray()
   );
 }
 
