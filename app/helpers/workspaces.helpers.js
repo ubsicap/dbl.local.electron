@@ -1,4 +1,5 @@
 import path from 'path';
+import { Set } from 'immutable';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 
 export const workspaceHelpers = {
@@ -22,10 +23,14 @@ function getCurrentWorkspaceFullPath(state) {
   return { workspaceFullPath, email };
 }
 
-function getToggledStarredEntries(bundleFilterReducerState, dblIdToToggle) {
+function getToggledStarredEntries(bundleFilterReducerState, dblIdToToggle, bundles) {
   const { starredEntries: starredEntriesOrig } = bundleFilterReducerState;
+  const { items } = bundles;
+  const dblIdsInBundles = items.map(item => item.dblId);
+  const dblIdsObsolete = starredEntriesOrig.subtract(dblIdsInBundles);
   const wasEntryStarred = starredEntriesOrig.has(dblIdToToggle);
   const starredEntries = wasEntryStarred ?
     starredEntriesOrig.delete(dblIdToToggle) : starredEntriesOrig.add(dblIdToToggle);
-  return { starredEntries, isEntryStarred: !wasEntryStarred };
+  const starredEntriesCleaned = starredEntries.subtract(dblIdsObsolete);
+  return { starredEntries: starredEntriesCleaned, isEntryStarred: !wasEntryStarred };
 }

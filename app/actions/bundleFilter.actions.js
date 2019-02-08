@@ -182,9 +182,9 @@ export function clearSearch() {
 
 export function toggleEntryStar(dblId) {
   return async (dispatch, getState) => {
-    const { bundlesFilter } = getState();
+    const { bundlesFilter, bundles } = getState();
     const { starredEntries } =
-      workspaceHelpers.getToggledStarredEntries(bundlesFilter, dblId);
+      workspaceHelpers.getToggledStarredEntries(bundlesFilter, dblId, bundles);
     const { showStarredEntries = false } = bundlesFilter;
     persistStarredEntries(getState(), starredEntries, showStarredEntries);
     dispatch(setStarredEntries(starredEntries));
