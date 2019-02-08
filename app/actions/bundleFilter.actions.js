@@ -3,11 +3,16 @@ import { findChunks } from 'highlight-words-core';
 import waitUntil from 'node-wait-until';
 import { bundleFilterConstants } from '../constants/bundleFilter.constants';
 import { workspaceUserSettingsStoreServices } from '../services/workspaces.service';
+import { workspaceHelpers } from '../helpers/workspaces.helpers';
 
 export const bundleFilterActions = {
   updateSearchInput,
   updateSearchResultsForBundleId,
-  clearSearch
+  clearSearch,
+  toggleEntryStar,
+  setStarredEntries,
+  toggleShowStarredEntries,
+  setEntriesFilters,
 };
 
 export default bundleFilterActions;
@@ -173,4 +178,55 @@ function combineSearchResults(searchResults, bundle, chunks, matches) {
 
 export function clearSearch() {
   return { type: bundleFilterConstants.CLEAR_SEARCH_RESULTS };
+}
+
+export function toggleEntryStar(dblId) {
+  return async (dispatch, getState) => {
+    const { bundlesFilter } = getState();
+    const { starredEntries } =
+      workspaceHelpers.getToggledStarredEntries(bundlesFilter, dblId);
+    const { showStarredEntries = false } = bundlesFilter;
+    persistStarredEntries(getState(), starredEntries, showStarredEntries);
+    dispatch(setStarredEntries(starredEntries));
+  };
+}
+
+function persistStarredEntries(state, starredEntries) {
+  const { workspaceFullPath, email } =
+  workspaceHelpers.getCurrentWorkspaceFullPath(state);
+  workspaceUserSettingsStoreServices.saveStarredEntries(
+    workspaceFullPath, email,
+    starredEntries.toArray()
+  );
+}
+
+export function setStarredEntries(starredEntries) {
+  return {
+    type: bundleFilterConstants.SET_STARRED_ENTRIES,
+    starredEntries
+  };
+}
+
+export function toggleShowStarredEntries() {
+  return async (dispatch, getState) => {
+    const showStarredEntries = !getState().bundlesFilter.showStarredEntries;
+    const entriesFilters = {
+      showStarredEntries
+    };
+    const { workspaceFullPath, email } =
+    workspaceHelpers.getCurrentWorkspaceFullPath(getState());
+    /* enabled filters can be 'include' or 'exclude' or 'disabled' */
+    workspaceUserSettingsStoreServices.saveEntriesFilters(
+      workspaceFullPath, email,
+      entriesFilters
+    );
+    dispatch(setEntriesFilters(entriesFilters));
+  };
+}
+
+export function setEntriesFilters(entriesFilters) {
+  return {
+    type: bundleFilterConstants.SET_ENTRIES_FILTERS,
+    entriesFilters
+  };
 }

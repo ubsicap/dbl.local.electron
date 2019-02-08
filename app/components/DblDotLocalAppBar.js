@@ -2,17 +2,21 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import { compose } from 'recompose';
+import { Set } from 'immutable';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
+import StarIcon from '@material-ui/icons/Star';
 import ListIcon from '@material-ui/icons/List';
 import ListAltIcon from '@material-ui/icons/FormatListNumberedRtl';
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 import { Button, Menu, MenuItem } from '@material-ui/core';
 
-import { fetchDownloadQueueCounts, fetchUploadQueueCounts, removeExcessBundles } from '../actions/bundle.actions';
+import { fetchDownloadQueueCounts, fetchUploadQueueCounts, removeExcessBundles }
+  from '../actions/bundle.actions';
+import { toggleShowStarredEntries } from '../actions/bundleFilter.actions';
 
 function mapStateToProps(state) {
   const { bundlesFilter, bundles } = state;
@@ -21,8 +25,11 @@ function mapStateToProps(state) {
     uploadQueue = { nSpecs: 0, nAtoms: 0 },
     allBundles
   } = bundles;
-  const { isSearchActive, searchResults } = bundlesFilter;
-  const entriesMatching = (isSearchActive && searchResults) ? Object.keys(searchResults.bundlesMatching) : [];
+  const {
+    isSearchActive, searchResults, starredEntries, showStarredEntries = false
+  } = bundlesFilter;
+  const entriesMatching = (isSearchActive && searchResults) ?
+    Object.keys(searchResults.bundlesMatching) : [];
   const entries = bundles.items;
   return {
     entries,
@@ -30,14 +37,17 @@ function mapStateToProps(state) {
     entriesMatching,
     isSearchActive,
     downloadQueue,
-    uploadQueue
+    uploadQueue,
+    starredEntries,
+    showStarredEntries
   };
 }
 
 const mapDispatchToProps = {
   fetchDownloadQueueCounts,
   fetchUploadQueueCounts,
-  removeExcessBundles
+  removeExcessBundles,
+  toggleShowStarredEntries
 };
 
 type Props = {
@@ -48,9 +58,12 @@ type Props = {
     isSearchActive: boolean,
     downloadQueue: {},
     uploadQueue: {},
+    starredEntries: Set,
+    showStarredEntries: boolean,
     fetchDownloadQueueCounts: () => {},
     fetchUploadQueueCounts: () => {},
-    removeExcessBundles: () => {}
+    removeExcessBundles: () => {},
+    toggleShowStarredEntries: () => {}
 };
 
 const styles = theme => ({
@@ -96,14 +109,34 @@ class DblDotLocalAppBar extends React.PureComponent {
     this.setState({ anchorElBundlesMenu: null });
   }
 
+  handleClickShowStarred = () => {
+    this.props.toggleShowStarredEntries();
+  }
+
   render() {
     const {
-      classes, entries, entriesMatching, isSearchActive, downloadQueue, uploadQueue, allBundles
+      classes, entries, entriesMatching, isSearchActive, downloadQueue, uploadQueue, allBundles,
+      starredEntries, showStarredEntries
     } = this.props;
     const { anchorElBundlesMenu } = this.state;
     return (
       <AppBar position="sticky" className={classes.appBar}>
         <Toolbar>
+          <Tooltip title="Starred entries">
+            <Button
+              color={showStarredEntries ? 'default' : 'inherit'}
+              className={classes.textSmall}
+              onClick={this.handleClickShowStarred}
+              style={showStarredEntries ? { backgroundColor: 'white' } : {}}
+            >
+              <div>
+                <StarIcon className={classes.iconSmall} />
+                <Typography variant="title" color="inherit" className={classes.textSmall}>
+                  {starredEntries.count()}
+                </Typography>
+              </div>
+            </Button>
+          </Tooltip>
           <Tooltip title={`Entries${isSearchActive ? ' (Matching/Total)' : ''}`}>
             <Button color="inherit" className={classes.textSmall}>
               <div>

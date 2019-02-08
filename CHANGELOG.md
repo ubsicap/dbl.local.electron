@@ -1,3 +1,9 @@
+### Version 0.26.0 (Starred entries)
+#### Features
+- Allow users to star entries they are working with
+- Allow users to filter on starred entries
+- Save user's starred entries and filter settings
+
 ### Version 0.25.0 (Show Entry DBL Id)
 #### Features
 - Show searchable DBL Id in entries

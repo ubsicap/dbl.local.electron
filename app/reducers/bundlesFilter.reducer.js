@@ -1,3 +1,4 @@
+import { Set } from 'immutable';
 import { bundleFilterConstants } from '../constants/bundleFilter.constants';
 
 function areArraysEqual(a1, a2) {
@@ -9,7 +10,11 @@ const initialSearchResults = {
   matches: {}
 };
 
-export function bundlesFilter(state = { isSearchActive: false }, action) {
+export function bundlesFilter(state =
+  {
+    isSearchActive: false,
+    starredEntries: Set(),
+  }, action) {
   switch (action.type) {
     case bundleFilterConstants.UPDATE_SEARCH_INPUT: {
       const hasKeywordsChanged = !areArraysEqual(state.searchKeywords, action.searchKeywords);
@@ -59,7 +64,7 @@ export function bundlesFilter(state = { isSearchActive: false }, action) {
           bundlesMatching: reducedBundlesMatching
         }
       };
-    } case bundleFilterConstants.CLEAR_SEARCH_RESULTS:
+    } case bundleFilterConstants.CLEAR_SEARCH_RESULTS: {
       return {
         isSearchActive: false,
         searchInput: '',
@@ -67,8 +72,21 @@ export function bundlesFilter(state = { isSearchActive: false }, action) {
         searchKeywords: [],
         searchResults: {}
       };
-    default:
+    } case bundleFilterConstants.SET_STARRED_ENTRIES: {
+      const { starredEntries } = action;
+      return {
+        ...state,
+        starredEntries
+      };
+    } case bundleFilterConstants.SET_ENTRIES_FILTERS: {
+      const { entriesFilters } = action;
+      return {
+        ...state,
+        ...entriesFilters
+      };
+    } default: {
       return state;
+    }
   }
 }
 export default bundlesFilter;
