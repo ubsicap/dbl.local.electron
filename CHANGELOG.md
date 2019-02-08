@@ -1,3 +1,7 @@
+### Version 0.26.1 (Starred entries)
+#### Fixes
+- Fix search box for entries to work again
+
 ### Version 0.26.0 (Starred entries)
 #### Features
 - Allow users to star entries they are working with

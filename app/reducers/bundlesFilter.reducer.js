@@ -23,6 +23,7 @@ export function bundlesFilter(state =
       const searchResults = isLoading ? initialSearchResults : state.searchResults;
       const { bundles } = isLoading ? action : state;
       return {
+        ...state,
         isSearchActive: true,
         isLoading,
         searchInput: action.searchInput,
@@ -66,6 +67,7 @@ export function bundlesFilter(state =
       };
     } case bundleFilterConstants.CLEAR_SEARCH_RESULTS: {
       return {
+        ...state,
         isSearchActive: false,
         searchInput: '',
         searchInputRaw: '',

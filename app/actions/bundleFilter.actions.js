@@ -33,7 +33,7 @@ export function updateSearchInput(searchInput) {
     const trimmedSearchInput = searchInput.trim();
     const searchKeywords = split(trimmedSearchInput, { separator: ' ' });
     await waitUntil(async () => !getAreBundlesLoading(getState));
-    const { workspaceFullPath, email } = workspaceUserSettingsStoreServices
+    const { workspaceFullPath, email } = workspaceHelpers
       .getCurrentWorkspaceFullPath(getState());
     workspaceUserSettingsStoreServices.saveBundlesSearchInput(workspaceFullPath, email, searchInput);
     const { bundles, bundlesFilter } = getState();
