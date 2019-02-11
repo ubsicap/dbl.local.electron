@@ -154,7 +154,7 @@ class MenuAppBar extends React.PureComponent {
           <IconButton className={classes.menuButton} color="inherit" aria-label="Menu">
             <MenuIcon />
           </IconButton>
-          <Typography variant="title" color="inherit" className={classes.flex}>
+          <Typography variant="h6" color="inherit" className={classes.flex}>
             nathanael
           </Typography>
           {showSearch &&

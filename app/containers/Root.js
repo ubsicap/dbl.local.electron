@@ -3,11 +3,18 @@ import React, { Component } from 'react';
 import { Provider, connect } from 'react-redux';
 import { ConnectedRouter } from 'react-router-redux';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
+import { createMuiTheme } from '@material-ui/core/styles';
 import Routes from '../routes';
 import { alertActions } from '../actions';
 import { ipcRendererConstants } from '../constants/ipcRenderer.constants';
 
 const { ipcRenderer } = window.require('electron'); // from https://github.com/electron/electron/issues/9920
+
+const theme = createMuiTheme({
+  typography: {
+    useNextVariants: true,
+  },
+});
 
 type Props = {
   store: {},
@@ -55,7 +62,7 @@ class Root extends Component<Props> {
 
   render() {
     return (
-      <MuiThemeProvider>
+      <MuiThemeProvider theme={theme}>
         <Provider store={this.props.store}>
           <ConnectedRouter history={this.props.history}>
             <Routes />

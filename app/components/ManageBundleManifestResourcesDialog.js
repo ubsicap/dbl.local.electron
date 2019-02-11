@@ -1311,10 +1311,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return Object.entries(wizardsResults).map(([wizardName, results]) =>
       (
         <React.Fragment key="frag">
-          <Typography key={`${wizardName}-description`} variant="subheading" color="inherit" paragraph>
+          <Typography key={`${wizardName}-description`} variant="subtitle1" color="inherit" paragraph>
             • <b>{results.description}</b> ({wizardName}):
           </Typography>
-          <Typography key={`${wizardName}-documentation`} variant="subheading" color="inherit" style={{ marginLeft: '20px' }} paragraph>
+          <Typography key={`${wizardName}-documentation`} variant="subtitle1" color="inherit" style={{ marginLeft: '20px' }} paragraph>
             {results.documentation}
           </Typography>
         </React.Fragment>
@@ -1491,7 +1491,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                 <CloseIcon />
               </IconButton>
               <FolderOpen color="inherit" className={classNames(classes.leftIcon)} />
-              <Typography variant="title" color="inherit">
+              <Typography variant="h6" color="inherit">
                 {modeUi.appBar.title}: {mediumIconMarginRight} <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry} </span> {name}
               </Typography>
               <Tooltip title={this.props.entryPageUrl}>
@@ -1519,7 +1519,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           </AppBar>
           {isModifyFilesMode && publicationsHealthMessage &&
             <Toolbar className={classes.errorBar}>
-              <Typography variant="subheading" color="inherit">
+              <Typography variant="subtitle1" color="inherit">
                 {publicationsHealthMessage}
               </Typography>
               <div style={{ paddingLeft: '10px' }} />
@@ -1535,7 +1535,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           {!loading && isModifyFilesMode && publicationsHealthSuccessMessage &&
             <Card className={classes.successBar} raised>
               <CardContent>
-                <Typography key="pubhealthSuccessMessage" variant="subheading" color="inherit" gutterBottom>
+                <Typography key="pubhealthSuccessMessage" variant="subtitle1" color="inherit" gutterBottom>
                   {publicationsHealthSuccessMessage}
                 </Typography>
                 {this.renderWizardsResults()}
