@@ -434,7 +434,7 @@ class DBLEntryRow extends PureComponent<Props> {
         style={{ borderBottom: '1px solid lightgray' }}
       >
         <Grid container justify="space-between" alignItems="center" wrap="nowrap">
-          <Grid container lg={1} md={1} sm={1}>
+          <Grid item container lg={1} md={1} sm={1}>
             <Grid item>
               <Tooltip title="Star entry">
                 <Button size="small" style={{ minWidth: '16px' }} onClick={this.handleClickStar}>
@@ -470,7 +470,7 @@ class DBLEntryRow extends PureComponent<Props> {
               </Grid>
             </Grid>
           </Grid>
-          <Grid container lg={2} md={2} sm={2} justify="flex-end">
+          <Grid item container lg={2} md={2} sm={2} justify="flex-end">
             <Grid item>
               <Tooltip title="Switch revision">
                 <Button
@@ -488,7 +488,7 @@ class DBLEntryRow extends PureComponent<Props> {
               </Tooltip>
             </Grid>
           </Grid>
-          <Grid item>
+          <Grid item lg={1} md={1} sm={1}>
             <Tooltip title="license">
               <div>
                 {this.renderLicenseIcon(license)}
@@ -504,7 +504,7 @@ class DBLEntryRow extends PureComponent<Props> {
               </div>
             </Tooltip>
           </Grid>
-          <Grid container lg={2} md={2} sm={2} justify="flex-end">
+          <Grid item container lg={2} md={2} sm={2} justify="flex-end">
             <Grid item>
               {this.showStoredButton() && (
                 <Button
