@@ -89,12 +89,16 @@ export function bundlesFilter(state =
       };
     } case bundleConstants.DELETE_SUCCESS: {
       const { deletedBundle, appStateSnapshot } = action;
+      const { allBundles } = appStateSnapshot.bundles;
+      const dblIdsInBundles = allBundles.map(item => item.dblId);
+      const dblIdsObsolete = state.starredEntries.subtract(dblIdsInBundles);
       const hasMoreThanOneMatchingDblId =
-        appStateSnapshot.bundles.allBundles.some(b => b.dblId === deletedBundle.dblId && b.id !== deletedBundle.id);
-      if (hasMoreThanOneMatchingDblId) {
+        allBundles.some(b => b.dblId === deletedBundle.dblId && b.id !== deletedBundle.id);
+      if (hasMoreThanOneMatchingDblId && dblIdsObsolete.length === 0) {
         return state;
       }
-      const starredEntries = state.starredEntries.delete(deletedBundle.dblId);
+      const starredEntriesCleaned = state.starredEntries.subtract(dblIdsObsolete);
+      const starredEntries = starredEntriesCleaned.delete(deletedBundle.dblId);
       return {
         ...state,
         starredEntries
