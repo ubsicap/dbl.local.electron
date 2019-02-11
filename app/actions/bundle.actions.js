@@ -7,7 +7,7 @@ import { bundleConstants } from '../constants/bundle.constants';
 import { bundleService } from '../services/bundle.service';
 import { updateSearchResultsForBundleId } from '../actions/bundleFilter.actions';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
-import workspaceHelpers from '../helpers/workspaces.helpers';
+import { bundleManageResourceActions } from '../actions/bundleManageResources.actions';
 
 export const bundleActions = {
   fetchAll,
@@ -246,6 +246,7 @@ export function createBundleFromDBL(dblId, revision, license) {
           500
         );
       dispatch(success(targetBundle));
+      dispatch(bundleManageResourceActions.getManifestResources(targetBundle.id));
     } catch (error) {
       dispatch(failure(error));
     }
