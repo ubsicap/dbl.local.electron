@@ -228,12 +228,14 @@ export function createNewBundle(_medium) {
   }
 }
 
+/* should this move to bundleManagerResources.actions? */
 function bundleForEntryRevisionHasBeenMade(getState, dblIdTarget, revisionTarget) {
   const { bundles: { allBundles } } = getState();
   const targetBundle = allBundles.find(b => b.dblId === dblIdTarget && b.revision === `${revisionTarget}`);
   return targetBundle;
 }
 
+/* should this move to bundleManagerResources.actions? */
 export function createBundleFromDBL(dblId, revision, license) {
   return async (dispatch, getState) => {
     try {
