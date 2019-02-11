@@ -666,7 +666,12 @@ export function removeBundle(id) {
 }
 
 function removeBundleSuccess(id) {
-  return { type: bundleConstants.DELETE_SUCCESS, id };
+  return async (dispatch, getState) => {
+    const deletedBundle = getAddedBundle(getState, id);
+    dispatch({
+      type: bundleConstants.DELETE_SUCCESS, id, appStateSnapshot: getState(), deletedBundle
+    });
+  };
 }
 
 export function requestSaveBundleTo(id, selectedFolder) {
