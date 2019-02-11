@@ -181,23 +181,14 @@ export function clearSearch() {
 }
 
 export function toggleEntryStar(dblId) {
-  return async (dispatch, getState) => {
+  return (dispatch, getState) => {
     const { bundlesFilter } = getState();
     const { starredEntries } =
       workspaceHelpers.getToggledStarredEntries(bundlesFilter, dblId);
     const { showStarredEntries = false } = bundlesFilter;
-    persistStarredEntries(getState(), starredEntries, showStarredEntries);
+    workspaceHelpers.persistStarredEntries(getState(), starredEntries, showStarredEntries);
     dispatch(setStarredEntries(starredEntries));
   };
-}
-
-function persistStarredEntries(state, starredEntries) {
-  const { workspaceFullPath, email } =
-  workspaceHelpers.getCurrentWorkspaceFullPath(state);
-  workspaceUserSettingsStoreServices.saveStarredEntries(
-    workspaceFullPath, email,
-    starredEntries.toArray()
-  );
 }
 
 export function setStarredEntries(starredEntries) {
@@ -208,7 +199,7 @@ export function setStarredEntries(starredEntries) {
 }
 
 export function toggleShowStarredEntries() {
-  return async (dispatch, getState) => {
+  return (dispatch, getState) => {
     const showStarredEntries = !getState().bundlesFilter.showStarredEntries;
     const entriesFilters = {
       showStarredEntries
