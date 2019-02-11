@@ -7,6 +7,7 @@ import { bundleConstants } from '../constants/bundle.constants';
 import { bundleService } from '../services/bundle.service';
 import { updateSearchResultsForBundleId } from '../actions/bundleFilter.actions';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
+import workspaceHelpers from '../helpers/workspaces.helpers';
 
 export const bundleActions = {
   fetchAll,
@@ -282,7 +283,7 @@ export function setupBundlesEventSource() {
       'downloader/global_status': (e) => dispatch(listenDownloaderGlobalStatus(e)),
       'uploader/global_status': (e) => dispatch(listenUploaderGlobalStatus(e)),
       'storer/delete_resource': (e) => listenStorerDeleteResource(e, dispatch, getState),
-      'storer/delete_bundle': (e) => listenStorerDeleteBundle(e, dispatch, getState),
+      'storer/delete_bundle': (e) => dispatch(listenStorerDeleteBundle(e)),
       'storer/write_resource': (e) => dispatch(listenStorerWriteResource(e))
     };
     Object.keys(listeners).forEach((evType) => {
@@ -473,11 +474,20 @@ export function setupBundlesEventSource() {
     };
   }
 
-  function listenStorerDeleteBundle(e, dispatch) {
-    const data = JSON.parse(e.data);
-    const bundleId = data.args[0];
-    dispatch(removeBundleSuccess(bundleId));
-    dispatch(updateUploadJobs(bundleId, null, bundleId));
+  function listenStorerDeleteBundle(e) {
+    return async (dispatch, getState) => {
+      const data = JSON.parse(e.data);
+      const bundleId = data.args[0];
+      dispatch(removeBundleSuccess(bundleId));
+      dispatch(updateUploadJobs(bundleId, null, bundleId));
+      await waitUntil(
+        () => !getAddedBundle(getState, bundleId),
+        60000,
+        500
+      );
+      const gotState = getState();
+      workspaceHelpers.persistStarredEntries(gotState, gotState.bundlesFilter.starredEntries);
+    };
   }
 }
 
@@ -666,7 +676,7 @@ export function removeBundle(id) {
 }
 
 function removeBundleSuccess(id) {
-  return async (dispatch, getState) => {
+  return (dispatch, getState) => {
     const deletedBundle = getAddedBundle(getState, id);
     dispatch({
       type: bundleConstants.DELETE_SUCCESS, id, appStateSnapshot: getState(), deletedBundle
