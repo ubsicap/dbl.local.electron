@@ -86,7 +86,7 @@ class BundlesPage extends PureComponent<Props> {
     const { anchorEl } = this.state;
     return (
       <div data-tid="container">
-        <MenuAppBar showSearch showClipboard />
+        <MenuAppBar showSearch showClipboard title="Entries" />
         <Bundles />
         <div style={{ paddingBottom: '100px' }} />
         <Tooltip title="Create new...">
