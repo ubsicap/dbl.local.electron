@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import fs from 'fs-extra';
 import sort from 'fast-sort';
 import upath from 'upath';
-import md5File from 'md5-file/promise';
 import recursiveReadDir from 'recursive-readdir';
 import { List, Set } from 'immutable';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -13,8 +12,10 @@ import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import Button from '@material-ui/core/Button';
 import AppBar from '@material-ui/core/AppBar';
+import MenuIcon from '@material-ui/icons/Menu';
 import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
+import Grid from '@material-ui/core/Grid';
 import FolderOpen from '@material-ui/icons/FolderOpen';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
@@ -591,7 +592,7 @@ const materialStyles = theme => ({
     color: theme.palette.primary.light,
   },
   toolBar: {
-    paddingLeft: '0px',
+    paddingLeft: '10px',
   },
   flex: {
     flex: 1,
@@ -1485,20 +1486,31 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       <Zoom in={open}>
         <div>
           <AppBar className={classes.appBar}>
-            <Toolbar className={classes.toolBar}>
-              <IconButton color="inherit" onClick={this.handleClose} aria-label="Close">
-                <CloseIcon />
+            <Toolbar className={classes.toolBar} disableGutters>
+              <IconButton className={classes.menuButton} color="inherit" aria-label="Menu">
+                <MenuIcon />
               </IconButton>
-              <FolderOpen color="inherit" className={classNames(classes.leftIcon)} />
-              <Typography variant="h6" color="inherit">
-                {modeUi.appBar.title}: {<EntryTitle bundle={origBundle} />}
-              </Typography>
-              <Tooltip title={this.props.entryPageUrl}>
-                <Button onClick={this.onOpenDBLEntryLink} className={classNames(classes.button, revBackground)}>
-                  <Link className={classNames(classes.leftIcon, classes.iconSmall)} />
-                  {revision}
-                </Button>
-              </Tooltip>
+              <Grid container alignItems="center">
+                <Grid item>
+                  <Typography variant="h6" color="inherit">
+                    <FolderOpen color="inherit" className={classNames(classes.leftIcon)} />
+                    {modeUi.appBar.title}:
+                  </Typography>
+                </Grid>
+                <Grid item>
+                  <Typography variant="text" color="inherit">
+                    {<EntryTitle bundle={origBundle} />}
+                  </Typography>
+                </Grid>
+                <Grid item>
+                  <Tooltip title={this.props.entryPageUrl}>
+                    <Button onClick={this.onOpenDBLEntryLink} className={classNames(classes.button, revBackground)}>
+                      <Link className={classNames(classes.leftIcon, classes.iconSmall)} />
+                      {revision}
+                    </Button>
+                  </Tooltip>
+                </Grid>
+              </Grid>
               <div className={classes.flex} />
               <Button key="btnOpenXml" color="inherit" disable={this.props.showMetadataFile} onClick={this.handleReview}>
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
@@ -1514,6 +1526,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                 selectedItems={storedResources}
               />}
               {this.renderOkOrPasteResourcesButton()}
+              <IconButton color="inherit" onClick={this.handleClose} aria-label="Close">
+                <CloseIcon />
+              </IconButton>
             </Toolbar>
           </AppBar>
           {isModifyFilesMode && publicationsHealthMessage &&
