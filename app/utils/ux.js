@@ -107,7 +107,9 @@ function conditionallyRenderBadge(props, content, node) {
 }
 
 function getClipboardTooltip(selectedItemsToPaste) {
-  const { bundleId, itemsType, getDisplayAs } = selectedItemsToPaste;
-  const clipboardTooltip = bundleId ? `${itemsType} from ${getDisplayAs().name} ${getDisplayAs().revision}` : '';
+  const {
+    bundleId, itemsType, getDisplayAs, getMedium
+  } = selectedItemsToPaste;
+  const clipboardTooltip = bundleId ? `${itemsType} from (${getMedium()}) ${getDisplayAs().name} ${getDisplayAs().revision}` : '';
   return clipboardTooltip;
 }
