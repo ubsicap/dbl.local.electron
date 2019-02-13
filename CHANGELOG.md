@@ -1,11 +1,15 @@
-### Version 0.27.0 (Starred entries)
+### Version 0.27.1
+#### Fixes
+- Fix crash after deleting draft when trying to re-save starred entries
+
+### Version 0.27.0
 #### Features
 - Add clipboard tooltip to Paste button
 - Add medium to clipboard tooltip
 - Add medium icon to Edit metadata title 
 
 #### Fixes
-- When user deletes bundle, cleanup obsolete starred entriess
+- When user deletes bundle, cleanup obsolete starred entries
 - Load manifest resources count for fetched Revisions
 
 ### Version 0.26.1 (Starred entries)

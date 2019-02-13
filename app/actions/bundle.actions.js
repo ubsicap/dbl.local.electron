@@ -8,6 +8,7 @@ import { bundleService } from '../services/bundle.service';
 import { updateSearchResultsForBundleId } from '../actions/bundleFilter.actions';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { bundleManageResourceActions } from '../actions/bundleManageResources.actions';
+import { workspaceHelpers } from '../helpers/workspaces.helpers';
 
 export const bundleActions = {
   fetchAll,
