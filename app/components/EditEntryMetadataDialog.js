@@ -27,6 +27,7 @@ import { clipboardHelpers } from '../helpers/clipboard';
 import rowStyles from './DBLEntryRow.css';
 import CopyForPasteButton from './CopyForPasteButton';
 import PasteButton from './PasteButton';
+import { ux } from '../utils/ux';
 
 const { shell } = require('electron');
 
@@ -163,7 +164,8 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     const {
       classes, formsErrors, selectedItemsToPaste, bundleId
     } = this.props;
-    const { items: sectionsToPaste = [], itemsType, bundleId: bundleIdOnClipboard } = selectedItemsToPaste || {};
+    const { items: sectionsToPaste = [], itemsType, bundleId: bundleIdOnClipboard }
+      = selectedItemsToPaste || {};
     if (selectedItemsToPaste &&
       itemsType === 'metadata sections' &&
       bundleId !== bundleIdOnClipboard && sectionsToPaste.length > 0) {
@@ -250,13 +252,11 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
 
   render() {
     const {
-      classes, open, selectedBundle = {}, bundleId, formStructure
+      classes, open, selectedBundle = {}, bundleId
     } = this.props;
     const { sectionSelections } = this.state;
     const sectionsSelected = Object.values(sectionSelections).filter(s => s);
     const areAllSelected = this.getAreAllSectionsSelected();
-    const { displayAs = {} } = selectedBundle;
-    const { languageAndCountry, name } = displayAs;
     return (
       <Zoom in={open}>
         <div>
@@ -266,7 +266,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
                 <CloseIcon />
               </IconButton>
               <Typography variant="h6" color="inherit" className={classes.flex}>
-                Edit metadata: <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry} </span> {name}
+                Edit metadata: {ux.renderBundleDisplayAsTitleForAppBar(selectedBundle, rowStyles)}
               </Typography>
               <Button key="btnOpenXml" color="inherit" disable={this.props.showMetadataFile} onClick={this.handleReview}>
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />

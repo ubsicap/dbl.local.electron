@@ -10,6 +10,7 @@ import { bundleService } from '../services/bundle.service';
 
 export const ux = {
   getMediumIcon,
+  renderBundleDisplayAsTitleForAppBar,
   getFormattedRevision,
   getDblRowStyles,
   getDblRowBackgroundColor,
@@ -118,4 +119,15 @@ function conditionallyRenderBadge(props, content, node) {
     return node;
   }
   return <Badge key="badge" {...props} badgeContent={content}>{node}</Badge>;
+}
+
+function renderBundleDisplayAsTitleForAppBar(bundle, rowStyles) {
+  const { displayAs = {}, medium } = bundle;
+  const { languageAndCountry, name } = displayAs;
+  return (
+    <React.Fragment>
+      {ux.getMediumIcon(medium)}
+      <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry} </span>
+      {name}
+    </React.Fragment>);
 }

@@ -1475,10 +1475,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     } = this.props;
     const { storedResources } = this.getSelectedResourcesByStatus();
     const { displayAs = {} } = origBundle;
-    const { languageAndCountry, name, revision } = displayAs;
+    const { revision } = displayAs;
     const modeUi = this.modeUi();
     const isModifyFilesMode = this.isModifyFilesMode();
-    const mediumIconMarginRight = ux.getMediumIcon(origBundle.medium);
     const { status, parent, dblId } = origBundle;
     const revBackground =
       ux.getDblRowBackgroundColor(false, classes, status, revision, parent, dblId);
@@ -1492,7 +1491,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               </IconButton>
               <FolderOpen color="inherit" className={classNames(classes.leftIcon)} />
               <Typography variant="h6" color="inherit">
-                {modeUi.appBar.title}: {mediumIconMarginRight} <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry} </span> {name}
+                {modeUi.appBar.title}: {ux.renderBundleDisplayAsTitleForAppBar(origBundle, rowStyles)}
               </Typography>
               <Tooltip title={this.props.entryPageUrl}>
                 <Button onClick={this.onOpenDBLEntryLink} className={classNames(classes.button, revBackground)}>
