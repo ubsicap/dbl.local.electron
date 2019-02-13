@@ -1490,7 +1490,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               <IconButton className={classes.menuButton} color="inherit" aria-label="Menu">
                 <MenuIcon />
               </IconButton>
-              <Grid container alignItems="center">
+              <Grid container justify="space-between" alignItems="center">
                 <Grid item>
                   <Typography variant="h6" color="inherit">
                     <FolderOpen color="inherit" className={classNames(classes.leftIcon)} />
