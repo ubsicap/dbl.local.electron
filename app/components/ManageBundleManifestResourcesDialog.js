@@ -36,7 +36,6 @@ import { closeResourceManager,
 import { selectItemsToPaste, pasteItems, clearClipboard } from '../actions/clipboard.actions';
 import { downloadResources, removeResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
-import rowStyles from './DBLEntryRow.css';
 import EnhancedTable from './EnhancedTable';
 import EnhancedTableToolbar from './EnhancedTableToolbar';
 import { utilities } from '../utils/utilities';
@@ -46,6 +45,7 @@ import ConfirmButton from '../components/ConfirmButton';
 import CopyForPasteButton from './CopyForPasteButton';
 import PasteButton from './PasteButton';
 import MapperTable from '../components/MapperTable';
+import EntryTitle from '../components/EntryTitle';
 
 const { dialog } = require('electron').remote;
 const { shell } = require('electron');
@@ -1491,7 +1491,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               </IconButton>
               <FolderOpen color="inherit" className={classNames(classes.leftIcon)} />
               <Typography variant="h6" color="inherit">
-                {modeUi.appBar.title}: {ux.renderBundleDisplayAsTitleForAppBar(origBundle, rowStyles)}
+                {modeUi.appBar.title}: {<EntryTitle bundle={origBundle} />}
               </Typography>
               <Tooltip title={this.props.entryPageUrl}>
                 <Button onClick={this.onOpenDBLEntryLink} className={classNames(classes.button, revBackground)}>

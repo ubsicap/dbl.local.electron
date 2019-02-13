@@ -22,6 +22,7 @@ import { ux } from '../utils/ux';
 import { updateSearchInput, clearSearch } from '../actions/bundleFilter.actions';
 import { workspaceUserSettingsStoreServices } from '../services/workspaces.service';
 import { workspaceHelpers } from '../helpers/workspaces.helpers';
+import MediumIcon from './MediumIcon';
 
 
 function mapStateToProps(state, props) {
@@ -175,7 +176,7 @@ class MenuAppBar extends React.PureComponent {
                 color="inherit"
                 // onClick={this.handlePasteResources}
               >
-                <Badge badgeContent={ux.getMediumIcon(clipboardMedium, { className: classNames(classes.rightIcon, classes.iconSmaller) })} >
+                <Badge badgeContent={<MediumIcon medium={clipboardMedium} iconProps={{ className: classNames(classes.rightIcon, classes.iconSmaller) }} />} >
                   <AssignmentIcon className={classNames(classes.leftIcon)} />
                 </Badge>
                 {ux.conditionallyRenderBadge(

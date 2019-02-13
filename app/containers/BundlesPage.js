@@ -16,6 +16,7 @@ import { createNewBundle } from '../actions/bundle.actions';
 import { setEntriesFilters, setStarredEntries } from '../actions/bundleFilter.actions';
 import { workspaceUserSettingsStoreServices } from '../services/workspaces.service';
 import { workspaceHelpers } from '../helpers/workspaces.helpers';
+import MediumIcon from '../components/MediumIcon';
 
 type Props = {
   classes: {},
@@ -109,7 +110,7 @@ class BundlesPage extends PureComponent<Props> {
         >
           {newMediaTypes.map(medium => (
             <MenuItem key={medium} onClick={this.handleCreateNew(medium)}>
-              { ux.getMediumIcon(medium) }{medium}
+              { <MediumIcon medium={medium} /> } { medium }
             </MenuItem>
           ))}
         </Menu>

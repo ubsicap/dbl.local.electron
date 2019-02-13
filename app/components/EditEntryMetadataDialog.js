@@ -24,10 +24,9 @@ import { selectItemsToPaste, pasteItems } from '../actions/clipboard.actions';
 import editMetadataService from '../services/editMetadata.service';
 import EditMetadataStepper from './EditMetadataStepper';
 import { clipboardHelpers } from '../helpers/clipboard';
-import rowStyles from './DBLEntryRow.css';
 import CopyForPasteButton from './CopyForPasteButton';
 import PasteButton from './PasteButton';
-import { ux } from '../utils/ux';
+import EntryTitle from './EntryTitle';
 
 const { shell } = require('electron');
 
@@ -266,7 +265,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
                 <CloseIcon />
               </IconButton>
               <Typography variant="h6" color="inherit" className={classes.flex}>
-                Edit metadata: {ux.renderBundleDisplayAsTitleForAppBar(selectedBundle, rowStyles)}
+                Edit metadata: {<EntryTitle bundle={selectedBundle} />}
               </Typography>
               <Button key="btnOpenXml" color="inherit" disable={this.props.showMetadataFile} onClick={this.handleReview}>
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />

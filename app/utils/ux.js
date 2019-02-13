@@ -1,16 +1,9 @@
 import React from 'react';
-import Book from '@material-ui/icons/Book';
-import Headset from '@material-ui/icons/Headset';
-import Videocam from '@material-ui/icons/Videocam';
-import Print from '@material-ui/icons/Print';
-import Grain from '@material-ui/icons/Grain';
 import Badge from '@material-ui/core/Badge';
 import { lighten } from '@material-ui/core/styles/colorManipulator';
 import { bundleService } from '../services/bundle.service';
 
 export const ux = {
-  getMediumIcon,
-  renderBundleDisplayAsTitleForAppBar,
   getFormattedRevision,
   getDblRowStyles,
   getDblRowBackgroundColor,
@@ -41,15 +34,6 @@ function getFormattedRevision(bundle, insertStr) {
     return `${insertStr}1 (New)`;
   }
   return `${insertStr}${revision}`;
-}
-
-export function getMediumIcon(medium, props = { style: { marginRight: '10px' } }) {
-  return (medium === 'text' && <Book {...props} />)
-  || (medium === 'audio' && <Headset {...props} />)
-  || (medium === 'video' && <Videocam {...props} />)
-  || (medium === 'print' && <Print {...props} />)
-  || (medium === 'braille' && <Grain {...props} />)
-  || (null);
 }
 
 function getDblRowStyles(theme) {
@@ -119,15 +103,4 @@ function conditionallyRenderBadge(props, content, node) {
     return node;
   }
   return <Badge key="badge" {...props} badgeContent={content}>{node}</Badge>;
-}
-
-function renderBundleDisplayAsTitleForAppBar(bundle, rowStyles) {
-  const { displayAs = {}, medium } = bundle;
-  const { languageAndCountry, name } = displayAs;
-  return (
-    <React.Fragment>
-      {ux.getMediumIcon(medium)}
-      <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry} </span>
-      {name}
-    </React.Fragment>);
 }
