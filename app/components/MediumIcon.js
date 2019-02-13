@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import Book from '@material-ui/icons/Book';
 import Headset from '@material-ui/icons/Headset';
 import Videocam from '@material-ui/icons/Videocam';
@@ -10,7 +10,7 @@ type Props = {
   iconProps?: {}
 };
 
-export default class MediumIcon extends Component<Props> {
+export default class MediumIcon extends PureComponent<Props> {
   props: Props;
   render() {
     const { medium, iconProps } = this.props;

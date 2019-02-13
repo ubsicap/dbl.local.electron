@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import rowStyles from './DBLEntryRow.css';
 import MediumIcon from './MediumIcon';
 
@@ -6,7 +6,7 @@ type Props = {
   bundle: {}
 };
 
-export default class EntryTitle extends Component<Props> {
+export default class EntryTitle extends PureComponent<Props> {
   props: Props;
   render() {
     const { displayAs = {}, medium } = this.props.bundle || {};
