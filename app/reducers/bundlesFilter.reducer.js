@@ -98,7 +98,8 @@ export function bundlesFilter(state =
         return state;
       }
       const starredEntriesCleaned = state.starredEntries.subtract(dblIdsObsolete);
-      const starredEntries = starredEntriesCleaned.delete(deletedBundle.dblId);
+      const starredEntries = hasMoreThanOneMatchingDblId ?
+        starredEntriesCleaned : starredEntriesCleaned.delete(deletedBundle.dblId);
       return {
         ...state,
         starredEntries
