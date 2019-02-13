@@ -175,8 +175,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
           color="secondary"
           variant="contained"
           onClick={this.handlePasteMetadataSections}
-          itemsToPaste={sectionsToPaste}
-          itemsType={itemsType}
+          selectedItemsToPaste={selectedItemsToPaste}
         />
       );
     }

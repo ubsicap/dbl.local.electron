@@ -9,7 +9,8 @@ export const ux = {
   getDblRowBackgroundColor,
   mapColumns,
   getHighlightTheme,
-  conditionallyRenderBadge
+  conditionallyRenderBadge,
+  getClipboardTooltip
 };
 export default ux;
 
@@ -103,4 +104,10 @@ function conditionallyRenderBadge(props, content, node) {
     return node;
   }
   return <Badge key="badge" {...props} badgeContent={content}>{node}</Badge>;
+}
+
+function getClipboardTooltip(selectedItemsToPaste) {
+  const { bundleId, itemsType, getDisplayAs } = selectedItemsToPaste;
+  const clipboardTooltip = bundleId ? `${itemsType} from ${getDisplayAs().name} ${getDisplayAs().revision}` : '';
+  return clipboardTooltip;
 }
