@@ -36,6 +36,7 @@ import { bundleService } from '../services/bundle.service';
 import { ux } from '../utils/ux';
 import DeleteOrCleanButton from './DeleteOrCleanButton';
 import ConfirmButton from './ConfirmButton';
+import MediumIcon from './MediumIcon';
 
 const { dialog, app } = require('electron').remote;
 const { shell } = require('electron');
@@ -422,7 +423,7 @@ class DBLEntryRow extends PureComponent<Props> {
     const resourceManagerMode = status === 'DRAFT' ? 'addFiles' : 'download';
     const laterEntryRevisionsCount = this.props.laterEntryRevisions.length;
     const laterRevisionsBadge = laterEntryRevisionsCount ? `${laterEntryRevisionsCount}+` : '';
-    const mediumIcon = ux.getMediumIcon(medium, { style: { marginRight: '0px' } });
+    const mediumIconProps = { style: { marginRight: '0px' } };
     return (
       <div
         className={classNames(styles.bundleRow, this.pickBackgroundColor(true))}
@@ -434,7 +435,7 @@ class DBLEntryRow extends PureComponent<Props> {
         style={{ borderBottom: '1px solid lightgray' }}
       >
         <Grid container justify="space-between" alignItems="center" wrap="nowrap">
-          <Grid container lg={1} md={1} sm={1}>
+          <Grid item container lg={1} md={1} sm={1}>
             <Grid item>
               <Tooltip title="Star entry">
                 <Button size="small" style={{ minWidth: '16px' }} onClick={this.handleClickStar}>
@@ -448,7 +449,7 @@ class DBLEntryRow extends PureComponent<Props> {
             <Grid item>
               <Tooltip title={medium}>
                 <Button size="small" style={{ minWidth: '16px' }}>
-                  { mediumIcon }
+                  <MediumIcon medium={medium} iconProps={mediumIconProps} />
                 </Button>
               </Tooltip>
             </Grid>
@@ -470,7 +471,7 @@ class DBLEntryRow extends PureComponent<Props> {
               </Grid>
             </Grid>
           </Grid>
-          <Grid container lg={2} md={2} sm={2} justify="flex-end">
+          <Grid item container lg={2} md={2} sm={2} justify="flex-end">
             <Grid item>
               <Tooltip title="Switch revision">
                 <Button
@@ -488,7 +489,7 @@ class DBLEntryRow extends PureComponent<Props> {
               </Tooltip>
             </Grid>
           </Grid>
-          <Grid item>
+          <Grid item lg={1} md={1} sm={1}>
             <Tooltip title="license">
               <div>
                 {this.renderLicenseIcon(license)}
@@ -504,7 +505,7 @@ class DBLEntryRow extends PureComponent<Props> {
               </div>
             </Tooltip>
           </Grid>
-          <Grid container lg={2} md={2} sm={2} justify="flex-end">
+          <Grid item container lg={2} md={2} sm={2} justify="flex-end">
             <Grid item>
               {this.showStoredButton() && (
                 <Button
@@ -514,7 +515,7 @@ class DBLEntryRow extends PureComponent<Props> {
                   onClick={this.onClickManageResources(resourceManagerMode)}
                 >
                   <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
-                  <Badge badgeContent={ux.getMediumIcon(medium, { className: classNames(classes.rightIcon, classes.iconSmaller) })} >
+                  <Badge badgeContent={<MediumIcon medium={medium} iconProps={{ className: classNames(classes.rightIcon, classes.iconSmaller) }} />} >
                     <Folder className={classNames(classes.rightIcon, classes.iconSmall)} />
                   </Badge>
                 </Button>
@@ -605,7 +606,7 @@ class DBLEntryRow extends PureComponent<Props> {
                     key={mediumOption}
                     onClick={this.handleClickMediaType(mediumOption)}
                   >
-                    {ux.getMediumIcon(mediumOption)}
+                    {<MediumIcon medium={mediumOption} />}
                     {mediumOption}
                   </MenuItem>
                 ))}

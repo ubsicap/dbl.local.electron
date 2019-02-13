@@ -1,9 +1,11 @@
 import path from 'path';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
+import { workspaceUserSettingsStoreServices } from '../services/workspaces.service';
 
 export const workspaceHelpers = {
   getCurrentWorkspaceFullPath,
-  getToggledStarredEntries
+  getToggledStarredEntries,
+  persistStarredEntries
 };
 export default workspaceHelpers;
 
@@ -28,4 +30,14 @@ function getToggledStarredEntries(bundleFilterReducerState, dblIdToToggle) {
   const starredEntries = wasEntryStarred ?
     starredEntriesOrig.delete(dblIdToToggle) : starredEntriesOrig.add(dblIdToToggle);
   return { starredEntries, isEntryStarred: !wasEntryStarred };
+}
+
+
+function persistStarredEntries(state, starredEntries) {
+  const { workspaceFullPath, email } =
+  workspaceHelpers.getCurrentWorkspaceFullPath(state);
+  workspaceUserSettingsStoreServices.saveStarredEntries(
+    workspaceFullPath, email,
+    starredEntries.toArray()
+  );
 }

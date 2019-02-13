@@ -131,7 +131,7 @@ class DblDotLocalAppBar extends React.PureComponent {
             >
               <div>
                 <StarIcon className={classes.iconSmall} />
-                <Typography variant="title" color="inherit" className={classes.textSmall}>
+                <Typography variant="h6" color="inherit" className={classes.textSmall}>
                   {starredEntries.count()}
                 </Typography>
               </div>
@@ -142,11 +142,11 @@ class DblDotLocalAppBar extends React.PureComponent {
               <div>
                 <ListIcon />
                 {isSearchActive ?
-                  <Typography variant="title" color="inherit" className={classes.textSmall}>
+                  <Typography variant="h6" color="inherit" className={classes.textSmall}>
                     {entriesMatching.length}/{entries.length}
                   </Typography>
                   :
-                  <Typography variant="title" color="inherit" className={classes.textSmall}>
+                  <Typography variant="h6" color="inherit" className={classes.textSmall}>
                     {entries.length}
                   </Typography>}
               </div>
@@ -161,7 +161,7 @@ class DblDotLocalAppBar extends React.PureComponent {
             >
               <div>
                 <ListAltIcon />
-                <Typography variant="title" color="inherit" className={classes.textSmall}>
+                <Typography variant="h6" color="inherit" className={classes.textSmall}>
                   {allBundles.length}
                 </Typography>
               </div>
@@ -184,7 +184,7 @@ class DblDotLocalAppBar extends React.PureComponent {
           <Tooltip title="Uploads (Entries/Atoms)">
             <div className={classes.dblDotLocalBarItem}>
               <ArrowUpwardIcon />
-              <Typography variant="title" color="inherit" className={classes.textSmall}>
+              <Typography variant="h6" color="inherit" className={classes.textSmall}>
                 {uploadQueue.nSpecs}/{uploadQueue.nAtoms}
               </Typography>
             </div>
@@ -192,7 +192,7 @@ class DblDotLocalAppBar extends React.PureComponent {
           <Tooltip title="Downloads (Entries/Resources)">
             <div className={classes.dblDotLocalBarItem}>
               <ArrowDownwardIcon />
-              <Typography variant="title" color="inherit" className={classes.textSmall}>
+              <Typography variant="h6" color="inherit" className={classes.textSmall}>
                 {downloadQueue.nSpecs}/{downloadQueue.nAtoms}
               </Typography>
             </div>

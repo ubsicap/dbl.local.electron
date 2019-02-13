@@ -1,5 +1,6 @@
 import { Set } from 'immutable';
 import { bundleFilterConstants } from '../constants/bundleFilter.constants';
+import { bundleConstants } from '../constants/bundle.constants';
 
 function areArraysEqual(a1, a2) {
   return JSON.stringify(a1 || []) === JSON.stringify(a2 || []);
@@ -85,6 +86,22 @@ export function bundlesFilter(state =
       return {
         ...state,
         ...entriesFilters
+      };
+    } case bundleConstants.DELETE_SUCCESS: {
+      const { deletedBundle, appStateSnapshot } = action;
+      const { allBundles } = appStateSnapshot.bundles;
+      const dblIdsInBundles = allBundles.map(item => item.dblId);
+      const dblIdsObsolete = state.starredEntries.subtract(dblIdsInBundles);
+      const hasMoreThanOneMatchingDblId =
+        allBundles.some(b => b.dblId === deletedBundle.dblId && b.id !== deletedBundle.id);
+      if (hasMoreThanOneMatchingDblId && dblIdsObsolete.length === 0) {
+        return state;
+      }
+      const starredEntriesCleaned = state.starredEntries.subtract(dblIdsObsolete);
+      const starredEntries = starredEntriesCleaned.delete(deletedBundle.dblId);
+      return {
+        ...state,
+        starredEntries
       };
     } default: {
       return state;

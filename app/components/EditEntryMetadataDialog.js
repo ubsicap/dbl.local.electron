@@ -24,9 +24,9 @@ import { selectItemsToPaste, pasteItems } from '../actions/clipboard.actions';
 import editMetadataService from '../services/editMetadata.service';
 import EditMetadataStepper from './EditMetadataStepper';
 import { clipboardHelpers } from '../helpers/clipboard';
-import rowStyles from './DBLEntryRow.css';
 import CopyForPasteButton from './CopyForPasteButton';
 import PasteButton from './PasteButton';
+import EntryTitle from './EntryTitle';
 
 const { shell } = require('electron');
 
@@ -163,7 +163,8 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     const {
       classes, formsErrors, selectedItemsToPaste, bundleId
     } = this.props;
-    const { items: sectionsToPaste = [], itemsType, bundleId: bundleIdOnClipboard } = selectedItemsToPaste || {};
+    const { items: sectionsToPaste = [], itemsType, bundleId: bundleIdOnClipboard }
+      = selectedItemsToPaste || {};
     if (selectedItemsToPaste &&
       itemsType === 'metadata sections' &&
       bundleId !== bundleIdOnClipboard && sectionsToPaste.length > 0) {
@@ -174,8 +175,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
           color="secondary"
           variant="contained"
           onClick={this.handlePasteMetadataSections}
-          itemsToPaste={sectionsToPaste}
-          itemsType={itemsType}
+          selectedItemsToPaste={selectedItemsToPaste}
         />
       );
     }
@@ -250,13 +250,11 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
 
   render() {
     const {
-      classes, open, selectedBundle = {}, bundleId, formStructure
+      classes, open, selectedBundle = {}, bundleId
     } = this.props;
     const { sectionSelections } = this.state;
     const sectionsSelected = Object.values(sectionSelections).filter(s => s);
     const areAllSelected = this.getAreAllSectionsSelected();
-    const { displayAs = {} } = selectedBundle;
-    const { languageAndCountry, name } = displayAs;
     return (
       <Zoom in={open}>
         <div>
@@ -265,8 +263,8 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
               <IconButton color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose} aria-label="Close">
                 <CloseIcon />
               </IconButton>
-              <Typography variant="title" color="inherit" className={classes.flex}>
-                Edit metadata: <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry} </span> {name}
+              <Typography variant="h6" color="inherit" className={classes.flex}>
+                Edit metadata: {<EntryTitle bundle={selectedBundle} />}
               </Typography>
               <Button key="btnOpenXml" color="inherit" disable={this.props.showMetadataFile} onClick={this.handleReview}>
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />

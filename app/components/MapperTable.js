@@ -102,7 +102,7 @@ class MapperTable extends Component<Props> {
           })}
         >
           <div className={classes.title}>
-            <Typography color="inherit" variant="subheading">
+            <Typography color="inherit" variant="subtitle1">
               {mapperMessage}
             </Typography>
           </div>

@@ -1,3 +1,13 @@
+### Version 0.27.0 (Starred entries)
+#### Features
+- Add clipboard tooltip to Paste button
+- Add medium to clipboard tooltip
+- Add medium icon to Edit metadata title 
+
+#### Fixes
+- When user deletes bundle, cleanup obsolete starred entriess
+- Load manifest resources count for fetched Revisions
+
 ### Version 0.26.1 (Starred entries)
 #### Fixes
 - Fix search box for entries to work again

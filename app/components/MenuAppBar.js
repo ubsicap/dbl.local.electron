@@ -22,6 +22,7 @@ import { ux } from '../utils/ux';
 import { updateSearchInput, clearSearch } from '../actions/bundleFilter.actions';
 import { workspaceUserSettingsStoreServices } from '../services/workspaces.service';
 import { workspaceHelpers } from '../helpers/workspaces.helpers';
+import MediumIcon from './MediumIcon';
 
 
 function mapStateToProps(state, props) {
@@ -147,14 +148,14 @@ class MenuAppBar extends React.PureComponent {
     const { anchorEl } = this.state;
     const open = Boolean(anchorEl);
     const clipboardMedium = clipboard.bundleId ? clipboard.getMedium() : '';
-    const clipboardTooltip = clipboard.bundleId ? `${clipboard.itemsType} from ${clipboard.getDisplayAs().name} ${clipboard.getDisplayAs().revision}` : '';
+    const clipboardTooltip = ux.getClipboardTooltip(clipboard);
     return (
       <AppBar position="sticky">
         <Toolbar>
           <IconButton className={classes.menuButton} color="inherit" aria-label="Menu">
             <MenuIcon />
           </IconButton>
-          <Typography variant="title" color="inherit" className={classes.flex}>
+          <Typography variant="h6" color="inherit" className={classes.flex}>
             nathanael
           </Typography>
           {showSearch &&
@@ -175,7 +176,7 @@ class MenuAppBar extends React.PureComponent {
                 color="inherit"
                 // onClick={this.handlePasteResources}
               >
-                <Badge badgeContent={ux.getMediumIcon(clipboardMedium, { className: classNames(classes.rightIcon, classes.iconSmaller) })} >
+                <Badge badgeContent={<MediumIcon medium={clipboardMedium} iconProps={{ className: classNames(classes.rightIcon, classes.iconSmaller) }} />} >
                   <AssignmentIcon className={classNames(classes.leftIcon)} />
                 </Badge>
                 {ux.conditionallyRenderBadge(

@@ -259,10 +259,10 @@ class WorkspacesPage extends PureComponent<Props> {
           {/* Hero unit */}
           <div className={classes.heroUnit}>
             <div className={classes.heroContent}>
-              <Typography variant="display3" align="center" color="textPrimary" gutterBottom>
+              <Typography variant="h2" align="center" color="textPrimary" gutterBottom>
                 Workspaces
               </Typography>
-              <Typography variant="title" align="center" color="textSecondary" paragraph>
+              <Typography variant="h6" align="center" color="textSecondary" paragraph>
                 Each workspace associates a DBL organization access token/secret pair with their own list of DBL entries.
                 Users should create a workspace for each organization for which they have DBL roles.
               </Typography>
@@ -311,7 +311,7 @@ class WorkspacesPage extends PureComponent<Props> {
                 <Grid item key={card.key} sm={12} md={12} lg={12}>
                   <Card className={classes.card}>
                     <CardContent className={classes.cardContent}>
-                      <Typography gutterBottom variant="headline" component="h2">
+                      <Typography gutterBottom variant="h5" component="h2">
                         <div>
                           {card.name}
                         </div>
@@ -324,14 +324,14 @@ class WorkspacesPage extends PureComponent<Props> {
                       </Typography>
                       {card.configXmlSettings &&
                       <div>
-                        <Typography variant="subheading" align="center">
+                        <Typography variant="subtitle1" align="center">
                           <b>{card.configXmlSettings.settings.dbl[0].organizationType[0].toUpperCase()}</b>
                         </Typography>
                         <Typography variant="body1" align="center" paragraph>
                           {card.configXmlSettings.settings.dbl[0].downloadOpenAccessEntries[0] === 'true' ?
                             'download open-access entries is ENABLED' : 'download open-access entries is DISABLED'}
                         </Typography>
-                        <Typography variant="subheading" align="center">
+                        <Typography variant="subtitle1" align="center">
                           <b>Access Token:</b>
                         </Typography>
                         <Typography align="center" paragraph>
@@ -380,10 +380,10 @@ class WorkspacesPage extends PureComponent<Props> {
           </div>
         </main>
         <footer className={classes.footer}>
-          <Typography variant="title" align="center" gutterBottom>
+          <Typography variant="h6" align="center" gutterBottom>
             Summary
           </Typography>
-          <Typography variant="subheading" align="center" color="textSecondary" component="p">
+          <Typography variant="subtitle1" align="center" color="textSecondary" component="p">
             This nathanael has {cards.length} workspace(s)
           </Typography>
         </footer>
