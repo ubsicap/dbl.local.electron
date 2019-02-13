@@ -30,6 +30,16 @@ import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
 import path from 'path';
 import { findChunks } from 'highlight-words-core';
+import Drawer from '@material-ui/core/Drawer';
+import MatList from '@material-ui/core/List';
+import Divider from '@material-ui/core/Divider';
+import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
+import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+import InboxIcon from '@material-ui/icons/MoveToInbox';
+import MailIcon from '@material-ui/icons/Mail';
 import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources,
   getMapperReport
@@ -79,6 +89,7 @@ type Props = {
   goFixPublications: ?() => {},
   entryPageUrl: string,
   selectedItemsToPaste: ?{},
+  theme: {},
   closeResourceManager: () => {},
   openMetadataFile: () => {},
   getManifestResources: () => {},
@@ -95,6 +106,8 @@ type Props = {
   pasteItems: () => {},
   clearClipboard: () => {}
 };
+
+const drawerWidth = 240;
 
 const addStatus = 'add?';
 const addAndOverwrite = 'add (revise)?';
@@ -290,10 +303,14 @@ const secondarySorts = ['container', 'name', 'status'];
 
 function createColumnConfig(mode) {
   if (mode === 'revisions') {
-    const { id, href, localBundle, disabled, ...columns } = createRevisionData();
+    const {
+      id, href, localBundle, disabled, ...columns
+    } = createRevisionData();
     return ux.mapColumns(columns, isNumeric, getLabel);
   }
-  const { id, uri, disabled, checksum, ...columns } = createResourceData(null, {}, {});
+  const {
+    id, uri, disabled, checksum, ...columns
+  } = createResourceData(null, {}, {});
   return ux.mapColumns(columns, isNumeric, getLabel);
 }
 
@@ -322,7 +339,12 @@ const makeGetManifestResourcesData = () => createSelector(
     );
     const { rawManifestResources, storedFiles } = bundleManifestResources;
     const { previousEntryRevision, bundlePreviousRevision, previousManifestResources } =
-      getPreviousRevisionManifestResources(bundleId, bundlesById, manifestResources, allEntryRevisions);
+      getPreviousRevisionManifestResources(
+        bundleId,
+        bundlesById,
+        manifestResources,
+        allEntryRevisions
+      );
     const bundleManifestResourcesData = Object.values(rawManifestResources)
       .map(r => createResourceData(
         bundleId[bundlesById],
@@ -380,7 +402,12 @@ function getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions) {
   return { bundlePreviousRevision, previousEntryRevision };
 }
 
-function getPreviousRevisionManifestResources(bundleId, bundlesById, manifestResources, allEntryRevisions) {
+function getPreviousRevisionManifestResources(
+  bundleId,
+  bundlesById,
+  manifestResources,
+  allEntryRevisions
+) {
   const { previousEntryRevision, bundlePreviousRevision } =
     getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions);
   const previousManifestResources = bundlePreviousRevision ?
@@ -392,19 +419,12 @@ function getPreviousRevisionManifestResources(bundleId, bundlesById, manifestRes
 const makeGetPrevManifestResources = () => createSelector(
   [getAllManifestResources, getBundleId, getBundlesById, getAllEntryRevisions],
   (manifestResources, bundleId, bundlesById, allEntryRevisions) =>
-    getPreviousRevisionManifestResources(bundleId, bundlesById, manifestResources, allEntryRevisions)
-);
-
-const makeGetBundlePrevRevision = () => createSelector(
-  [getAllEntryRevisions, getBundleId, getBundlesById],
-  (allEntryRevisions, bundleId, bundlesById) =>
-    getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions)
-);
-
-const makeGetPrevEntryRevision = () => createSelector(
-  [getAllEntryRevisions, getBundleId, getBundlesById],
-  (allEntryRevisions, bundleId, bundlesById) =>
-    getPrevEntryRevision(bundlesById[bundleId], allEntryRevisions)
+    getPreviousRevisionManifestResources(
+      bundleId,
+      bundlesById,
+      manifestResources,
+      allEntryRevisions
+    )
 );
 
 /*
@@ -582,8 +602,62 @@ const mapDispatchToProps = {
 
 const materialStyles = theme => ({
   ...ux.getDblRowStyles(theme),
-  appBar: {
-    position: 'sticky'
+  ...{
+    root: {
+      display: 'flex',
+    },
+    appBar: {
+      position: 'sticky',
+      transition: theme.transitions.create(['margin', 'width'], {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.leavingScreen,
+      }),
+    },
+    appBarShift: {
+      width: `calc(100% - ${drawerWidth}px)`,
+      marginLeft: drawerWidth,
+      transition: theme.transitions.create(['margin', 'width'], {
+        easing: theme.transitions.easing.easeOut,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+    },
+    menuButton: {
+      marginLeft: 12,
+      marginRight: 20,
+    },
+    hide: {
+      display: 'none',
+    },
+    drawer: {
+      width: drawerWidth,
+      flexShrink: 0,
+    },
+    drawerPaper: {
+      width: drawerWidth,
+    },
+    drawerHeader: {
+      display: 'flex',
+      alignItems: 'center',
+      padding: '0 8px',
+      ...theme.mixins.toolbar,
+      justifyContent: 'flex-end',
+    },
+    content: {
+      flexGrow: 1,
+      padding: theme.spacing.unit * 3,
+      transition: theme.transitions.create('margin', {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.leavingScreen,
+      }),
+      marginLeft: -drawerWidth,
+    },
+    contentShift: {
+      transition: theme.transitions.create('margin', {
+        easing: theme.transitions.easing.easeOut,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+      marginLeft: 0,
+    },
   },
   errorBar: {
     color: theme.palette.secondary.light,
@@ -628,7 +702,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   state = {
     selectedIds: [],
     addedFilePaths: [],
-    selectAll: ['download'].includes(this.props.mode)
+    selectAll: ['download'].includes(this.props.mode),
+    openDrawer: false,
   }
 
   componentDidMount() {
@@ -700,6 +775,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       )();
     }
   }
+
+  handleDrawerOpen = () => {
+    this.setState({ openDrawer: true });
+  };
+
+  handleDrawerClose = () => {
+    this.setState({ openDrawer: false });
+  };
 
   updateTableAsIs(tableData) {
     this.setState({ tableData });
@@ -1474,6 +1557,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       classes, open, origBundle = {}, mode,
       publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading
     } = this.props;
+    const { theme } = this.props;
+    const { openDrawer } = this.state;
     const { storedResources } = this.getSelectedResourcesByStatus();
     const { displayAs = {} } = origBundle;
     const { revision } = displayAs;
@@ -1485,9 +1570,17 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return (
       <Zoom in={open}>
         <div>
-          <AppBar className={classes.appBar}>
-            <Toolbar className={classes.toolBar} disableGutters>
-              <IconButton className={classes.menuButton} color="inherit" aria-label="Menu">
+          <AppBar className={classNames(classes.appBar, {
+            [classes.appBarShift]: openDrawer,
+          })}
+          >
+            <Toolbar className={classes.toolBar} disableGutters={!openDrawer}>
+              <IconButton
+                aria-label="Open drawer"
+                onClick={this.handleDrawerOpen}
+                className={classNames(classes.menuButton, openDrawer && classes.hide)}
+                color="inherit"
+              >
                 <MenuIcon />
               </IconButton>
               <Grid container justify="space-between" alignItems="center">
@@ -1498,7 +1591,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                   </Typography>
                 </Grid>
                 <Grid item>
-                  <Typography variant="text" color="inherit">
+                  <Typography variant="h6" color="inherit">
                     {<EntryTitle bundle={origBundle} />}
                   </Typography>
                 </Grid>
@@ -1531,32 +1624,72 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               </IconButton>
             </Toolbar>
           </AppBar>
-          {isModifyFilesMode && publicationsHealthMessage &&
-            <Toolbar className={classes.errorBar}>
-              <Typography variant="subtitle1" color="inherit">
-                {publicationsHealthMessage}
-              </Typography>
-              <div style={{ paddingLeft: '10px' }} />
-              <Button
-                key="btnGoEdit"
-                color="secondary"
-                variant="contained"
-                onClick={this.handleGoFixError}
-              >Go Fix
-              </Button>
-            </Toolbar>
-          }
-          {!loading && isModifyFilesMode && publicationsHealthSuccessMessage &&
-            <Card className={classes.successBar} raised>
-              <CardContent>
-                <Typography key="pubhealthSuccessMessage" variant="subtitle1" color="inherit" gutterBottom>
-                  {publicationsHealthSuccessMessage}
+          <Drawer
+            className={classes.drawer}
+            variant="persistent"
+            anchor="left"
+            open={openDrawer}
+            classes={{
+              paper: classes.drawerPaper,
+            }}
+          >
+            <div className={classes.drawerHeader}>
+              <IconButton onClick={this.handleDrawerClose}>
+                {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+              </IconButton>
+            </div>
+            <Divider />
+            <MatList>
+              {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => (
+                <ListItem button key={text}>
+                  <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
+                  <ListItemText primary={text} />
+                </ListItem>
+              ))}
+            </MatList>
+            <Divider />
+            <MatList>
+              {['All mail', 'Trash', 'Spam'].map((text, index) => (
+                <ListItem button key={text}>
+                  <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
+                  <ListItemText primary={text} />
+                </ListItem>
+              ))}
+            </MatList>
+          </Drawer>
+          <main
+            className={classNames(classes.content, {
+              [classes.contentShift]: openDrawer,
+            })}
+          >
+            <div className={classes.drawerHeader} />
+            {isModifyFilesMode && publicationsHealthMessage &&
+              <Toolbar className={classes.errorBar}>
+                <Typography variant="subtitle1" color="inherit">
+                  {publicationsHealthMessage}
                 </Typography>
-                {this.renderWizardsResults()}
-              </CardContent>
-            </Card>
-          }
-          {this.renderTable()}
+                <div style={{ paddingLeft: '10px' }} />
+                <Button
+                  key="btnGoEdit"
+                  color="secondary"
+                  variant="contained"
+                  onClick={this.handleGoFixError}
+                >Go Fix
+                </Button>
+              </Toolbar>
+            }
+            {!loading && isModifyFilesMode && publicationsHealthSuccessMessage &&
+              <Card className={classes.successBar} raised>
+                <CardContent>
+                  <Typography key="pubhealthSuccessMessage" variant="subtitle1" color="inherit" gutterBottom>
+                    {publicationsHealthSuccessMessage}
+                  </Typography>
+                  {this.renderWizardsResults()}
+                </CardContent>
+              </Card>
+            }
+            {this.renderTable()}
+          </main>
         </div>
       </Zoom>
     );
@@ -1564,7 +1697,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 }
 
 export default compose(
-  withStyles(materialStyles, { name: 'ManageBundleManifestResourcesDialog' }),
+  withStyles(materialStyles, { withTheme: true, name: 'ManageBundleManifestResourcesDialog' }),
   connect(
     mapStateToProps,
     mapDispatchToProps
