@@ -30,16 +30,6 @@ import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
 import path from 'path';
 import { findChunks } from 'highlight-words-core';
-import Drawer from '@material-ui/core/Drawer';
-import MaterialUiList from '@material-ui/core/List';
-import Divider from '@material-ui/core/Divider';
-import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
-import ChevronRightIcon from '@material-ui/icons/ChevronRight';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
-import InboxIcon from '@material-ui/icons/MoveToInbox';
-import MailIcon from '@material-ui/icons/Mail';
 import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources,
   getMapperReport
@@ -57,6 +47,7 @@ import CopyForPasteButton from './CopyForPasteButton';
 import PasteButton from './PasteButton';
 import MapperTable from '../components/MapperTable';
 import EntryTitle from '../components/EntryTitle';
+import EntryDrawer from '../components/EntryDrawer';
 
 const { dialog } = require('electron').remote;
 const { shell } = require('electron');
@@ -106,8 +97,6 @@ type Props = {
   pasteItems: () => {},
   clearClipboard: () => {}
 };
-
-const drawerWidth = 240;
 
 const addStatus = 'add?';
 const addAndOverwrite = 'add (revise)?';
@@ -602,63 +591,7 @@ const mapDispatchToProps = {
 
 const materialStyles = theme => ({
   ...ux.getDblRowStyles(theme),
-  ...{
-    root: {
-      display: 'flex',
-    },
-    appBar: {
-      position: 'sticky',
-      transition: theme.transitions.create(['margin', 'width'], {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.leavingScreen,
-      }),
-    },
-    appBarShift: {
-      width: `calc(100% - ${drawerWidth}px)`,
-      marginLeft: drawerWidth,
-      transition: theme.transitions.create(['margin', 'width'], {
-        easing: theme.transitions.easing.easeOut,
-        duration: theme.transitions.duration.enteringScreen,
-      }),
-    },
-    menuButton: {
-      marginLeft: 12,
-      marginRight: 20,
-    },
-    hide: {
-      display: 'none',
-    },
-    drawer: {
-      width: drawerWidth,
-      flexShrink: 0,
-    },
-    drawerPaper: {
-      width: drawerWidth,
-    },
-    drawerHeader: {
-      display: 'flex',
-      alignItems: 'center',
-      padding: '0 8px',
-      ...theme.mixins.toolbar,
-      justifyContent: 'flex-end',
-    },
-    content: {
-      flexGrow: 1,
-      padding: theme.spacing.unit * 3,
-      transition: theme.transitions.create('margin', {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.leavingScreen,
-      }),
-      marginLeft: -drawerWidth,
-    },
-    contentShift: {
-      transition: theme.transitions.create('margin', {
-        easing: theme.transitions.easing.easeOut,
-        duration: theme.transitions.duration.enteringScreen,
-      }),
-      marginLeft: 0,
-    },
-  },
+  ...ux.getEntryDrawerStyles(theme),
   errorBar: {
     color: theme.palette.secondary.light,
   },
@@ -1624,39 +1557,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               </IconButton>
             </Toolbar>
           </AppBar>
-          <Drawer
-            className={classes.drawer}
-            variant="persistent"
-            anchor="left"
-            open={openDrawer}
-            classes={{
-              paper: classes.drawerPaper,
-            }}
-          >
-            <div className={classes.drawerHeader}>
-              <IconButton onClick={this.handleDrawerClose}>
-                {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-              </IconButton>
-            </div>
-            <Divider />
-            <MaterialUiList>
-              {['Resources', 'View/Edit Details', 'Review metadata.xml'].map((text, index) => (
-                <ListItem button key={text}>
-                  <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
-                  <ListItemText primary={text} />
-                </ListItem>
-              ))}
-            </MaterialUiList>
-            <Divider />
-            <MaterialUiList>
-              {['Make Revision', 'Export To', 'Copy As'].map((text, index) => (
-                <ListItem button key={text}>
-                  <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
-                  <ListItemText primary={text} />
-                </ListItem>
-              ))}
-            </MaterialUiList>
-          </Drawer>
+          <EntryDrawer
+            openDrawer={openDrawer}
+            handleDrawerClose={this.handleDrawerClose}
+          />
           <main
             className={classNames(classes.content, {
               [classes.contentShift]: openDrawer,
