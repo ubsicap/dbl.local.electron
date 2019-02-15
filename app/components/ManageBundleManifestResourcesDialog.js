@@ -1490,7 +1490,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       classes, open, origBundle = {}, mode,
       publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading
     } = this.props;
-    const { theme } = this.props;
     const { openDrawer } = this.state;
     const { storedResources } = this.getSelectedResourcesByStatus();
     const { displayAs = {} } = origBundle;
