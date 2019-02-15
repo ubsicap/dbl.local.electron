@@ -1485,6 +1485,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       </ConfirmButton>);
   }
 
+  getDrawerItems = () => (
+    [
+      {
+        label: 'Review metadata.xml',
+        icon: <OpenInNew />,
+        handleClick: this.handleReview
+      }
+    ]
+  );
+
   render() {
     const {
       classes, open, origBundle = {}, mode,
@@ -1559,6 +1569,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           <EntryDrawer
             openDrawer={openDrawer}
             handleDrawerClose={this.handleDrawerClose}
+            items={this.getDrawerItems()}
           />
           <main
             className={classNames(classes.content, {

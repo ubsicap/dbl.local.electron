@@ -12,6 +12,7 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import InboxIcon from '@material-ui/icons/MoveToInbox';
 import MailIcon from '@material-ui/icons/Mail';
+import OpenInNew from '@material-ui/icons/OpenInNew';
 import { ux } from '../utils/ux';
 
 
@@ -19,6 +20,7 @@ type Props = {
   classes: {},
   theme: {},
   openDrawer: boolean,
+  items: [],
   handleDrawerClose: () => {}
 };
 
@@ -59,12 +61,20 @@ const materialStyles = theme => ({
   }
 });
 
+
 class EntryDrawer extends PureComponent<Props> {
   props: Props;
 
+  renderListItem = (item) => (
+    <ListItem button key={item.label} onClick={item.handleClick}>
+      <ListItemIcon>{item.icon}</ListItemIcon>
+      <ListItemText primary={item.label} />
+    </ListItem>
+  );
+
   render() {
     const {
-      classes
+      classes, items
     } = this.props;
     const { theme, openDrawer } = this.props;
     return (
@@ -84,13 +94,9 @@ class EntryDrawer extends PureComponent<Props> {
         </div>
         <Divider />
         <MaterialUiList>
-          {['Resources', 'View/Edit Details', 'Review metadata.xml'].map((text, index) => (
-            <ListItem button key={text}>
-              <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
-              <ListItemText primary={text} />
-            </ListItem>
-          ))}
+          {items.map(this.renderListItem)}
         </MaterialUiList>
+        { /*
         <Divider />
         <MaterialUiList>
           {['Make Revision', 'Export To', 'Copy As'].map((text, index) => (
@@ -100,6 +106,7 @@ class EntryDrawer extends PureComponent<Props> {
             </ListItem>
           ))}
         </MaterialUiList>
+        */}
       </Drawer>
     );
   }
