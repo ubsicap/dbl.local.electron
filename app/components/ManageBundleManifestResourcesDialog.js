@@ -1525,25 +1525,27 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               >
                 <MenuIcon />
               </IconButton>
-              <Grid container justify="space-between" alignItems="center">
+              <Grid container justify="flex-start" alignItems="center" spacing={24}>
                 <Grid item>
-                  <Typography variant="h6" color="inherit">
+                  <Typography variant="h6" color="inherit" noWrap>
                     <FolderOpen color="inherit" className={classNames(classes.leftIcon)} />
                     {modeUi.appBar.title}:
                   </Typography>
                 </Grid>
-                <Grid item>
-                  <Typography variant="h6" color="inherit">
-                    {<EntryTitle bundle={origBundle} />}
-                  </Typography>
-                </Grid>
-                <Grid item>
-                  <Tooltip title={this.props.entryPageUrl}>
-                    <Button onClick={this.onOpenDBLEntryLink} className={classNames(classes.button, revBackground)}>
-                      <Link className={classNames(classes.leftIcon, classes.iconSmall)} />
-                      {revision}
-                    </Button>
-                  </Tooltip>
+                <Grid item container justify="flex-start" alignItems="center" lg={6} sm={6} md={6}>
+                  <Grid item>
+                    <Typography variant="h6" color="inherit" noWrap>
+                      {<EntryTitle bundle={origBundle} />}
+                    </Typography>
+                  </Grid>
+                  <Grid item>
+                    <Tooltip title={this.props.entryPageUrl}>
+                      <Button onClick={this.onOpenDBLEntryLink} className={classNames(classes.button, revBackground)}>
+                        <Link className={classNames(classes.leftIcon, classes.iconSmall)} />
+                        {revision}
+                      </Button>
+                    </Tooltip>
+                  </Grid>
                 </Grid>
               </Grid>
               <div className={classes.flex} />
