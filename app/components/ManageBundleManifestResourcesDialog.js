@@ -31,7 +31,7 @@ import Zoom from '@material-ui/core/Zoom';
 import path from 'path';
 import { findChunks } from 'highlight-words-core';
 import Drawer from '@material-ui/core/Drawer';
-import MatList from '@material-ui/core/List';
+import MaterialUiList from '@material-ui/core/List';
 import Divider from '@material-ui/core/Divider';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
@@ -1271,7 +1271,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   modeUi = () => {
     const { mode, classes } = this.props;
-    const title = 'Manage resources';
+    const title = 'Resources';
     switch (mode) {
       case 'download': {
         const { OkButtonLabel, OkButtonIcon, OkButtonProps } =
@@ -1639,23 +1639,23 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               </IconButton>
             </div>
             <Divider />
-            <MatList>
-              {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => (
+            <MaterialUiList>
+              {['Resources', 'View/Edit Details', 'Review metadata.xml'].map((text, index) => (
                 <ListItem button key={text}>
                   <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
                   <ListItemText primary={text} />
                 </ListItem>
               ))}
-            </MatList>
+            </MaterialUiList>
             <Divider />
-            <MatList>
-              {['All mail', 'Trash', 'Spam'].map((text, index) => (
+            <MaterialUiList>
+              {['Make Revision', 'Export To', 'Copy As'].map((text, index) => (
                 <ListItem button key={text}>
                   <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
                   <ListItemText primary={text} />
                 </ListItem>
               ))}
-            </MatList>
+            </MaterialUiList>
           </Drawer>
           <main
             className={classNames(classes.content, {
