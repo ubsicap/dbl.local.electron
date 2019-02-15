@@ -1488,7 +1488,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   getDrawerItems = () => (
     [
       {
-        label: 'Review metadata.xml',
+        label: 'Open metadata.xml',
         icon: <OpenInNew />,
         handleClick: this.handleReview
       }
