@@ -665,7 +665,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       return;
     }
     if (this.props.showMetadataFile && !prevProps.showMetadataFile) {
-      shell.openExternal(this.props.showMetadataFile);
+      const normalizedFilePath = upath.normalize(this.props.showMetadataFile);
+      window.open(`file:///${normalizedFilePath}`, '_blank', 'nodeIntegration=no');
+      // modal.document.write('<h1>Hello</h1>');
+      // shell.openExternal(this.props.showMetadataFile);
     }
     if (this.props.progress !== prevProps.progress &&
       (this.props.progress === 100)) {
