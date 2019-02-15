@@ -1547,10 +1547,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
                 </Grid>
               </Grid>
               <div className={classes.flex} />
-              <Button key="btnOpenXml" color="inherit" disable={this.props.showMetadataFile} onClick={this.handleReview}>
-                <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
-                Review
-              </Button>
               {mode !== 'revisions' &&
               <CopyForPasteButton
                 key="btnCopyForPaste"
