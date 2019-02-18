@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import { compose } from 'recompose';
+import { connect } from 'react-redux';
+import { createSelector } from 'reselect';
 import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import AppBar from '@material-ui/core/AppBar';
@@ -16,10 +18,14 @@ import classNames from 'classnames';
 import { ux } from '../utils/ux';
 import CopyForPasteButton from './CopyForPasteButton';
 import EntryTitle from '../components/EntryTitle';
+import { bundleService } from '../services/bundle.service';
 
 type Props = {
   classes: {},
-  origBundle: {}
+  origBundle: {},
+  entryPageUrl: string,
+  mode: string,
+  openDrawer: boolean
 };
 
 const materialStyles = theme => ({
@@ -59,17 +65,39 @@ const materialStyles = theme => ({
   }
 });
 
+
+const getBundleId = (state, props) => props.match.params.bundleId;
+const getBundlesById = (state) => state.bundles.addedByBundleIds || {};
+const getDblBaseUrl = (state) => state.dblDotLocalConfig.dblBaseUrl;
+const makeGetEntryPageUrl = () => createSelector(
+  [getDblBaseUrl, getBundlesById, getBundleId],
+  (dblBaseUrl, bundlesById, bundleId) => {
+    const origBundle = bundlesById[bundleId];
+    const { dblId, revision, parent } = origBundle;
+    const revisionNum = bundleService.getRevisionOrParentRevision(dblId, revision, parent);
+    const revisionQuery = revisionNum ? `&revision=${revisionNum}` : '';
+    const url = `${dblBaseUrl}/entry?id=${dblId}${revisionQuery}`;
+    return url;
+  }
+);
+
+const getMode = (state) => state.bundleManageResources.mode;
+
+function mapStateToProps(state, props) {
+  const getEntryPageUrl = makeGetEntryPageUrl();
+  return {
+    entryPageUrl: getEntryPageUrl(state, props),
+    mode: getMode(state, props)
+  };
+}
+
 class EntryAppBar extends Component<Props> {
   props: Props;
-  state = {
-    openDrawer: false,
-  }
 
   render() {
     const {
-      classes, origBundle = {}
+      classes, origBundle = {}, openDrawer, mode
     } = this.props;
-    const { openDrawer } = this.state;
     const { storedResources } = this.getSelectedResourcesByStatus();
     const { displayAs = {} } = origBundle;
     const { revision } = displayAs;
@@ -134,4 +162,10 @@ class EntryAppBar extends Component<Props> {
   }
 }
 
-export default compose(withStyles(materialStyles, { withTheme: true }))(EntryAppBar);
+export default compose(
+  withStyles(materialStyles, { withTheme: true }),
+  connect(
+    mapStateToProps,
+    null
+  )
+)(EntryAppBar);
