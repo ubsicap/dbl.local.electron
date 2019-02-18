@@ -11,18 +11,10 @@ import { withStyles } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import Button from '@material-ui/core/Button';
-import AppBar from '@material-ui/core/AppBar';
-import MenuIcon from '@material-ui/icons/Menu';
 import Toolbar from '@material-ui/core/Toolbar';
-import Tooltip from '@material-ui/core/Tooltip';
-import Grid from '@material-ui/core/Grid';
-import FolderOpen from '@material-ui/icons/FolderOpen';
-import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import Delete from '@material-ui/icons/Delete';
-import CloseIcon from '@material-ui/icons/Close';
 import CheckIcon from '@material-ui/icons/Check';
-import Link from '@material-ui/icons/Link';
 import FileDownload from '@material-ui/icons/CloudDownloadOutlined';
 import { createSelector } from 'reselect';
 import classNames from 'classnames';
@@ -41,14 +33,12 @@ import { utilities } from '../utils/utilities';
 import { bundleService } from '../services/bundle.service';
 import { ux } from '../utils/ux';
 import ConfirmButton from '../components/ConfirmButton';
-import CopyForPasteButton from './CopyForPasteButton';
 import PasteButton from './PasteButton';
 import MapperTable from '../components/MapperTable';
-import EntryTitle from '../components/EntryTitle';
+import EntryAppBar from '../components/EntryAppBar';
 import EntryDrawer from '../components/EntryDrawer';
 
 const { dialog } = require('electron').remote;
-const { shell } = require('electron');
 
 const NEED_CONTAINER = '/?';
 
@@ -76,7 +66,6 @@ type Props = {
   mapperInputData: ?{},
   selectedIdsInputConverters: ?{},
   goFixPublications: ?() => {},
-  entryPageUrl: string,
   selectedItemsToPaste: ?{},
   theme: {},
   closeResourceManager: () => {},
@@ -493,20 +482,6 @@ const makeGetEntryRevisionsData = () => createSelector(
   }
 );
 
-const getDblBaseUrl = (state) => state.dblDotLocalConfig.dblBaseUrl;
-const makeGetEntryPageUrl = () => createSelector(
-  [getDblBaseUrl, getBundlesById, getBundleId],
-  (dblBaseUrl, bundlesById, bundleId) => {
-    const origBundle = bundlesById[bundleId];
-    const { dblId, revision, parent } = origBundle;
-    const revisionNum = bundleService.getRevisionOrParentRevision(dblId, revision, parent);
-    const revisionQuery = revisionNum ? `&revision=${revisionNum}` : '';
-    const url = `${dblBaseUrl}/entry?id=${dblId}${revisionQuery}`;
-    return url;
-  }
-);
-
-
 function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundleManageResources, clipboard } = state;
   const {
@@ -529,7 +504,6 @@ function mapStateToProps(state, props) {
   const bundlesById = getBundlesById(state);
   const getEntryRevisionsData = makeGetEntryRevisionsData();
   const origBundle = bundleId ? bundlesById[bundleId] : {};
-  const getEntryPageUrl = makeGetEntryPageUrl();
   const {
     previousEntryRevision,
     bundlePreviousRevision,
@@ -563,7 +537,6 @@ function mapStateToProps(state, props) {
     goFixPublications,
     publicationsHealthSuccessMessage,
     wizardsResults,
-    entryPageUrl: getEntryPageUrl(state, props),
     selectedItemsToPaste
   };
 }
@@ -828,13 +801,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       inEffect
     };
   };
-
-  handleCopyFiles = () => {
-    const { storedResources } = this.getSelectedResourcesByStatus();
-    const uris = storedResources.map(r => r.uri);
-    this.props.selectItemsToPaste(this.props.bundleId, uris, 'resources');
-    this.handleClose();
-  }
 
   handlePasteResources = () => {
     this.props.pasteItems(this.props.bundleId);
@@ -1427,10 +1393,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
   }
 
-  onOpenDBLEntryLink = (event) => {
-    utilities.onOpenLink(this.props.entryPageUrl)(event);
-  }
-
   renderOkOrPasteResourcesButton = () => {
     const {
       classes, loading, progress, bundleId, selectedItemsToPaste, isOkToAddFiles
@@ -1476,73 +1438,25 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   render() {
     const {
-      classes, open, origBundle = {}, mode,
+      classes, open, origBundle = {},
       publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading
     } = this.props;
     const { openDrawer } = this.state;
     const { storedResources } = this.getSelectedResourcesByStatus();
-    const { displayAs = {} } = origBundle;
-    const { revision } = displayAs;
     const modeUi = this.modeUi();
     const isModifyFilesMode = this.isModifyFilesMode();
-    const { status, parent, dblId } = origBundle;
-    const revBackground =
-      ux.getDblRowBackgroundColor(false, classes, status, revision, parent, dblId);
     return (
       <Zoom in={open}>
         <div>
-          <AppBar className={classNames(classes.appBar, {
-            [classes.appBarShift]: openDrawer,
-          })}
-          >
-            <Toolbar className={classes.toolBar} disableGutters={!openDrawer}>
-              <IconButton
-                aria-label="Open drawer"
-                onClick={this.handleDrawerOpen}
-                className={classNames(classes.menuButton, openDrawer && classes.hide)}
-                color="inherit"
-              >
-                <MenuIcon />
-              </IconButton>
-              <Grid container justify="flex-start" alignItems="center" spacing={24}>
-                <Grid item>
-                  <Typography variant="h6" color="inherit" noWrap>
-                    <FolderOpen color="inherit" className={classNames(classes.leftIcon)} />
-                    {modeUi.appBar.title}:
-                  </Typography>
-                </Grid>
-                <Grid item container justify="flex-start" alignItems="center" lg={6} sm={6} md={6}>
-                  <Grid item>
-                    <Typography variant="h6" color="inherit" noWrap>
-                      {<EntryTitle bundle={origBundle} />}
-                    </Typography>
-                  </Grid>
-                  <Grid item>
-                    <Tooltip title={this.props.entryPageUrl}>
-                      <Button onClick={this.onOpenDBLEntryLink} className={classNames(classes.button, revBackground)}>
-                        <Link className={classNames(classes.leftIcon, classes.iconSmall)} />
-                        {revision}
-                      </Button>
-                    </Tooltip>
-                  </Grid>
-                </Grid>
-              </Grid>
-              <div className={classes.flex} />
-              {mode !== 'revisions' &&
-              <CopyForPasteButton
-                key="btnCopyForPaste"
-                classes={classes}
-                color="inherit"
-                onClick={this.handleCopyFiles}
-                disabled={storedResources.length === 0}
-                selectedItems={storedResources}
-              />}
-              {this.renderOkOrPasteResourcesButton()}
-              <IconButton color="inherit" onClick={this.handleClose} aria-label="Close">
-                <CloseIcon />
-              </IconButton>
-            </Toolbar>
-          </AppBar>
+          <EntryAppBar
+            origBundle={origBundle}
+            openDrawer={openDrawer}
+            modeUi={modeUi}
+            selectedItemsForCopy={storedResources}
+            actionButton={this.renderOkOrPasteResourcesButton()}
+            handleDrawerOpen={this.handleDrawerOpen}
+            handleClose={this.handleClose}
+          />
           <EntryDrawer
             bundleId={origBundle.id}
             openDrawer={openDrawer}

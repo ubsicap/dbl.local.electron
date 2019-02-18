@@ -30,6 +30,7 @@ type Props = {
   mode: string,
   modeUi: {},
   selectedItemsForCopy: [],
+  actionButton: React.Node,
   selectItemsToPaste: () => {},
   handleDrawerOpen: () => {},
   handleClose: () => {}
@@ -73,7 +74,7 @@ const materialStyles = theme => ({
 });
 
 
-const getBundleId = (state, props) => props.match.params.bundleId;
+const getBundleId = (state, props) => props.origBundle.id;
 const getBundlesById = (state) => state.bundles.addedByBundleIds || {};
 const getDblBaseUrl = (state) => state.dblDotLocalConfig.dblBaseUrl;
 const makeGetEntryPageUrl = () => createSelector(
@@ -173,7 +174,7 @@ class EntryAppBar extends Component<Props> {
             disabled={selectedItemsForCopy.length === 0}
             selectedItems={selectedItemsForCopy}
           />}
-          {this.renderOkOrPasteResourcesButton()}
+          {this.props.actionButton}
           <IconButton color="inherit" onClick={this.props.handleClose} aria-label="Close">
             <CloseIcon />
           </IconButton>
