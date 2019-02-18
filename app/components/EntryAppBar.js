@@ -19,13 +19,20 @@ import { ux } from '../utils/ux';
 import CopyForPasteButton from './CopyForPasteButton';
 import EntryTitle from '../components/EntryTitle';
 import { bundleService } from '../services/bundle.service';
+import { utilities } from '../utils/utilities';
+import { selectItemsToPaste } from '../actions/clipboard.actions';
 
 type Props = {
   classes: {},
   origBundle: {},
   entryPageUrl: string,
+  openDrawer: boolean,
   mode: string,
-  openDrawer: boolean
+  modeUi: {},
+  selectedItemsForCopy: [],
+  selectItemsToPaste: () => {},
+  handleDrawerOpen: () => {},
+  handleClose: () => {}
 };
 
 const materialStyles = theme => ({
@@ -91,17 +98,31 @@ function mapStateToProps(state, props) {
   };
 }
 
+const mapDispatchToProps = {
+  selectItemsToPaste,
+};
+
 class EntryAppBar extends Component<Props> {
   props: Props;
 
+  onOpenDBLEntryLink = (event) => {
+    utilities.onOpenLink(this.props.entryPageUrl)(event);
+  }
+
+  handleCopyFiles = () => {
+    const { selectedItemsForCopy } = this.props;
+    const uris = selectedItemsForCopy.map(r => r.uri);
+    // todo: handle other paste modes.
+    this.props.selectItemsToPaste(this.props.origBundle.id, uris, 'resources');
+    this.props.handleClose();
+  }
+
   render() {
     const {
-      classes, origBundle = {}, openDrawer, mode
+      classes, origBundle = {}, openDrawer, mode, modeUi, selectedItemsForCopy,
     } = this.props;
-    const { storedResources } = this.getSelectedResourcesByStatus();
     const { displayAs = {} } = origBundle;
     const { revision } = displayAs;
-    const modeUi = this.modeUi();
     const { status, parent, dblId } = origBundle;
     const revBackground =
       ux.getDblRowBackgroundColor(false, classes, status, revision, parent, dblId);
@@ -113,7 +134,7 @@ class EntryAppBar extends Component<Props> {
         <Toolbar className={classes.toolBar} disableGutters={!openDrawer}>
           <IconButton
             aria-label="Open drawer"
-            onClick={this.handleDrawerOpen}
+            onClick={this.props.handleDrawerOpen}
             className={classNames(classes.menuButton, openDrawer && classes.hide)}
             color="inherit"
           >
@@ -149,11 +170,11 @@ class EntryAppBar extends Component<Props> {
             classes={classes}
             color="inherit"
             onClick={this.handleCopyFiles}
-            disabled={storedResources.length === 0}
-            selectedItems={storedResources}
+            disabled={selectedItemsForCopy.length === 0}
+            selectedItems={selectedItemsForCopy}
           />}
           {this.renderOkOrPasteResourcesButton()}
-          <IconButton color="inherit" onClick={this.handleClose} aria-label="Close">
+          <IconButton color="inherit" onClick={this.props.handleClose} aria-label="Close">
             <CloseIcon />
           </IconButton>
         </Toolbar>
@@ -166,6 +187,6 @@ export default compose(
   withStyles(materialStyles, { withTheme: true }),
   connect(
     mapStateToProps,
-    null
+    mapDispatchToProps
   )
 )(EntryAppBar);

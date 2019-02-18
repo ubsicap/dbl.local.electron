@@ -1,12 +1,10 @@
 import log from 'electron-log';
-import fs from 'fs-extra';
 import upath from 'upath';
 import waitUntil from 'node-wait-until';
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
 import { bundleService } from '../services/bundle.service';
-import { utilities } from '../utils/utilities';
 import editMetadataService from '../services/editMetadata.service';
 import { bundleActions } from '../actions/bundle.actions';
 
