@@ -1,4 +1,7 @@
 import log from 'electron-log';
+import fs from 'fs-extra';
+import upath from 'upath';
+import waitUntil from 'node-wait-until';
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
@@ -224,10 +227,17 @@ export function closeEditMetadata(bundleId) {
 }
 
 export function openMetadataFile(bundleId) {
-  return async dispatch => {
+  return async (dispatch, getState) => {
     dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_SHOW_REQUEST, bundleId });
     dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_REQUEST, bundleId });
-    return dispatch(saveMetadatFileToTempBundleFolder(bundleId));
+    dispatch(saveMetadatFileToTempBundleFolder(bundleId));
+    const metadataFile = await waitUntil(
+      () => getState().bundleEditMetadata.showMetadataFile,
+      60000,
+      500
+    );
+    const normalizedFilePath = upath.normalize(metadataFile);
+    window.open(`file:///${normalizedFilePath}`, '_blank', 'nodeIntegration=no');
   };
 }
 
@@ -235,7 +245,6 @@ function saveMetadatFileToTempBundleFolder(bundleId) {
   return async dispatch => {
     dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_REQUEST, bundleId });
     const metadataFile = await bundleService.saveMetadataToTempFolder(bundleId);
-    await utilities.sleep(1000); // give time for OS to release the file.
     dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_SAVED, bundleId, metadataFile });
     return metadataFile;
   };

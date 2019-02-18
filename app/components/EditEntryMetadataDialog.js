@@ -35,7 +35,7 @@ function mapStateToProps(state, props) {
   const { bundleId } = props.match.params;
   const { selectedItemsToPaste } = clipboard;
   const {
-    showMetadataFile, currentFormWithErrors, nextFormWithErrors, formStructure
+    currentFormWithErrors, nextFormWithErrors, formStructure
   } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
@@ -56,7 +56,6 @@ function mapStateToProps(state, props) {
     wasMetadataSaved,
     moveNext,
     couldNotSaveMetadataMessage,
-    showMetadataFile,
     formsErrors,
     currentFormNumWithErrors,
     nextFormWithErrors,
@@ -110,7 +109,6 @@ type Props = {
   openMetadataFile: () => {},
   selectItemsToPaste: () => {},
   wasMetadataSaved: boolean,
-  showMetadataFile: ?string,
   moveNext: ?{},
   couldNotSaveMetadataMessage: ?string,
   requestingSaveMetadata: boolean,
@@ -135,9 +133,6 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
       this.props.couldNotSaveMetadataMessage !== prevProps.couldNotSaveMetadataMessage) {
       // TODO: post confirm message.
       // if confirmed: this.props.closeEditMetadata();
-    }
-    if (this.props.showMetadataFile && !prevProps.showMetadataFile) {
-      shell.openExternal(this.props.showMetadataFile);
     }
   }
 
@@ -266,7 +261,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
               <Typography variant="h6" color="inherit" className={classes.flex}>
                 Edit metadata: {<EntryTitle bundle={selectedBundle} />}
               </Typography>
-              <Button key="btnOpenXml" color="inherit" disable={this.props.showMetadataFile} onClick={this.handleReview}>
+              <Button key="btnOpenXml" color="inherit" onClick={this.handleReview}>
                 <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
                 Review
               </Button>

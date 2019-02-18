@@ -22,7 +22,6 @@ import Typography from '@material-ui/core/Typography';
 import Delete from '@material-ui/icons/Delete';
 import CloseIcon from '@material-ui/icons/Close';
 import CheckIcon from '@material-ui/icons/Check';
-import OpenInNew from '@material-ui/icons/OpenInNew';
 import Link from '@material-ui/icons/Link';
 import FileDownload from '@material-ui/icons/CloudDownloadOutlined';
 import { createSelector } from 'reselect';
@@ -36,7 +35,6 @@ import { closeResourceManager,
 } from '../actions/bundleManageResources.actions';
 import { selectItemsToPaste, pasteItems, clearClipboard } from '../actions/clipboard.actions';
 import { downloadResources, removeResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
-import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import EnhancedTable from './EnhancedTable';
 import EnhancedTableToolbar from './EnhancedTableToolbar';
 import { utilities } from '../utils/utilities';
@@ -82,7 +80,6 @@ type Props = {
   selectedItemsToPaste: ?{},
   theme: {},
   closeResourceManager: () => {},
-  openMetadataFile: () => {},
   getManifestResources: () => {},
   getEntryRevisions: () => {},
   downloadResources: () => {},
@@ -573,7 +570,6 @@ function mapStateToProps(state, props) {
 
 const mapDispatchToProps = {
   closeResourceManager,
-  openMetadataFile,
   getManifestResources,
   getEntryRevisions,
   downloadResources,
@@ -663,12 +659,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   componentDidUpdate(prevProps) {
     if (this.state.closing) {
       return;
-    }
-    if (this.props.showMetadataFile && !prevProps.showMetadataFile) {
-      const normalizedFilePath = upath.normalize(this.props.showMetadataFile);
-      window.open(`file:///${normalizedFilePath}`, '_blank', 'nodeIntegration=no');
-      // modal.document.write('<h1>Hello</h1>');
-      // shell.openExternal(this.props.showMetadataFile);
     }
     if (this.props.progress !== prevProps.progress &&
       (this.props.progress === 100)) {
@@ -900,10 +890,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.setState({ closing: true });
     this.props.closeResourceManager(this.props.bundleId);
   };
-
-  handleReview = () => {
-    this.props.openMetadataFile(this.props.bundleId);
-  }
 
   handleGoFixError = () => {
     this.props.goFixPublications();
@@ -1488,16 +1474,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       </ConfirmButton>);
   }
 
-  getDrawerItems = () => (
-    [
-      {
-        label: 'Open metadata.xml',
-        icon: <OpenInNew />,
-        handleClick: this.handleReview
-      }
-    ]
-  );
-
   render() {
     const {
       classes, open, origBundle = {}, mode,
@@ -1568,9 +1544,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             </Toolbar>
           </AppBar>
           <EntryDrawer
+            bundleId={origBundle.id}
             openDrawer={openDrawer}
             handleDrawerClose={this.handleDrawerClose}
-            items={this.getDrawerItems()}
           />
           <main
             className={classNames(classes.content, {

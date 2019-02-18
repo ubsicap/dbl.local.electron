@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { compose } from 'recompose';
+import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import Drawer from '@material-ui/core/Drawer';
@@ -10,18 +11,23 @@ import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-import InboxIcon from '@material-ui/icons/MoveToInbox';
-import MailIcon from '@material-ui/icons/Mail';
 import OpenInNew from '@material-ui/icons/OpenInNew';
+import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import { ux } from '../utils/ux';
 
 
 type Props = {
   classes: {},
   theme: {},
+  bundleId: string,
   openDrawer: boolean,
-  items: [],
-  handleDrawerClose: () => {}
+  handleDrawerClose: () => {},
+  openMetadataFile: () => {}
+};
+
+
+const mapDispatchToProps = {
+  openMetadataFile,
 };
 
 const materialStyles = theme => ({
@@ -65,6 +71,20 @@ const materialStyles = theme => ({
 class EntryDrawer extends PureComponent<Props> {
   props: Props;
 
+  getDrawerItems = () => (
+    [
+      {
+        label: 'Open metadata.xml',
+        icon: <OpenInNew />,
+        handleClick: this.handleOpenMetadata
+      }
+    ]
+  );
+
+  handleOpenMetadata = () => {
+    this.props.openMetadataFile(this.props.bundleId);
+  }
+
   renderListItem = (item) => (
     <ListItem button key={item.label} onClick={item.handleClick}>
       <ListItemIcon>{item.icon}</ListItemIcon>
@@ -74,8 +94,9 @@ class EntryDrawer extends PureComponent<Props> {
 
   render() {
     const {
-      classes, items
+      classes
     } = this.props;
+    const items = this.getDrawerItems();
     const { theme, openDrawer } = this.props;
     return (
       <Drawer
@@ -112,4 +133,10 @@ class EntryDrawer extends PureComponent<Props> {
   }
 }
 
-export default compose(withStyles(materialStyles, { withTheme: true }))(EntryDrawer);
+export default compose(
+  withStyles(materialStyles, { withTheme: true }),
+  connect(
+    null,
+    mapDispatchToProps
+  )
+)(EntryDrawer);
