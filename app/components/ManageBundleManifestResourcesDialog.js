@@ -1467,7 +1467,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               [classes.contentShift]: openDrawer,
             })}
           >
-            <div className={classes.drawerHeader} />
             {isModifyFilesMode && publicationsHealthMessage &&
               <Toolbar className={classes.errorBar}>
                 <Typography variant="subtitle1" color="inherit">

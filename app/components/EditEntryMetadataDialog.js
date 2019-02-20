@@ -282,7 +282,6 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
               [classes.contentShift]: openDrawer,
             })}
           >
-            <div className={classes.drawerHeader} />
             <FormControlLabel
               style={{ paddingTop: '8px', paddingLeft: '55px' }}
               control={
