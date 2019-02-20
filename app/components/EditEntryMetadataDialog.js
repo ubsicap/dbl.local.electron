@@ -4,16 +4,10 @@ import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
 import Badge from '@material-ui/core/Badge';
 import Button from '@material-ui/core/Button';
-import AppBar from '@material-ui/core/AppBar';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import { Map } from 'immutable';
 import Checkbox from '@material-ui/core/Checkbox';
-import Toolbar from '@material-ui/core/Toolbar';
 import NavigateNext from '@material-ui/icons/NavigateNext';
-import IconButton from '@material-ui/core/IconButton';
-import Typography from '@material-ui/core/Typography';
-import CloseIcon from '@material-ui/icons/Close';
-import OpenInNew from '@material-ui/icons/OpenInNew';
 import Save from '@material-ui/icons/Save';
 import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
@@ -24,11 +18,10 @@ import { selectItemsToPaste, pasteItems } from '../actions/clipboard.actions';
 import editMetadataService from '../services/editMetadata.service';
 import EditMetadataStepper from './EditMetadataStepper';
 import { clipboardHelpers } from '../helpers/clipboard';
-import CopyForPasteButton from './CopyForPasteButton';
+import EntryAppBar from '../components/EntryAppBar';
+import EntryDrawer from '../components/EntryDrawer';
 import PasteButton from './PasteButton';
-import EntryTitle from './EntryTitle';
-
-const { shell } = require('electron');
+import { ux } from '../utils/ux';
 
 function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundles, clipboard } = state;
@@ -74,6 +67,8 @@ const mapDispatchToProps = {
 };
 
 const materialStyles = theme => ({
+  ...ux.getDblRowStyles(theme),
+  ...ux.getEntryDrawerStyles(theme),
   appBar: {
     position: 'sticky'
   },
@@ -121,6 +116,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   props: Props;
   state = {
     sectionSelections: {},
+    openDrawer: false
   };
 
   componentDidUpdate(prevProps) {
@@ -243,57 +239,69 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     this.handleClose();
   }
 
+  handleDrawerOpen = () => {
+    this.setState({ openDrawer: true });
+  };
+
+  handleDrawerClose = () => {
+    this.setState({ openDrawer: false });
+  };
+
+  modeUi = () => {
+    const title = 'Metadata';
+    return { appBar: { title, OkButtonLabel: '', OkButtonIcon: (null) } };
+  }
+
   render() {
     const {
       classes, open, selectedBundle = {}, bundleId
     } = this.props;
-    const { sectionSelections } = this.state;
+    const { sectionSelections, openDrawer } = this.state;
     const sectionsSelected = Object.values(sectionSelections).filter(s => s);
     const areAllSelected = this.getAreAllSectionsSelected();
+    const modeUi = this.modeUi();
     return (
       <Zoom in={open}>
         <div>
-          <AppBar className={classes.appBar}>
-            <Toolbar className={classes.toolBar}>
-              <IconButton color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose} aria-label="Close">
-                <CloseIcon />
-              </IconButton>
-              <Typography variant="h6" color="inherit" className={classes.flex}>
-                Edit metadata: {<EntryTitle bundle={selectedBundle} />}
-              </Typography>
-              <Button key="btnOpenXml" color="inherit" onClick={this.handleReview}>
-                <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
-                Review
-              </Button>
-              <CopyForPasteButton
-                key="btnCopyForPaste"
-                classes={classes}
-                color="inherit"
-                onClick={this.handleCopySections}
-                disabled={sectionsSelected.length === 0}
-                selectedItems={sectionsSelected}
-              />
-              {this.conditionallyRenderPrimaryActionButton()}
-            </Toolbar>
-          </AppBar>
-          <FormControlLabel
-            style={{ paddingTop: '8px', paddingLeft: '55px' }}
-            control={
-              <Checkbox
-                onClick={this.handleClickSelectAll}
-                value="selectAllSectionCheckboxes"
-                checked={areAllSelected}
-                indeterminate={sectionsSelected.length > 0 && !areAllSelected}
-              />
-            }
-            label={`Selected Sections (${sectionsSelected.length})`}
+          <EntryAppBar
+            origBundle={selectedBundle}
+            openDrawer={openDrawer}
+            modeUi={modeUi}
+            selectedItemsForCopy={sectionsSelected}
+            actionButton={this.conditionallyRenderPrimaryActionButton()}
+            handleDrawerOpen={this.handleDrawerOpen}
+            handleClose={this.handleClose}
           />
-          <EditMetadataStepper
-            bundleId={bundleId}
-            myStructurePath=""
-            sectionSelections={sectionSelections}
-            onClickSectionSelection={this.handleClickSectionSelection}
+          <EntryDrawer
+            bundleId={selectedBundle.id}
+            openDrawer={openDrawer}
+            handleDrawerClose={this.handleDrawerClose}
           />
+          <main
+            className={classNames(classes.content, {
+              [classes.contentShift]: openDrawer,
+            })}
+          >
+            <div className={classes.drawerHeader} />
+            <FormControlLabel
+              style={{ paddingTop: '8px', paddingLeft: '55px' }}
+              control={
+                <Checkbox
+                  onClick={this.handleClickSelectAll}
+                  value="selectAllSectionCheckboxes"
+                  checked={areAllSelected}
+                  indeterminate={sectionsSelected.length > 0 && !areAllSelected}
+                />
+              }
+              label={`Selected Sections (${sectionsSelected.length})`}
+            />
+            <EditMetadataStepper
+              bundleId={bundleId}
+              myStructurePath=""
+              sectionSelections={sectionSelections}
+              onClickSectionSelection={this.handleClickSectionSelection}
+            />
+          </main>
         </div>
       </Zoom>
     );
