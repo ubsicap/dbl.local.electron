@@ -30,6 +30,7 @@ type Props = {
   mode: string,
   modeUi: {},
   selectedItemsForCopy: [],
+  itemsTypeForCopy: string,
   actionButton: React.Node,
   selectItemsToPaste: () => {},
   handleDrawerOpen: () => {},
@@ -114,7 +115,7 @@ class EntryAppBar extends Component<Props> {
     const { selectedItemsForCopy } = this.props;
     const uris = selectedItemsForCopy.map(r => r.uri);
     // todo: handle other paste modes.
-    this.props.selectItemsToPaste(this.props.origBundle.id, uris, 'resources');
+    this.props.selectItemsToPaste(this.props.origBundle.id, uris, this.props.itemsTypeForCopy);
     this.props.handleClose();
   }
 

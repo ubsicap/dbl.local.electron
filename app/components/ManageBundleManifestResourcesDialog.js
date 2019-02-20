@@ -1453,6 +1453,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             openDrawer={openDrawer}
             modeUi={modeUi}
             selectedItemsForCopy={storedResources}
+            itemsTypeForCopy="resources"
             actionButton={this.renderOkOrPasteResourcesButton()}
             handleDrawerOpen={this.handleDrawerOpen}
             handleClose={this.handleClose}

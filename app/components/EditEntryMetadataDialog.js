@@ -13,8 +13,8 @@ import classNames from 'classnames';
 import Zoom from '@material-ui/core/Zoom';
 import Tooltip from '@material-ui/core/Tooltip';
 import { updateBundle } from '../actions/bundle.actions';
-import { closeEditMetadata, saveFieldValuesForActiveForm, openMetadataFile } from '../actions/bundleEditMetadata.actions';
-import { selectItemsToPaste, pasteItems } from '../actions/clipboard.actions';
+import { closeEditMetadata, saveFieldValuesForActiveForm } from '../actions/bundleEditMetadata.actions';
+import { pasteItems } from '../actions/clipboard.actions';
 import editMetadataService from '../services/editMetadata.service';
 import EditMetadataStepper from './EditMetadataStepper';
 import { clipboardHelpers } from '../helpers/clipboard';
@@ -61,8 +61,6 @@ const mapDispatchToProps = {
   closeEditMetadata,
   saveFieldValuesForActiveForm,
   updateBundle,
-  openMetadataFile,
-  selectItemsToPaste,
   pasteItems
 };
 
@@ -101,8 +99,6 @@ type Props = {
   updateBundle: () => {},
   classes: {},
   saveFieldValuesForActiveForm: () => {},
-  openMetadataFile: () => {},
-  selectItemsToPaste: () => {},
   wasMetadataSaved: boolean,
   moveNext: ?{},
   couldNotSaveMetadataMessage: ?string,
@@ -140,10 +136,6 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     const { nextFormWithErrors } = this.props;
     const moveNext = nextFormWithErrors ? { formKey: nextFormWithErrors } : null;
     this.props.saveFieldValuesForActiveForm({ moveNext });
-  }
-
-  handleReview = () => {
-    this.props.openMetadataFile(this.props.bundleId);
   }
 
   handlePasteMetadataSections = () => {
@@ -231,14 +223,6 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     this.setState({ sectionSelections });
   }
 
-  handleCopySections = () => {
-    const { sectionSelections } = this.state;
-    const sectionsSelected = Object.entries(sectionSelections)
-      .filter(([, isSelected]) => isSelected).map(([s]) => s);
-    this.props.selectItemsToPaste(this.props.bundleId, sectionsSelected, 'metadata sections');
-    this.handleClose();
-  }
-
   handleDrawerOpen = () => {
     this.setState({ openDrawer: true });
   };
@@ -257,7 +241,8 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
       classes, open, selectedBundle = {}, bundleId
     } = this.props;
     const { sectionSelections, openDrawer } = this.state;
-    const sectionsSelected = Object.values(sectionSelections).filter(s => s);
+    const sectionsSelected = Object.entries(sectionSelections)
+      .filter(([, isSelected]) => isSelected).map(([s]) => s);
     const areAllSelected = this.getAreAllSectionsSelected();
     const modeUi = this.modeUi();
     return (
@@ -268,6 +253,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
             openDrawer={openDrawer}
             modeUi={modeUi}
             selectedItemsForCopy={sectionsSelected}
+            itemsTypeForCopy="metadata sections"
             actionButton={this.conditionallyRenderPrimaryActionButton()}
             handleDrawerOpen={this.handleDrawerOpen}
             handleClose={this.handleClose}
