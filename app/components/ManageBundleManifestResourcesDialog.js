@@ -1413,8 +1413,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           variant="contained"
           onClick={this.handlePasteResources}
           disabled={urisToPaste.length === 0}
-          itemsToPaste={urisToPaste}
-          itemsType={itemsType}
+          selectedItemsToPaste={selectedItemsToPaste}
         />
       );
     }
@@ -1438,11 +1437,12 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   render() {
     const {
-      classes, open, origBundle = {},
+      classes, open, origBundle = {}, mode,
       publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading
     } = this.props;
     const { openDrawer } = this.state;
     const { storedResources } = this.getSelectedResourcesByStatus();
+    const selectedItemsForCopy = storedResources.map(r => r.uri);
     const modeUi = this.modeUi();
     const isModifyFilesMode = this.isModifyFilesMode();
     return (
@@ -1451,8 +1451,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           <EntryAppBar
             origBundle={origBundle}
             openDrawer={openDrawer}
+            mode={mode}
             modeUi={modeUi}
-            selectedItemsForCopy={storedResources}
+            selectedItemsForCopy={selectedItemsForCopy}
             itemsTypeForCopy="resources"
             actionButton={this.renderOkOrPasteResourcesButton()}
             handleDrawerOpen={this.handleDrawerOpen}

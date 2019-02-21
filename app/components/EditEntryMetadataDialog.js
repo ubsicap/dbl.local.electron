@@ -251,6 +251,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
           <EntryAppBar
             origBundle={selectedBundle}
             openDrawer={openDrawer}
+            mode="metadata"
             modeUi={modeUi}
             selectedItemsForCopy={sectionsSelected}
             itemsTypeForCopy="metadata sections"

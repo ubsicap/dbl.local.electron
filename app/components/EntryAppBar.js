@@ -113,9 +113,7 @@ class EntryAppBar extends Component<Props> {
 
   handleCopyFiles = () => {
     const { selectedItemsForCopy } = this.props;
-    const uris = selectedItemsForCopy.map(r => r.uri);
-    // todo: handle other paste modes.
-    this.props.selectItemsToPaste(this.props.origBundle.id, uris, this.props.itemsTypeForCopy);
+    this.props.selectItemsToPaste(this.props.origBundle.id, selectedItemsForCopy, this.props.itemsTypeForCopy);
     this.props.handleClose();
   }
 
