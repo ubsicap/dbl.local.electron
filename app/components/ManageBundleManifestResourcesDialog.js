@@ -37,6 +37,7 @@ import PasteButton from './PasteButton';
 import MapperTable from '../components/MapperTable';
 import EntryAppBar from '../components/EntryAppBar';
 import EntryDrawer from '../components/EntryDrawer';
+import Conditionally from '../components/Conditionally';
 
 const { dialog } = require('electron').remote;
 
@@ -1446,58 +1447,60 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const modeUi = this.modeUi();
     const isModifyFilesMode = this.isModifyFilesMode();
     return (
-      <Zoom in={open}>
-        <div>
-          <EntryAppBar
-            origBundle={origBundle}
-            openDrawer={openDrawer}
-            mode={mode}
-            modeUi={modeUi}
-            selectedItemsForCopy={selectedItemsForCopy}
-            itemsTypeForCopy="resources"
-            actionButton={this.renderOkOrPasteResourcesButton()}
-            handleDrawerOpen={this.handleDrawerOpen}
-            handleClose={this.handleClose}
-          />
-          <EntryDrawer
-            bundleId={origBundle.id}
-            openDrawer={openDrawer}
-            handleDrawerClose={this.handleDrawerClose}
-          />
-          <main
-            className={classNames(classes.content, {
-              [classes.contentShift]: openDrawer,
-            })}
-          >
-            {isModifyFilesMode && publicationsHealthMessage &&
-              <Toolbar className={classes.errorBar}>
-                <Typography variant="subtitle1" color="inherit">
-                  {publicationsHealthMessage}
-                </Typography>
-                <div style={{ paddingLeft: '10px' }} />
-                <Button
-                  key="btnGoEdit"
-                  color="secondary"
-                  variant="contained"
-                  onClick={this.handleGoFixError}
-                >Go Fix
-                </Button>
-              </Toolbar>
-            }
-            {!loading && isModifyFilesMode && publicationsHealthSuccessMessage &&
-              <Card className={classes.successBar} raised>
-                <CardContent>
-                  <Typography key="pubhealthSuccessMessage" variant="subtitle1" color="inherit" gutterBottom>
-                    {publicationsHealthSuccessMessage}
+      <Conditionally showHOC>
+        <Zoom in={open}>
+          <div>
+            <EntryAppBar
+              origBundle={origBundle}
+              openDrawer={openDrawer}
+              mode={mode}
+              modeUi={modeUi}
+              selectedItemsForCopy={selectedItemsForCopy}
+              itemsTypeForCopy="resources"
+              actionButton={this.renderOkOrPasteResourcesButton()}
+              handleDrawerOpen={this.handleDrawerOpen}
+              handleClose={this.handleClose}
+            />
+            <EntryDrawer
+              bundleId={origBundle.id}
+              openDrawer={openDrawer}
+              handleDrawerClose={this.handleDrawerClose}
+            />
+            <main
+              className={classNames(classes.content, {
+                [classes.contentShift]: openDrawer,
+              })}
+            >
+              {isModifyFilesMode && publicationsHealthMessage &&
+                <Toolbar className={classes.errorBar}>
+                  <Typography variant="subtitle1" color="inherit">
+                    {publicationsHealthMessage}
                   </Typography>
-                  {this.renderWizardsResults()}
-                </CardContent>
-              </Card>
-            }
-            {this.renderTable()}
-          </main>
-        </div>
-      </Zoom>
+                  <div style={{ paddingLeft: '10px' }} />
+                  <Button
+                    key="btnGoEdit"
+                    color="secondary"
+                    variant="contained"
+                    onClick={this.handleGoFixError}
+                  >Go Fix
+                  </Button>
+                </Toolbar>
+              }
+              {!loading && isModifyFilesMode && publicationsHealthSuccessMessage &&
+                <Card className={classes.successBar} raised>
+                  <CardContent>
+                    <Typography key="pubhealthSuccessMessage" variant="subtitle1" color="inherit" gutterBottom>
+                      {publicationsHealthSuccessMessage}
+                    </Typography>
+                    {this.renderWizardsResults()}
+                  </CardContent>
+                </Card>
+              }
+              {this.renderTable()}
+            </main>
+          </div>
+        </Zoom>
+      </Conditionally>
     );
   }
 }
