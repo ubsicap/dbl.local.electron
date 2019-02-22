@@ -262,6 +262,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
               handleClose={this.handleClose}
             />
             <EntryDrawer
+              activeBundle={selectedBundle}
               bundleId={selectedBundle.id}
               openDrawer={openDrawer}
               handleDrawerClose={this.handleDrawerClose}

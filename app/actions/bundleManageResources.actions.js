@@ -17,7 +17,7 @@ export const bundleManageResourceActions = {
   checkPublicationsHealth
 };
 
-export function openResourceManager(_bundleId, _mode) {
+export function openResourceManager(_bundleId, _mode, _doZoom = false) {
   return async (dispatch, getState) => {
     dispatch(bundleActions.updateBundle(_bundleId, true));
     const { addedByBundleIds } = getState().bundles;
@@ -26,14 +26,17 @@ export function openResourceManager(_bundleId, _mode) {
     if (bundle.parent && bundle.parent.dblId === bundle.dblId) {
       dispatch(getManifestResources(bundle.parent.bundleId));
     }
-    dispatch(navigate(_bundleId, _mode));
+    dispatch(navigate(_bundleId, _mode, _doZoom));
   };
   function success(bundleId, mode) {
     return { type: bundleResourceManagerConstants.OPEN_RESOURCE_MANAGER, bundleId, mode };
   }
-  function navigate(bundleId, mode) {
+  function navigate(bundleId, mode, doZoom) {
     const manageResourcesUrl =
-      utilities.buildRouteUrl(navigationConstants.NAVIGATION_BUNDLE_MANAGE_RESOURCES, { bundleId, mode });
+      utilities.buildRouteUrl(
+        navigationConstants.NAVIGATION_BUNDLE_MANAGE_RESOURCES,
+        { bundleId, mode, doZoom }
+      );
     history.push(manageResourcesUrl);
     return success(bundleId, mode);
   }

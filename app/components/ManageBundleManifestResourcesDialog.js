@@ -69,6 +69,7 @@ type Props = {
   goFixPublications: ?() => {},
   selectedItemsToPaste: ?{},
   theme: {},
+  doZoom: boolean,
   closeResourceManager: () => {},
   getManifestResources: () => {},
   getEntryRevisions: () => {},
@@ -497,7 +498,7 @@ function mapStateToProps(state, props) {
     message: publicationsHealthSuccessMessage,
     wizardsResults,
   } = publicationsHealth || {};
-  const { bundleId, mode } = props.match.params;
+  const { bundleId, mode, doZoom = false } = props.match.params;
   const { showMetadataFile } = bundleEditMetadata;
   const columnConfig = createColumnConfig(mode);
   const getManifestResourceData = makeGetManifestResourcesData();
@@ -517,6 +518,7 @@ function mapStateToProps(state, props) {
     selectedMappers.input || Object.keys(mapperReport);
   return {
     open: Boolean(bundleId),
+    doZoom,
     loading: loading || fetchingMetadata || !isStoreMode,
     progress,
     bundleId,
@@ -1438,7 +1440,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   render() {
     const {
-      classes, open, origBundle = {}, mode,
+      classes, open, origBundle = {}, mode, doZoom,
       publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading
     } = this.props;
     const { openDrawer } = this.state;
@@ -1447,7 +1449,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const modeUi = this.modeUi();
     const isModifyFilesMode = this.isModifyFilesMode();
     return (
-      <Conditionally showHOC>
+      <Conditionally showHOC={doZoom}>
         <Zoom in={open}>
           <div>
             <EntryAppBar
@@ -1462,7 +1464,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               handleClose={this.handleClose}
             />
             <EntryDrawer
-              bundleId={origBundle.id}
+              activeBundle={origBundle}
               openDrawer={openDrawer}
               handleDrawerClose={this.handleDrawerClose}
             />

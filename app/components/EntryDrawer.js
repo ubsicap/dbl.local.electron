@@ -13,6 +13,7 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import OpenInNew from '@material-ui/icons/OpenInNew';
 import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
+import { openResourceManager } from '../actions/bundleManageResources.actions';
 import { ux } from '../utils/ux';
 
 
@@ -20,14 +21,24 @@ type Props = {
   classes: {},
   theme: {},
   bundleId: string,
+  activeBundle: {},
   openDrawer: boolean,
   handleDrawerClose: () => {},
-  openMetadataFile: () => {}
+  openMetadataFile: () => {},
+  openResourceManager: () => {}
 };
 
 
+function mapStateToProps(state, props) {
+  const { id: bundleId } = props.activeBundle;
+  return {
+    bundleId
+  };
+}
+
 const mapDispatchToProps = {
   openMetadataFile,
+  openResourceManager
 };
 
 const materialStyles = theme => ({
@@ -71,19 +82,27 @@ const materialStyles = theme => ({
 class EntryDrawer extends PureComponent<Props> {
   props: Props;
 
+  getResourceMode = () => {
+    const { activeBundle } = this.props;
+    const { status } = activeBundle;
+    const mode = status === 'DRAFT' ? 'addFiles' : 'download';
+    return mode;
+  }
+
   getDrawerItems = () => (
     [
       {
-        label: 'Open metadata.xml',
-        icon: <OpenInNew />,
-        handleClick: this.handleOpenMetadata
-      }
+        label: 'Metadata',
+        icon: ux.getModeIcon('metadata'),
+        handleClick: this.handleSwitchToMetadata
+      },
+      {
+        label: 'Resources',
+        icon: ux.getModeIcon(this.getResourceMode()),
+        handleClick: this.handleSwitchToResources
+      },
     ]
   );
-
-  handleOpenMetadata = () => {
-    this.props.openMetadataFile(this.props.bundleId);
-  }
 
   renderListItem = (item) => (
     <ListItem button key={item.label} onClick={item.handleClick}>
@@ -91,6 +110,19 @@ class EntryDrawer extends PureComponent<Props> {
       <ListItemText primary={item.label} />
     </ListItem>
   );
+
+  handleOpenMetadataXml = () => {
+    this.props.openMetadataFile(this.props.bundleId);
+  }
+
+  handleSwitchToMetadata = () => {
+  }
+
+  handleSwitchToResources = () => {
+    const { bundleId } = this.props;
+    const mode = this.getResourceMode();
+    this.props.openResourceManager(bundleId, mode, false);
+  }
 
   render() {
     const {
@@ -115,6 +147,13 @@ class EntryDrawer extends PureComponent<Props> {
         </div>
         <Divider />
         <MaterialUiList>
+          <ListItem button key="metadataXml" onClick={this.handleOpenMetadataXml}>
+            <ListItemIcon><OpenInNew /></ListItemIcon>
+            <ListItemText primary="Review metadata.xml" />
+          </ListItem>
+        </MaterialUiList>
+        <Divider />
+        <MaterialUiList>
           {items.map(this.renderListItem)}
         </MaterialUiList>
         { /*
@@ -136,7 +175,7 @@ class EntryDrawer extends PureComponent<Props> {
 export default compose(
   withStyles(materialStyles, { withTheme: true }),
   connect(
-    null,
+    mapStateToProps,
     mapDispatchToProps
   )
 )(EntryDrawer);

@@ -90,13 +90,10 @@ const makeGetEntryPageUrl = () => createSelector(
   }
 );
 
-const getMode = (state) => state.bundleManageResources.mode;
-
 function mapStateToProps(state, props) {
   const getEntryPageUrl = makeGetEntryPageUrl();
   return {
-    entryPageUrl: getEntryPageUrl(state, props),
-    mode: getMode(state, props)
+    entryPageUrl: getEntryPageUrl(state, props)
   };
 }
 
@@ -124,6 +121,7 @@ class EntryAppBar extends Component<Props> {
     const { displayAs = {} } = origBundle;
     const { revision } = displayAs;
     const { status, parent, dblId } = origBundle;
+    const modeIcon = ux.getModeIcon(mode, { color: 'inherit', className: classNames(classes.leftIcon) });
     const revBackground =
       ux.getDblRowBackgroundColor(false, classes, status, revision, parent, dblId);
     return (
@@ -143,7 +141,7 @@ class EntryAppBar extends Component<Props> {
           <Grid container justify="flex-start" alignItems="center" spacing={24}>
             <Grid item>
               <Typography variant="h6" color="inherit" noWrap>
-                <FolderOpen color="inherit" className={classNames(classes.leftIcon)} />
+                {modeIcon}
                 {modeUi.appBar.title}:
               </Typography>
             </Grid>

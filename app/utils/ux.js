@@ -1,5 +1,7 @@
 import React from 'react';
 import Badge from '@material-ui/core/Badge';
+import Description from '@material-ui/icons/Description';
+import FolderOpen from '@material-ui/icons/FolderOpen';
 import { lighten } from '@material-ui/core/styles/colorManipulator';
 import { bundleService } from '../services/bundle.service';
 
@@ -11,7 +13,8 @@ export const ux = {
   mapColumns,
   getHighlightTheme,
   conditionallyRenderBadge,
-  getClipboardTooltip
+  getClipboardTooltip,
+  getModeIcon,
 };
 export default ux;
 
@@ -175,4 +178,8 @@ function getClipboardTooltip(selectedItemsToPaste) {
   } = selectedItemsToPaste;
   const clipboardTooltip = bundleId ? `${itemsType} from (${getMedium()}) ${getDisplayAs().name} ${getDisplayAs().revision}` : '';
   return clipboardTooltip;
+}
+
+function getModeIcon(mode, props) {
+  return mode === 'metadata' ? <Description {...props} /> : <FolderOpen {...props} />;
 }
