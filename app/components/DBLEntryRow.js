@@ -316,7 +316,7 @@ class DBLEntryRow extends PureComponent<Props> {
 
   onClickEditMetadata = (event) => {
     const { bundleId } = this.props;
-    this.props.openEditMetadata(bundleId);
+    this.props.openEditMetadata(bundleId, undefined, true);
     event.stopPropagation();
   }
 

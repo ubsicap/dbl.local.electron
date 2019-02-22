@@ -26,7 +26,7 @@ import Conditionally from '../components/Conditionally';
 
 function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundles, clipboard } = state;
-  const { bundleId } = props.match.params;
+  const { bundleId, doZoom = false } = props.match.params;
   const { selectedItemsToPaste } = clipboard;
   const {
     currentFormWithErrors, nextFormWithErrors, formStructure
@@ -44,6 +44,7 @@ function mapStateToProps(state, props) {
   } = bundleEditMetadata;
   return {
     open: Boolean(bundleId || false),
+    doZoom: (doZoom === 'true'),
     bundleId,
     selectedBundle,
     requestingSaveMetadata,
@@ -106,7 +107,8 @@ type Props = {
   requestingSaveMetadata: boolean,
   formStructure: {},
   selectedItemsToPaste: ?{},
-  pasteItems: () => {}
+  pasteItems: () => {},
+  doZoom: boolean,
 };
 
 class EditEntryMetadataDialog extends PureComponent<Props> {
@@ -239,7 +241,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
 
   render() {
     const {
-      classes, open, selectedBundle = {}, bundleId
+      classes, open, selectedBundle = {}, bundleId, doZoom
     } = this.props;
     const { sectionSelections, openDrawer } = this.state;
     const sectionsSelected = Object.entries(sectionSelections)
@@ -247,7 +249,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     const areAllSelected = this.getAreAllSectionsSelected();
     const modeUi = this.modeUi();
     return (
-      <Conditionally showHOC>
+      <Conditionally showHOC={doZoom}>
         <Zoom in={open}>
           <div>
             <EntryAppBar

@@ -7,6 +7,7 @@ import { navigationConstants } from '../constants/navigation.constants';
 import { bundleService } from '../services/bundle.service';
 import editMetadataService from '../services/editMetadata.service';
 import { bundleActions } from '../actions/bundle.actions';
+import { utilities } from '../utils/utilities';
 
 export const bundleEditMetadataActions = {
   openEditMetadata,
@@ -24,10 +25,6 @@ export const bundleEditMetadataActions = {
 };
 
 export default bundleEditMetadataActions;
-
-function buildEditMetadataUrl(routeUrl, bundleId) {
-  return routeUrl.replace(':bundleId', bundleId);
-}
 
 async function getFormStructure(_bundleId) {
   const response = await bundleService.getFormBundleTree(_bundleId);
@@ -161,18 +158,18 @@ function getUserMetadataOverrides(whoami) {
   };
 }
 
-export function openEditMetadata(_bundleId, _moveNextStep) {
+export function openEditMetadata(_bundleId, _moveNextStep, _doZoom) {
   return async (dispatch, getState) => {
     const bundleToEdit = bundleService.getCurrentBundleState(getState, _bundleId);
     dispatch(request(bundleToEdit, _moveNextStep));
     if (bundleToEdit.mode === 'create') {
-      dispatch(navigate(bundleToEdit, _moveNextStep));
+      dispatch(navigate(bundleToEdit, _moveNextStep, _doZoom));
       return;
     }
     try {
       try {
         const bundleReady = bundleService.getCurrentBundleState(getState, _bundleId);
-        dispatch(navigate(bundleReady, _moveNextStep));
+        dispatch(navigate(bundleReady, _moveNextStep, _doZoom));
       } catch (error) {
         dispatch(failure(_bundleId, `error ${error} while waiting for create mode`, _moveNextStep));
       }
@@ -199,13 +196,12 @@ export function openEditMetadata(_bundleId, _moveNextStep) {
       moveNextStep
     };
   }
-  function navigate(bundleToEdit, moveNextStep) {
+  function navigate(bundleToEdit, moveNextStep, doZoom) {
     const { id: bundleId } = bundleToEdit;
-    const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO;
-    const editMetadataPage = isDemoMode ?
-      navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO :
-      navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA;
-    const editMetadataPageWithBundleId = buildEditMetadataUrl(editMetadataPage, bundleId);
+    const editMetadataPageWithBundleId = utilities.buildRouteUrl(
+      navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA,
+      { bundleId, doZoom }
+    );
     history.push(editMetadataPageWithBundleId);
     return success(bundleToEdit, moveNextStep);
   }
@@ -284,12 +280,7 @@ export function deleteForm(bundleId, formKey, shouldReloadActiveForm) {
 }
 
 function switchBackToBundlesPage() {
-  const isDemoMode =
-    history.location.pathname === navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO;
-  const bundlesPage = isDemoMode ?
-    navigationConstants.NAVIGATION_BUNDLES_DEMO :
-    navigationConstants.NAVIGATION_BUNDLES;
-  history.push(bundlesPage);
+  history.push(navigationConstants.NAVIGATION_BUNDLES);
 }
 
 export function reloadActiveForm(shouldUpdateBundleFormErrors = false) {

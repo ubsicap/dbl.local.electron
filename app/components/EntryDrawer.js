@@ -12,7 +12,7 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import OpenInNew from '@material-ui/icons/OpenInNew';
-import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
+import { openMetadataFile, openEditMetadata } from '../actions/bundleEditMetadata.actions';
 import { openResourceManager } from '../actions/bundleManageResources.actions';
 import { ux } from '../utils/ux';
 
@@ -25,6 +25,7 @@ type Props = {
   openDrawer: boolean,
   handleDrawerClose: () => {},
   openMetadataFile: () => {},
+  openEditMetadata: () => {},
   openResourceManager: () => {}
 };
 
@@ -38,7 +39,8 @@ function mapStateToProps(state, props) {
 
 const mapDispatchToProps = {
   openMetadataFile,
-  openResourceManager
+  openEditMetadata,
+  openResourceManager,
 };
 
 const materialStyles = theme => ({
@@ -116,6 +118,7 @@ class EntryDrawer extends PureComponent<Props> {
   }
 
   handleSwitchToMetadata = () => {
+    this.props.openEditMetadata(this.props.bundleId, undefined, false);
   }
 
   handleSwitchToResources = () => {

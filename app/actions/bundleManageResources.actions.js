@@ -110,7 +110,11 @@ export function checkPublicationsHealth(_bundleId) {
         error: 'NO_PUBLICATION_INSTANCE',
         publications: [],
         errorMessage: `${msgToAddOrRemoveResources}, first add a publication to Publications`,
-        goFix: () => dispatch(openEditMetadata(_bundleId, { formKey: '/publications/publication' }))
+        goFix: () => dispatch(openEditMetadata(
+          _bundleId,
+          { formKey: '/publications/publication' },
+          false
+        ))
       });
     }
     const pubsMissingCanonSpecs = publicationInstanceIds.filter(pubId =>
@@ -160,7 +164,11 @@ export function checkPublicationsHealth(_bundleId) {
       error: 'MISSING_CANON_SPECS',
       publications: pubsMissingCanonSpecs,
       errorMessage: `${msgToAddOrRemoveResources}, first add Canon Specification (ESPECIALLY Canon Components) to the following publications: ${pubsMissingCanonSpecs}`,
-      goFix: () => dispatch(openEditMetadata(_bundleId, { formKey: `/publications/publication/${p1}/canonSpec` }))
+      goFix: () => dispatch(openEditMetadata(
+        _bundleId,
+        { formKey: `/publications/publication/${p1}/canonSpec` },
+        false
+      ))
     };
   }
 }

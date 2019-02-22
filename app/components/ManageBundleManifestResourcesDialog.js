@@ -518,7 +518,7 @@ function mapStateToProps(state, props) {
     selectedMappers.input || Object.keys(mapperReport);
   return {
     open: Boolean(bundleId),
-    doZoom,
+    doZoom: (doZoom === 'true'),
     loading: loading || fetchingMetadata || !isStoreMode,
     progress,
     bundleId,
