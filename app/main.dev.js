@@ -96,11 +96,13 @@ app.on('ready', async () => {
     mainWindow.show();
     mainWindow.focus();
     const autoUpdater = autoUpdaterServices.setupAutoUpdater(mainWindow);
-    const menuBuilder = new MenuBuilder(mainWindow);
-    menuBuilder.buildMenu();
-
     autoUpdater.logger.info('Request checkForUpdatesAndNotify');
     autoUpdater.checkForUpdatesAndNotify();
+  });
+
+  mainWindow.on('focus', () => {
+    const menuBuilder = new MenuBuilder(mainWindow);
+    menuBuilder.buildMainMenu();
   });
 
   mainWindow.on('closed', () => {
