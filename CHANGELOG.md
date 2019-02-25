@@ -1,3 +1,10 @@
+### Version 0.28.0 (Navigation Drawer for Resources/Metadata)
+#### Features
+- Add navigation drawer for switching between stored Resources and Metadata
+- "Review metadata.xml" (in drawer) now opens in electron's native Chrome browser
+- "Review metadata.xml" auto-refreshes when the metadata.xml changes on disk
+- "Review metadata.xml" windows allows File > Save To
+
 ### Version 0.27.1
 #### Fixes
 - Fix crash after deleting draft when trying to re-save starred entries
