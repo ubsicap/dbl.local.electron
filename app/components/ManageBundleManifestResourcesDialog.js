@@ -18,7 +18,6 @@ import CheckIcon from '@material-ui/icons/Check';
 import FileDownload from '@material-ui/icons/CloudDownloadOutlined';
 import { createSelector } from 'reselect';
 import classNames from 'classnames';
-import Zoom from '@material-ui/core/Zoom';
 import path from 'path';
 import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
@@ -37,7 +36,6 @@ import PasteButton from './PasteButton';
 import MapperTable from '../components/MapperTable';
 import EntryAppBar from '../components/EntryAppBar';
 import EntryDrawer from '../components/EntryDrawer';
-import Conditionally from '../components/Conditionally';
 
 const { dialog } = require('electron').remote;
 
@@ -45,7 +43,6 @@ const NEED_CONTAINER = '/?';
 
 type Props = {
   classes: {},
-  open: boolean,
   loading: boolean,
   progress: number,
   bundleId: ?string,
@@ -69,7 +66,6 @@ type Props = {
   goFixPublications: ?() => {},
   selectedItemsToPaste: ?{},
   theme: {},
-  doZoom: boolean,
   closeResourceManager: () => {},
   getManifestResources: () => {},
   getEntryRevisions: () => {},
@@ -498,7 +494,7 @@ function mapStateToProps(state, props) {
     message: publicationsHealthSuccessMessage,
     wizardsResults,
   } = publicationsHealth || {};
-  const { bundleId, mode, doZoom = false } = props.match.params;
+  const { bundleId, mode } = props.match.params;
   const { showMetadataFile } = bundleEditMetadata;
   const columnConfig = createColumnConfig(mode);
   const getManifestResourceData = makeGetManifestResourcesData();
@@ -517,8 +513,6 @@ function mapStateToProps(state, props) {
   const selectedIdsInputConverters =
     selectedMappers.input || Object.keys(mapperReport);
   return {
-    open: Boolean(bundleId),
-    doZoom: (doZoom === 'true'),
     loading: loading || fetchingMetadata || !isStoreMode,
     progress,
     bundleId,
@@ -1440,7 +1434,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   render() {
     const {
-      classes, open, origBundle = {}, mode, doZoom,
+      classes, origBundle = {}, mode,
       publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading
     } = this.props;
     const { openDrawer } = this.state;
@@ -1449,60 +1443,56 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const modeUi = this.modeUi();
     const isModifyFilesMode = this.isModifyFilesMode();
     return (
-      <Conditionally showHOC={doZoom}>
-        <Zoom in={open}>
-          <div>
-            <EntryAppBar
-              origBundle={origBundle}
-              openDrawer={openDrawer}
-              mode={mode}
-              modeUi={modeUi}
-              selectedItemsForCopy={selectedItemsForCopy}
-              itemsTypeForCopy="resources"
-              actionButton={this.renderOkOrPasteResourcesButton()}
-              handleDrawerOpen={this.handleDrawerOpen}
-              handleClose={this.handleClose}
-            />
-            <EntryDrawer
-              activeBundle={origBundle}
-              openDrawer={openDrawer}
-              handleDrawerClose={this.handleDrawerClose}
-            />
-            <main
-              className={classNames(classes.content, {
-                [classes.contentShift]: openDrawer,
-              })}
-            >
-              {isModifyFilesMode && publicationsHealthMessage &&
-                <Toolbar className={classes.errorBar}>
-                  <Typography variant="subtitle1" color="inherit">
-                    {publicationsHealthMessage}
-                  </Typography>
-                  <div style={{ paddingLeft: '10px' }} />
-                  <Button
-                    key="btnGoEdit"
-                    color="secondary"
-                    variant="contained"
-                    onClick={this.handleGoFixError}
-                  >Go Fix
-                  </Button>
-                </Toolbar>
-              }
-              {!loading && isModifyFilesMode && publicationsHealthSuccessMessage &&
-                <Card className={classes.successBar} raised>
-                  <CardContent>
-                    <Typography key="pubhealthSuccessMessage" variant="subtitle1" color="inherit" gutterBottom>
-                      {publicationsHealthSuccessMessage}
-                    </Typography>
-                    {this.renderWizardsResults()}
-                  </CardContent>
-                </Card>
-              }
-              {this.renderTable()}
-            </main>
-          </div>
-        </Zoom>
-      </Conditionally>
+      <div>
+        <EntryAppBar
+          origBundle={origBundle}
+          openDrawer={openDrawer}
+          mode={mode}
+          modeUi={modeUi}
+          selectedItemsForCopy={selectedItemsForCopy}
+          itemsTypeForCopy="resources"
+          actionButton={this.renderOkOrPasteResourcesButton()}
+          handleDrawerOpen={this.handleDrawerOpen}
+          handleClose={this.handleClose}
+        />
+        <EntryDrawer
+          activeBundle={origBundle}
+          openDrawer={openDrawer}
+          handleDrawerClose={this.handleDrawerClose}
+        />
+        <main
+          className={classNames(classes.content, {
+            [classes.contentShift]: openDrawer,
+          })}
+        >
+          {isModifyFilesMode && publicationsHealthMessage &&
+            <Toolbar className={classes.errorBar}>
+              <Typography variant="subtitle1" color="inherit">
+                {publicationsHealthMessage}
+              </Typography>
+              <div style={{ paddingLeft: '10px' }} />
+              <Button
+                key="btnGoEdit"
+                color="secondary"
+                variant="contained"
+                onClick={this.handleGoFixError}
+              >Go Fix
+              </Button>
+            </Toolbar>
+          }
+          {!loading && isModifyFilesMode && publicationsHealthSuccessMessage &&
+            <Card className={classes.successBar} raised>
+              <CardContent>
+                <Typography key="pubhealthSuccessMessage" variant="subtitle1" color="inherit" gutterBottom>
+                  {publicationsHealthSuccessMessage}
+                </Typography>
+                {this.renderWizardsResults()}
+              </CardContent>
+            </Card>
+          }
+          {this.renderTable()}
+        </main>
+      </div>
     );
   }
 }

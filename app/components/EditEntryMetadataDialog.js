@@ -10,7 +10,6 @@ import Checkbox from '@material-ui/core/Checkbox';
 import NavigateNext from '@material-ui/icons/NavigateNext';
 import Save from '@material-ui/icons/Save';
 import classNames from 'classnames';
-import Zoom from '@material-ui/core/Zoom';
 import Tooltip from '@material-ui/core/Tooltip';
 import { updateBundle } from '../actions/bundle.actions';
 import { closeEditMetadata, saveFieldValuesForActiveForm } from '../actions/bundleEditMetadata.actions';
@@ -22,11 +21,10 @@ import EntryAppBar from '../components/EntryAppBar';
 import EntryDrawer from '../components/EntryDrawer';
 import PasteButton from './PasteButton';
 import { ux } from '../utils/ux';
-import Conditionally from '../components/Conditionally';
 
 function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundles, clipboard } = state;
-  const { bundleId, doZoom = false } = props.match.params;
+  const { bundleId } = props.match.params;
   const { selectedItemsToPaste } = clipboard;
   const {
     currentFormWithErrors, nextFormWithErrors, formStructure
@@ -44,7 +42,6 @@ function mapStateToProps(state, props) {
   } = bundleEditMetadata;
   return {
     open: Boolean(bundleId || false),
-    doZoom: (doZoom === 'true'),
     bundleId,
     selectedBundle,
     requestingSaveMetadata,
@@ -91,7 +88,6 @@ const materialStyles = theme => ({
 });
 
 type Props = {
-  open: boolean,
   bundleId: string,
   selectedBundle: {},
   formsErrors: {},
@@ -107,8 +103,7 @@ type Props = {
   requestingSaveMetadata: boolean,
   formStructure: {},
   selectedItemsToPaste: ?{},
-  pasteItems: () => {},
-  doZoom: boolean,
+  pasteItems: () => {}
 };
 
 class EditEntryMetadataDialog extends PureComponent<Props> {
@@ -241,7 +236,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
 
   render() {
     const {
-      classes, open, selectedBundle = {}, bundleId, doZoom
+      classes, selectedBundle = {}, bundleId
     } = this.props;
     const { sectionSelections, openDrawer } = this.state;
     const sectionsSelected = Object.entries(sectionSelections)
@@ -249,53 +244,49 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     const areAllSelected = this.getAreAllSectionsSelected();
     const modeUi = this.modeUi();
     return (
-      <Conditionally showHOC={doZoom}>
-        <Zoom in={open}>
-          <div>
-            <EntryAppBar
-              origBundle={selectedBundle}
-              openDrawer={openDrawer}
-              mode="metadata"
-              modeUi={modeUi}
-              selectedItemsForCopy={sectionsSelected}
-              itemsTypeForCopy="metadata sections"
-              actionButton={this.conditionallyRenderPrimaryActionButton()}
-              handleDrawerOpen={this.handleDrawerOpen}
-              handleClose={this.handleClose}
-            />
-            <EntryDrawer
-              activeBundle={selectedBundle}
-              bundleId={selectedBundle.id}
-              openDrawer={openDrawer}
-              handleDrawerClose={this.handleDrawerClose}
-            />
-            <main
-              className={classNames(classes.content, {
-                [classes.contentShift]: openDrawer,
-              })}
-            >
-              <FormControlLabel
-                style={{ paddingTop: '8px', paddingLeft: '55px' }}
-                control={
-                  <Checkbox
-                    onClick={this.handleClickSelectAll}
-                    value="selectAllSectionCheckboxes"
-                    checked={areAllSelected}
-                    indeterminate={sectionsSelected.length > 0 && !areAllSelected}
-                  />
-                }
-                label={`Selected Sections (${sectionsSelected.length})`}
+      <div>
+        <EntryAppBar
+          origBundle={selectedBundle}
+          openDrawer={openDrawer}
+          mode="metadata"
+          modeUi={modeUi}
+          selectedItemsForCopy={sectionsSelected}
+          itemsTypeForCopy="metadata sections"
+          actionButton={this.conditionallyRenderPrimaryActionButton()}
+          handleDrawerOpen={this.handleDrawerOpen}
+          handleClose={this.handleClose}
+        />
+        <EntryDrawer
+          activeBundle={selectedBundle}
+          bundleId={selectedBundle.id}
+          openDrawer={openDrawer}
+          handleDrawerClose={this.handleDrawerClose}
+        />
+        <main
+          className={classNames(classes.content, {
+            [classes.contentShift]: openDrawer,
+          })}
+        >
+          <FormControlLabel
+            style={{ paddingTop: '8px', paddingLeft: '55px' }}
+            control={
+              <Checkbox
+                onClick={this.handleClickSelectAll}
+                value="selectAllSectionCheckboxes"
+                checked={areAllSelected}
+                indeterminate={sectionsSelected.length > 0 && !areAllSelected}
               />
-              <EditMetadataStepper
-                bundleId={bundleId}
-                myStructurePath=""
-                sectionSelections={sectionSelections}
-                onClickSectionSelection={this.handleClickSectionSelection}
-              />
-            </main>
-          </div>
-        </Zoom>
-      </Conditionally>
+            }
+            label={`Selected Sections (${sectionsSelected.length})`}
+          />
+          <EditMetadataStepper
+            bundleId={bundleId}
+            myStructurePath=""
+            sectionSelections={sectionSelections}
+            onClickSectionSelection={this.handleClickSectionSelection}
+          />
+        </main>
+      </div>
     );
   }
 }

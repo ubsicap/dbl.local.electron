@@ -162,18 +162,18 @@ function getUserMetadataOverrides(whoami) {
   };
 }
 
-export function openEditMetadata(_bundleId, _moveNextStep, _doZoom) {
+export function openEditMetadata(_bundleId, _moveNextStep) {
   return async (dispatch, getState) => {
     const bundleToEdit = bundleService.getCurrentBundleState(getState, _bundleId);
     dispatch(request(bundleToEdit, _moveNextStep));
     if (bundleToEdit.mode === 'create') {
-      dispatch(navigate(bundleToEdit, _moveNextStep, _doZoom));
+      dispatch(navigate(bundleToEdit, _moveNextStep));
       return;
     }
     try {
       try {
         const bundleReady = bundleService.getCurrentBundleState(getState, _bundleId);
-        dispatch(navigate(bundleReady, _moveNextStep, _doZoom));
+        dispatch(navigate(bundleReady, _moveNextStep));
       } catch (error) {
         dispatch(failure(_bundleId, `error ${error} while waiting for create mode`, _moveNextStep));
       }
@@ -200,11 +200,11 @@ export function openEditMetadata(_bundleId, _moveNextStep, _doZoom) {
       moveNextStep
     };
   }
-  function navigate(bundleToEdit, moveNextStep, doZoom) {
+  function navigate(bundleToEdit, moveNextStep) {
     const { id: bundleId } = bundleToEdit;
     const editMetadataPageWithBundleId = utilities.buildRouteUrl(
       navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA,
-      { bundleId, doZoom }
+      { bundleId }
     );
     history.push(editMetadataPageWithBundleId);
     return success(bundleToEdit, moveNextStep);
