@@ -8,11 +8,12 @@ import { bundleService } from '../services/bundle.service';
 import editMetadataService from '../services/editMetadata.service';
 import { bundleActions } from '../actions/bundle.actions';
 import { utilities } from '../utils/utilities';
+import { browserWindowService } from '../services/browserWindow.service';
 
 const electron = require('electron');
 
 const { remote = {} } = electron;
-const { BrowserWindow, Menu } = remote;
+const { app } = remote;
 
 export const bundleEditMetadataActions = {
   openEditMetadata,
@@ -142,8 +143,6 @@ export function setArchivistStatusOverrides(_bundleId) {
   }
 }
 
-const { app } = require('electron').remote;
-
 function getAppMetadataOverrides(formStructure) {
   const { id: identificationStatusFormKey } = formStructure.find(section => section.id.endsWith('dentification'));
   const bundleProducerDefault = `${app.getName()}/${app.getVersion()}`;
@@ -225,99 +224,6 @@ export function closeEditMetadata(bundleId) {
   };
 }
 
-function buildBrowserTemplate(browserWin) {
-  // console.log('menu/buildDefaultTemplate');
-  // console.log(loginLabel);
-  const templateBrowser = [
-    {
-      label: '&File',
-      submenu: [{
-        label: 'Save To',
-        accelerator: 'Ctrl+S',
-        click: () => (this.navigate())
-      },
-      {
-        label: 'E&xit',
-        accelerator: 'Ctrl+W',
-        click: () => {
-          browserWin.close();
-        }
-      }]
-    },
-    {
-      label: 'Edit',
-      submenu: [
-        { label: 'Undo', accelerator: 'CmdOrCtrl+Z', selector: 'undo:' },
-        { label: 'Redo', accelerator: 'Shift+CmdOrCtrl+Z', selector: 'redo:' },
-        { type: 'separator' },
-        { label: 'Cut', accelerator: 'CmdOrCtrl+X', selector: 'cut:' },
-        { label: 'Copy', accelerator: 'CmdOrCtrl+C', selector: 'copy:' },
-        { label: 'Paste', accelerator: 'CmdOrCtrl+V', selector: 'paste:' },
-        { label: 'Select All', accelerator: 'CmdOrCtrl+A', selector: 'selectAll:' }
-      ]
-    },
-    {
-      label: '&View',
-      submenu: [{
-        label: '&Reload',
-        accelerator: 'Ctrl+R',
-        click: () => {
-          browserWin.webContents.reload();
-        }
-      }, {
-        label: 'Toggle &Full Screen',
-        accelerator: 'F11',
-        click: () => {
-          browserWin.setFullScreen(!browserWin.isFullScreen());
-        }
-      }, {
-        label: 'Toggle &Developer Tools',
-        accelerator: 'Alt+Ctrl+I',
-        click: () => {
-          browserWin.toggleDevTools();
-        }
-      }]
-    },
-    {
-      label: 'Help',
-      submenu: [{
-        label: 'Toggle &Developer Tools',
-        accelerator: 'Shift+CmdOrCtrl+I',
-        click: () => {
-          browserWin.toggleDevTools();
-        }
-      }]
-    }];
-
-  return templateBrowser;
-}
-
-function buildBrowserMenu(browserWin) {
-  const template = buildBrowserTemplate(browserWin);
-  const menu = Menu.buildFromTemplate(template);
-  Menu.setApplicationMenu(menu);
-  return menu;
-}
-
-
-function openInChromeBrowser(url) {
-  const browserWin = new BrowserWindow({
-    width: 800,
-    height: 550,
-    webPreferences: {
-      nativeWindowOpen: true,
-      nodeIntegration: false
-    },
-    show: false
-  });
-  browserWin.loadURL(url);
-  browserWin.on('focus', () => {
-    buildBrowserMenu(browserWin);
-  });
-  browserWin.show();
-  browserWin.focus();
-}
-
 export function openMetadataFile(bundleId) {
   return async (dispatch, getState) => {
     dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_SHOW_REQUEST, bundleId });
@@ -329,7 +235,7 @@ export function openMetadataFile(bundleId) {
       500
     );
     const normalizedFilePath = upath.normalize(metadataFile);
-    openInChromeBrowser(`file:///${normalizedFilePath}`);
+    browserWindowService.openInChromeBrowser(`file:///${normalizedFilePath}`);
   };
 }
 

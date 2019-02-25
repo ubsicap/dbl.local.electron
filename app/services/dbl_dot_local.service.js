@@ -292,6 +292,7 @@ function exportConfigXml(sourceFilePath) {
     browserWindow,
     {
       title: 'Select folder to save config.xml',
+      buttonLabel: 'Save',
       defaultPath,
       filters: [
         { name: 'XML files', extensions: ['xml'] },
