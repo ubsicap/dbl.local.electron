@@ -1,5 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
+import upath from 'upath';
 
 const electron = require('electron');
 
@@ -9,7 +10,7 @@ const {
 } = remote;
 
 export const browserWindowService = {
-  openInChromeBrowser
+  openFileInChromeBrowser
 };
 
 export default browserWindowService;
@@ -117,8 +118,9 @@ function buildBrowserMenu(browserWin) {
   return menu;
 }
 
-
-function openInChromeBrowser(url, webPreferences = {}) {
+function openFileInChromeBrowser(filePath, hotReload = false, webPreferences = {}) {
+  const normalizedFilePath = upath.normalize(filePath);
+  const url = `file:///${normalizedFilePath}`;
   const browserWin = new BrowserWindow({
     width: 800,
     height: 550,
@@ -133,6 +135,16 @@ function openInChromeBrowser(url, webPreferences = {}) {
   browserWin.on('focus', () => {
     buildBrowserMenu(browserWin);
   });
+  browserWin.on('closed', () => {
+    fs.unwatchFile(filePath);
+  });
   browserWin.show();
   browserWin.focus();
+  if (hotReload) {
+    fs.watchFile(filePath, (curr, prev) => {
+      if (curr.mtime !== prev.mtime) {
+        browserWin.webContents.reload();
+      }
+    });
+  }
 }

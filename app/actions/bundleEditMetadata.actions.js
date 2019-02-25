@@ -234,8 +234,7 @@ export function openMetadataFile(bundleId) {
       60000,
       500
     );
-    const normalizedFilePath = upath.normalize(metadataFile);
-    browserWindowService.openInChromeBrowser(`file:///${normalizedFilePath}`);
+    browserWindowService.openFileInChromeBrowser(metadataFile, true);
   };
 }
 
