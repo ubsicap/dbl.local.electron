@@ -1,11 +1,10 @@
-import path from 'path';
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
 import { bundleService } from '../services/bundle.service';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { utilities } from '../utils/utilities';
-import { openEditMetadata } from './bundleEditMetadata.actions';
+import { openEditMetadata, saveMetadatFileToTempBundleFolder } from './bundleEditMetadata.actions';
 import { bundleActions } from './bundle.actions';
 
 export const bundleManageResourceActions = {
@@ -209,6 +208,7 @@ export function addManifestResources(_bundleId, _fileToContainerPaths, inputMapp
     await updatePublications(getState, _bundleId);
     await bundleService.waitStopCreateMode(_bundleId);
     dispatch(done(_bundleId));
+    dispatch(saveMetadatFileToTempBundleFolder(_bundleId));
     /*
     await Promise.all(Object.entries(_fileToContainerPaths)
       .map(async ([filePath, containerPath]) => {
@@ -269,6 +269,7 @@ export function deleteManifestResources(_bundleId, _uris) {
       await updatePublications(getState, _bundleId);
       await bundleService.waitStopCreateMode(_bundleId);
       dispatch(success(_bundleId, _uris));
+      dispatch(saveMetadatFileToTempBundleFolder(_bundleId));
     } catch (error) {
       dispatch(failure(_bundleId, error));
     }

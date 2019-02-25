@@ -1,5 +1,4 @@
 import log from 'electron-log';
-import upath from 'upath';
 import waitUntil from 'node-wait-until';
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 import { history } from '../store/configureStore';
@@ -27,7 +26,8 @@ export const bundleEditMetadataActions = {
   saveMetadata,
   saveFieldValuesForActiveForm,
   reloadActiveForm,
-  setArchivistStatusOverrides
+  setArchivistStatusOverrides,
+  saveMetadatFileToTempBundleFolder
 };
 
 export default bundleEditMetadataActions;
@@ -238,7 +238,7 @@ export function openMetadataFile(bundleId) {
   };
 }
 
-function saveMetadatFileToTempBundleFolder(bundleId) {
+export function saveMetadatFileToTempBundleFolder(bundleId) {
   return async dispatch => {
     dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_REQUEST, bundleId });
     const metadataFile = await bundleService.saveMetadataToTempFolder(bundleId);
