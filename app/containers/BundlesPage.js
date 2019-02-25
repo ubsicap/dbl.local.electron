@@ -3,7 +3,7 @@ import { Set } from 'immutable';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import { compose } from 'recompose';
-import Button from '@material-ui/core/Button';
+import Fab from '@material-ui/core/Fab';
 import AddIcon from '@material-ui/icons/Add';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -11,7 +11,6 @@ import Tooltip from '@material-ui/core/Tooltip';
 import Bundles from '../components/Bundles';
 import MenuAppBar from '../components/MenuAppBar';
 import DblDotLocalAppBar from '../components/DblDotLocalAppBar';
-import { ux } from '../utils/ux';
 import { createNewBundle } from '../actions/bundle.actions';
 import { setEntriesFilters, setStarredEntries } from '../actions/bundleFilter.actions';
 import { workspaceUserSettingsStoreServices } from '../services/workspaces.service';
@@ -90,17 +89,16 @@ class BundlesPage extends PureComponent<Props> {
         <Bundles />
         <div style={{ paddingBottom: '100px' }} />
         <Tooltip title="Create new...">
-          <Button
+          <Fab
             aria-owns={anchorEl ? 'simple-menu' : null}
             aria-haspopup="true"
             onClick={this.handleClick}
-            variant="fab"
             color="primary"
             aria-label="Add"
             className={classes.fab}
           >
             <AddIcon />
-          </Button>
+          </Fab>
         </Tooltip>
         <Menu
           id="simple-menu"
