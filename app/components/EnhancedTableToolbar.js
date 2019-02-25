@@ -7,7 +7,7 @@ import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
 import InfoIcon from '@material-ui/icons/Info';
 import FilterListIcon from '@material-ui/icons/FilterList';
-import Button from '@material-ui/core/Button';
+import Fab from '@material-ui/core/Fab';
 import AddIcon from '@material-ui/icons/Add';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -103,17 +103,16 @@ class EnhancedTableToolbar extends Component<Props> {
           {handleAddByFile ? (
             <div>
               <Tooltip title="Add resource(s)">
-                <Button
+                <Fab
                   aria-owns={anchorEl ? 'simple-menu' : null}
                   aria-haspopup="true"
                   onClick={this.handleClick}
-                  variant="fab"
                   color="secondary"
                   aria-label="Add"
                   className={classes.button}
                 >
                   <AddIcon />
-                </Button>
+                </Fab>
               </Tooltip>
               <Menu
                 id="simple-menu"

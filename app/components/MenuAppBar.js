@@ -64,6 +64,7 @@ type Props = {
     clipboard: ?{},
     workspaceFullPath?: string,
     userEmail?: string,
+    title?: string,
     updateSearchInput: () => {}
 };
 
@@ -156,7 +157,7 @@ class MenuAppBar extends React.PureComponent {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" color="inherit" className={classes.flex}>
-            nathanael
+            {this.props.title}
           </Typography>
           {showSearch &&
           <div>
@@ -221,7 +222,8 @@ MenuAppBar.defaultProps = {
   showSearch: false,
   showClipboard: false,
   workspaceFullPath: undefined,
-  userEmail: undefined
+  userEmail: undefined,
+  title: 'nathanael'
 };
 
 export default compose(

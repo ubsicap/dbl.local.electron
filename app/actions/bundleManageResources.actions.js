@@ -1,11 +1,10 @@
-import path from 'path';
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
 import { bundleService } from '../services/bundle.service';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { utilities } from '../utils/utilities';
-import { openEditMetadata } from './bundleEditMetadata.actions';
+import { openEditMetadata, saveMetadatFileToTempBundleFolder } from './bundleEditMetadata.actions';
 import { bundleActions } from './bundle.actions';
 
 export const bundleManageResourceActions = {
@@ -19,6 +18,7 @@ export const bundleManageResourceActions = {
 
 export function openResourceManager(_bundleId, _mode) {
   return async (dispatch, getState) => {
+    await bundleService.waitStopCreateMode(_bundleId);
     dispatch(bundleActions.updateBundle(_bundleId, true));
     const { addedByBundleIds } = getState().bundles;
     const bundleId = _bundleId;
@@ -33,7 +33,10 @@ export function openResourceManager(_bundleId, _mode) {
   }
   function navigate(bundleId, mode) {
     const manageResourcesUrl =
-      utilities.buildRouteUrl(navigationConstants.NAVIGATION_BUNDLE_MANAGE_RESOURCES, { bundleId, mode });
+      utilities.buildRouteUrl(
+        navigationConstants.NAVIGATION_BUNDLE_MANAGE_RESOURCES,
+        { bundleId, mode }
+      );
     history.push(manageResourcesUrl);
     return success(bundleId, mode);
   }
@@ -107,7 +110,11 @@ export function checkPublicationsHealth(_bundleId) {
         error: 'NO_PUBLICATION_INSTANCE',
         publications: [],
         errorMessage: `${msgToAddOrRemoveResources}, first add a publication to Publications`,
-        goFix: () => dispatch(openEditMetadata(_bundleId, { formKey: '/publications/publication' }))
+        goFix: () => dispatch(openEditMetadata(
+          _bundleId,
+          { formKey: '/publications/publication' },
+          false
+        ))
       });
     }
     const pubsMissingCanonSpecs = publicationInstanceIds.filter(pubId =>
@@ -157,7 +164,11 @@ export function checkPublicationsHealth(_bundleId) {
       error: 'MISSING_CANON_SPECS',
       publications: pubsMissingCanonSpecs,
       errorMessage: `${msgToAddOrRemoveResources}, first add Canon Specification (ESPECIALLY Canon Components) to the following publications: ${pubsMissingCanonSpecs}`,
-      goFix: () => dispatch(openEditMetadata(_bundleId, { formKey: `/publications/publication/${p1}/canonSpec` }))
+      goFix: () => dispatch(openEditMetadata(
+        _bundleId,
+        { formKey: `/publications/publication/${p1}/canonSpec` },
+        false
+      ))
     };
   }
 }
@@ -197,6 +208,7 @@ export function addManifestResources(_bundleId, _fileToContainerPaths, inputMapp
     await updatePublications(getState, _bundleId);
     await bundleService.waitStopCreateMode(_bundleId);
     dispatch(done(_bundleId));
+    dispatch(saveMetadatFileToTempBundleFolder(_bundleId));
     /*
     await Promise.all(Object.entries(_fileToContainerPaths)
       .map(async ([filePath, containerPath]) => {
@@ -257,6 +269,7 @@ export function deleteManifestResources(_bundleId, _uris) {
       await updatePublications(getState, _bundleId);
       await bundleService.waitStopCreateMode(_bundleId);
       dispatch(success(_bundleId, _uris));
+      dispatch(saveMetadatFileToTempBundleFolder(_bundleId));
     } catch (error) {
       dispatch(failure(_bundleId, error));
     }

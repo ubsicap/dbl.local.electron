@@ -68,7 +68,7 @@ export function bundleEditMetadata(state = initialState, action) {
       return { ...state, moveNext };
     }
     case bundleEditMetadataConstants.METADATA_FILE_SHOW_REQUEST: {
-      return { ...state, requestingShowMetadataFile: true };
+      return { ...state, requestingShowMetadataFile: true, showMetadataFile: undefined };
     }
     case bundleEditMetadataConstants.METADATA_FILE_SAVED: {
       if (state.requestingShowMetadataFile) {

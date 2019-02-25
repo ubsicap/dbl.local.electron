@@ -79,7 +79,10 @@ app.on('ready', async () => {
   mainWindow = new BrowserWindow({
     show: false,
     width: 1024,
-    height: 728
+    height: 728,
+    webPreferences: {
+      nativeWindowOpen: true
+    }
   });
 
   mainWindow.loadURL(`file://${__dirname}/app.html#${navigationConstants.NAVIGATION_WORKSPACES}`);
@@ -93,11 +96,13 @@ app.on('ready', async () => {
     mainWindow.show();
     mainWindow.focus();
     const autoUpdater = autoUpdaterServices.setupAutoUpdater(mainWindow);
-    const menuBuilder = new MenuBuilder(mainWindow);
-    menuBuilder.buildMenu();
-
     autoUpdater.logger.info('Request checkForUpdatesAndNotify');
     autoUpdater.checkForUpdatesAndNotify();
+  });
+
+  mainWindow.on('focus', () => {
+    const menuBuilder = new MenuBuilder(mainWindow);
+    menuBuilder.buildMainMenu();
   });
 
   mainWindow.on('closed', () => {

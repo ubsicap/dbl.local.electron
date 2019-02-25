@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import fs from 'fs-extra';
 import sort from 'fast-sort';
 import upath from 'upath';
-import md5File from 'md5-file/promise';
 import recursiveReadDir from 'recursive-readdir';
 import { List, Set } from 'immutable';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -12,21 +11,13 @@ import { withStyles } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import Button from '@material-ui/core/Button';
-import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
-import Tooltip from '@material-ui/core/Tooltip';
-import FolderOpen from '@material-ui/icons/FolderOpen';
-import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import Delete from '@material-ui/icons/Delete';
-import CloseIcon from '@material-ui/icons/Close';
 import CheckIcon from '@material-ui/icons/Check';
-import OpenInNew from '@material-ui/icons/OpenInNew';
-import Link from '@material-ui/icons/Link';
 import FileDownload from '@material-ui/icons/CloudDownloadOutlined';
 import { createSelector } from 'reselect';
 import classNames from 'classnames';
-import Zoom from '@material-ui/core/Zoom';
 import path from 'path';
 import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
@@ -35,26 +26,23 @@ import { closeResourceManager,
 } from '../actions/bundleManageResources.actions';
 import { selectItemsToPaste, pasteItems, clearClipboard } from '../actions/clipboard.actions';
 import { downloadResources, removeResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
-import { openMetadataFile } from '../actions/bundleEditMetadata.actions';
 import EnhancedTable from './EnhancedTable';
 import EnhancedTableToolbar from './EnhancedTableToolbar';
 import { utilities } from '../utils/utilities';
 import { bundleService } from '../services/bundle.service';
 import { ux } from '../utils/ux';
 import ConfirmButton from '../components/ConfirmButton';
-import CopyForPasteButton from './CopyForPasteButton';
 import PasteButton from './PasteButton';
 import MapperTable from '../components/MapperTable';
-import EntryTitle from '../components/EntryTitle';
+import EntryAppBar from '../components/EntryAppBar';
+import EntryDrawer from '../components/EntryDrawer';
 
 const { dialog } = require('electron').remote;
-const { shell } = require('electron');
 
 const NEED_CONTAINER = '/?';
 
 type Props = {
   classes: {},
-  open: boolean,
   loading: boolean,
   progress: number,
   bundleId: ?string,
@@ -76,10 +64,9 @@ type Props = {
   mapperInputData: ?{},
   selectedIdsInputConverters: ?{},
   goFixPublications: ?() => {},
-  entryPageUrl: string,
   selectedItemsToPaste: ?{},
+  theme: {},
   closeResourceManager: () => {},
-  openMetadataFile: () => {},
   getManifestResources: () => {},
   getEntryRevisions: () => {},
   downloadResources: () => {},
@@ -289,10 +276,14 @@ const secondarySorts = ['container', 'name', 'status'];
 
 function createColumnConfig(mode) {
   if (mode === 'revisions') {
-    const { id, href, localBundle, disabled, ...columns } = createRevisionData();
+    const {
+      id, href, localBundle, disabled, ...columns
+    } = createRevisionData();
     return ux.mapColumns(columns, isNumeric, getLabel);
   }
-  const { id, uri, disabled, checksum, ...columns } = createResourceData(null, {}, {});
+  const {
+    id, uri, disabled, checksum, ...columns
+  } = createResourceData(null, {}, {});
   return ux.mapColumns(columns, isNumeric, getLabel);
 }
 
@@ -321,7 +312,12 @@ const makeGetManifestResourcesData = () => createSelector(
     );
     const { rawManifestResources, storedFiles } = bundleManifestResources;
     const { previousEntryRevision, bundlePreviousRevision, previousManifestResources } =
-      getPreviousRevisionManifestResources(bundleId, bundlesById, manifestResources, allEntryRevisions);
+      getPreviousRevisionManifestResources(
+        bundleId,
+        bundlesById,
+        manifestResources,
+        allEntryRevisions
+      );
     const bundleManifestResourcesData = Object.values(rawManifestResources)
       .map(r => createResourceData(
         bundleId[bundlesById],
@@ -379,7 +375,12 @@ function getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions) {
   return { bundlePreviousRevision, previousEntryRevision };
 }
 
-function getPreviousRevisionManifestResources(bundleId, bundlesById, manifestResources, allEntryRevisions) {
+function getPreviousRevisionManifestResources(
+  bundleId,
+  bundlesById,
+  manifestResources,
+  allEntryRevisions
+) {
   const { previousEntryRevision, bundlePreviousRevision } =
     getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions);
   const previousManifestResources = bundlePreviousRevision ?
@@ -391,19 +392,12 @@ function getPreviousRevisionManifestResources(bundleId, bundlesById, manifestRes
 const makeGetPrevManifestResources = () => createSelector(
   [getAllManifestResources, getBundleId, getBundlesById, getAllEntryRevisions],
   (manifestResources, bundleId, bundlesById, allEntryRevisions) =>
-    getPreviousRevisionManifestResources(bundleId, bundlesById, manifestResources, allEntryRevisions)
-);
-
-const makeGetBundlePrevRevision = () => createSelector(
-  [getAllEntryRevisions, getBundleId, getBundlesById],
-  (allEntryRevisions, bundleId, bundlesById) =>
-    getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions)
-);
-
-const makeGetPrevEntryRevision = () => createSelector(
-  [getAllEntryRevisions, getBundleId, getBundlesById],
-  (allEntryRevisions, bundleId, bundlesById) =>
-    getPrevEntryRevision(bundlesById[bundleId], allEntryRevisions)
+    getPreviousRevisionManifestResources(
+      bundleId,
+      bundlesById,
+      manifestResources,
+      allEntryRevisions
+    )
 );
 
 /*
@@ -486,20 +480,6 @@ const makeGetEntryRevisionsData = () => createSelector(
   }
 );
 
-const getDblBaseUrl = (state) => state.dblDotLocalConfig.dblBaseUrl;
-const makeGetEntryPageUrl = () => createSelector(
-  [getDblBaseUrl, getBundlesById, getBundleId],
-  (dblBaseUrl, bundlesById, bundleId) => {
-    const origBundle = bundlesById[bundleId];
-    const { dblId, revision, parent } = origBundle;
-    const revisionNum = bundleService.getRevisionOrParentRevision(dblId, revision, parent);
-    const revisionQuery = revisionNum ? `&revision=${revisionNum}` : '';
-    const url = `${dblBaseUrl}/entry?id=${dblId}${revisionQuery}`;
-    return url;
-  }
-);
-
-
 function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundleManageResources, clipboard } = state;
   const {
@@ -522,7 +502,6 @@ function mapStateToProps(state, props) {
   const bundlesById = getBundlesById(state);
   const getEntryRevisionsData = makeGetEntryRevisionsData();
   const origBundle = bundleId ? bundlesById[bundleId] : {};
-  const getEntryPageUrl = makeGetEntryPageUrl();
   const {
     previousEntryRevision,
     bundlePreviousRevision,
@@ -534,7 +513,6 @@ function mapStateToProps(state, props) {
   const selectedIdsInputConverters =
     selectedMappers.input || Object.keys(mapperReport);
   return {
-    open: Boolean(bundleId),
     loading: loading || fetchingMetadata || !isStoreMode,
     progress,
     bundleId,
@@ -556,14 +534,12 @@ function mapStateToProps(state, props) {
     goFixPublications,
     publicationsHealthSuccessMessage,
     wizardsResults,
-    entryPageUrl: getEntryPageUrl(state, props),
     selectedItemsToPaste
   };
 }
 
 const mapDispatchToProps = {
   closeResourceManager,
-  openMetadataFile,
   getManifestResources,
   getEntryRevisions,
   downloadResources,
@@ -581,9 +557,7 @@ const mapDispatchToProps = {
 
 const materialStyles = theme => ({
   ...ux.getDblRowStyles(theme),
-  appBar: {
-    position: 'sticky'
-  },
+  ...ux.getEntryDrawerStyles(theme),
   errorBar: {
     color: theme.palette.secondary.light,
   },
@@ -591,7 +565,7 @@ const materialStyles = theme => ({
     color: theme.palette.primary.light,
   },
   toolBar: {
-    paddingLeft: '0px',
+    paddingLeft: '10px',
   },
   flex: {
     flex: 1,
@@ -627,7 +601,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   state = {
     selectedIds: [],
     addedFilePaths: [],
-    selectAll: ['download'].includes(this.props.mode)
+    selectAll: ['download'].includes(this.props.mode),
+    openDrawer: false,
   }
 
   componentDidMount() {
@@ -654,9 +629,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   componentDidUpdate(prevProps) {
     if (this.state.closing) {
       return;
-    }
-    if (this.props.showMetadataFile && !prevProps.showMetadataFile) {
-      shell.openExternal(this.props.showMetadataFile);
     }
     if (this.props.progress !== prevProps.progress &&
       (this.props.progress === 100)) {
@@ -699,6 +671,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       )();
     }
   }
+
+  handleDrawerOpen = () => {
+    this.setState({ openDrawer: true });
+  };
+
+  handleDrawerClose = () => {
+    this.setState({ openDrawer: false });
+  };
 
   updateTableAsIs(tableData) {
     this.setState({ tableData });
@@ -819,13 +799,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     };
   };
 
-  handleCopyFiles = () => {
-    const { storedResources } = this.getSelectedResourcesByStatus();
-    const uris = storedResources.map(r => r.uri);
-    this.props.selectItemsToPaste(this.props.bundleId, uris, 'resources');
-    this.handleClose();
-  }
-
   handlePasteResources = () => {
     this.props.pasteItems(this.props.bundleId);
   }
@@ -880,10 +853,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.setState({ closing: true });
     this.props.closeResourceManager(this.props.bundleId);
   };
-
-  handleReview = () => {
-    this.props.openMetadataFile(this.props.bundleId);
-  }
 
   handleGoFixError = () => {
     this.props.goFixPublications();
@@ -1187,7 +1156,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   modeUi = () => {
     const { mode, classes } = this.props;
-    const title = 'Manage resources';
+    const title = 'Resources';
     switch (mode) {
       case 'download': {
         const { OkButtonLabel, OkButtonIcon, OkButtonProps } =
@@ -1421,10 +1390,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
   }
 
-  onOpenDBLEntryLink = (event) => {
-    utilities.onOpenLink(this.props.entryPageUrl)(event);
-  }
-
   renderOkOrPasteResourcesButton = () => {
     const {
       classes, loading, progress, bundleId, selectedItemsToPaste, isOkToAddFiles
@@ -1445,8 +1410,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           variant="contained"
           onClick={this.handlePasteResources}
           disabled={urisToPaste.length === 0}
-          itemsToPaste={urisToPaste}
-          itemsType={itemsType}
+          selectedItemsToPaste={selectedItemsToPaste}
         />
       );
     }
@@ -1470,52 +1434,37 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   render() {
     const {
-      classes, open, origBundle = {}, mode,
+      classes, origBundle = {}, mode,
       publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading
     } = this.props;
+    const { openDrawer } = this.state;
     const { storedResources } = this.getSelectedResourcesByStatus();
-    const { displayAs = {} } = origBundle;
-    const { revision } = displayAs;
+    const selectedItemsForCopy = storedResources.map(r => r.uri);
     const modeUi = this.modeUi();
     const isModifyFilesMode = this.isModifyFilesMode();
-    const { status, parent, dblId } = origBundle;
-    const revBackground =
-      ux.getDblRowBackgroundColor(false, classes, status, revision, parent, dblId);
     return (
-      <Zoom in={open}>
-        <div>
-          <AppBar className={classes.appBar}>
-            <Toolbar className={classes.toolBar}>
-              <IconButton color="inherit" onClick={this.handleClose} aria-label="Close">
-                <CloseIcon />
-              </IconButton>
-              <FolderOpen color="inherit" className={classNames(classes.leftIcon)} />
-              <Typography variant="h6" color="inherit">
-                {modeUi.appBar.title}: {<EntryTitle bundle={origBundle} />}
-              </Typography>
-              <Tooltip title={this.props.entryPageUrl}>
-                <Button onClick={this.onOpenDBLEntryLink} className={classNames(classes.button, revBackground)}>
-                  <Link className={classNames(classes.leftIcon, classes.iconSmall)} />
-                  {revision}
-                </Button>
-              </Tooltip>
-              <div className={classes.flex} />
-              <Button key="btnOpenXml" color="inherit" disable={this.props.showMetadataFile} onClick={this.handleReview}>
-                <OpenInNew className={classNames(classes.leftIcon, classes.iconSmall)} />
-                Review
-              </Button>
-              {mode !== 'revisions' &&
-              <CopyForPasteButton
-                key="btnCopyForPaste"
-                classes={classes}
-                color="inherit"
-                onClick={this.handleCopyFiles}
-                disabled={storedResources.length === 0}
-                selectedItems={storedResources}
-              />}
-              {this.renderOkOrPasteResourcesButton()}
-            </Toolbar>
-          </AppBar>
+      <div>
+        <EntryAppBar
+          origBundle={origBundle}
+          openDrawer={openDrawer}
+          mode={mode}
+          modeUi={modeUi}
+          selectedItemsForCopy={selectedItemsForCopy}
+          itemsTypeForCopy="resources"
+          actionButton={this.renderOkOrPasteResourcesButton()}
+          handleDrawerOpen={this.handleDrawerOpen}
+          handleClose={this.handleClose}
+        />
+        <EntryDrawer
+          activeBundle={origBundle}
+          openDrawer={openDrawer}
+          handleDrawerClose={this.handleDrawerClose}
+        />
+        <main
+          className={classNames(classes.content, {
+            [classes.contentShift]: openDrawer,
+          })}
+        >
           {isModifyFilesMode && publicationsHealthMessage &&
             <Toolbar className={classes.errorBar}>
               <Typography variant="subtitle1" color="inherit">
@@ -1542,14 +1491,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             </Card>
           }
           {this.renderTable()}
-        </div>
-      </Zoom>
+        </main>
+      </div>
     );
   }
 }
 
 export default compose(
-  withStyles(materialStyles, { name: 'ManageBundleManifestResourcesDialog' }),
+  withStyles(materialStyles, { withTheme: true, name: 'ManageBundleManifestResourcesDialog' }),
   connect(
     mapStateToProps,
     mapDispatchToProps

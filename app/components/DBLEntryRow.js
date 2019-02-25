@@ -310,13 +310,13 @@ class DBLEntryRow extends PureComponent<Props> {
 
   onClickManageResources = (mode) => (event) => {
     const { bundleId } = this.props;
-    this.props.openResourceManager(bundleId, mode);
+    this.props.openResourceManager(bundleId, mode, true);
     event.stopPropagation();
   }
 
   onClickEditMetadata = (event) => {
     const { bundleId } = this.props;
-    this.props.openEditMetadata(bundleId);
+    this.props.openEditMetadata(bundleId, undefined, true);
     event.stopPropagation();
   }
 

@@ -1,5 +1,7 @@
 import React from 'react';
 import Badge from '@material-ui/core/Badge';
+import Description from '@material-ui/icons/Description';
+import FolderOpen from '@material-ui/icons/FolderOpen';
 import { lighten } from '@material-ui/core/styles/colorManipulator';
 import { bundleService } from '../services/bundle.service';
 
@@ -7,10 +9,12 @@ export const ux = {
   getFormattedRevision,
   getDblRowStyles,
   getDblRowBackgroundColor,
+  getEntryDrawerStyles,
   mapColumns,
   getHighlightTheme,
   conditionallyRenderBadge,
-  getClipboardTooltip
+  getClipboardTooltip,
+  getModeIcon,
 };
 export default ux;
 
@@ -67,6 +71,68 @@ function getDblRowStyles(theme) {
   });
 }
 
+const drawerWidth = 240;
+
+function getEntryDrawerStyles(theme) {
+  return {
+    root: {
+      display: 'flex',
+    },
+    appBar: {
+      position: 'sticky',
+      transition: theme.transitions.create(['margin', 'width'], {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.leavingScreen,
+      }),
+    },
+    appBarShift: {
+      width: `calc(100% - ${drawerWidth}px)`,
+      marginLeft: drawerWidth,
+      transition: theme.transitions.create(['margin', 'width'], {
+        easing: theme.transitions.easing.easeOut,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+    },
+    menuButton: {
+      marginLeft: 12,
+      marginRight: 20,
+    },
+    hide: {
+      display: 'none',
+    },
+    drawer: {
+      width: drawerWidth,
+      flexShrink: 0,
+    },
+    drawerPaper: {
+      width: drawerWidth,
+    },
+    drawerHeader: {
+      display: 'flex',
+      alignItems: 'center',
+      padding: '0 8px',
+      ...theme.mixins.toolbar,
+      justifyContent: 'flex-end',
+    },
+    content: {
+      flexGrow: 1,
+      padding: theme.spacing.unit * 3,
+      transition: theme.transitions.create('margin', {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.leavingScreen,
+      }),
+      marginLeft: 0,
+    },
+    contentShift: {
+      transition: theme.transitions.create('margin', {
+        easing: theme.transitions.easing.easeOut,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+      marginLeft: drawerWidth,
+    },
+  };
+}
+
 function mapColumns(columns, getIsNumeric, getColumnLabel) {
   return Object.keys(columns)
     .map(c => ({ name: c, type: getIsNumeric(c) ? 'numeric' : 'string', label: getColumnLabel(c) }));
@@ -112,4 +178,8 @@ function getClipboardTooltip(selectedItemsToPaste) {
   } = selectedItemsToPaste;
   const clipboardTooltip = bundleId ? `${itemsType} from (${getMedium()}) ${getDisplayAs().name} ${getDisplayAs().revision}` : '';
   return clipboardTooltip;
+}
+
+function getModeIcon(mode, props) {
+  return mode === 'metadata' ? <Description {...props} /> : <FolderOpen {...props} />;
 }

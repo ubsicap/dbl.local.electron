@@ -1,11 +1,18 @@
 import log from 'electron-log';
+import waitUntil from 'node-wait-until';
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
 import { bundleService } from '../services/bundle.service';
-import { utilities } from '../utils/utilities';
 import editMetadataService from '../services/editMetadata.service';
 import { bundleActions } from '../actions/bundle.actions';
+import { utilities } from '../utils/utilities';
+import { browserWindowService } from '../services/browserWindow.service';
+
+const electron = require('electron');
+
+const { remote = {} } = electron;
+const { app } = remote;
 
 export const bundleEditMetadataActions = {
   openEditMetadata,
@@ -19,14 +26,11 @@ export const bundleEditMetadataActions = {
   saveMetadata,
   saveFieldValuesForActiveForm,
   reloadActiveForm,
-  setArchivistStatusOverrides
+  setArchivistStatusOverrides,
+  saveMetadatFileToTempBundleFolder
 };
 
 export default bundleEditMetadataActions;
-
-function buildEditMetadataUrl(routeUrl, bundleId) {
-  return routeUrl.replace(':bundleId', bundleId);
-}
 
 async function getFormStructure(_bundleId) {
   const response = await bundleService.getFormBundleTree(_bundleId);
@@ -139,8 +143,6 @@ export function setArchivistStatusOverrides(_bundleId) {
   }
 }
 
-const { app } = require('electron').remote;
-
 function getAppMetadataOverrides(formStructure) {
   const { id: identificationStatusFormKey } = formStructure.find(section => section.id.endsWith('dentification'));
   const bundleProducerDefault = `${app.getName()}/${app.getVersion()}`;
@@ -200,11 +202,10 @@ export function openEditMetadata(_bundleId, _moveNextStep) {
   }
   function navigate(bundleToEdit, moveNextStep) {
     const { id: bundleId } = bundleToEdit;
-    const isDemoMode = history.location.pathname === navigationConstants.NAVIGATION_BUNDLES_DEMO;
-    const editMetadataPage = isDemoMode ?
-      navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO :
-      navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA;
-    const editMetadataPageWithBundleId = buildEditMetadataUrl(editMetadataPage, bundleId);
+    const editMetadataPageWithBundleId = utilities.buildRouteUrl(
+      navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA,
+      { bundleId }
+    );
     history.push(editMetadataPageWithBundleId);
     return success(bundleToEdit, moveNextStep);
   }
@@ -224,18 +225,23 @@ export function closeEditMetadata(bundleId) {
 }
 
 export function openMetadataFile(bundleId) {
-  return async dispatch => {
+  return async (dispatch, getState) => {
     dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_SHOW_REQUEST, bundleId });
     dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_REQUEST, bundleId });
-    return dispatch(saveMetadatFileToTempBundleFolder(bundleId));
+    dispatch(saveMetadatFileToTempBundleFolder(bundleId));
+    const metadataFile = await waitUntil(
+      () => getState().bundleEditMetadata.showMetadataFile,
+      60000,
+      500
+    );
+    browserWindowService.openFileInChromeBrowser(metadataFile, true);
   };
 }
 
-function saveMetadatFileToTempBundleFolder(bundleId) {
+export function saveMetadatFileToTempBundleFolder(bundleId) {
   return async dispatch => {
     dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_REQUEST, bundleId });
     const metadataFile = await bundleService.saveMetadataToTempFolder(bundleId);
-    await utilities.sleep(1000); // give time for OS to release the file.
     dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_SAVED, bundleId, metadataFile });
     return metadataFile;
   };
@@ -259,6 +265,8 @@ export function deleteForm(bundleId, formKey, shouldReloadActiveForm) {
     } catch (errorReadable) {
       const error = await errorReadable.text();
       dispatch(failure(error));
+    } finally {
+      await bundleService.waitStopCreateMode(bundleId);
     }
   };
   function request() {
@@ -277,12 +285,7 @@ export function deleteForm(bundleId, formKey, shouldReloadActiveForm) {
 }
 
 function switchBackToBundlesPage() {
-  const isDemoMode =
-    history.location.pathname === navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_DEMO;
-  const bundlesPage = isDemoMode ?
-    navigationConstants.NAVIGATION_BUNDLES_DEMO :
-    navigationConstants.NAVIGATION_BUNDLES;
-  history.push(bundlesPage);
+  history.push(navigationConstants.NAVIGATION_BUNDLES);
 }
 
 export function reloadActiveForm(shouldUpdateBundleFormErrors = false) {
@@ -418,6 +421,7 @@ function tryUpdatePublications(formKey, bundleId) {
       }
     } catch (error) {
       log.error(`publication wizards error: ${error}`);
+    } finally {
       await bundleService.waitStopCreateMode(bundleId);
     }
   };

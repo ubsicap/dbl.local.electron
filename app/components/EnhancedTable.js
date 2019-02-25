@@ -122,7 +122,7 @@ class EnhancedTable extends Component<Props> {
       checkboxColumn.header = header;
     }
     const stringCellProps = { style: { paddingRight: 0 } };
-    const numericCellProps = { numeric: true };
+    const numericCellProps = { align: 'right' };
     const columns = columnConfig.map(c => ({
       name: c.name,
       header: c.label,
