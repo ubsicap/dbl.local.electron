@@ -265,6 +265,8 @@ export function deleteForm(bundleId, formKey, shouldReloadActiveForm) {
     } catch (errorReadable) {
       const error = await errorReadable.text();
       dispatch(failure(error));
+    } finally {
+      await bundleService.waitStopCreateMode(bundleId);
     }
   };
   function request() {
@@ -419,6 +421,7 @@ function tryUpdatePublications(formKey, bundleId) {
       }
     } catch (error) {
       log.error(`publication wizards error: ${error}`);
+    } finally {
       await bundleService.waitStopCreateMode(bundleId);
     }
   };

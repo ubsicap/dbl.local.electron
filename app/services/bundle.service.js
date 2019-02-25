@@ -439,8 +439,12 @@ function getFormFields(bundleId, formKey) {
 async function waitUntilPostFormFields(postFormFieldArgs) {
   const { bundleId } = postFormFieldArgs;
   await bundleService.waitStartCreateMode(bundleId);
-  const response = await postFormFields(postFormFieldArgs);
-  return response;
+  try {
+    const response = await postFormFields(postFormFieldArgs);
+    return response;
+  } finally {
+    await bundleService.waitStopCreateMode(bundleId);
+  }
 }
 
 function postFormFields({
