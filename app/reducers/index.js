@@ -1,6 +1,6 @@
 // @flow
 import { combineReducers } from 'redux';
-import { routerReducer as router } from 'react-router-redux';
+import { connectRouter } from 'connected-react-router';
 import { authentication } from './authentication.reducer';
 import { bundles } from './bundles.reducer';
 import { bundlesFilter } from './bundlesFilter.reducer';
@@ -11,17 +11,17 @@ import { dblDotLocalConfig } from './dblDotLocalConfig.reducer';
 import { alert } from './alert.reducer';
 import { clipboard } from './clipboard.reducer';
 
-const rootReducer = combineReducers({
-  router,
-  dblDotLocalConfig,
-  authentication,
-  bundles,
-  bundlesFilter,
-  bundleEditMetadata,
-  bundleManageResources,
-  bundlesSaveTo,
-  alert,
-  clipboard
-});
-
-export default rootReducer;
+export default function createRootReducer(history: History) {
+  return combineReducers({
+    router: connectRouter(history),
+    dblDotLocalConfig,
+  	authentication,
+	bundles,
+	bundlesFilter,
+	bundleEditMetadata,
+	bundleManageResources,
+	bundlesSaveTo,
+	alert,
+	clipboard
+  });
+}

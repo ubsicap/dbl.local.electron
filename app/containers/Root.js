@@ -2,9 +2,10 @@
 import React, { Component } from 'react';
 import { Provider, connect } from 'react-redux';
 import { ConnectedRouter } from 'react-router-redux';
+import type { Store } from '../reducers/types';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import { createMuiTheme } from '@material-ui/core/styles';
-import Routes from '../routes';
+import Routes from '../Routes';
 import { alertActions } from '../actions';
 import { ipcRendererConstants } from '../constants/ipcRenderer.constants';
 
@@ -17,7 +18,7 @@ const theme = createMuiTheme({
 });
 
 type Props = {
-  store: {},
+  store: Store,
   history: {},
   authentication: {},
   dispatch: () => void
@@ -61,6 +62,7 @@ class Root extends Component<Props> {
   }
 
   render() {
+    const { store, history } = this.props;
     return (
       <MuiThemeProvider theme={theme}>
         <Provider store={this.props.store}>
