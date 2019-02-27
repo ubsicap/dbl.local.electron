@@ -577,6 +577,8 @@ function postResource(bundleId, filePath, bundlePath, mapper) {
       /* 'content-type': 'multipart/form-data' */ // Is set automatically
     }
   };
+  /* fetch does not support posting files as multipart/form-data
+     https://github.com/electron/electron/issues/9684 */
   return rp(options);
 }
 
