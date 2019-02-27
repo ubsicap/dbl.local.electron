@@ -1,3 +1,4 @@
+import log from 'electron-log';
 import traverse from 'traverse';
 import fs from 'fs-extra';
 import path from 'path';
@@ -557,6 +558,7 @@ function postResource(bundleId, filePath, bundlePath, mapper) {
   const filename = path.basename(filePath);
   const uri = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/resource/${bundlePath}`;
   const fullUri = mapper ? `${uri}?mapper=${mapper}` : uri;
+  log.info(`postResource uri: ${fullUri}`);
   const options = {
     method: 'POST',
     uri: fullUri,

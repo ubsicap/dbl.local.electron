@@ -1,3 +1,4 @@
+import log from 'electron-log';
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
@@ -183,6 +184,7 @@ async function updatePublications(getState, bundleId) {
 export function addManifestResources(_bundleId, _fileToContainerPaths, inputMappers) {
   return async (dispatch, getState) => {
     dispatch(request(_bundleId, _fileToContainerPaths));
+    log.info(`addManifestResources: ${JSON.stringify(_fileToContainerPaths)}`);
     await bundleService.waitStartCreateMode(_bundleId);
     const urisToConvert = utilities.getUnionOfValues(inputMappers);
     /* eslint-disable no-restricted-syntax */
