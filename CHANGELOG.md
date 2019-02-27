@@ -1,3 +1,7 @@
+### Version 0.28.1 (Debug Info for Adding Resources)
+#### Fixes
+- Add some debug info to discover missing resources bug
+
 ### Version 0.28.0 (Navigation Drawer for Resources/Metadata)
 #### Features
 - Add navigation drawer for switching between stored Resources and Metadata
