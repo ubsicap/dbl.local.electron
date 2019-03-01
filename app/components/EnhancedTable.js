@@ -51,9 +51,9 @@ class EnhancedTable extends Component<Props> {
   constructor(props) {
     super(props);
     this.  state = {
-      order: this.props.orderDirection,
-      orderBy: this.props.defaultOrderBy || this.props.columnConfig[0].name,
-      selectedRowIds: this.props.selectedIds
+      order: props.orderDirection,
+      orderBy: props.defaultOrderBy || props.columnConfig[0].name,
+      selectedRowIds: props.selectedIds
     };
   }
 

@@ -603,7 +603,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.state = {
       selectedIds: [],
       addedFilePaths: [],
-      selectAll: ['download'].includes(this.props.mode),
+      selectAll: ['download'].includes(props.mode),
       openDrawer: false,
     };
   }
