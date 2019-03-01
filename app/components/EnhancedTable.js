@@ -48,11 +48,14 @@ function getSelectableData(data) {
 
 class EnhancedTable extends Component<Props> {
   props: Props;
-  state = {
-    order: this.props.orderDirection,
-    orderBy: this.props.defaultOrderBy || this.props.columnConfig[0].name,
-    selectedRowIds: this.props.selectedIds
-  };
+  constructor(props) {
+    super(props);
+    this.  state = {
+      order: this.props.orderDirection,
+      orderBy: this.props.defaultOrderBy || this.props.columnConfig[0].name,
+      selectedRowIds: this.props.selectedIds
+    };
+  }
 
   componentWillReceiveProps(nextProps) {
     // You don't have to do this check first, but it can help prevent an unneeded render

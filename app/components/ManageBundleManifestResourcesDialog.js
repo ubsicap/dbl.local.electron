@@ -598,11 +598,14 @@ function mapSuggestions(suggestions) {
 
 class ManageBundleManifestResourcesDialog extends Component<Props> {
   props: Props;
-  state = {
-    selectedIds: [],
-    addedFilePaths: [],
-    selectAll: ['download'].includes(this.props.mode),
-    openDrawer: false,
+  constructor(props) {
+    super(props);
+    this.state = {
+      selectedIds: [],
+      addedFilePaths: [],
+      selectAll: ['download'].includes(this.props.mode),
+      openDrawer: false,
+    };
   }
 
   componentDidMount() {
