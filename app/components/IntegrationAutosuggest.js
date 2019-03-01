@@ -118,11 +118,14 @@ const styles = theme => ({
 
 class IntegrationAutosuggest extends React.Component<Prop> {
   props: Props
-  state = {
-    single: '',
-    popper: '',
-    suggestions: this.props.getSuggestions()
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      single: '',
+      popper: '',
+      suggestions: props.getSuggestions()
+    };
+  }
   popperNode = null;
 
   handleSuggestionsFetchRequested = ({ value, reason }) => {
