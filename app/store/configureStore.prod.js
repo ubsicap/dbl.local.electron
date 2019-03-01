@@ -2,7 +2,7 @@
 import { createStore, applyMiddleware } from 'redux';
 import thunk from 'redux-thunk';
 import { createHashHistory } from 'history';
-import { routerMiddleware } from 'react-router-redux';
+import { routerMiddleware } from 'connected-react-router';
 import createDebounce from 'redux-debounced';
 import createRootReducer from '../reducers';
 import type { counterStateType } from '../reducers/counter';

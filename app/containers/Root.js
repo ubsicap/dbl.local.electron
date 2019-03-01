@@ -1,7 +1,7 @@
 // @flow
 import React, { Component } from 'react';
 import { Provider, connect } from 'react-redux';
-import { ConnectedRouter } from 'react-router-redux';
+import { ConnectedRouter } from 'connected-react-router';
 import type { Store } from '../reducers/types';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import { createMuiTheme } from '@material-ui/core/styles';
