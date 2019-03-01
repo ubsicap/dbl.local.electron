@@ -93,7 +93,10 @@ function exportStateToSettings(state, origSettings) {
 
 export default class WorkspaceEditDialog extends React.Component<Props> {
   props: Props;
-  state = importSettingsToState(this.props.settings);
+  constructor(props) {
+    super(props);
+    this.state = importSettingsToState(props.settings);
+  }
 
   componentDidMount() {
     const { getInitialFormErrors } = this.props;
