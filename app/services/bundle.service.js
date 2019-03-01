@@ -151,9 +151,11 @@ function apiBundleHasMetadata(apiBundle) {
 }
 
 function convertBundleApiListToBundles(apiBundles) {
-  const bundles = Promise.all(Object.values(apiBundles)
-    .filter(apiBundleHasMetadata)
-    .map(apiBundle => convertApiBundleToNathanaelBundle(apiBundle)));
+  const bundles = Promise.all(
+    Object.values(apiBundles)
+      .filter(apiBundleHasMetadata)
+      .map(apiBundle => convertApiBundleToNathanaelBundle(apiBundle))
+  );
   return bundles;
 }
 
@@ -192,22 +194,27 @@ function getHasStoredResources(apiBundle) {
 function getResourceFileStoredCount(apiBundle) {
   const storedFiles = getFlatFileInfo(apiBundle);
   const flatFilePaths = Object.keys(storedFiles || {});
-  const resourceCountStored = (flatFilePaths.length > 1 ? flatFilePaths.length - 1 : 0);
+  const resourceCountStored =
+    flatFilePaths.length > 1 ? flatFilePaths.length - 1 : 0;
   return { resourceCountStored, storedFiles };
 }
 
 async function convertApiBundleToNathanaelBundle(apiBundle, lazyLoads = {}) {
+  const { mode, metadata, dbl, upload } = apiBundle;
   const {
-    mode, metadata, dbl, upload
-  } = apiBundle;
-  const { resourceCountManifest = null, formsErrorStatus = {}, manifestResources = [] } = lazyLoads;
+    resourceCountManifest = null,
+    formsErrorStatus = {},
+    manifestResources = []
+  } = lazyLoads;
   const { jobId: uploadJob } = upload || {};
   const { parent } = dbl;
   const bundleId = apiBundle.local_id;
   const initTaskStatus = getInitialTaskAndStatus(apiBundle);
   const { task } = initTaskStatus;
   let { status } = initTaskStatus;
-  const { resourceCountStored, storedFiles } = getResourceFileStoredCount(apiBundle);
+  const { resourceCountStored, storedFiles } = getResourceFileStoredCount(
+    apiBundle
+  );
   if (resourceCountStored) {
     if (task === 'DOWNLOAD' && mode === 'store') {
       status = 'COMPLETED'; // even if only some are stored
@@ -246,7 +253,7 @@ async function fetchById(id) {
     `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${id}`,
     requestOptions
   );
-  return handleResponse(response, (r) => r);
+  return handleResponse(response, r => r);
 }
 
 function create(bundle) {
@@ -269,7 +276,9 @@ function update(bundle) {
     body: JSON.stringify(bundle)
   };
 
-  return fetch(`/${BUNDLE_API}/${bundle.id}`, requestOptions).then(handleResponse);
+  return fetch(`/${BUNDLE_API}/${bundle.id}`, requestOptions).then(
+    handleResponse
+  );
 }
 
 function handleResponse(response, rejectFunc) {
@@ -319,7 +328,10 @@ function deleteManifestResource(bundleId, uri) {
  */
 function downloadResources(bundleId, uris = []) {
   const urisXml = uris.map(uri => `<resource uri="${uri}"/>`).join('') || '';
-  return bundleAddTasks(bundleId, `<downloadResources>${urisXml}</downloadResources>`);
+  return bundleAddTasks(
+    bundleId,
+    `<downloadResources>${urisXml}</downloadResources>`
+  );
 }
 
 /* /subsystem/download/queue */
@@ -343,8 +355,13 @@ function getSubsystemUploadQueue() {
 }
 
 function removeResources(bundleId, pathsToRemove = []) {
-  const resourceList = pathsToRemove.map(uri => `<resource uri="${uri}"/>`).join('');
-  return bundleAddTasks(bundleId, `<removeLocalResources>${resourceList}</removeLocalResources>`);
+  const resourceList = pathsToRemove
+    .map(uri => `<resource uri="${uri}"/>`)
+    .join('');
+  return bundleAddTasks(
+    bundleId,
+    `<removeLocalResources>${resourceList}</removeLocalResources>`
+  );
 }
 
 function removeBundle(bundleId) {
@@ -357,8 +374,15 @@ function copyResources(bundleId, fromBundleId, uris, merge = true) {
   return bundleAddTasks(bundleId, copyResourcesTask);
 }
 
-function copyMetadata(bundleId, fromBundleId, sections, preserveExisting = true) {
-  const sectionsList = sections.map(section => `<section>${section}</section>`).join('');
+function copyMetadata(
+  bundleId,
+  fromBundleId,
+  sections,
+  preserveExisting = true
+) {
+  const sectionsList = sections
+    .map(section => `<section>${section}</section>`)
+    .join('');
   const copyResourcesTask = `<copyMetadata><fromBundleId>${fromBundleId}</fromBundleId>${sectionsList}<preserveExisting>${preserveExisting}</preserveExisting></copyMetadata>`;
   return bundleAddTasks(bundleId, copyResourcesTask);
 }
@@ -366,7 +390,10 @@ function copyMetadata(bundleId, fromBundleId, sections, preserveExisting = true)
 function bundleAddTasks(bundleId, innerTasks) {
   const requestOptions = {
     method: 'POST',
-    headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: {
+      ...authHeader(),
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
     body: `xml=<tasks> ${encodeURIComponent(innerTasks)} </tasks>`
   };
   const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/add-tasks`;
@@ -400,7 +427,12 @@ async function saveMetadataToTempFolder(bundleId) {
  * Downloader.download('https://download.damieng.com/fonts/original/EnvyCodeR-PR7.zip',
  *  'envy-code-r.zip', (bytes, percent) => console.log(`Downloaded ${bytes} (${percent})`));
  */
-function requestSaveResourceTo(selectedFolder, bundleId, resourcePath, progressCallback) {
+function requestSaveResourceTo(
+  selectedFolder,
+  bundleId,
+  resourcePath,
+  progressCallback
+) {
   const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${RESOURCE_API}/${resourcePath}`;
   const targetPath = path.join(selectedFolder, resourcePath);
   return download(url, targetPath, progressCallback, authHeader());
@@ -448,16 +480,18 @@ async function waitUntilPostFormFields(postFormFieldArgs) {
   }
 }
 
-function postFormFields({
-  bundleId, formKey, payload, keyField
-}) {
+function postFormFields({ bundleId, formKey, payload, keyField }) {
   const requestOptions = {
     method: 'POST',
-    headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: {
+      ...authHeader(),
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
     body: `response=${encodeURIComponent(JSON.stringify(payload))}`
   };
   const newKeyPath = `/${keyField}`;
-  const newInstanceKey = keyField && !formKey.endsWith(newKeyPath) ? newKeyPath : '';
+  const newInstanceKey =
+    keyField && !formKey.endsWith(newKeyPath) ? newKeyPath : '';
   const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${FORM_API}/${bundleId}${formKey}${newInstanceKey}`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }
@@ -472,7 +506,10 @@ function checkAllFields(bundleId) {
 }
 
 function startUploadBundle(bundleId) {
-  return bundleAddTasks(bundleId, '<cancelUploadJobs/><createUploadJob/><uploadResources/><submitJobIfComplete><forkAfterUpload>true</forkAfterUpload></submitJobIfComplete>');
+  return bundleAddTasks(
+    bundleId,
+    '<cancelUploadJobs/><createUploadJob/><uploadResources/><submitJobIfComplete><forkAfterUpload>true</forkAfterUpload></submitJobIfComplete>'
+  );
 }
 
 function deleteForm(bundleId, formKey) {
@@ -491,15 +528,18 @@ function forkBundle(bundleId, medium) {
 
 function createLabelElement(label, bundleId) {
   const uuid1 = uuidv1();
-  const labelElement = label ? `<label>${label}-${bundleId}-${uuid1}</label>` : '';
+  const labelElement = label
+    ? `<label>${label}-${bundleId}-${uuid1}</label>`
+    : '';
   return labelElement;
 }
 
 function startCreateContent(bundleId, label) {
   const creator = label ? 'NoOpCreator' : 'AsyncCreator';
   const labelElement = createLabelElement(label, bundleId);
-  const tasksCopyResources = label ?
-    '<tasks><copyResources><fromBundleLabel>_parent</fromBundleLabel></copyResources></tasks>' : '';
+  const tasksCopyResources = label
+    ? '<tasks><copyResources><fromBundleLabel>_parent</fromBundleLabel></copyResources></tasks>'
+    : '';
   return bundleAddTasks(
     bundleId,
     `<createContent><class>${creator}</class>${labelElement}<data/>
@@ -521,7 +561,10 @@ function getCurrentBundleState(getState, bundleId) {
 }
 
 async function waitUntilBundleCondition(getState, bundleId, condition) {
-  const bundleCurrentState = bundleService.getCurrentBundleState(getState, bundleId);
+  const bundleCurrentState = bundleService.getCurrentBundleState(
+    getState,
+    bundleId
+  );
   await waitUntil(async () => condition(bundleCurrentState), 60000, 500);
   return bundleCurrentState;
 }
@@ -537,7 +580,11 @@ async function waitStopCreateMode(bundleId) {
   if (await bundleIsInCreateMode(bundleId)) {
     // unblock block tasks like 'Delete'
     await stopCreateContent(bundleId);
-    await waitUntil(async () => !(await bundleIsInCreateMode(bundleId)), 60000, 500);
+    await waitUntil(
+      async () => !(await bundleIsInCreateMode(bundleId)),
+      60000,
+      500
+    );
   }
 }
 
@@ -555,10 +602,20 @@ function stopCreateContent(bundleId, mode = 'success') {
 }
 
 function postResource(bundleId, filePath, bundlePath, mapper) {
-  const filename = path.basename(filePath);
   const uri = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/resource/${bundlePath}`;
   const fullUri = mapper ? `${uri}?mapper=${mapper}` : uri;
   log.info(`postResource uri: ${fullUri}`);
+  // const data = new FormData();
+  // data.append('content', fs.createReadStream(filePath), filename);
+  /*
+  return fetch(fullUri, {
+      headers: { ...authHeader() },
+      method: 'POST',
+      body: fs.createReadStream(filePath)
+  });
+  */
+  const filename = path.basename(filePath);
+  // 'content-type': 'multipart/form-data' // Is set automatically
   const options = {
     method: 'POST',
     uri: fullUri,
@@ -574,18 +631,17 @@ function postResource(bundleId, filePath, bundlePath, mapper) {
     },
     headers: {
       ...authHeader()
-      /* 'content-type': 'multipart/form-data' */ // Is set automatically
     }
   };
-  /* fetch does not support posting files as multipart/form-data
-     https://github.com/electron/electron/issues/9684 */
+  // fetch does not support posting files as multipart/form-data
+  // https://github.com/electron/electron/issues/9684
   return rp(options);
 }
 
 function updateManifestResource(bundleId, bundlePath) {
   const requestOptions = {
     method: 'POST',
-    headers: { ...authHeader() },
+    headers: { ...authHeader() }
   };
   const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${MANIFEST_API}/${bundleId}/update/${bundlePath}`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
@@ -600,7 +656,7 @@ async function getPublicationWizards() {
     `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${PUBLICATION_API}/wizard`,
     requestOptions
   );
-  return handleResponse(response, (r) => r);
+  return handleResponse(response, r => r);
 }
 
 async function testPublicationWizards(bundleId, pubId) {
@@ -612,22 +668,26 @@ async function testPublicationWizards(bundleId, pubId) {
     `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${PUBLICATION_API}/wizard/${bundleId}/${pubId}`,
     requestOptions
   );
-  return handleResponse(response, (r) => r);
+  return handleResponse(response, r => r);
 }
 
 function runPublicationWizard(bundleId, pubId, wizardId, containerUri) {
   const requestOptions = {
     method: 'POST',
-    headers: { ...authHeader() },
+    headers: { ...authHeader() }
   };
-  const parameterizedPath = [bundleId, pubId, wizardId, containerUri].filter(Boolean).join('/');
+  const parameterizedPath = [bundleId, pubId, wizardId, containerUri]
+    .filter(Boolean)
+    .join('/');
   const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${PUBLICATION_API}/wizard/${parameterizedPath}`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }
 
 async function getApplicableWizards(bundleId, medium) {
   const wizards = await getPublicationWizards();
-  const applicableWizards = Object.values(wizards).filter(w => w.medium === medium);
+  const applicableWizards = Object.values(wizards).filter(
+    w => w.medium === medium
+  );
   return applicableWizards;
 }
 
@@ -636,14 +696,21 @@ async function getBestWizards(bundleId, publicationIds) {
   /* eslint-disable no-restricted-syntax */
   /* eslint-disable no-await-in-loop */
   for (const pubId of publicationIds) {
-    const wizardTestResults = await bundleService.testPublicationWizards(bundleId, pubId);
+    const wizardTestResults = await bundleService.testPublicationWizards(
+      bundleId,
+      pubId
+    );
     const bestWizard = wizardTestResults.reduce(
       (acc, r) => (r.hits.length >= acc.hits.length ? r : acc),
       { hits: [], misses: [] }
     );
     const { wizard, uri } = bestWizard;
     bestWizards.push({
-      bundleId, pubId, wizard, uri, testResults: bestWizard
+      bundleId,
+      pubId,
+      wizard,
+      uri,
+      testResults: bestWizard
     });
   }
   return bestWizards;
@@ -651,25 +718,31 @@ async function getBestWizards(bundleId, publicationIds) {
 
 async function updatePublications(bundleId, publicationIds) {
   const bundleRaw = await fetchById(bundleId);
-  const { dbl: { medium } } = bundleRaw;
+  const {
+    dbl: { medium }
+  } = bundleRaw;
   const applicableWizards = await getApplicableWizards(bundleId, medium);
   if (applicableWizards.length === 0) {
-    console.log(`Publications not updated. No publication wizards were found for medium ${medium}`);
+    console.log(
+      `Publications not updated. No publication wizards were found for medium ${medium}`
+    );
     return;
   }
   /* eslint-disable no-restricted-syntax */
   /* eslint-disable no-await-in-loop */
   const bestWizards = await getBestWizards(bundleId, publicationIds);
   for (const bestWizard of bestWizards) {
-    const {
-      wizard, uri, pubId, testResults
-    } = bestWizard;
+    const { wizard, uri, pubId, testResults } = bestWizard;
     if (!wizard) {
-      console.log(`Publication ${pubId} not updated. No publication wizard hits were found in these tests:`);
+      console.log(
+        `Publication ${pubId} not updated. No publication wizard hits were found in these tests:`
+      );
       console.log(testResults);
     } else {
       await bundleService.runPublicationWizard(bundleId, pubId, wizard, uri);
-      console.log(`Publication ${pubId} was updated by wizard ${wizard} for uri ${uri}`);
+      console.log(
+        `Publication ${pubId} was updated by wizard ${wizard} for uri ${uri}`
+      );
       console.log(bestWizard);
     }
   }
@@ -679,15 +752,19 @@ async function updatePublications(bundleId, publicationIds) {
 async function getMapperInputOverwrites(bundleId, mappers, uris) {
   const requestOptions = {
     method: 'POST',
-    headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `uris=${encodeURIComponent(JSON.stringify(uris))}&mappers=${encodeURIComponent(JSON.stringify(mappers))}`
+    headers: {
+      ...authHeader(),
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: `uris=${encodeURIComponent(
+      JSON.stringify(uris)
+    )}&mappers=${encodeURIComponent(JSON.stringify(mappers))}`
   };
   try {
-    const response =
-      await fetch(
-        `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/mapper/input/overwrites`,
-        requestOptions
-      );
+    const response = await fetch(
+      `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/mapper/input/overwrites`,
+      requestOptions
+    );
     return servicesHelpers.handleResponseAsReadable(response).json();
   } catch (error) {
     return servicesHelpers.handleResponseAsReadable(error).text();
@@ -700,14 +777,20 @@ function getPublicationsInstances(formStructure) {
 }
 
 function getSubSectionInstances(formStructure, sectionId, subSectionId) {
-  const sectionStructure = formStructure.find(section => section.id === sectionId);
+  const sectionStructure = formStructure.find(
+    section => section.id === sectionId
+  );
   const { contains } = sectionStructure;
-  const subSectionStructure = contains.find(section => section.id === subSectionId);
+  const subSectionStructure = contains.find(
+    section => section.id === subSectionId
+  );
   const { instances } = subSectionStructure;
   return instances;
 }
 
 function getRevisionOrParentRevision(dblId, revision, parent) {
-  return parseInt(revision, 10) || parseInt(parent && parent.dblId === dblId ? parent.revision : 0, 10);
+  return (
+    parseInt(revision, 10) ||
+    parseInt(parent && parent.dblId === dblId ? parent.revision : 0, 10)
+  );
 }
-
