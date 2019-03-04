@@ -1,3 +1,13 @@
+### Version 0.29.0 (Debug Info for Adding Resources)
+#### Features
+- Add info (job_spec.xml) button for uploading
+- dbl_dot_local_app (3/4/2019) Added single-threaded endpoints
+- dbl_dot_local_app (3/4/2019) Braille wizard fixes
+
+#### Fixes
+- fix crash saving overrides
+- dbl_dot_local_app (3/4/2019) Fixes promotion editing
+
 ### Version 0.28.1 (Debug Info for Adding Resources)
 #### Fixes
 - Add some debug info to discover missing resources bug
