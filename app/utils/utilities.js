@@ -90,5 +90,6 @@ function buildRouteUrl(routeUrl, params) {
 }
 
 function calculatePercentage(completed, total) {
-  return parseFloat(((completed / total) * 100).toFixed(2));
+  const percentage = parseFloat(((completed / total) * 100).toFixed(2));
+  return Math.min([percentage, 100]);
 }
