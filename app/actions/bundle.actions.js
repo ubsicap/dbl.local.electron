@@ -9,6 +9,7 @@ import { updateSearchResultsForBundleId } from '../actions/bundleFilter.actions'
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { bundleManageResourceActions } from '../actions/bundleManageResources.actions';
 import { workspaceHelpers } from '../helpers/workspaces.helpers';
+import { browserWindowService } from '../services/browserWindow.service';
 
 export const bundleActions = {
   fetchAll,
@@ -24,6 +25,7 @@ export const bundleActions = {
   removeResources,
   toggleSelectEntry,
   uploadBundle,
+  openJobSpecInBrowser,
   fetchDownloadQueueCounts,
   removeExcessBundles,
   selectBundleEntryRevision
@@ -403,15 +405,18 @@ export function setupBundlesEventSource() {
     }
   }
 
-  function updateUploadProgress(bundleId, entryId, jobId, resourceCountUploaded, resourceCountToUpload) {
-    return {
-      type: bundleConstants.UPLOAD_RESOURCES_UPDATE_PROGRESS,
-      bundleId,
-      entryId,
-      jobId,
-      resourceCountUploaded,
-      resourceCountToUpload
-    };
+  async function updateUploadProgress(bundleId, entryId, jobId, resourceCountUploaded, resourceCountToUpload) {
+    return async (dispatch) => {
+      await bundleService.saveJobSpecToTempFolder(bundleId);
+      return dispatch({
+        type: bundleConstants.UPLOAD_RESOURCES_UPDATE_PROGRESS,
+        bundleId,
+        entryId,
+        jobId,
+        resourceCountUploaded,
+        resourceCountToUpload
+      });
+    }
   }
 
   function updateUploadMessage(bundleId, jobId, message) {
@@ -616,6 +621,14 @@ export function uploadBundle(id) {
   function failure(_id, error) {
     return { type: bundleConstants.UPLOAD_BUNDLE_FAILURE, id, error };
   }
+}
+
+export function openJobSpecInBrowser(bundleId) {
+  return async (dispatch) => {
+    const jobSpecFile = await bundleService.saveJobSpecToTempFolder(bundleId);
+    browserWindowService.openFileInChromeBrowser(jobSpecFile, false);
+    dispatch({ type: 'BUNDLE_OPEN_JOB_SPEC', jobSpecFile });
+  };
 }
 
 export function downloadResources(_id, _uris = []) {

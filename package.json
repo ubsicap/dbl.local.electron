@@ -1,7 +1,7 @@
 {
   "name": "nathanael",
   "productName": "nathanael",
-  "version": "0.28.1",
+  "version": "0.29.0",
   "description": "Electron frontend to DBL dot Local",
   "scripts": {
     "build": "concurrently \"npm run build-main\" \"npm run build-renderer\"",
@@ -233,7 +233,7 @@
     "redux": "^3.7.2",
     "redux-debounced": "^0.5.0",
     "redux-thunk": "^2.2.0",
-    "request-promise-native": "^1.0.5",
+    "request-promise-native": "^1.0.7",
     "reselect": "^3.0.1",
     "source-map-support": "^0.5.3",
     "split-string": "^5.0.4",
