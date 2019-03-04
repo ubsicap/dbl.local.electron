@@ -24,11 +24,12 @@ import Save from '@material-ui/icons/Save';
 import CreateNewFolder from '@material-ui/icons/CreateNewFolder';
 import Description from '@material-ui/icons/Description';
 import CloudUpload from '@material-ui/icons/CloudUpload';
+import InfoIcon from '@material-ui/icons/Info';
 import styles from './DBLEntryRow.css';
 import ControlledHighlighter from './ControlledHighlighter';
 import { toggleEntryStar } from '../actions/bundleFilter.actions';
 import { toggleSelectEntry, requestSaveBundleTo, forkIntoNewBundle,
-  downloadResources, uploadBundle, updateBundle, createDraftRevision } from '../actions/bundle.actions';
+  downloadResources, uploadBundle, updateBundle, createDraftRevision, openJobSpecInBrowser } from '../actions/bundle.actions';
 import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
 import editMetadataService from '../services/editMetadata.service';
 import { openResourceManager } from '../actions/bundleManageResources.actions';
@@ -78,6 +79,7 @@ type Props = {
   uploadBundle: () => {},
   updateBundle: () => {},
   createDraftRevision: () => {},
+  openJobSpecInBrowser: () => {},
   toggleEntryStar: () => {}
 };
 
@@ -91,6 +93,7 @@ const mapDispatchToProps = {
   uploadBundle,
   updateBundle,
   createDraftRevision,
+  openJobSpecInBrowser,
   toggleEntryStar
 };
 
@@ -244,6 +247,9 @@ class DBLEntryRow extends PureComponent<Props> {
   }
 
   showStatusAsText = () => {
+    if (this.getIsUploading()) {
+      return false;
+    }
     const { status } = this.props;
     return (['IN_PROGRESS'].includes(status));
   }
@@ -269,9 +275,14 @@ class DBLEntryRow extends PureComponent<Props> {
 
   shouldDisableSaveTo = () => this.shouldDisableCleanResources();
 
-  shouldShowUpload = () => {
+  getIsUploading = () => {
     const { isUploading = false, task, status } = this.props;
-    return status === 'DRAFT' || isUploading || (task === 'UPLOAD' && status === 'IN_PROGRESS');
+    return isUploading || (task === 'UPLOAD' && status === 'IN_PROGRESS');
+  }
+
+  shouldShowUpload = () => {
+    const { status } = this.props;
+    return status === 'DRAFT' || this.getIsUploading();
   }
 
   shouldShowDraftRevision = () => (this.props.status !== 'DRAFT' && this.props.license === 'owned');
@@ -291,8 +302,7 @@ class DBLEntryRow extends PureComponent<Props> {
     Object.keys(this.props.formsErrors).length > 0 || (this.isNewDraftEntry() && this.props.resourceCountStored === 0));
 
   shouldDisableDraftRevisionOrEdit = () => {
-    const { isUploading = false, task, status } = this.props;
-    return isUploading || (task === 'UPLOAD' && status === 'IN_PROGRESS') || this.shouldDisableRevise();
+    return this.getIsUploading() || this.shouldDisableRevise();
   }
 
   emptyMatches = [];
@@ -342,6 +352,11 @@ class DBLEntryRow extends PureComponent<Props> {
     this.handleCloseMediaTypeMenu(event);
     event.stopPropagation();
   };
+
+  handleClickUploadInfo = () => {
+    const { bundleId } = this.props;
+    this.props.openJobSpecInBrowser(bundleId);
+  }
 
   onClickUploadBundle = (event) => {
     const { bundleId } = this.props;
@@ -420,6 +435,7 @@ class DBLEntryRow extends PureComponent<Props> {
     if (!shouldShowRow || (shouldShowStarred && !isStarred)) {
       return (null);
     }
+    const isUploading = this.getIsUploading();
     const resourceManagerMode = status === 'DRAFT' ? 'addFiles' : 'download';
     const laterEntryRevisionsCount = this.props.laterEntryRevisions.length;
     const laterRevisionsBadge = laterEntryRevisionsCount ? `${laterEntryRevisionsCount}+` : '';
@@ -521,6 +537,17 @@ class DBLEntryRow extends PureComponent<Props> {
                 </Button>
               )}
             </Grid>
+            {isUploading &&
+              <Button
+                variant="text"
+                size="small"
+                className={classNames(classes.button, this.pickBackgroundColor())}
+                onClick={this.handleClickUploadInfo}
+              >
+                <ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />
+                <InfoIcon className={classNames(classes.rightIcon, classes.iconSmall)} />
+              </Button>
+            }
             {this.showStatusAsText() && (
               <div style={{ paddingRight: '20px', paddingTop: '6px' }}>
                 {<ControlledHighlighter {...this.getHighlighterSharedProps(displayAs.status)} />}

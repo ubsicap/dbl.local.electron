@@ -31,6 +31,8 @@ export const bundleService = {
   getResourcePaths,
   requestSaveResourceTo,
   saveMetadataToTempFolder,
+  saveJobSpecToTempFolder,
+  getJobSpec,
   removeBundle,
   getFormBundleTree,
   getFormFields,
@@ -73,6 +75,7 @@ const FORM_API = 'form';
 const FORM_BUNDLE_API = `${FORM_API}/bundle`;
 const FORM_BUNDLE_API_DELETE = `${FORM_API}/delete`;
 const MANIFEST_API = 'manifest';
+const DEBUG_API = 'debug';
 const MANIFEST_DETAILS = 'details';
 const PUBLICATION_API = 'publication';
 const SUBSYSTEM_API = 'subsystem';
@@ -314,6 +317,15 @@ function deleteManifestResource(bundleId, uri) {
   return fetch(url, requestOptions).then(handleResponse);
 }
 
+function getJobSpec(bundleId) {
+  const requestOptions = {
+    method: 'GET',
+    headers: authHeader()
+  };
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${DEBUG_API}/${bundleId}/job-spec`;
+  return fetch(url, requestOptions).then(handleResponse);
+}
+
 /* <downloadResources>
       <resource uri="release/English.lds"/>
  */
@@ -383,10 +395,8 @@ function getResourcePaths(bundleId) {
 }
 
 async function saveMetadataToTempFolder(bundleId) {
-  const temp = app.getPath('temp');
-  const metadataXmlResource = 'metadata.xml';
-  const tmpFolder = path.join(temp, bundleId);
-  const metadataFile = path.join(tmpFolder, metadataXmlResource);
+  const { tmpFolder, filePath: metadataFile, fileName: metadataXmlResource }
+    = getTempFolderForFile(bundleId, 'metadata.xml');
   await bundleService.requestSaveResourceTo(
     tmpFolder,
     bundleId,
@@ -394,6 +404,23 @@ async function saveMetadataToTempFolder(bundleId) {
     () => {}
   );
   return metadataFile;
+}
+
+function getTempFolderForFile(bundleId, fileName) {
+  const temp = app.getPath('temp');
+  const tmpFolder = path.join(temp, bundleId);
+  const filePath = path.join(tmpFolder, fileName);
+  return {
+    temp, tmpFolder, filePath, fileName
+  };
+}
+
+async function saveJobSpecToTempFolder(bundleId) {
+  const { filePath: jobSpecPath }
+    = getTempFolderForFile(bundleId, 'job-spec.xml');
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${DEBUG_API}/${bundleId}/job-spec`;
+  await download(url, jobSpecPath, () => {}, authHeader());
+  return jobSpecPath;
 }
 
 /*
