@@ -630,6 +630,12 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     if (this.state.closing) {
       return;
     }
+    if (this.props.loading) {
+      const { origBundle } = this.props;
+      if (origBundle.mode === 'create') {
+        return;
+      }
+    }
     if (this.props.progress !== prevProps.progress &&
       (this.props.progress === 100)) {
       const { bundleId } = this.props;

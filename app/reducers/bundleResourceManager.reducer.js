@@ -1,6 +1,7 @@
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 import { bundleConstants } from '../constants/bundle.constants';
 import { utilities } from '../utils/utilities';
+import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 
 const initialState = {
   isStoreMode: true,
@@ -20,6 +21,9 @@ export function bundleManageResources(state = initialState, action) {
       };
     }
     case bundleResourceManagerConstants.CLOSE_RESOURCE_MANAGER: {
+      return initialState;
+    }
+    case bundleEditMetadataConstants.CLOSE_EDIT_METADATA: {
       return initialState;
     }
     case bundleConstants.UPDATE_BUNDLE: {
