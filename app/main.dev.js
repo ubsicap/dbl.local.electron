@@ -120,7 +120,6 @@ app.on('ready', async () => {
     const menuBuilder = new MenuBuilder(mainWindow);
     menuBuilder.buildMainMenu();
   });
-
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
