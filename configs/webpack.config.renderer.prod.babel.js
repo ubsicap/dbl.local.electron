@@ -205,17 +205,6 @@ export default merge.smart(baseConfig, {
     new MiniCssExtractPlugin({
       filename: 'style.css'
     }),
-    new UglifyJSPlugin({
-      parallel: true,
-      sourceMap: true,
-      uglifyOptions: {
-        /*
-            inlining is broken sometimes where inlined function uses the same variable name as inlining function.
-            See https://github.com/mishoo/UglifyJS2/issues/2842, https://github.com/mishoo/UglifyJS2/issues/2843
-         */
-        compress: { inline:false },
-      },
-    }),
 
     new BundleAnalyzerPlugin({
       analyzerMode:

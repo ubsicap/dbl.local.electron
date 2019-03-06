@@ -44,17 +44,6 @@ export default merge.smart(baseConfig, {
         process.env.OPEN_ANALYZER === 'true' ? 'server' : 'disabled',
       openAnalyzer: process.env.OPEN_ANALYZER === 'true'
     }),
-    new UglifyJSPlugin({
-      parallel: true,
-      sourceMap: true,
-      uglifyOptions: {
-        /*
-            inlining is broken sometimes where inlined function uses the same variable name as inlining function.
-            See https://github.com/mishoo/UglifyJS2/issues/2842, https://github.com/mishoo/UglifyJS2/issues/2843
-         */
-        compress: { inline:false },
-      },
-     }),
 
     /**
      * Create global constants which can be configured at compile time.
