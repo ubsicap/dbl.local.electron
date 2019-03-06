@@ -11,13 +11,14 @@
  * @flow
  */
 import { app, BrowserWindow } from 'electron';
-import { autoUpdater } from 'electron-updater';
+// import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import path from 'path';
 import MenuBuilder from './menu';
 import { autoUpdaterServices } from './main-process/autoUpdater.services';
 import { navigationConstants } from './constants/navigation.constants';
 
+/*
 export default class AppUpdater {
   constructor() {
     log.transports.file.level = 'info';
@@ -25,15 +26,16 @@ export default class AppUpdater {
     autoUpdater.checkForUpdatesAndNotify();
   }
 }
+*/
 
 let mainWindow = null;
 
 /*
-   * from https://github.com/megahertz/electron-log
-   * on Linux: ~/.config/<app name>/log.log
-   * on OS X: ~/Library/Logs/<app name>/log.log
-   * on Windows: %USERPROFILE%\AppData\Roaming\<app name>\log.log
-   */
+ * from https://github.com/megahertz/electron-log
+ * on Linux: ~/.config/<app name>/log.log
+ * on OS X: ~/Library/Logs/<app name>/log.log
+ * on Windows: %USERPROFILE%\AppData\Roaming\<app name>\log.log
+ */
 if (process.env.NODE_ENV === 'development') {
   log.transports.file.level = 'debug';
   log.transports.file.file = path.join(__dirname, 'log-dev.txt');
@@ -93,7 +95,9 @@ app.on('ready', async () => {
     }
   });
 
-  mainWindow.loadURL(`file://${__dirname}/app.html#${navigationConstants.NAVIGATION_WORKSPACES}`);
+  mainWindow.loadURL(
+    `file://${__dirname}/app.html#${navigationConstants.NAVIGATION_WORKSPACES}`
+  );
 
   // @TODO: Use 'ready-to-show' event
   //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
@@ -107,9 +111,9 @@ app.on('ready', async () => {
       mainWindow.show();
       mainWindow.focus();
     }
-    const autoUpdater = autoUpdaterServices.setupAutoUpdater(mainWindow);
-    autoUpdater.logger.info('Request checkForUpdatesAndNotify');
-    autoUpdater.checkForUpdatesAndNotify();
+    const myAutoUpdater = autoUpdaterServices.setupAutoUpdater(mainWindow);
+    myAutoUpdater.logger.info('Request checkForUpdatesAndNotify');
+    myAutoUpdater.checkForUpdatesAndNotify();
   });
 
   mainWindow.on('focus', () => {
@@ -117,16 +121,15 @@ app.on('ready', async () => {
     menuBuilder.buildMainMenu();
   });
 
-
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 
-  mainWindow.onerror = (err) => {
+  mainWindow.onerror = err => {
     log.error(JSON.stringify(err));
   };
 
-  process.on('uncaughtException', (err) => {
+  process.on('uncaughtException', err => {
     log.error(JSON.stringify(err));
   });
 
