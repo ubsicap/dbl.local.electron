@@ -356,7 +356,7 @@ export function saveMetadata({
       postFormArgs = {
         bundleId, formKey, payload: { formId: bundleId, fields }, keyField: keyFieldValue
       };
-      await bundleService.waitUntilPostFormFields({ ...postFormArgs }, getState);
+      await bundleService.waitUntilPostFormFields({ ...postFormArgs }, !saveOverrides);
       if (saveOverrides) {
         // reset state so that saving overrides does not result in infinite loop when errors occur
         dispatch(fetchActiveFormInputs(bundleId, formKey));

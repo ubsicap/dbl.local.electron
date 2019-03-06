@@ -1,6 +1,7 @@
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 import editMetadataService from '../services/editMetadata.service';
 import { bundleConstants } from '../constants/bundle.constants';
+import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 
 const initialState = {
   editingMetadata: null,
@@ -59,6 +60,9 @@ export function bundleEditMetadata(state = initialState, action) {
         currentFormWithErrors,
         nextFormWithErrors
       };
+    }
+    case bundleResourceManagerConstants.CLOSE_RESOURCE_MANAGER: {
+      return initialState;
     }
     case bundleEditMetadataConstants.CLOSE_EDIT_METADATA: {
       return initialState;

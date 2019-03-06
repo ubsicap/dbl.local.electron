@@ -189,8 +189,13 @@ export function addManifestResources(_bundleId, _fileToContainerPaths, inputMapp
     const urisToConvert = utilities.getUnionOfValues(inputMappers);
     /* eslint-disable no-restricted-syntax */
     /* eslint-disable no-await-in-loop */
+    const gottenStateForPublications = getState(); // in case user cancel during add
     for (const [filePath, containerPath] of Object.entries(_fileToContainerPaths)) {
       try {
+        const { bundleManageResources } = getState();
+        if (!bundleManageResources.loading) {
+          break; // user canceled dialog
+        }
         if (!urisToConvert.has(containerPath)) {
           await bundleService.postResource(_bundleId, filePath, containerPath);
           dispatch(success(_bundleId, filePath, containerPath));
@@ -207,7 +212,7 @@ export function addManifestResources(_bundleId, _fileToContainerPaths, inputMapp
         dispatch(failure(_bundleId, error));
       }
     }
-    await updatePublications(getState, _bundleId);
+    await updatePublications(() => gottenStateForPublications, _bundleId);
     await bundleService.waitStopCreateMode(_bundleId);
     dispatch(done(_bundleId));
     dispatch(saveMetadatFileToTempBundleFolder(_bundleId));

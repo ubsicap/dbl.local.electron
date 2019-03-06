@@ -18,14 +18,16 @@ export default browserWindowService;
 
 function saveFileToFolder(browserWin) {
   const fileUrl = browserWin.webContents.getURL();
+  const fileName = path.basename(fileUrl);
+  const ext = path.extname(fileName).replace('.', '');
   const defaultFolder = app.getPath('documents');
-  const defaultPath = path.join(defaultFolder, 'metadata.xml');
+  const defaultPath = path.join(defaultFolder, fileName);
   const targetFile = dialog.showSaveDialog({
-    title: 'Select folder to save metadata.xml',
+    title: `Select folder to save ${fileName}`,
     buttonLabel: 'Save',
     defaultPath,
     filters: [
-      { name: 'XML files', extensions: ['xml'] },
+      { name: `${ext.toUpperCase()} files`, extensions: [ext] },
       { name: 'All Files', extensions: ['*'] }
     ]
   });
@@ -129,6 +131,7 @@ function openFileInChromeBrowser(filePath, hotReload = false, webPreferences = {
       nodeIntegration: false,
       ...webPreferences
     },
+    title: filePath,
     show: false
   });
   browserWin.loadURL(url);
