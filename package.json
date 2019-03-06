@@ -59,7 +59,7 @@
   "main": "./app/main.prod.js",
   "build": {
     "productName": "nathanael",
-    "appId": "org.develar.nathanael",
+    "appId": "org.ubsicap.nathanael",
     "files": [
       "app/dist/",
       "app/app.html",
