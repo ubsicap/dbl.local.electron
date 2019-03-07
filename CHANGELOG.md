@@ -1,3 +1,7 @@
+### Version 0.29.1
+#### Fixes
+- Fix `Actions must be plain objects` warning
+
 ### Version 0.29.0 (Debug Info for Adding Resources)
 #### Features
 - Add info (job_spec.xml) button for uploading
