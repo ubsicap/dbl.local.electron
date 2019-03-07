@@ -1,3 +1,7 @@
+### Version 0.29.2
+#### Fixes
+- Fix upload status progress to avoid seeming stuck at the end sometimes
+
 ### Version 0.29.1
 #### Fixes
 - Fix `Actions must be plain objects` warning
