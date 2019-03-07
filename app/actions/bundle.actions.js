@@ -405,7 +405,7 @@ export function setupBundlesEventSource() {
     }
   }
 
-  async function updateUploadProgress(bundleId, entryId, jobId, resourceCountUploaded, resourceCountToUpload) {
+  function updateUploadProgress(bundleId, entryId, jobId, resourceCountUploaded, resourceCountToUpload) {
     return async (dispatch) => {
       await bundleService.saveJobSpecToTempFolder(bundleId);
       return dispatch({
