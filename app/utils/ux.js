@@ -138,15 +138,19 @@ function mapColumns(columns, getIsNumeric, getColumnLabel) {
     .map(c => ({ name: c, type: getIsNumeric(c) ? 'numeric' : 'string', label: getColumnLabel(c) }));
 }
 
-function getDblRowBackgroundColor(isForRow, classes, status, revision, parent, dblId) {
+function getBackgroundForDraftNewOrRevision(classes, isForRow, dblId, revision, parent) {
+  if (isForRow) {
+    return classes.storedMode;
+  }
+  const effectiveRevision = bundleService.getRevisionOrParentRevision(dblId, revision, parent);
+  return effectiveRevision ? classes.draftRevision : classes.draftNew;
+}
+
+function getDblRowBackgroundColor(isForRow, classes, status, revision, parent, dblId, mode) {
+  if (mode === 'upload' || status === 'DRAFT') {
+    return getBackgroundForDraftNewOrRevision(classes, isForRow, dblId, revision, parent);
+  }
   switch (status) {
-    case 'DRAFT': {
-      if (isForRow) {
-        return classes.storedMode;
-      }
-      const effectiveRevision = bundleService.getRevisionOrParentRevision(dblId, revision, parent);
-      return effectiveRevision ? classes.draftRevision : classes.draftNew;
-    }
     case 'NOT_STARTED': return classes.noneStoredMode;
     default:
       return classes.storedMode;

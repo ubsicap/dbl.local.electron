@@ -282,7 +282,7 @@ export function setupBundlesEventSource() {
       error: (e) => dispatch(listenError(e)),
       'storer/execute_task': listenStorerExecuteTaskDownloadResources,
       'storer/change_mode': (e) => dispatch(listenStorerChangeMode(e)),
-      'uploader/job': (e) => listenUploaderJob(e, dispatch, getState().bundles.uploadJobs),
+      'uploader/job': (e) => dispatch(listenUploaderJob(e)),
       'uploader/createJob': (e) => listenUploaderCreateJob(e, dispatch),
       'downloader/receiver': listenDownloaderReceiver,
       'downloader/spec_status': (e) => dispatch(listenDownloaderSpecStatus(e)),
@@ -383,25 +383,33 @@ export function setupBundlesEventSource() {
    * {'event': 'uploader/job', 'data': {'args': ('state', '343a70a5-b4d2-453a-95a5-5b53107b0c60', 'submitting'), 'component': 'uploader', 'type': 'job'}}
    * {'event': 'uploader/job', 'data': {'args': ('status', '343a70a5-b4d2-453a-95a5-5b53107b0c60', 'completed'), 'component': 'uploader', 'type': 'job'}}
    */
-  function listenUploaderJob(e, dispatch, uploadJobs) {
-    // console.log(e);
-    const data = JSON.parse(e.data);
-    const [type, ...nextArgs] = data.args;
-    if (type === 'updated') {
-      const [entryId, jobId, payload] = nextArgs;
-      const bundleId = uploadJobs[jobId];
-      const [resourceCountToUpload, resourceCountUploaded] = [payload[0], payload[5]];
-      dispatch(updateUploadProgress(bundleId, entryId, jobId, resourceCountUploaded, resourceCountToUpload));
-      dispatch(fetchUploadQueueCounts());
-      return;
-    }
-    if (type === 'state' || type === 'status') {
-      const [jobId, payload] = nextArgs;
-      const bundleId = uploadJobs[jobId];
-      if (payload === 'completed') {
-        dispatch(updateUploadJobs(bundleId, null, jobId));
+  function listenUploaderJob(e) {
+    return (dispatch, getState) => {
+      const uploadJobs = getState().bundles.uploadJobs;
+      const data = JSON.parse(e.data);
+      const [type, ...nextArgs] = data.args;
+      if (type === 'updated') {
+        const [entryId, jobId, payload] = nextArgs;
+        const bundleId = uploadJobs[jobId];
+        const addedBundle = getAddedBundle(getState, bundleId);
+        if (addedBundle.mode === 'upload') {
+          const [resourceCountToUpload, resourceCountUploaded] = [payload[0], payload[5]];
+          dispatch(updateUploadProgress(bundleId, entryId, jobId, resourceCountUploaded, resourceCountToUpload));
+        }
+        dispatch(fetchUploadQueueCounts());
+        return;
       }
-      return dispatch(updateUploadMessage(bundleId, jobId, payload));
+      if (type === 'state' || type === 'status') {
+        const [jobId, payload] = nextArgs;
+        const bundleId = uploadJobs[jobId];
+        if (payload === 'completed') {
+          dispatch(updateUploadJobs(bundleId, null, jobId));
+        }
+        const addedBundle = getAddedBundle(getState, bundleId);
+        if (addedBundle.mode === 'upload') {
+          return dispatch(updateUploadMessage(bundleId, jobId, payload));
+        }
+      }
     }
   }
 

@@ -123,7 +123,7 @@ class EntryAppBar extends Component<Props> {
     const { status, parent, dblId } = origBundle;
     const modeIcon = ux.getModeIcon(mode, { color: 'inherit', className: classNames(classes.leftIcon) });
     const revBackground =
-      ux.getDblRowBackgroundColor(false, classes, status, revision, parent, dblId);
+      ux.getDblRowBackgroundColor(false, classes, status, revision, parent, dblId, origBundle.mode);
     return (
       <AppBar className={classNames(classes.appBar, {
         [classes.appBarShift]: openDrawer,
