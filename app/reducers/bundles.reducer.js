@@ -281,7 +281,7 @@ export function bundles(state = initialState, action) {
       const { bundle, rawBundle } = action;
       return updateTaskStatusProgress(bundle.id, null, null, null, (bState) => {
         const updatedBundle = { ...bState, ...bundle };
-        if (bState.isUploading && rawBundle.mode === 'upload') {
+        if (rawBundle.mode === 'upload') {
           return updateBundleItem(updatedBundle, 'UPLOAD', 'IN_PROGRESS', bState.progress);
         }
         return updateBundleItem(updatedBundle, bundle.task, bundle.status, bundle.progress, () => ({

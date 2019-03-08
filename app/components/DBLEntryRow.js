@@ -407,9 +407,9 @@ class DBLEntryRow extends PureComponent<Props> {
 
   pickBackgroundColor = (isForRow) => {
     const {
-      classes, status, revision, parent, dblId
+      classes, status, revision, parent, dblId, mode
     } = this.props;
-    return ux.getDblRowBackgroundColor(isForRow, classes, status, revision, parent, dblId);
+    return ux.getDblRowBackgroundColor(isForRow, classes, status, revision, parent, dblId, mode);
   }
 
   renderLicenseIcon = (license) => {

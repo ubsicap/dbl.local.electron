@@ -1,8 +1,10 @@
-### Version 0.30.0 (Electron boilerplate upgrade)
+### Version 0.29.2
+#### Fixes
+- Fix upload status progress to avoid seeming stuck at the end sometimes
 
-#### Features
-
-- Updated Chrome Dev Tools
+### Version 0.29.1
+#### Fixes
+- Fix `Actions must be plain objects` warning
 
 ### Version 0.29.0 (Debug Info for Adding Resources)
 
