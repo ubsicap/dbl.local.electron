@@ -40,7 +40,7 @@ if (process.env.NODE_ENV === 'development') {
   log.transports.file.level = 'debug';
   log.transports.file.file = path.join(__dirname, 'log-dev.txt');
 } else {
-  log.transports.file.level = 'info';
+  log.transports.file.level = 'debug';
 }
 log.info('App starting...');
 log.info(`Log file: ${log.transports.file.file}`);
@@ -112,8 +112,16 @@ app.on('ready', async () => {
       mainWindow.focus();
     }
     const myAutoUpdater = autoUpdaterServices.setupAutoUpdater(mainWindow);
+    myAutoUpdater.logger.info(`logger level? ${myAutoUpdater.logger.transports.file.level}`);
+    myAutoUpdater.logger.info(`autoUpdater config path: ${myAutoUpdater._appUpdateConfigPath}`);
+    if (process.env.NODE_ENV === 'development') {
+      myAutoUpdater.updateConfigPath = path.join(__dirname, 'dev-app-update.yml');
+    } else {
+      myAutoUpdater.updateConfigPath = path.join(__dirname, '..', '..', 'app-update.yml');
+    }
     myAutoUpdater.logger.info('Request checkForUpdatesAndNotify');
     myAutoUpdater.checkForUpdatesAndNotify();
+    myAutoUpdater.logger.info(`autoUpdater config path: ${myAutoUpdater._appUpdateConfigPath}`);
   });
 
   mainWindow.on('focus', () => {
