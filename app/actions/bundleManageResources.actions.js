@@ -363,14 +363,20 @@ export function selectRevisions(selectedRevisions) {
 }
 
 export function updateAddedFilePaths(
-  addedFilePaths,
+  newAddedFilePaths,
   fullToRelativePaths,
   shouldRunMapperReport = false,
   shouldUpdateWithFileStats = false
 ) {
-  return {
-    type: bundleResourceManagerConstants.UPDATE_ADDED_FILEPATHS,
-    addedFilePaths,
-    fullToRelativePaths,
+  return (dispatch, getState) => {
+    const { addedFilePaths: origAddedFilePaths = [], selectedResources: origSelectedIds } = getState().bundleManageResources;
+    const addedFilePaths = utilities.union(origAddedFilePaths, newAddedFilePaths);
+    const selectedIds = utilities.union(origSelectedIds, addedFilePaths);
+    dispatch({
+      type: bundleResourceManagerConstants.UPDATE_ADDED_FILEPATHS,
+      addedFilePaths,
+      fullToRelativePaths,
+    });
+    dispatch(selectResources(selectedIds));
   };
 }

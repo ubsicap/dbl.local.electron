@@ -1032,10 +1032,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   };
 
   setAddedFilePathsAndSelectAll = (newAddedFilePaths, fullToRelativePaths) => {
-    const addedFilePaths = this.getUnionWithAddedFiles(newAddedFilePaths);
-    const selectedIds = this.getUnionWithSelectedIds(addedFilePaths);
-    this.props.updateAddedFilePaths(addedFilePaths, fullToRelativePaths);
-    this.props.selectResources(selectedIds);
+    this.props.updateAddedFilePaths(newAddedFilePaths, fullToRelativePaths);
     /*
     this.setState(
       { addedFilePaths, selectedIds, fullToRelativePaths },
