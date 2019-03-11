@@ -347,3 +347,30 @@ export function selectMappers(direction, mapperIds) {
     mapperIds
   };
 }
+
+export function selectResources(selectedResources) {
+  return {
+    type: bundleResourceManagerConstants.RESOURCES_SELECTED,
+    selectedResources
+  };
+}
+
+export function selectRevisions(selectedRevisions) {
+  return {
+    type: bundleResourceManagerConstants.REVISIONS_SELECTED,
+    selectedRevisions
+  };
+}
+
+export function updateAddedFilePaths(
+  addedFilePaths,
+  fullToRelativePaths,
+  shouldRunMapperReport = false,
+  shouldUpdateWithFileStats = false
+) {
+  return {
+    type: bundleResourceManagerConstants.UPDATE_ADDED_FILEPATHS,
+    addedFilePaths,
+    fullToRelativePaths,
+  };
+}

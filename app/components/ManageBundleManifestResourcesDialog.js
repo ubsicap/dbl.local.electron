@@ -22,7 +22,7 @@ import path from 'path';
 import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources,
-  getMapperReport
+  getMapperReport, selectResources, selectRevisions, updateAddedFilePaths
 } from '../actions/bundleManageResources.actions';
 import { selectItemsToPaste, pasteItems, clearClipboard } from '../actions/clipboard.actions';
 import { downloadResources, removeResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
@@ -43,6 +43,7 @@ const NEED_CONTAINER = '/?';
 
 type Props = {
   classes: {},
+  theme: {},
   loading: boolean,
   progress: number,
   bundleId: ?string,
@@ -65,7 +66,9 @@ type Props = {
   selectedIdsInputConverters: ?{},
   goFixPublications: ?() => {},
   selectedItemsToPaste: ?{},
-  theme: {},
+  selectedRowIds: [],
+  autoSelectAllResources: boolean,
+  tableData: [],
   closeResourceManager: () => {},
   getManifestResources: () => {},
   getEntryRevisions: () => {},
@@ -79,7 +82,10 @@ type Props = {
   getMapperReport: () => {},
   selectItemsToPaste: () => {},
   pasteItems: () => {},
-  clearClipboard: () => {}
+  clearClipboard: () => {},
+  selectResources: () => {},
+  selectRevisions: () => {},
+  updateAddedFilePaths: () => {}
 };
 
 const addStatus = 'add?';
@@ -480,12 +486,21 @@ const makeGetEntryRevisionsData = () => createSelector(
   }
 );
 
+function filterSelectedResourceIds(mode, autoSelectAllResources, selectedResources, tableData) {
+  const isDownloadMode = mode === 'download';
+  const selectedResourceIds = autoSelectAllResources ?
+    tableData.filter(row => !isDownloadMode || (!row.stored && !row.disabled)).map(row => row.id) :
+    selectedResources.filter(id => tableData.some(row => row.id === id && !row.disabled));
+  return selectedResourceIds;
+}
+
 function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundleManageResources, clipboard } = state;
   const {
     publicationsHealth, progress = 100, loading = false,
     isStoreMode = false, fetchingMetadata = false,
-    mapperReports = {}, selectedMappers = {}
+    mapperReports = {}, selectedMappers = {},
+    selectedResources = [], autoSelectAllResources = false, selectedRevisions = []
   } = bundleManageResources;
   const { selectedItemsToPaste = {} } = clipboard;
   const {
@@ -512,6 +527,12 @@ function mapStateToProps(state, props) {
   const { report: mapperReport = {} } = mapperInputData || {};
   const selectedIdsInputConverters =
     selectedMappers.input || Object.keys(mapperReport);
+  const entryRevisions = mode === 'revisions' ? getEntryRevisionsData(state, props) : [];
+  const manifestResources = getManifestResourceData(state, props);
+  const tableData = mode === 'revisions' ? entryRevisions : manifestResources;
+  const selectedRowIds = mode === 'revisons' ?
+    selectedRevisions :
+    filterSelectedResourceIds(mode, autoSelectAllResources, selectedResources, tableData);
   return {
     loading: loading || fetchingMetadata || !isStoreMode,
     progress,
@@ -522,11 +543,13 @@ function mapStateToProps(state, props) {
     showMetadataFile,
     mapperInputData,
     selectedIdsInputConverters,
-    manifestResources: getManifestResourceData(state, props),
+    selectedRowIds,
+    autoSelectAllResources,
+    manifestResources,
     previousEntryRevision,
     bundlePreviousRevision,
     previousManifestResources,
-    entryRevisions: mode === 'revisions' ? getEntryRevisionsData(state, props) : [],
+    entryRevisions,
     columnConfig,
     isOkToAddFiles: !publicationsHealthMessage,
     isOkToRemoveFromManifest: !publicationsHealthMessage,
@@ -534,7 +557,8 @@ function mapStateToProps(state, props) {
     goFixPublications,
     publicationsHealthSuccessMessage,
     wizardsResults,
-    selectedItemsToPaste
+    selectedItemsToPaste,
+    tableData
   };
 }
 
@@ -552,7 +576,10 @@ const mapDispatchToProps = {
   getMapperReport,
   selectItemsToPaste,
   pasteItems,
-  clearClipboard
+  clearClipboard,
+  selectResources,
+  selectRevisions,
+  updateAddedFilePaths
 };
 
 const materialStyles = theme => ({
@@ -599,9 +626,7 @@ function mapSuggestions(suggestions) {
 class ManageBundleManifestResourcesDialog extends Component<Props> {
   props: Props;
   state = {
-    selectedIds: [],
     addedFilePaths: [],
-    selectAll: ['download'].includes(this.props.mode),
     openDrawer: false,
   }
 
@@ -656,7 +681,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         this.props.getManifestResources(this.props.bundlePreviousRevision.id);
       }
     }
-    /* todo: the following do setState, which is unorthodox/anti-pattern */
+    /* todo: the following do setState, which is unorthodox/anti-pattern
     if (hasResourceDataChanged(prevProps.manifestResources, this.props.manifestResources) ||
       (this.props.mode === 'revisions' && !utilities.areEqualArrays(this.props.entryRevisions, prevProps.entryRevisions)) ||
       !utilities.haveEqualKeys(
@@ -676,6 +701,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         false
       )();
     }
+    */
   }
 
   handleDrawerOpen = () => {
@@ -686,25 +712,25 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.setState({ openDrawer: false });
   };
 
-  updateTableAsIs(tableData) {
-    this.setState({ tableData });
-  }
-
   /* todo: memoize tableData */
   updateTableData = (props) => {
-    const tableData = props.mode === 'revisions' ? props.entryRevisions : props.manifestResources;
+    /*
+    const { tableData } = props;
     const selectedIds = this.getSelectedIds(tableData, props.mode);
     this.setState({
       tableData, selectedIds, addedFilePaths: [], fullToRelativePaths: undefined
     }, this.getMapperReport);
+    */
   }
 
   getSelectedIds = (tableData, mode) => {
+    /*
     const isDownloadMode = mode === 'download';
     const selectedIds = this.state.selectAll ?
       tableData.filter(row => !isDownloadMode || (!row.stored && !row.disabled)).map(row => row.id) :
       this.state.selectedIds.filter(id => tableData.some(row => row.id === id && !row.disabled));
     return selectedIds;
+    */
   }
 
   handleDownloadOrClean = () => {
@@ -851,7 +877,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       const filesToContainers = toAddResources.reduce((acc, selectedResource) =>
         ({ ...acc, [selectedResource.id]: formatUriForApi(selectedResource) }), {});
       this.props.addManifestResources(bundleId, filesToContainers, selectedMappers);
-      this.setState({ selectedIds: [] });
+      this.props.selectResources([]);
     }
   }
 
@@ -877,16 +903,20 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.props.getMapperReport('input', uris, bundleId);
   }
 
-  handleSelectedResourceIds = (selectedIds) => {
-    this.setState({ selectedIds, selectAll: false }, this.getMapperReport);
+  handleSelectedRowIds = (selectedIds) => {
+    if (this.props.mode === 'revisions') {
+      this.props.selectRevisions(selectedIds);
+    } else {
+      this.props.selectResources(selectedIds);
+    }
   }
 
   getSelectedCountMessage = (shouldDisableOk) => {
-    const { selectAll } = this.state;
+    const { autoSelectAllResources } = this.props;
     if (shouldDisableOk()) {
       return '';
     }
-    const allMsg = selectAll ? 'All ' : '';
+    const allMsg = autoSelectAllResources ? 'All ' : '';
     const {
       inEffect = []
     } = this.getSelectedResourcesByStatus();
@@ -915,16 +945,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   isNothingSelected = () => {
-    const { selectedIds = [] } = this.state;
-    return selectedIds.length === 0;
+    const { selectedRowIds = [] } = this.props;
+    return selectedRowIds.length === 0;
   }
 
   shouldDisableDownload = () => this.isNothingSelected();
 
   shouldDisableModifyFiles = () => {
-    const { selectedIds = [] } = this.state;
+    const { selectedRowIds = [] } = this.props;
     const { loading = false } = this.props;
-    if (loading || selectedIds.length === 0) {
+    if (loading || selectedRowIds.length === 0) {
       return true;
     }
     const { isOkToRemoveFromManifest, isOkToAddFiles } = this.props;
@@ -957,7 +987,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   getUpdateSelectedResourcesContainers = (newContainer) => {
-    const { tableData: origTotalResources } = this.state;
+    const { tableData: origTotalResources } = this.props;
     const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
     if (toAddResources !== inEffect) {
       return origTotalResources;
@@ -1004,10 +1034,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   setAddedFilePathsAndSelectAll = (newAddedFilePaths, fullToRelativePaths) => {
     const addedFilePaths = this.getUnionWithAddedFiles(newAddedFilePaths);
     const selectedIds = this.getUnionWithSelectedIds(addedFilePaths);
+    this.props.updateAddedFilePaths(addedFilePaths, fullToRelativePaths);
+    this.props.selectResources(selectedIds);
+    /*
     this.setState(
       { addedFilePaths, selectedIds, fullToRelativePaths },
       this.updateTotalResources(newAddedFilePaths, fullToRelativePaths, true, true)
     );
+    */
     // this.setState({ selectAll: true });
   };
 
@@ -1018,7 +1052,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   getUnionWithSelectedIds = (addedFilePaths) => {
-    const { selectedIds: origSelectedIds } = this.state;
+    const { selectedRowIds: origSelectedIds } = this.props;
     const selectedIds = utilities.union(origSelectedIds, addedFilePaths);
     return selectedIds;
   }
@@ -1253,16 +1287,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   getSelectedRowData = () => {
-    const { manifestResources } = this.props;
-    const { tableData = manifestResources, selectedIds } = this.state;
-    const selectedIdSet = Set(selectedIds);
+    const { selectedRowIds, tableData } = this.props;
+    const selectedIdSet = Set(selectedRowIds);
     return tableData.filter(r => selectedIdSet.has(r.id));
   }
 
   hasAnySelectedUnassignedContainers = () => {
-    const { manifestResources } = this.props;
-    const { tableData = manifestResources, selectedIds } = this.state;
-    const selectedIdSet = Set(selectedIds);
+    const { tableData, selectedRowIds } = this.props;
+    const selectedIdSet = Set(selectedRowIds);
     const resourcesWithUnassignedContainers =
       tableData
         .filter(r => (r.container === NEED_CONTAINER));
@@ -1297,8 +1329,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   renderTableToolbar = () => {
-    const { mode, mapperInputData } = this.props;
-    const { selectedIds } = this.state;
+    const { mode, mapperInputData, selectedRowIds } = this.props;
     const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
     const addModeProps = mode === 'addFiles' ? {
       enableEditContainer: toAddResources === inEffect,
@@ -1311,7 +1342,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return (
       <React.Fragment>
         <EnhancedTableToolbar
-          numSelected={selectedIds.length}
+          numSelected={selectedRowIds.length}
           {...addModeProps}
         />
         {this.renderInputMapperReportTable()}
@@ -1334,9 +1365,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   renderTable = () => {
     const {
-      columnConfig, manifestResources, mode
+      columnConfig, mode, selectedRowIds, tableData
     } = this.props;
-    const { tableData = manifestResources, selectedIds } = this.state;
     switch (mode) {
       case 'download': {
         return (
@@ -1347,9 +1377,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               columnConfig={columnConfig}
               secondarySorts={secondarySorts}
               defaultOrderBy="container"
-              onSelectedRowIds={this.handleSelectedResourceIds}
+              onSelectedRowIds={this.handleSelectedRowIds}
               multiSelections
-              selectedIds={selectedIds}
+              selectedIds={selectedRowIds}
             />
           </React.Fragment>
         );
@@ -1365,8 +1395,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               secondarySorts={['revision']}
               defaultOrderBy="revision"
               orderDirection="desc"
-              onSelectedRowIds={this.handleSelectedResourceIds}
-              selectedIds={selectedIds}
+              onSelectedRowIds={this.handleSelectedRowIds}
+              selectedIds={selectedRowIds}
             />
           </React.Fragment>
         );
@@ -1380,9 +1410,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               columnConfig={columnConfig}
               secondarySorts={secondarySorts}
               defaultOrderBy="container"
-              onSelectedRowIds={this.handleSelectedResourceIds}
               multiSelections
-              selectedIds={selectedIds}
+              onSelectedRowIds={this.handleSelectedRowIds}
+              selectedIds={selectedRowIds}
             />
           </React.Fragment>
         );
