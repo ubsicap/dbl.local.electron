@@ -1221,13 +1221,11 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   getOkButtonDataDownloadOrCleanResources = () => {
     const { classes } = this.props;
+    const resourceSelectionStatus = this.getSelectedResourcesByStatus();
     const {
       storedResources, manifestResources, inEffect
-    } = this.getSelectedResourcesByStatus();
+    } = resourceSelectionStatus;
     const isManifestResourcesInEffect = manifestResources === inEffect;
-    const OkButtonIcon = isManifestResourcesInEffect ?
-      <FileDownload className={classNames(classes.leftIcon)} /> :
-      <Delete className={classNames(classes.leftIcon)} />;
     let OkButtonLabel;
     if (manifestResources === inEffect) {
       OkButtonLabel = `Download${this.getSelectedCountMessage(this.shouldDisableDownload)}`;
@@ -1235,6 +1233,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     if (storedResources === inEffect) {
       OkButtonLabel = `Clean (${storedResources.length})`;
     }
+    const OkButtonIcon = this.getDownloadOkButtonIcon(resourceSelectionStatus);
     const OkButtonProps = {
       classes,
       confirmingProps: { variant: 'contained' },
@@ -1244,6 +1243,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       disabled: this.shouldDisableDownload()
     };
     return { OkButtonLabel, OkButtonIcon, OkButtonProps };
+  }
+
+  getDownloadOkButtonIcon = ({ inEffect, manifestResources }) => {
+    const { classes } = this.props;
+    if (!inEffect || inEffect.length === 0)
+      return (null);
+    const OkButtonIcon = manifestResources === inEffect ?
+      <FileDownload className={classNames(classes.leftIcon)} /> :
+      <Delete className={classNames(classes.leftIcon)} />;
+    return OkButtonIcon;
   }
 
   modeUi = () => {
