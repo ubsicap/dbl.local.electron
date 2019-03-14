@@ -134,10 +134,6 @@ function createUpdatedTotalResources(origTotalResources, filePath, updateFunc) {
   return origTotalResources.map(r => (r.id === filePath ? { ...r, ...updateFunc(r) } : r));
 }
 
-function formatBytesByKbs(bytes) {
-  return (Math.round(Number(bytes) / 1024)).toLocaleString();
-}
-
 function formatContainer(containerInput) {
   const trimmed = containerInput.trim();
   if (trimmed === '' || trimmed === '/' || trimmed === '.') {
@@ -221,7 +217,7 @@ function createResourceData(
   const container = formatContainer(upath.normalizeTrim(path.dirname(uri)));
   const name = path.basename(uri);
   /* const ext = path.extname(uri); */
-  const size = formatBytesByKbs(sizeRaw);
+  const size = utilities.formatBytesByKbs(sizeRaw);
   const id = uri;
   const isModifiedFromPrev = prevManifestResource ?
     prevManifestResource.checksum !== checksum : false;
@@ -298,6 +294,13 @@ const getMode = (state) => state.bundleManageResources.mode;
 const getBundleId = (state, props) => props.match.params.bundleId;
 const getAllEntryRevisions = (state) => state.bundles.allEntryRevisions || {};
 const getBundlesById = (state) => state.bundles.addedByBundleIds || {};
+const getAddedFilePaths = (state) => state.bundleManageResources.addedFilePaths || [];
+const getFullToRelativePaths = (state) => state.bundleManageResources.fullToRelativePaths || {};
+const getFileSizes = (state) => state.bundleManageResources.fileSizes || {};
+const getMapperReports = (state) => state.bundleManageResources.mapperReports || {};
+const getMapperInputData = (state) => getMapperReports(state).input || {};
+const getMapperInputReport = (state) => getMapperInputData(state).report || {};
+const getSelectedMappers = (state) => state.bundleManageResources.selectedMappers || {};
 
 function getOrDefault(obj, prop, defaultValue) {
   if (!obj) {
@@ -308,9 +311,42 @@ function getOrDefault(obj, prop, defaultValue) {
 
 const emptyBundleManifestResources = { rawManifestResources: {}, storedFiles: {} };
 
+function filterBySelectedMappers(inputMappers, selectedIdsInputConverters) {
+  return Object.entries(inputMappers)
+    .filter(([mapperKey]) => selectedIdsInputConverters.includes(mapperKey))
+    .reduce((acc, [mapperKey, mapperValue]) => ({ ...acc, [mapperKey]: mapperValue }), {});
+}
+
+function getTableDataForAddedResources(
+  mapperInputData,
+  selectedIdsInputConverters,
+  previousManifestResources,
+  newAddedFilePaths,
+  fullToRelativePaths
+) {
+  const { report: inputMappers = {}, overwrites: inputMappersOverwrites = {} } = mapperInputData;
+  const parentRawManifestResourceUris =
+    getRawManifestResourceUris(previousManifestResources);
+  const conversions =
+    utilities.getUnionOfValues(filterBySelectedMappers(inputMappers, selectedIdsInputConverters));
+  const conversionOverwrites =
+    Object.entries(filterBySelectedMappers(inputMappersOverwrites, selectedIdsInputConverters))
+      .reduce((acc, [, mapperOverwrites]) => acc.union(mapperOverwrites.map(a => a[0])), Set());
+  const addedResources = newAddedFilePaths.map(createAddedResource(
+    fullToRelativePaths, parentRawManifestResourceUris,
+    conversions, conversionOverwrites
+  ));
+  return addedResources;
+}
+
 const makeGetManifestResourcesData = () => createSelector(
-  [getAllManifestResources, getMode, getBundleId, getBundlesById, getAllEntryRevisions],
-  (manifestResources, mode, bundleId, bundlesById, allEntryRevisions) => {
+  [getAllManifestResources, getMode, getBundleId, getBundlesById, getAllEntryRevisions,
+    getAddedFilePaths, getFullToRelativePaths, getFileSizes,
+    getMapperInputData, getMapperInputReport, getSelectedMappers],
+  (
+    manifestResources, mode, bundleId, bundlesById, allEntryRevisions,
+    addedFilePaths, fullToRelativePaths, fileSizes, mapperInputData, mapperReport, selectedMappers
+  ) => {
     const bundleManifestResources = getOrDefault(
       manifestResources,
       bundleId,
@@ -338,7 +374,16 @@ const makeGetManifestResourcesData = () => createSelector(
         .filter(pr => !bundleManifestResourceUris.has(pr.uri) &&
           Object.keys(rawManifestResources).length)
         .map(pr => createResourceData(null, pr, parentStoredFiles[pr.uri], pr));
-    return [...bundleManifestResourcesData, ...deletedParentBundleResources];
+    const selectedIdsInputConverters =
+      selectedMappers.input || Object.keys(mapperReport);
+    const addedResources = getTableDataForAddedResources(
+      mapperInputData,
+      selectedIdsInputConverters,
+      previousManifestResources,
+      addedFilePaths,
+      fullToRelativePaths
+    );
+    return [...bundleManifestResourcesData, ...addedResources, ...deletedParentBundleResources];
   }
 );
 
@@ -626,7 +671,6 @@ function mapSuggestions(suggestions) {
 class ManageBundleManifestResourcesDialog extends Component<Props> {
   props: Props;
   state = {
-    addedFilePaths: [],
     openDrawer: false,
   }
 
@@ -890,16 +934,21 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.props.goFixPublications();
   }
 
-  getMapperReport = () => {
+  getMapperReportUris = () => {
     if (!this.isModifyFilesMode()) {
-      return;
+      return [];
     }
     const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
     if (toAddResources !== inEffect && inEffect) {
-      return;
+      return [];
     }
-    const { bundleId } = this.props;
     const uris = (toAddResources || []).map(r => r.uri);
+    return uris;
+  }
+
+  getMapperReport = () => {
+    const { bundleId } = this.props;
+    const uris = this.getMapperReportUris();
     this.props.getMapperReport('input', uris, bundleId);
   }
 
@@ -970,11 +1019,12 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return false;
   }
 
+  /*
   updateAddedResourcesWithFileStats = (newlyAddedFilePaths) => async () => {
     const fileSizesPromises = newlyAddedFilePaths.map(async (filePath) => {
       const stats = await fs.stat(filePath);
       const { size: sizeRaw } = stats;
-      const size = formatBytesByKbs(sizeRaw);
+      const size = utilities.formatBytesByKbs(sizeRaw);
       return { filePath, size };
       // const checksum = size < 268435456 ? await md5File(filePath) : '(too expensive)';
     });
@@ -985,6 +1035,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         (createUpdatedTotalResources(acc, filePath, () => ({ size }))), this.state.tableData);
     this.setState({ tableData: updatedTotalResources });
   }
+  */
 
   getUpdateSelectedResourcesContainers = (newContainer) => {
     const { tableData: origTotalResources } = this.props;
@@ -1028,11 +1079,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     if (!newAddedFilePaths) {
       return;
     }
-    this.setAddedFilePathsAndSelectAll(newAddedFilePaths, this.state.fullToRelativePaths);
+    this.setAddedFilePathsAndSelectAll(newAddedFilePaths);
   };
 
-  setAddedFilePathsAndSelectAll = (newAddedFilePaths, fullToRelativePaths) => {
-    this.props.updateAddedFilePaths(newAddedFilePaths, fullToRelativePaths);
+  setAddedFilePathsAndSelectAll = (newAddedFilePaths, fullToRelativePaths = null) => {
+    this.props.updateAddedFilePaths(
+      this.props.bundleId,
+      newAddedFilePaths,
+      fullToRelativePaths,
+      this.getMapperReportUris()
+    );
     /*
     this.setState(
       { addedFilePaths, selectedIds, fullToRelativePaths },
@@ -1042,17 +1098,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     // this.setState({ selectAll: true });
   };
 
-  getUnionWithAddedFiles = (newAddedFilePaths) => {
-    const { addedFilePaths: origAddedFilePaths = [] } = this.state;
-    const addedFilePaths = utilities.union(origAddedFilePaths, newAddedFilePaths);
-    return addedFilePaths;
-  }
-
-  getUnionWithSelectedIds = (addedFilePaths) => {
-    const { selectedRowIds: origSelectedIds } = this.props;
-    const selectedIds = utilities.union(origSelectedIds, addedFilePaths);
-    return selectedIds;
-  }
 
   handleAddByFolder = async () => {
     const folderPaths = dialog.showOpenDialog({ properties: ['openFile', 'openDirectory', 'multiSelections'] });

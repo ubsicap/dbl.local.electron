@@ -16,7 +16,8 @@ export const utilities = {
   union,
   difference,
   buildRouteUrl,
-  calculatePercentage
+  calculatePercentage,
+  formatBytesByKbs
 };
 export default utilities;
 
@@ -91,4 +92,8 @@ function buildRouteUrl(routeUrl, params) {
 
 function calculatePercentage(completed, total) {
   return parseFloat(((completed / total) * 100).toFixed(2));
+}
+
+function formatBytesByKbs(bytes) {
+  return (Math.round(Number(bytes) / 1024)).toLocaleString();
 }

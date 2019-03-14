@@ -180,6 +180,21 @@ export function bundleManageResources(state = initialState, action) {
         selectedRevisions
       };
     }
+    case bundleResourceManagerConstants.UPDATE_ADDED_FILEPATHS: {
+      const { addedFilePaths, fullToRelativePaths } = action;
+      return {
+        ...state,
+        addedFilePaths,
+        fullToRelativePaths
+      };
+    }
+    case bundleResourceManagerConstants.UPDATE_FILE_STATS_SIZES: {
+      const { fileSizes } = action;
+      return {
+        ...state,
+        fileSizes
+      };
+    }
     default: {
       return state;
     }

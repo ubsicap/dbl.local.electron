@@ -1,4 +1,5 @@
 import log from 'electron-log';
+import fs from 'fs-extra';
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
@@ -145,7 +146,10 @@ export function checkPublicationsHealth(_bundleId) {
       const { wizard: wizardName } = bestPubWizard;
       const { description, documentation } = applicableWizards.find(w => w.name === wizardName);
       const { wizardsResults: prevWizardsResults = {} } = acc;
-      return { wizardsResults: { ...prevWizardsResults, [wizardName]: { ...bestPubWizard, description, documentation } } };
+      return {
+        wizardsResults:
+          { ...prevWizardsResults, [wizardName]: { ...bestPubWizard, description, documentation } }
+      };
     }, { wizardsResults: {} });
     dispatch({
       type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_SUCCESS,
@@ -363,20 +367,47 @@ export function selectRevisions(selectedRevisions) {
 }
 
 export function updateAddedFilePaths(
+  bundleId,
   newAddedFilePaths,
-  fullToRelativePaths,
-  shouldRunMapperReport = false,
-  shouldUpdateWithFileStats = false
+  fullToRelativePaths = null,
+  mapperReportUris = []
 ) {
   return (dispatch, getState) => {
-    const { addedFilePaths: origAddedFilePaths = [], selectedResources: origSelectedIds } = getState().bundleManageResources;
+    const {
+      addedFilePaths: origAddedFilePaths = [],
+      selectedResources: origSelectedIds,
+      fullToRelativePaths: fullToRelativePathsOrig
+    } = getState().bundleManageResources;
     const addedFilePaths = utilities.union(origAddedFilePaths, newAddedFilePaths);
     const selectedIds = utilities.union(origSelectedIds, addedFilePaths);
     dispatch({
       type: bundleResourceManagerConstants.UPDATE_ADDED_FILEPATHS,
       addedFilePaths,
-      fullToRelativePaths,
+      fullToRelativePaths: fullToRelativePaths || fullToRelativePathsOrig,
     });
     dispatch(selectResources(selectedIds));
+    if (mapperReportUris.length > 0) {
+      dispatch(getMapperReport('input', mapperReportUris, bundleId));
+    }
+    dispatch(getFileSizes(newAddedFilePaths));
+  };
+}
+
+function getFileSizes(newlyAddedFilePaths) {
+  return async dispatch => {
+    const fileSizesPromises = newlyAddedFilePaths.map(async (filePath) => {
+      const stats = await fs.stat(filePath);
+      const { size: sizeRaw } = stats;
+      const size = utilities.formatBytesByKbs(sizeRaw);
+      return { filePath, size };
+      // const checksum = size < 268435456 ? await md5File(filePath) : '(too expensive)';
+    });
+    const fileSizesList = await Promise.all(fileSizesPromises);
+    const fileSizes =
+      fileSizesList.reduce((acc, data) => { acc[data.filePath] = data.size; return acc; }, {});
+    dispatch({
+      type: bundleResourceManagerConstants.UPDATE_FILE_STATS_SIZES,
+      fileSizes
+    });
   };
 }
