@@ -51,7 +51,6 @@ type Props = {
   origBundle: {},
   mode: string,
   showMetadataFile: ?string,
-  manifestResources: [],
   previousEntryRevision: ?{},
   bundlePreviousRevision: ?{},
   previousManifestResources: {},
@@ -307,11 +306,11 @@ function getTableDataForAddedResources(
 }
 
 const makeGetManifestResourcesData = () => createSelector(
-  [getAllManifestResources, getMode, getBundleId, getBundlesById, getAllEntryRevisions,
+  [getAllManifestResources, getMode, getBundleId, getBundlesById, makeGetPrevManifestResourcesData(),
     getAddedFilePaths, getFullToRelativePaths, getFileSizes,
     getMapperInputData, getMapperInputReport, getSelectedMappers],
   (
-    manifestResources, mode, bundleId, bundlesById, allEntryRevisions,
+    manifestResources, mode, bundleId, bundlesById, prevManifestResourcesData,
     addedFilePaths, fullToRelativePaths, fileSizes, mapperInputData, mapperReport, selectedMappers
   ) => {
     const bundleManifestResources = getOrDefault(
@@ -321,12 +320,7 @@ const makeGetManifestResourcesData = () => createSelector(
     );
     const { rawManifestResources, storedFiles } = bundleManifestResources;
     const { previousEntryRevision, bundlePreviousRevision, previousManifestResources } =
-      getPreviousRevisionManifestResources(
-        bundleId,
-        bundlesById,
-        manifestResources,
-        allEntryRevisions
-      );
+      prevManifestResourcesData;
     const bundleManifestResourcesData = Object.values(rawManifestResources)
       .map(r => createResourceData(
         bundleId[bundlesById],
@@ -355,25 +349,42 @@ const makeGetManifestResourcesData = () => createSelector(
   }
 );
 
+const getSelectedResourceIds = (state) => state.bundleManageResources.selectedResources || [];
+
+const makeGetSelectedResources = () => createSelector(
+  [getSelectedResourceIds, makeGetManifestResourcesData()],
+  getSelectedRowData
+);
+
 function getSelectedRowData(selectedRowIds, tableData) {
   const selectedIdSet = Set(selectedRowIds);
   return tableData.filter(r => selectedIdSet.has(r.id));
 }
 
-const getSelectedRowIds = (state, props) => props.selectedRowIds || [];
-const getTableData = (state, props) => props.tableData;
-const getPrevManifestResourcesSelector = (state, props) => props.previousManifestResources;
+const getAutoSelectAllResources = (state) =>
+  state.bundleManageResources.autoSelectAllResources || false;
 
-const makeGetSelectedResourcesByStatus = () => createSelector(
-  [getSelectedRowIds, getTableData, getPrevManifestResourcesSelector, getMode],
-  (selectedRowIds, tableData, previousManifestResources, mode) =>
-    getSelectedResourcesByStatus(selectedRowIds, tableData, previousManifestResources, mode)
+const makeGetSelectedResourceIds = () => createSelector(
+  [getMode, getAutoSelectAllResources, getSelectedResourceIds, makeGetManifestResourcesData()],
+  filterSelectedResourceIds
 );
 
-function getSelectedResourcesByStatus(selectedRowIds, tableData, previousManifestResources, mode) {
+const makeGetSelectedResourcesByStatus = () => createSelector(
+  [makeGetSelectedResourceIds(), makeGetManifestResourcesData(),
+    makeGetPrevManifestResourcesData(), getMode],
+  (selectedRowIds, tableData, previousManifestResourcesData, mode) =>
+    getSelectedResourcesByStatus(selectedRowIds, tableData, previousManifestResourcesData, mode)
+);
+
+function getSelectedResourcesByStatus(
+  selectedRowIds,
+  tableData,
+  previousManifestResourcesData,
+  mode
+) {
   const selectedResources = getSelectedRowData(selectedRowIds, tableData);
   const parentRawManifestResourceUris =
-    getRawManifestResourceUris(previousManifestResources);
+    getRawManifestResourceUris(previousManifestResourcesData.previousManifestResources);
   const filteredResources
     = List(selectedResources).reduce(
       (acc, r) => {
@@ -478,7 +489,7 @@ function getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions) {
   return { bundlePreviousRevision, previousEntryRevision };
 }
 
-function getPreviousRevisionManifestResources(
+function getPreviousRevisionManifestResourcesData(
   bundleId,
   bundlesById,
   manifestResources,
@@ -492,10 +503,10 @@ function getPreviousRevisionManifestResources(
   return { previousEntryRevision, bundlePreviousRevision, previousManifestResources };
 }
 
-const makeGetPrevManifestResources = () => createSelector(
+const makeGetPrevManifestResourcesData = () => createSelector(
   [getAllManifestResources, getBundleId, getBundlesById, getAllEntryRevisions],
   (manifestResources, bundleId, bundlesById, allEntryRevisions) =>
-    getPreviousRevisionManifestResources(
+    getPreviousRevisionManifestResourcesData(
       bundleId,
       bundlesById,
       manifestResources,
@@ -583,12 +594,12 @@ const makeGetEntryRevisionsData = () => createSelector(
   }
 );
 
-function filterSelectedResourceIds(mode, autoSelectAllResources, selectedResources, tableData) {
+function filterSelectedResourceIds(mode, autoSelectAllResources, selectedResourceIds, tableData) {
   const isDownloadMode = mode === 'download';
-  const selectedResourceIds = autoSelectAllResources ?
+  const filteredSelectedResourceIds = autoSelectAllResources ?
     tableData.filter(row => !isDownloadMode || (!row.stored && !row.disabled)).map(row => row.id) :
-    selectedResources.filter(id => tableData.some(row => row.id === id && !row.disabled));
-  return selectedResourceIds;
+    selectedResourceIds.filter(id => tableData.some(row => row.id === id && !row.disabled));
+  return filteredSelectedResourceIds;
 }
 
 function mapStateToProps(state, props) {
@@ -597,7 +608,7 @@ function mapStateToProps(state, props) {
     publicationsHealth, progress = 100, loading = false,
     isStoreMode = false, fetchingMetadata = false,
     mapperReports = {}, selectedMappers = {},
-    selectedResources = [], autoSelectAllResources = false, selectedRevisions = []
+    autoSelectAllResources = false, selectedRevisions = []
   } = bundleManageResources;
   const { selectedItemsToPaste = {} } = clipboard;
   const {
@@ -610,15 +621,17 @@ function mapStateToProps(state, props) {
   const { showMetadataFile } = bundleEditMetadata;
   const columnConfig = createColumnConfig(mode);
   const getManifestResourceData = makeGetManifestResourcesData();
-  const getPrevManifestResources = makeGetPrevManifestResources();
+  const getPrevManifestResourcesDataSelector = makeGetPrevManifestResourcesData();
   const bundlesById = getBundlesById(state);
   const getEntryRevisionsData = makeGetEntryRevisionsData();
+  const getSelectedResourcesByStatusSelector = makeGetSelectedResourcesByStatus();
+  const getSelectedResourceIdsSelector = makeGetSelectedResourceIds();
   const origBundle = bundleId ? bundlesById[bundleId] : {};
   const {
     previousEntryRevision,
     bundlePreviousRevision,
     previousManifestResources
-  } = (mode !== 'revisions' ? getPrevManifestResources(state, props) :
+  } = (mode !== 'revisions' ? getPrevManifestResourcesDataSelector(state, props) :
     { previousManifestResources: emptyBundleManifestResources });
   const { input: mapperInputData } = mapperReports;
   const { report: mapperReport = {} } = mapperInputData || {};
@@ -628,10 +641,9 @@ function mapStateToProps(state, props) {
   const manifestResources = getManifestResourceData(state, props);
   const tableData = mode === 'revisions' ? entryRevisions : manifestResources;
   const selectedRowIds = mode === 'revisions' ?
-    selectedRevisions :
-    filterSelectedResourceIds(mode, autoSelectAllResources, selectedResources, tableData);
-  const selectedResourcesByStatus = mode === 'revisions' ? {} :
-    getSelectedResourcesByStatus(selectedRowIds, tableData, previousManifestResources, mode);
+    selectedRevisions : getSelectedResourceIdsSelector(state, props);
+  const selectedResourcesByStatus = mode === 'revisions' ?
+    {} : getSelectedResourcesByStatusSelector(state, props);
   return {
     loading: loading || fetchingMetadata || !isStoreMode,
     progress,
