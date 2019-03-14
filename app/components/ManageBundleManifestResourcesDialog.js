@@ -1172,13 +1172,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   getOkButtonDataModifyResources = () => {
     const { classes, loading } = this.props;
+    const resourceSelectionStatus = this.getSelectedResourcesByStatus();
     const {
       discardableResources, storedResources, manifestResources, toAddResources, inEffect = []
-    } = this.getSelectedResourcesByStatus();
-    const toAddReourcesInEffect = toAddResources === inEffect;
-    const OkButtonIcon = toAddReourcesInEffect ?
-      <CheckIcon className={classNames(classes.leftIcon)} /> :
-      <Delete className={classNames(classes.leftIcon)} />;
+    } = resourceSelectionStatus;
     const inEffectCount = inEffect.length;
     let OkButtonLabel = '';
     if ([storedResources, discardableResources].includes(inEffect)) {
@@ -1201,6 +1198,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       }
       OkButtonLabel = addMessageBuilder.join('');
     }
+    const OkButtonIcon = this.getOkButtonIcon(resourceSelectionStatus);
     const OkButtonProps = {
       classes,
       color: 'secondary',
@@ -1209,6 +1207,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       disabled: this.shouldDisableModifyFiles()
     };
     return { OkButtonLabel, OkButtonIcon, OkButtonProps };
+  }
+
+  getOkButtonIcon = ({ inEffect, toAddResources }) => {
+    const { classes } = this.props;
+    if (!inEffect || inEffect.length === 0)
+      return (null);
+    if (toAddResources === inEffect) {
+      return <CheckIcon className={classNames(classes.leftIcon)} />;
+    }
+    return <Delete className={classNames(classes.leftIcon)} />;
   }
 
   getOkButtonDataDownloadOrCleanResources = () => {
@@ -1497,6 +1505,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           selectedItemsToPaste={selectedItemsToPaste}
         />
       );
+    }
+    if (!modeUi.appBar.OkButtonIcon) {
+      return (null);
     }
     return (
       <ConfirmButton
