@@ -28,7 +28,7 @@ export function union(arrayA, arrayB = []) {
 
 export function difference(arrayA, arrayB = []) {
   const diff = Set(arrayA);
-  return diff.subtract(arrayB);
+  return diff.subtract(arrayB).toArray();
 }
 
 /* from https://stackoverflow.com/a/19746771 */

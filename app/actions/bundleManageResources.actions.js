@@ -212,6 +212,9 @@ export function addManifestResources(_bundleId, _fileToContainerPaths, inputMapp
             dispatch(success(_bundleId, filePath, containerPath, mapper));
           }
         }
+        const { bundleManageResources: { addedFilePaths: origAddedFilePaths, fullToRelativePaths } } = getState();
+        const remainingAddedFilePaths = utilities.difference(origAddedFilePaths, [filePath]);
+        dispatch(updateAddedFilePaths(remainingAddedFilePaths, fullToRelativePaths));
       } catch (error) {
         dispatch(failure(_bundleId, error));
       }
@@ -366,7 +369,7 @@ export function selectRevisions(selectedRevisions) {
   };
 }
 
-export function updateAddedFilePaths(
+export function appendAddedFilePaths(
   bundleId,
   newAddedFilePaths,
   fullToRelativePaths = null,
@@ -380,16 +383,20 @@ export function updateAddedFilePaths(
     } = getState().bundleManageResources;
     const addedFilePaths = utilities.union(origAddedFilePaths, newAddedFilePaths);
     const selectedIds = utilities.union(origSelectedIds, addedFilePaths);
-    dispatch({
-      type: bundleResourceManagerConstants.UPDATE_ADDED_FILEPATHS,
-      addedFilePaths,
-      fullToRelativePaths: fullToRelativePaths || fullToRelativePathsOrig,
-    });
+    dispatch(updateAddedFilePaths(addedFilePaths, fullToRelativePaths || fullToRelativePathsOrig));
     dispatch(selectResources(selectedIds));
     if (mapperReportUris.length > 0) {
       dispatch(getMapperReport('input', mapperReportUris, bundleId));
     }
     dispatch(getFileSizes(newAddedFilePaths));
+  };
+}
+
+export function updateAddedFilePaths(addedFilePaths, fullToRelativePaths) {
+  return {
+    type: bundleResourceManagerConstants.UPDATE_ADDED_FILEPATHS,
+    addedFilePaths,
+    fullToRelativePaths
   };
 }
 

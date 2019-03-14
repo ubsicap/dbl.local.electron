@@ -22,7 +22,7 @@ import path from 'path';
 import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources,
-  getMapperReport, selectResources, selectRevisions, updateAddedFilePaths
+  getMapperReport, selectResources, selectRevisions, appendAddedFilePaths
 } from '../actions/bundleManageResources.actions';
 import { selectItemsToPaste, pasteItems, clearClipboard } from '../actions/clipboard.actions';
 import { downloadResources, removeResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
@@ -85,7 +85,7 @@ type Props = {
   clearClipboard: () => {},
   selectResources: () => {},
   selectRevisions: () => {},
-  updateAddedFilePaths: () => {}
+  appendAddedFilePaths: () => {}
 };
 
 const addStatus = 'add?';
@@ -251,7 +251,7 @@ function getAddStatus(uri, resourcesInParent, conversions = Set(), conversionOve
 
 function createAddedResource(
   fullToRelativePaths, resourcesInParent,
-  conversions, conversionOverwrites
+  conversions, conversionOverwrites, fileSizes={}
 ) {
   return (filePath) => {
     const fileName = path.basename(filePath);
@@ -259,9 +259,10 @@ function createAddedResource(
     const relativeFolder = formatContainer(path.dirname(relativePath));
     const uri = formatUri(relativeFolder, fileName);
     const [id, name] = [filePath, fileName];
+    const size = fileSizes[filePath] || '';
     const status = getAddStatus(uri, resourcesInParent, conversions, conversionOverwrites);
     return {
-      id, uri, status, mimeType: '', container: relativeFolder || NEED_CONTAINER, relativeFolder, name, size: '', checksum: '', disabled: false
+      id, uri, status, mimeType: '', container: relativeFolder || NEED_CONTAINER, relativeFolder, name, size, checksum: '', disabled: false
     };
   };
 }
@@ -322,7 +323,8 @@ function getTableDataForAddedResources(
   selectedIdsInputConverters,
   previousManifestResources,
   newAddedFilePaths,
-  fullToRelativePaths
+  fullToRelativePaths,
+  fileSizes
 ) {
   const { report: inputMappers = {}, overwrites: inputMappersOverwrites = {} } = mapperInputData;
   const parentRawManifestResourceUris =
@@ -334,7 +336,7 @@ function getTableDataForAddedResources(
       .reduce((acc, [, mapperOverwrites]) => acc.union(mapperOverwrites.map(a => a[0])), Set());
   const addedResources = newAddedFilePaths.map(createAddedResource(
     fullToRelativePaths, parentRawManifestResourceUris,
-    conversions, conversionOverwrites
+    conversions, conversionOverwrites, fileSizes
   ));
   return addedResources;
 }
@@ -381,7 +383,8 @@ const makeGetManifestResourcesData = () => createSelector(
       selectedIdsInputConverters,
       previousManifestResources,
       addedFilePaths,
-      fullToRelativePaths
+      fullToRelativePaths,
+      fileSizes
     );
     return [...bundleManifestResourcesData, ...addedResources, ...deletedParentBundleResources];
   }
@@ -624,7 +627,7 @@ const mapDispatchToProps = {
   clearClipboard,
   selectResources,
   selectRevisions,
-  updateAddedFilePaths
+  appendAddedFilePaths
 };
 
 const materialStyles = theme => ({
@@ -1083,7 +1086,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   };
 
   setAddedFilePathsAndSelectAll = (newAddedFilePaths, fullToRelativePaths = null) => {
-    this.props.updateAddedFilePaths(
+    this.props.appendAddedFilePaths(
       this.props.bundleId,
       newAddedFilePaths,
       fullToRelativePaths,
@@ -1169,7 +1172,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   isDownloadMode = () => this.props.mode === 'download';
 
   getOkButtonDataModifyResources = () => {
-    const { classes } = this.props;
+    const { classes, loading } = this.props;
     const {
       discardableResources, storedResources, manifestResources, toAddResources, inEffect = []
     } = this.getSelectedResourcesByStatus();
