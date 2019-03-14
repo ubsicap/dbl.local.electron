@@ -924,7 +924,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       const filesToContainers = toAddResources.reduce((acc, selectedResource) =>
         ({ ...acc, [selectedResource.id]: formatUriForApi(selectedResource) }), {});
       this.props.addManifestResources(bundleId, filesToContainers, selectedMappers);
-      this.props.selectResources([]);
     }
   }
 
@@ -1410,7 +1409,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   renderTable = () => {
     const {
-      columnConfig, mode, selectedRowIds, tableData
+      columnConfig, mode, selectedRowIds, tableData, loading
     } = this.props;
     switch (mode) {
       case 'download': {
@@ -1425,6 +1424,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               onSelectedRowIds={this.handleSelectedRowIds}
               multiSelections
               selectedIds={selectedRowIds}
+              freezeCheckedColumnState={loading}
             />
           </React.Fragment>
         );
@@ -1442,6 +1442,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               orderDirection="desc"
               onSelectedRowIds={this.handleSelectedRowIds}
               selectedIds={selectedRowIds}
+              freezeCheckedColumnState={loading}
             />
           </React.Fragment>
         );
@@ -1458,6 +1459,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               multiSelections
               onSelectedRowIds={this.handleSelectedRowIds}
               selectedIds={selectedRowIds}
+              freezeCheckedColumnState={loading}
             />
           </React.Fragment>
         );
@@ -1466,6 +1468,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         return (<EnhancedTable
           data={tableData}
           columnConfig={columnConfig}
+          freezeCheckedColumnState={loading}
         />);
       }
     }

@@ -35,6 +35,7 @@ type Props = {
   selectedIds: [],
   multiSelections?: boolean,
   customSorts?: {},
+  freezeCheckedColumnState?: boolean,
   onSelectedRowIds: () => {}
 };
 
@@ -98,12 +99,13 @@ class EnhancedTable extends Component<Props> {
     this.state.selectedRowIds.some(id => rowData.id === id));
 
   columns = () => {
-    const { columnConfig } = this.props;
+    const { columnConfig, freezeCheckedColumnState } = this.props;
     const checkboxColumn = {
       name: 'checkbox',
       cell: rowData => (
         !rowData.disabled ?
           <Checkbox
+            disabled={freezeCheckedColumnState}
             checked={this.isRowChecked(rowData)}
           /> :
           null
@@ -161,7 +163,6 @@ class EnhancedTable extends Component<Props> {
       return {
         selectedRowIds: [rowData.id]
       };
-
     }, this.reportSelectedRowIds);
   }
 
@@ -226,7 +227,8 @@ class EnhancedTable extends Component<Props> {
 EnhancedTable.defaultProps = {
   orderDirection: 'asc',
   customSorts: {},
-  multiSelections: false
+  multiSelections: false,
+  freezeCheckedColumnState: false
 };
 
 export default withStyles(styles)(EnhancedTable);
