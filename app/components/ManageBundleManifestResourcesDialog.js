@@ -575,7 +575,7 @@ function mapStateToProps(state, props) {
   const entryRevisions = mode === 'revisions' ? getEntryRevisionsData(state, props) : [];
   const manifestResources = getManifestResourceData(state, props);
   const tableData = mode === 'revisions' ? entryRevisions : manifestResources;
-  const selectedRowIds = mode === 'revisons' ?
+  const selectedRowIds = mode === 'revisions' ?
     selectedRevisions :
     filterSelectedResourceIds(mode, autoSelectAllResources, selectedResources, tableData);
   return {
