@@ -78,7 +78,7 @@ const materialStyles = theme => ({
 const getBundleId = (state, props) => props.origBundle.id;
 const getBundlesById = (state) => state.bundles.addedByBundleIds || {};
 const getDblBaseUrl = (state) => state.dblDotLocalConfig.dblBaseUrl;
-const makeGetEntryPageUrl = () => createSelector(
+const getEntryPageUrl = createSelector(
   [getDblBaseUrl, getBundlesById, getBundleId],
   (dblBaseUrl, bundlesById, bundleId) => {
     const origBundle = bundlesById[bundleId];
@@ -91,7 +91,6 @@ const makeGetEntryPageUrl = () => createSelector(
 );
 
 function mapStateToProps(state, props) {
-  const getEntryPageUrl = makeGetEntryPageUrl();
   return {
     entryPageUrl: getEntryPageUrl(state, props)
   };

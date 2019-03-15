@@ -22,6 +22,9 @@ import EntryDrawer from '../components/EntryDrawer';
 import PasteButton from './PasteButton';
 import { ux } from '../utils/ux';
 
+
+const getFormsErrors = editMetadataService.makeGetFormsErrors();
+
 function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundles, clipboard } = state;
   const { bundleId } = props.match.params;
@@ -31,7 +34,6 @@ function mapStateToProps(state, props) {
   } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
-  const getFormsErrors = editMetadataService.makeGetFormsErrors();
   const formsErrors = getFormsErrors(state, selectedBundle);
   const currentFormNumWithErrors = Object.keys(formsErrors).indexOf(currentFormWithErrors) + 1;
   const {

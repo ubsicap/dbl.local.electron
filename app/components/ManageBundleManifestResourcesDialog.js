@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import fs from 'fs-extra';
 import sort from 'fast-sort';
 import upath from 'upath';
 import recursiveReadDir from 'recursive-readdir';
@@ -305,8 +304,20 @@ function getTableDataForAddedResources(
   return addedResources;
 }
 
-const makeGetManifestResourcesData = () => createSelector(
-  [getAllManifestResources, getMode, getBundleId, getBundlesById, makeGetPrevManifestResourcesData(),
+const getPreviousManifestResourcesDataSelector = createSelector(
+  [getAllManifestResources, getBundleId, getBundlesById, getAllEntryRevisions],
+  (manifestResources, bundleId, bundlesById, allEntryRevisions) =>
+    getPreviousRevisionManifestResourcesData(
+      bundleId,
+      bundlesById,
+      manifestResources,
+      allEntryRevisions
+    )
+);
+
+const getManifestResourcesDataSelector = createSelector(
+  [getAllManifestResources, getMode, getBundleId, getBundlesById,
+    getPreviousManifestResourcesDataSelector,
     getAddedFilePaths, getFullToRelativePaths, getFileSizes,
     getMapperInputData, getMapperInputReport, getSelectedMappers],
   (
@@ -351,8 +362,8 @@ const makeGetManifestResourcesData = () => createSelector(
 
 const getSelectedResourceIds = (state) => state.bundleManageResources.selectedResources || [];
 
-const makeGetSelectedResources = () => createSelector(
-  [getSelectedResourceIds, makeGetManifestResourcesData()],
+const getSelectedResourcesSelector = createSelector(
+  [getSelectedResourceIds, getManifestResourcesDataSelector],
   getSelectedRowData
 );
 
@@ -364,25 +375,21 @@ function getSelectedRowData(selectedRowIds, tableData) {
 const getAutoSelectAllResources = (state) =>
   state.bundleManageResources.autoSelectAllResources || false;
 
-const makeGetSelectedResourceIds = () => createSelector(
-  [getMode, getAutoSelectAllResources, getSelectedResourceIds, makeGetManifestResourcesData()],
+const getSelectAllOrFilterSelectedResourceIdsSelector = createSelector(
+  [getMode, getAutoSelectAllResources, getSelectedResourceIds, getManifestResourcesDataSelector],
   filterSelectedResourceIds
 );
 
-const makeGetSelectedResourcesByStatus = () => createSelector(
-  [makeGetSelectedResourceIds(), makeGetManifestResourcesData(),
-    makeGetPrevManifestResourcesData(), getMode],
-  (selectedRowIds, tableData, previousManifestResourcesData, mode) =>
-    getSelectedResourcesByStatus(selectedRowIds, tableData, previousManifestResourcesData, mode)
+const getSelectedResourcesByStatusSelector = createSelector(
+  [getSelectedResourcesSelector, getPreviousManifestResourcesDataSelector, getMode],
+  getSelectedResourcesByStatus
 );
 
 function getSelectedResourcesByStatus(
-  selectedRowIds,
-  tableData,
+  selectedResources,
   previousManifestResourcesData,
   mode
 ) {
-  const selectedResources = getSelectedRowData(selectedRowIds, tableData);
   const parentRawManifestResourceUris =
     getRawManifestResourceUris(previousManifestResourcesData.previousManifestResources);
   const filteredResources
@@ -503,17 +510,6 @@ function getPreviousRevisionManifestResourcesData(
   return { previousEntryRevision, bundlePreviousRevision, previousManifestResources };
 }
 
-const makeGetPrevManifestResourcesData = () => createSelector(
-  [getAllManifestResources, getBundleId, getBundlesById, getAllEntryRevisions],
-  (manifestResources, bundleId, bundlesById, allEntryRevisions) =>
-    getPreviousRevisionManifestResourcesData(
-      bundleId,
-      bundlesById,
-      manifestResources,
-      allEntryRevisions
-    )
-);
-
 /*
   {
   "archivist": "B68BB7E4F225974EC823",
@@ -560,7 +556,7 @@ function getIsCompatibleVersion(entryRevision) {
   return entryRevision.version.startsWith('2.');
 }
 
-const makeGetEntryRevisionsData = () => createSelector(
+const getEntryRevisionsDataSelector = createSelector(
   [getAllEntryRevisions, getAllManifestResources, getBundlesById, getBundleId],
   (allEntryRevisions, manifestResources, bundlesById, bundleId) => {
     const bundle = bundlesById[bundleId];
@@ -620,28 +616,23 @@ function mapStateToProps(state, props) {
   const { bundleId, mode } = props.match.params;
   const { showMetadataFile } = bundleEditMetadata;
   const columnConfig = createColumnConfig(mode);
-  const getManifestResourceData = makeGetManifestResourcesData();
-  const getPrevManifestResourcesDataSelector = makeGetPrevManifestResourcesData();
   const bundlesById = getBundlesById(state);
-  const getEntryRevisionsData = makeGetEntryRevisionsData();
-  const getSelectedResourcesByStatusSelector = makeGetSelectedResourcesByStatus();
-  const getSelectedResourceIdsSelector = makeGetSelectedResourceIds();
   const origBundle = bundleId ? bundlesById[bundleId] : {};
   const {
     previousEntryRevision,
     bundlePreviousRevision,
     previousManifestResources
-  } = (mode !== 'revisions' ? getPrevManifestResourcesDataSelector(state, props) :
+  } = (mode !== 'revisions' ? getPreviousManifestResourcesDataSelector(state, props) :
     { previousManifestResources: emptyBundleManifestResources });
   const { input: mapperInputData } = mapperReports;
   const { report: mapperReport = {} } = mapperInputData || {};
   const selectedIdsInputConverters =
     selectedMappers.input || Object.keys(mapperReport);
-  const entryRevisions = mode === 'revisions' ? getEntryRevisionsData(state, props) : [];
-  const manifestResources = getManifestResourceData(state, props);
+  const entryRevisions = mode === 'revisions' ? getEntryRevisionsDataSelector(state, props) : [];
+  const manifestResources = getManifestResourcesDataSelector(state, props);
   const tableData = mode === 'revisions' ? entryRevisions : manifestResources;
   const selectedRowIds = mode === 'revisions' ?
-    selectedRevisions : getSelectedResourceIdsSelector(state, props);
+    selectedRevisions : getSelectAllOrFilterSelectedResourceIdsSelector(state, props);
   const selectedResourcesByStatus = mode === 'revisions' ?
     {} : getSelectedResourcesByStatusSelector(state, props);
   return {
