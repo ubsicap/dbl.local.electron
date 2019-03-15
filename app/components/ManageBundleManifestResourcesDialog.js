@@ -35,6 +35,7 @@ import PasteButton from './PasteButton';
 import MapperTable from '../components/MapperTable';
 import EntryAppBar from '../components/EntryAppBar';
 import EntryDrawer from '../components/EntryDrawer';
+import { emptyArray, emptyObject } from '../utils/defaultValues';
 
 const { dialog } = require('electron').remote;
 
@@ -87,8 +88,6 @@ type Props = {
   appendAddedFilePaths: () => {}
 };
 
-const emptyObject = {};
-const emptyArray = [];
 const addStatus = 'add?';
 const addAndOverwrite = 'add (revise)?';
 const addAndConvert = 'add / convert?';
