@@ -57,9 +57,11 @@ class EnhancedTable extends Component<Props> {
 
   componentWillReceiveProps(nextProps) {
     // You don't have to do this check first, but it can help prevent an unneeded render
+    /*
     if (nextProps.selectedIds !== this.props.selectedIds) {
       this.setState({ selectedRowIds: nextProps.selectedIds });
     }
+    */
   }
 
   areAnyChecked = () => this.state.selectedRowIds.length > 0;
@@ -98,16 +100,26 @@ class EnhancedTable extends Component<Props> {
   isRowChecked = (rowData) => (
     this.state.selectedRowIds.some(id => rowData.id === id));
 
+  renderCheckBoxInRow = (rowData) => (
+    <Checkbox
+      disabled={this.props.freezeCheckedColumnState}
+      checked={this.isRowChecked(rowData)}
+    />);
+
+  renderCheckBoxInHeader = () => (
+    <Checkbox
+      checked={this.areAnyChecked()}
+      onChange={this.onChangeCheckBoxHeader}
+      {...this.headerCheckBoxProps()}
+    />);
+
   columns = () => {
-    const { columnConfig, freezeCheckedColumnState } = this.props;
+    const { columnConfig } = this.props;
     const checkboxColumn = {
       name: 'checkbox',
       cell: rowData => (
         !rowData.disabled ?
-          <Checkbox
-            disabled={freezeCheckedColumnState}
-            checked={this.isRowChecked(rowData)}
-          /> :
+          this.renderCheckBoxInRow(rowData) :
           null
       ),
       cellProps: { style: { paddingRight: 0 } },
@@ -115,12 +127,7 @@ class EnhancedTable extends Component<Props> {
       onHeaderClick: false
     };
     if (this.props.multiSelections) {
-      const header = (
-        <Checkbox
-          checked={this.areAnyChecked()}
-          onChange={this.onChangeCheckBoxHeader}
-          {...this.headerCheckBoxProps()}
-        />);
+      const header = this.renderCheckBoxInHeader();
       checkboxColumn.header = header;
     }
     const stringCellProps = { style: { paddingRight: 0 } };

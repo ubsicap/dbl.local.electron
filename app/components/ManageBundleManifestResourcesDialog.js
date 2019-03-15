@@ -363,7 +363,8 @@ const getManifestResourcesDataSelector = createSelector(
   }
 );
 
-const getSelectedResourceIds = (state) => state.bundleManageResourcesUx.selectedResourceIds || emptyArray;
+const getSelectedResourceIds = (state) =>
+  state.bundleManageResourcesUx.selectedResourceIds || emptyArray;
 
 const getSelectedResourcesSelector = createSelector(
   [getSelectedResourceIds, getManifestResourcesDataSelector],
@@ -598,6 +599,9 @@ function filterSelectedResourceIds(mode, autoSelectAllResources, selectedResourc
   const filteredSelectedResourceIds = autoSelectAllResources ?
     tableData.filter(row => !isDownloadMode || (!row.stored && !row.disabled)).map(row => row.id) :
     selectedResourceIds.filter(id => tableData.some(row => row.id === id && !row.disabled));
+  if (filteredSelectedResourceIds.length === 0) {
+    return emptyArray; // optimize caches
+  }
   return filteredSelectedResourceIds;
 }
 
