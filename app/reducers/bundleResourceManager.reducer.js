@@ -166,18 +166,18 @@ export function bundleManageResources(state = initialState, action) {
       };
     }
     case bundleResourceManagerConstants.RESOURCES_SELECTED: {
-      const { selectedResources } = action;
+      const { selectedResourceIds } = action;
       return {
         ...state,
-        selectedResources,
+        selectedResourceIds,
         autoSelectAllResources: false
       };
     }
     case bundleResourceManagerConstants.REVISIONS_SELECTED: {
-      const { selectedRevisions } = action;
+      const { selectedRevisionIds } = action;
       return {
         ...state,
-        selectedRevisions
+        selectedRevisionIds
       };
     }
     case bundleResourceManagerConstants.UPDATE_ADDED_FILEPATHS: {

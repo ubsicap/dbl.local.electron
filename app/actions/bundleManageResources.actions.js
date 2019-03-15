@@ -355,17 +355,17 @@ export function selectMappers(direction, mapperIds) {
   };
 }
 
-export function selectResources(selectedResources) {
+export function selectResources(selectedResourceIds) {
   return {
     type: bundleResourceManagerConstants.RESOURCES_SELECTED,
-    selectedResources
+    selectedResourceIds
   };
 }
 
-export function selectRevisions(selectedRevisions) {
+export function selectRevisions(selectedRevisionIds) {
   return {
     type: bundleResourceManagerConstants.REVISIONS_SELECTED,
-    selectedRevisions
+    selectedRevisionIds
   };
 }
 
@@ -378,7 +378,7 @@ export function appendAddedFilePaths(
   return (dispatch, getState) => {
     const {
       addedFilePaths: origAddedFilePaths = [],
-      selectedResources: origSelectedIds,
+      selectedResourceIds: origSelectedIds,
       fullToRelativePaths: fullToRelativePathsOrig
     } = getState().bundleManageResources;
     const addedFilePaths = utilities.union(origAddedFilePaths, newAddedFilePaths);

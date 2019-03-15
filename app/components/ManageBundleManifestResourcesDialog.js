@@ -360,7 +360,7 @@ const getManifestResourcesDataSelector = createSelector(
   }
 );
 
-const getSelectedResourceIds = (state) => state.bundleManageResources.selectedResources || [];
+const getSelectedResourceIds = (state) => state.bundleManageResources.selectedResourceIds || [];
 
 const getSelectedResourcesSelector = createSelector(
   [getSelectedResourceIds, getManifestResourcesDataSelector],
@@ -604,7 +604,7 @@ function mapStateToProps(state, props) {
     publicationsHealth, progress = 100, loading = false,
     isStoreMode = false, fetchingMetadata = false,
     mapperReports = {}, selectedMappers = {},
-    autoSelectAllResources = false, selectedRevisions = []
+    autoSelectAllResources = false, selectedRevisionIds = []
   } = bundleManageResources;
   const { selectedItemsToPaste = {} } = clipboard;
   const {
@@ -632,7 +632,7 @@ function mapStateToProps(state, props) {
   const manifestResources = getManifestResourcesDataSelector(state, props);
   const tableData = mode === 'revisions' ? entryRevisions : manifestResources;
   const selectedRowIds = mode === 'revisions' ?
-    selectedRevisions : getSelectAllOrFilterSelectedResourceIdsSelector(state, props);
+    selectedRevisionIds : getSelectAllOrFilterSelectedResourceIdsSelector(state, props);
   const selectedResourcesByStatus = mode === 'revisions' ?
     {} : getSelectedResourcesByStatusSelector(state, props);
   return {
