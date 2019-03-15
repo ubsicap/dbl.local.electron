@@ -608,7 +608,7 @@ function mapStateToProps(state, props) {
     publicationsHealth, progress = 100, loading = false,
     isStoreMode = false, fetchingMetadata = false,
     mapperReports = {}, selectedMappers = {},
-    autoSelectAllResources = false, selectedResources = [], selectedRevisions = []
+    autoSelectAllResources = false, selectedRevisions = []
   } = bundleManageResources;
   const { selectedItemsToPaste = {} } = clipboard;
   const {
@@ -624,15 +624,15 @@ function mapStateToProps(state, props) {
   const getPrevManifestResourcesDataSelector = makeGetPrevManifestResourcesData();
   const bundlesById = getBundlesById(state);
   const getEntryRevisionsData = makeGetEntryRevisionsData();
+  const getSelectedResourcesByStatusSelector = makeGetSelectedResourcesByStatus();
+  const getSelectedResourceIdsSelector = makeGetSelectedResourceIds();
   const origBundle = bundleId ? bundlesById[bundleId] : {};
-  const previousManifestResourcesData = (mode !== 'revisions' ?
-    getPrevManifestResourcesDataSelector(state, props) :
-    { previousManifestResources: emptyBundleManifestResources });
   const {
     previousEntryRevision,
     bundlePreviousRevision,
     previousManifestResources
-  } = previousManifestResourcesData;
+  } = (mode !== 'revisions' ? getPrevManifestResourcesDataSelector(state, props) :
+    { previousManifestResources: emptyBundleManifestResources });
   const { input: mapperInputData } = mapperReports;
   const { report: mapperReport = {} } = mapperInputData || {};
   const selectedIdsInputConverters =
@@ -641,10 +641,9 @@ function mapStateToProps(state, props) {
   const manifestResources = getManifestResourceData(state, props);
   const tableData = mode === 'revisions' ? entryRevisions : manifestResources;
   const selectedRowIds = mode === 'revisions' ?
-    selectedRevisions :
-    filterSelectedResourceIds(mode, autoSelectAllResources, selectedResources, tableData);
-  const selectedResourcesByStatus = mode === 'revisions' ? {} :
-    getSelectedResourcesByStatus(selectedRowIds, tableData, previousManifestResourcesData, mode);
+    selectedRevisions : getSelectedResourceIdsSelector(state, props);
+  const selectedResourcesByStatus = mode === 'revisions' ?
+    {} : getSelectedResourcesByStatusSelector(state, props);
   return {
     loading: loading || fetchingMetadata || !isStoreMode,
     progress,
