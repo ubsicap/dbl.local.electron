@@ -87,6 +87,8 @@ type Props = {
   appendAddedFilePaths: () => {}
 };
 
+const emptyObject = {};
+const emptyArray = [];
 const addStatus = 'add?';
 const addAndOverwrite = 'add (revise)?';
 const addAndConvert = 'add / convert?';
@@ -214,7 +216,7 @@ function getAddStatus(uri, resourcesInParent, conversions = Set(), conversionOve
 
 function createAddedResource(
   fullToRelativePaths, resourcesInParent,
-  conversions, conversionOverwrites, fileSizes = {}
+  conversions, conversionOverwrites, fileSizes = emptyObject
 ) {
   return (filePath) => {
     const fileName = path.basename(filePath);
@@ -249,22 +251,24 @@ function createColumnConfig(mode) {
   }
   const {
     id, uri, disabled, checksum, ...columns
-  } = createResourceData(null, {}, {});
+  } = createResourceData(null, emptyObject, emptyObject);
   return ux.mapColumns(columns, isNumeric, getLabel);
 }
 
-const getAllManifestResources = (state) => state.bundleManageResources.manifestResources || {};
+const getAllManifestResources = (state) =>
+  state.bundleManageResources.manifestResources || emptyObject;
 const getMode = (state) => state.bundleManageResources.mode;
 const getBundleId = (state, props) => props.match.params.bundleId;
-const getAllEntryRevisions = (state) => state.bundles.allEntryRevisions || {};
-const getBundlesById = (state) => state.bundles.addedByBundleIds || {};
-const getAddedFilePaths = (state) => state.bundleManageResources.addedFilePaths || [];
-const getFullToRelativePaths = (state) => state.bundleManageResources.fullToRelativePaths || {};
-const getFileSizes = (state) => state.bundleManageResources.fileSizes || {};
-const getMapperReports = (state) => state.bundleManageResources.mapperReports || {};
-const getMapperInputData = (state) => getMapperReports(state).input || {};
-const getMapperInputReport = (state) => getMapperInputData(state).report || {};
-const getSelectedMappers = (state) => state.bundleManageResources.selectedMappers || {};
+const getAllEntryRevisions = (state) => state.bundles.allEntryRevisions || emptyObject;
+const getBundlesById = (state) => state.bundles.addedByBundleIds || emptyObject;
+const getAddedFilePaths = (state) => state.bundleManageResources.addedFilePaths || emptyArray;
+const getFullToRelativePaths = (state) =>
+  state.bundleManageResources.fullToRelativePaths || emptyObject;
+const getFileSizes = (state) => state.bundleManageResources.fileSizes || emptyObject;
+const getMapperReports = (state) => state.bundleManageResources.mapperReports || emptyObject;
+const getMapperInputData = (state) => getMapperReports(state).input || emptyObject;
+const getMapperInputReport = (state) => getMapperInputData(state).report || emptyObject;
+const getSelectedMappers = (state) => state.bundleManageResources.selectedMappers || emptyObject;
 
 function getOrDefault(obj, prop, defaultValue) {
   if (!obj) {
@@ -273,12 +277,12 @@ function getOrDefault(obj, prop, defaultValue) {
   return obj[prop] || defaultValue;
 }
 
-const emptyBundleManifestResources = { rawManifestResources: {}, storedFiles: {} };
+const emptyBundleManifestResources = { rawManifestResources: emptyObject, storedFiles: emptyObject };
 
 function filterBySelectedMappers(inputMappers, selectedIdsInputConverters) {
   return Object.entries(inputMappers)
     .filter(([mapperKey]) => selectedIdsInputConverters.includes(mapperKey))
-    .reduce((acc, [mapperKey, mapperValue]) => ({ ...acc, [mapperKey]: mapperValue }), {});
+    .reduce((acc, [mapperKey, mapperValue]) => ({ ...acc, [mapperKey]: mapperValue }), emptyObject);
 }
 
 function getTableDataForAddedResources(
@@ -289,7 +293,7 @@ function getTableDataForAddedResources(
   fullToRelativePaths,
   fileSizes
 ) {
-  const { report: inputMappers = {}, overwrites: inputMappersOverwrites = {} } = mapperInputData;
+  const { report: inputMappers = emptyObject, overwrites: inputMappersOverwrites = emptyObject } = mapperInputData;
   const parentRawManifestResourceUris =
     getRawManifestResourceUris(previousManifestResources);
   const conversions =
@@ -360,7 +364,7 @@ const getManifestResourcesDataSelector = createSelector(
   }
 );
 
-const getSelectedResourceIds = (state) => state.bundleManageResources.selectedResourceIds || [];
+const getSelectedResourceIds = (state) => state.bundleManageResourcesUx.selectedResourceIds || emptyArray;
 
 const getSelectedResourcesSelector = createSelector(
   [getSelectedResourceIds, getManifestResourcesDataSelector],
@@ -373,7 +377,7 @@ function getSelectedRowData(selectedRowIds, tableData) {
 }
 
 const getAutoSelectAllResources = (state) =>
-  state.bundleManageResources.autoSelectAllResources || false;
+  state.bundleManageResourcesUx.autoSelectAllResources || false;
 
 const getSelectAllOrFilterSelectedResourceIdsSelector = createSelector(
   [getMode, getAutoSelectAllResources, getSelectedResourceIds, getManifestResourcesDataSelector],
@@ -466,7 +470,7 @@ function getRawManifestResourceUris(manifestResources) {
 
 function getPrevEntryRevision(bundle, allEntryRevisions) {
   const { dblId, revision } = bundle;
-  const entryRevisions = allEntryRevisions[dblId] || [];
+  const entryRevisions = allEntryRevisions[dblId] || emptyArray;
   const prevEntryRevision = entryRevisions.find((entryRevision, index) => {
     const prevIndex = index - 1;
     if (prevIndex < 0) {
@@ -486,7 +490,7 @@ function getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions) {
     const entryRevisions = allEntryRevisions[dblId];
     return {
       bundlePreviousRevision: bundleBundle,
-      previousEntryRevision: (entryRevisions || []).find(r => `${r.revision}` === bundleBundle.revision)
+      previousEntryRevision: (entryRevisions || emptyArray).find(r => `${r.revision}` === bundleBundle.revision)
     };
   }
   const previousEntryRevision = getPrevEntryRevision(bundle, allEntryRevisions);
@@ -535,11 +539,11 @@ function createRevisionData(entryRevision, localEntryBundle, bundleManifestResou
     archivist = '',
     comments = '',
     href = '',
-  } = entryRevision || {};
+  } = entryRevision || emptyObject;
   const id = href;
-  const is_on_disk = Boolean(Object.keys(localEntryBundle || {}).length);
+  const is_on_disk = Boolean(Object.keys(localEntryBundle || emptyObject).length);
   const localBundle = localEntryBundle || null;
-  const { storedFiles = {}, rawManifestResources = {} } = bundleManifestResources || {};
+  const { storedFiles = emptyObject, rawManifestResources = emptyObject } = bundleManifestResources || emptyObject;
   const storedFromManifest = Object.values(rawManifestResources).filter(r => r.uri in storedFiles);
   const stored = is_on_disk ? storedFromManifest.length : '';
   const manifest = is_on_disk ? Object.values(rawManifestResources).length : '';
@@ -562,19 +566,19 @@ const getEntryRevisionsDataSelector = createSelector(
     const bundle = bundlesById[bundleId];
     const { dblId } = bundle;
     const localEntryBundles = findLocalEntryBundles(bundlesById, dblId);
-    const entryRevisions = allEntryRevisions[dblId] || [];
+    const entryRevisions = allEntryRevisions[dblId] || emptyArray;
     const entryRevData = entryRevisions
       .map(entryRevision => {
         const revision = `${entryRevision.revision}`;
         const localEntryBundle = localEntryBundles.find(b => b.revision === revision);
-        const { id: localBundleId } = localEntryBundle || {};
-        const { [localBundleId]: bundleManifestResources = [] } = manifestResources;
+        const { id: localBundleId } = localEntryBundle || emptyObject;
+        const { [localBundleId]: bundleManifestResources = emptyArray } = manifestResources;
         const disabled = bundleId === localBundleId || !getIsCompatibleVersion(entryRevision);
         return createRevisionData(entryRevision, localEntryBundle, bundleManifestResources, disabled);
       });
     const draftData = Object.values(localEntryBundles).filter(localBundle => [0, '0'].includes(localBundle.revision)).map(localEntryBundle => {
-      const { id: localBundleId } = localEntryBundle || {};
-      const { [localBundleId]: bundleManifestResources = [] } = manifestResources;
+      const { id: localBundleId } = localEntryBundle || emptyObject;
+      const { [localBundleId]: bundleManifestResources = emptyArray } = manifestResources;
       const revision = ux.getFormattedRevision(localEntryBundle, '');
       const mockEntryRevision = {
         created_on: localEntryBundle.raw.store.created,
@@ -599,25 +603,30 @@ function filterSelectedResourceIds(mode, autoSelectAllResources, selectedResourc
 }
 
 function mapStateToProps(state, props) {
-  const { bundleEditMetadata, bundleManageResources, clipboard } = state;
+  const {
+    bundleEditMetadata, bundleManageResources, bundleManageResourcesUx, clipboard
+  } = state;
   const {
     publicationsHealth, progress = 100, loading = false,
     isStoreMode = false, fetchingMetadata = false,
-    mapperReports = {}, selectedMappers = {},
-    autoSelectAllResources = false, selectedRevisionIds = []
+    mapperReports = emptyObject, selectedMappers = emptyObject,
   } = bundleManageResources;
-  const { selectedItemsToPaste = {} } = clipboard;
+  const {
+    autoSelectAllResources = false,
+    selectedRevisionIds = emptyArray
+  } = bundleManageResourcesUx;
+  const { selectedItemsToPaste = emptyObject } = clipboard;
   const {
     errorMessage: publicationsHealthMessage,
     goFix: goFixPublications,
     message: publicationsHealthSuccessMessage,
     wizardsResults,
-  } = publicationsHealth || {};
+  } = publicationsHealth || emptyObject;
   const { bundleId, mode } = props.match.params;
   const { showMetadataFile } = bundleEditMetadata;
   const columnConfig = createColumnConfig(mode);
   const bundlesById = getBundlesById(state);
-  const origBundle = bundleId ? bundlesById[bundleId] : {};
+  const origBundle = bundleId ? bundlesById[bundleId] : emptyObject;
   const {
     previousEntryRevision,
     bundlePreviousRevision,
@@ -625,16 +634,16 @@ function mapStateToProps(state, props) {
   } = (mode !== 'revisions' ? getPreviousManifestResourcesDataSelector(state, props) :
     { previousManifestResources: emptyBundleManifestResources });
   const { input: mapperInputData } = mapperReports;
-  const { report: mapperReport = {} } = mapperInputData || {};
+  const { report: mapperReport = emptyObject } = mapperInputData || emptyObject;
   const selectedIdsInputConverters =
     selectedMappers.input || Object.keys(mapperReport);
-  const entryRevisions = mode === 'revisions' ? getEntryRevisionsDataSelector(state, props) : [];
+  const entryRevisions = mode === 'revisions' ? getEntryRevisionsDataSelector(state, props) : emptyArray;
   const manifestResources = getManifestResourcesDataSelector(state, props);
   const tableData = mode === 'revisions' ? entryRevisions : manifestResources;
   const selectedRowIds = mode === 'revisions' ?
     selectedRevisionIds : getSelectAllOrFilterSelectedResourceIdsSelector(state, props);
   const selectedResourcesByStatus = mode === 'revisions' ?
-    {} : getSelectedResourcesByStatusSelector(state, props);
+    emptyObject : getSelectedResourcesByStatusSelector(state, props);
   return {
     loading: loading || fetchingMetadata || !isStoreMode,
     progress,

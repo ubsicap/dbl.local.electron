@@ -17,8 +17,7 @@ export function bundleManageResources(state = initialState, action) {
       return {
         ...initialState,
         bundleId,
-        mode,
-        autoSelectAllResources: mode === 'download'
+        mode
       };
     }
     case bundleResourceManagerConstants.CLOSE_RESOURCE_MANAGER: {
@@ -163,21 +162,6 @@ export function bundleManageResources(state = initialState, action) {
       return {
         ...state,
         selectedMappers: { ...selectedMappersOrig, [direction]: mapperIds }
-      };
-    }
-    case bundleResourceManagerConstants.RESOURCES_SELECTED: {
-      const { selectedResourceIds } = action;
-      return {
-        ...state,
-        selectedResourceIds,
-        autoSelectAllResources: false
-      };
-    }
-    case bundleResourceManagerConstants.REVISIONS_SELECTED: {
-      const { selectedRevisionIds } = action;
-      return {
-        ...state,
-        selectedRevisionIds
       };
     }
     case bundleResourceManagerConstants.UPDATE_ADDED_FILEPATHS: {
