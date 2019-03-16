@@ -103,6 +103,11 @@ class EntryDrawer extends PureComponent<Props> {
         icon: ux.getModeIcon(this.getResourceMode()),
         handleClick: this.handleSwitchToResources
       },
+      {
+        label: 'Revisions',
+        icon: ux.getModeIcon('revisions'),
+        handleClick: this.handleSwitchToRevisions
+      },
     ]
   );
 
@@ -125,6 +130,11 @@ class EntryDrawer extends PureComponent<Props> {
     const { bundleId } = this.props;
     const mode = this.getResourceMode();
     this.props.openResourceManager(bundleId, mode, false);
+  }
+
+  handleSwitchToRevisions = () => {
+    const { bundleId } = this.props;
+    this.props.openResourceManager(bundleId, 'revisions', false);
   }
 
   render() {

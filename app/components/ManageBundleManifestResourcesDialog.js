@@ -383,7 +383,7 @@ function getSelectedResourcesByStatus(
   const parentRawManifestResourceUris =
     getRawManifestResourceUris(previousManifestResourcesData.previousManifestResources);
   const filteredResources
-    = List(selectedResources).reduce(
+    = List(mode === 'revisions' ? [] : selectedResources).reduce(
       (acc, r) => {
         const resourceInParent = parentRawManifestResourceUris.has(r.uri);
         const resourcesInParent = resourceInParent ?
@@ -631,8 +631,7 @@ function mapStateToProps(state, props) {
   const tableData = mode === 'revisions' ? entryRevisions : manifestResources;
   const selectedRowIds = mode === 'revisions' ?
     selectedRevisionIds : getSelectAllOrFilterSelectedResourceIdsSelector(state, props);
-  const selectedResourcesByStatus = mode === 'revisions' ?
-    emptyObject : getSelectedResourcesByStatusSelector(state, props);
+  const selectedResourcesByStatus = getSelectedResourcesByStatusSelector(state, props);
   return {
     loading: loading || fetchingMetadata || !isStoreMode,
     progress,
