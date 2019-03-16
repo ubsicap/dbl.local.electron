@@ -24,23 +24,22 @@ export function bundleManageResourcesUx(state = initialState, action) {
       return initialState;
     }
     case bundleResourceManagerConstants.RESOURCES_SELECTED: {
-      const { selectedResourceIds } = action;
-      return {
-        ...state,
-        selectedResourceIds,
-        autoSelectAllResources: false
-      };
+      return updateStateFromActionProps({ autoSelectAllResources: false });
     }
     case bundleResourceManagerConstants.REVISIONS_SELECTED: {
-      const { selectedRevisionIds } = action;
-      return {
-        ...state,
-        selectedRevisionIds
-      };
+      return updateStateFromActionProps();
     }
     default: {
       return state;
     }
+  }
+  function updateStateFromActionProps(appendProps = {}) {
+    const { type, ...restProps } = action;
+    return {
+      ...state,
+      ...restProps,
+      ...appendProps
+    };
   }
 }
 

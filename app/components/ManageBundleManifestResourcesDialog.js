@@ -21,7 +21,7 @@ import path from 'path';
 import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources,
-  getMapperReport, selectResources, selectRevisions, appendAddedFilePaths
+  getMapperReport, selectResources, selectRevisions, appendAddedFilePaths, editContainers
 } from '../actions/bundleManageResources.actions';
 import { selectItemsToPaste, pasteItems, clearClipboard } from '../actions/clipboard.actions';
 import { downloadResources, removeResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
@@ -85,7 +85,8 @@ type Props = {
   clearClipboard: () => {},
   selectResources: () => {},
   selectRevisions: () => {},
-  appendAddedFilePaths: () => {}
+  appendAddedFilePaths: () => {},
+  editContainers: () => {}
 };
 
 const addStatus = 'add?';
@@ -98,23 +99,9 @@ function createUpdatedTotalResources(origTotalResources, filePath, updateFunc) {
   return origTotalResources.map(r => (r.id === filePath ? { ...r, ...updateFunc(r) } : r));
 }
 
-function formatContainer(containerInput) {
-  const trimmed = containerInput.trim();
-  if (trimmed === '' || trimmed === '/' || trimmed === '.') {
-    return '/';
-  }
-  const prefix = containerInput[0] !== '/' ? '/' : '';
-  const postfix = containerInput.slice(-1) !== '/' ? '/' : '';
-  return `${prefix}${containerInput}${postfix}`;
-}
-
 function formatUriForApi(resource) {
   const { container, name } = resource;
-  return formatUri(container, name);
-}
-
-function formatUri(container, name) {
-  return `${container.substr(1)}${name}`;
+  return utilities.formatUri(container, name);
 }
 
 function ignoreHiddenFunc(file, stats) {
@@ -178,7 +165,7 @@ function createResourceData(
   const {
     uri = '', checksum = '', size: sizeRaw = 0, mimeType = ''
   } = manifestResourceRaw;
-  const container = formatContainer(upath.normalizeTrim(path.dirname(uri)));
+  const container = utilities.formatContainer(upath.normalizeTrim(path.dirname(uri)));
   const name = path.basename(uri);
   /* const ext = path.extname(uri); */
   const size = utilities.formatBytesByKbs(sizeRaw);
@@ -215,18 +202,17 @@ function getAddStatus(uri, resourcesInParent, conversions = Set(), conversionOve
 
 function createAddedResource(
   fullToRelativePaths, resourcesInParent,
-  conversions, conversionOverwrites, fileSizes = emptyObject
+  conversions, conversionOverwrites, fileSizes = emptyObject, editedContainers = emptyObject
 ) {
   return (filePath) => {
-    const fileName = path.basename(filePath);
-    const relativePath = upath.normalizeTrim(getOrDefault(fullToRelativePaths, filePath, ''));
-    const relativeFolder = formatContainer(path.dirname(relativePath));
-    const uri = formatUri(relativeFolder, fileName);
+    const { fileName, relativeFolder, container } =
+      utilities.getFilePathResourceData(filePath, fullToRelativePaths, editedContainers);
+    const uri = utilities.formatUri(relativeFolder, fileName);
     const [id, name] = [filePath, fileName];
     const size = fileSizes[filePath] || '';
     const status = getAddStatus(uri, resourcesInParent, conversions, conversionOverwrites);
     return {
-      id, uri, status, mimeType: '', container: relativeFolder || NEED_CONTAINER, relativeFolder, name, size, checksum: '', disabled: false
+      id, uri, status, mimeType: '', container: container || NEED_CONTAINER, relativeFolder, name, size, checksum: '', disabled: false
     };
   };
 }
@@ -268,15 +254,10 @@ const getMapperReports = (state) => state.bundleManageResources.mapperReports ||
 const getMapperInputData = (state) => getMapperReports(state).input || emptyObject;
 const getMapperInputReport = (state) => getMapperInputData(state).report || emptyObject;
 const getSelectedMappers = (state) => state.bundleManageResources.selectedMappers || emptyObject;
+const getEditedContainers = (state) => state.bundleManageResources.editedContainers || emptyObject;
 
-function getOrDefault(obj, prop, defaultValue) {
-  if (!obj) {
-    return defaultValue;
-  }
-  return obj[prop] || defaultValue;
-}
-
-const emptyBundleManifestResources = { rawManifestResources: emptyObject, storedFiles: emptyObject };
+const emptyBundleManifestResources =
+  { rawManifestResources: emptyObject, storedFiles: emptyObject };
 
 function filterBySelectedMappers(inputMappers, selectedIdsInputConverters) {
   return Object.entries(inputMappers)
@@ -290,9 +271,12 @@ function getTableDataForAddedResources(
   previousManifestResources,
   newAddedFilePaths,
   fullToRelativePaths,
-  fileSizes
+  fileSizes,
+  editedContainers
 ) {
-  const { report: inputMappers = emptyObject, overwrites: inputMappersOverwrites = emptyObject } = mapperInputData;
+  const {
+    report: inputMappers = emptyObject, overwrites: inputMappersOverwrites = emptyObject
+  } = mapperInputData;
   const parentRawManifestResourceUris =
     getRawManifestResourceUris(previousManifestResources);
   const conversions =
@@ -302,7 +286,7 @@ function getTableDataForAddedResources(
       .reduce((acc, [, mapperOverwrites]) => acc.union(mapperOverwrites.map(a => a[0])), Set());
   const addedResources = newAddedFilePaths.map(createAddedResource(
     fullToRelativePaths, parentRawManifestResourceUris,
-    conversions, conversionOverwrites, fileSizes
+    conversions, conversionOverwrites, fileSizes, editedContainers
   ));
   return addedResources;
 }
@@ -322,12 +306,13 @@ const getManifestResourcesDataSelector = createSelector(
   [getAllManifestResources, getMode, getBundleId, getBundlesById,
     getPreviousManifestResourcesDataSelector,
     getAddedFilePaths, getFullToRelativePaths, getFileSizes,
-    getMapperInputData, getMapperInputReport, getSelectedMappers],
+    getMapperInputData, getMapperInputReport, getSelectedMappers, getEditedContainers],
   (
     manifestResources, mode, bundleId, bundlesById, prevManifestResourcesData,
-    addedFilePaths, fullToRelativePaths, fileSizes, mapperInputData, mapperReport, selectedMappers
+    addedFilePaths, fullToRelativePaths, fileSizes, mapperInputData, mapperReport, selectedMappers,
+    editedContainers
   ) => {
-    const bundleManifestResources = getOrDefault(
+    const bundleManifestResources = utilities.getOrDefault(
       manifestResources,
       bundleId,
       emptyBundleManifestResources
@@ -357,7 +342,8 @@ const getManifestResourcesDataSelector = createSelector(
       previousManifestResources,
       addedFilePaths,
       fullToRelativePaths,
-      fileSizes
+      fileSizes,
+      editedContainers
     );
     return [...bundleManifestResourcesData, ...addedResources, ...deletedParentBundleResources];
   }
@@ -693,7 +679,8 @@ const mapDispatchToProps = {
   clearClipboard,
   selectResources,
   selectRevisions,
-  appendAddedFilePaths
+  appendAddedFilePaths,
+  editContainers
 };
 
 const materialStyles = theme => ({
@@ -1046,15 +1033,15 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const parentRawManifestResourceUris =
       getRawManifestResourceUris(this.props.previousManifestResources);
     const tableData = toAddResources.map(resource => resource.id).reduce((acc, filePath) => {
-      const container = formatContainer(newContainer);
+      const container = utilities.formatContainer(newContainer);
       const updatedTotalResources = createUpdatedTotalResources(
         acc,
         filePath,
         (resource) => {
           const updatedContainer = (resource.relativeFolder ?
-            formatContainer(upath.joinSafe(container, resource.relativeFolder)) :
+            utilities.formatContainer(upath.joinSafe(container, resource.relativeFolder)) :
             container);
-          const updatedUri = formatUri(updatedContainer, resource.name);
+          const updatedUri = utilities.formatUri(updatedContainer, resource.name);
           const status = getAddStatus(updatedUri, parentRawManifestResourceUris);
           return {
             container: updatedContainer,
@@ -1070,7 +1057,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   updateSelectedResourcesContainersSetState = (newContainer) => {
     const tableData = this.getUpdateSelectedResourcesContainers(newContainer);
-    this.setState({ tableData });
+    /* 
+    this.setState({ tableData }); 
+    */
   }
 
   handleAddByFile = () => {
@@ -1126,43 +1115,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return Object.entries(inputMappers)
       .filter(([mapperKey]) => selectedIdsInputConverters.includes(mapperKey))
       .reduce((acc, [mapperKey, mapperValue]) => ({ ...acc, [mapperKey]: mapperValue }), {});
-  }
-
-  getTableDataForAddedResources = (newAddedFilePaths, fullToRelativePaths) => {
-    const { manifestResources, mapperInputData = {} } = this.props;
-    const { report: inputMappers = {}, overwrites: inputMappersOverwrites = {} } = mapperInputData;
-    const { tableData = manifestResources } = this.state;
-    const parentRawManifestResourceUris =
-      getRawManifestResourceUris(this.props.previousManifestResources);
-    const otherResources = tableData.filter(r => !newAddedFilePaths.includes(r.id));
-    const conversions = utilities.getUnionOfValues(this.filterBySelectedMappers(inputMappers));
-    const conversionOverwrites = Object.entries(this.filterBySelectedMappers(inputMappersOverwrites))
-      .reduce((acc, [, mapperOverwrites]) => acc.union(mapperOverwrites.map(a => a[0])), Set());
-    const newlyAddedResources = newAddedFilePaths.map(createAddedResource(
-      fullToRelativePaths, parentRawManifestResourceUris,
-      conversions, conversionOverwrites
-    ));
-    return [...otherResources, ...newlyAddedResources];
-  }
-
-  updateTotalResources = (
-    newAddedFilePaths,
-    fullToRelativePaths,
-    shouldRunMapperReport = false,
-    shouldUpdateWithFileStats = false
-  ) => () => {
-    const tableData = this.getTableDataForAddedResources(newAddedFilePaths, fullToRelativePaths);
-    this.setState(
-      { tableData },
-      () => {
-        if (shouldRunMapperReport) {
-          this.getMapperReport();
-        }
-        if (shouldUpdateWithFileStats) {
-          this.updateAddedResourcesWithFileStats(newAddedFilePaths)();
-        }
-      }
-    );
   }
 
   isModifyFilesMode = () => this.props.mode === 'addFiles';
@@ -1332,7 +1284,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   getSuggestions = (value) => {
     // console.log({ getSuggestions: true, value, reason });
     const inputValue = value ? value.trim() : null;
-    const updatedResources = this.getUpdateSelectedResourcesContainers(value || '');
+    const updatedResources = this.props.tableData;
     if (!inputValue) {
       return this.getAllSuggestions(updatedResources);
     }
@@ -1364,7 +1316,12 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     if (newValue === undefined) {
       return;
     }
-    this.updateSelectedResourcesContainersSetState(newValue.trim());
+    const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
+    if (toAddResources !== inEffect) {
+      return;
+    }
+    this.props.editContainers(newValue.trim());
+    // this.updateSelectedResourcesContainersSetState(newValue.trim());
   }
 
   renderWizardsResults = () => {

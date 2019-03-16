@@ -56,12 +56,10 @@ class EnhancedTable extends Component<Props> {
   };
 
   componentWillReceiveProps(nextProps) {
-    // You don't have to do this check first, but it can help prevent an unneeded render
-    /*
+    // TODO: phase this out by removing state.selectedRowIds
     if (nextProps.selectedIds !== this.props.selectedIds) {
       this.setState({ selectedRowIds: nextProps.selectedIds });
     }
-    */
   }
 
   areAnyChecked = () => this.state.selectedRowIds.length > 0;

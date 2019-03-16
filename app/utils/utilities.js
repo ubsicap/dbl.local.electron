@@ -1,4 +1,6 @@
 import sort from 'fast-sort';
+import upath from 'upath';
+import path from 'path';
 import { Set } from 'immutable';
 
 const { shell } = require('electron');
@@ -17,7 +19,11 @@ export const utilities = {
   difference,
   buildRouteUrl,
   calculatePercentage,
-  formatBytesByKbs
+  formatBytesByKbs,
+  formatContainer,
+  getOrDefault,
+  getFilePathResourceData,
+  formatUri
 };
 export default utilities;
 
@@ -96,4 +102,33 @@ function calculatePercentage(completed, total) {
 
 function formatBytesByKbs(bytes) {
   return (Math.round(Number(bytes) / 1024)).toLocaleString();
+}
+
+function formatContainer(containerInput) {
+  const trimmed = containerInput.trim();
+  if (trimmed === '' || trimmed === '/' || trimmed === '.') {
+    return '/';
+  }
+  const prefix = containerInput[0] !== '/' ? '/' : '';
+  const postfix = containerInput.slice(-1) !== '/' ? '/' : '';
+  return `${prefix}${containerInput}${postfix}`;
+}
+
+function getOrDefault(obj, prop, defaultValue) {
+  if (!obj) {
+    return defaultValue;
+  }
+  return obj[prop] || defaultValue;
+}
+
+function getFilePathResourceData(filePath, fullToRelativePaths, editedContainers = {}) {
+  const fileName = path.basename(filePath);
+  const editedContainer = utilities.getOrDefault(editedContainers, filePath, null);
+  const relativePath = upath.normalizeTrim(utilities.getOrDefault(fullToRelativePaths, filePath, ''));
+  const relativeFolder = formatContainer(path.dirname(relativePath));
+  return { fileName, relativeFolder, container: editedContainer || relativeFolder };
+}
+
+function formatUri(container, name) {
+  return `${container.substr(1)}${name}`;
 }
