@@ -4,6 +4,8 @@ import { withStyles } from '@material-ui/core/styles';
 import sort from 'fast-sort';
 import Paper from '@material-ui/core/Paper';
 import Checkbox from '@material-ui/core/Checkbox';
+import { connect } from 'react-redux';
+import { compose } from 'recompose';
 
 const styles = theme => ({
   root: {
@@ -28,8 +30,11 @@ const styles = theme => ({
 type Props = {
   classes: {},
   data: [],
+  sortedData: [],
+  selectableData: [],
   orderDirection?: string,
   columnConfig: [],
+  columns: [],
   defaultOrderBy: string,
   secondarySorts: [],
   selectedIds: [],
@@ -38,6 +43,109 @@ type Props = {
   freezeCheckedColumnState?: boolean,
   onSelectedRowIds: () => {}
 };
+
+
+function getSortMethod(customSorts, orderBy) {
+  const customSort = customSorts[orderBy];
+  if (customSort) {
+    return customSort;
+  }
+  return orderBy;
+}
+
+/* TODO
+  state = {
+    order: this.props.orderDirection,
+    orderBy: this.props.defaultOrderBy || this.props.columnConfig[0].name,
+    selectedRowIds: this.props.selectedIds
+  };
+*/
+function getSortedData(data, secondarySorts, customSorts, orderBy, order) {
+  const secondaryOrderBys = secondarySorts.filter(s => s !== orderBy).map((s) =>
+    ({ asc: getSortMethod(customSorts, s) }));
+  const orderByConfig = [{ [order]: getSortMethod(customSorts, orderBy) }, ...secondaryOrderBys];
+  const sorted = sort(data).by(orderByConfig);
+  return sorted;
+}
+
+function isRowChecked(rowData, selectedRowIds) {
+  return selectedRowIds.some(id => rowData.id === id);
+}
+
+function renderCheckBoxInRow(rowData, freezeCheckedColumnState, selectedRowIds) {
+  return (<Checkbox
+    disabled={freezeCheckedColumnState}
+    checked={isRowChecked(rowData, selectedRowIds)}
+  />);
+}
+
+function getHeaderCheckBoxProps(selectableData, selectedRowIds, areAnyChecked) {
+  if (selectableData.length === 0) {
+    return {
+      disabled: true
+    };
+  }
+  if (areAnyChecked &&
+      selectedRowIds.length !== selectableData.length) {
+    return {
+      indeterminate: true,
+      color: 'default'
+    };
+  }
+  return {};
+}
+
+function renderCheckBoxInHeader(
+  areAnyChecked,
+  onChangeCheckBoxHeader,
+  selectableData,
+  selectedRowIds
+) {
+  return (<Checkbox
+    checked={areAnyChecked}
+    onChange={onChangeCheckBoxHeader}
+    {...getHeaderCheckBoxProps(selectableData, selectedRowIds, areAnyChecked)}
+  />);
+}
+
+function getColumns(columnConfig, multiSelections) {
+  const checkboxColumn = {
+    name: 'checkbox',
+    cell: rowData => (
+      !rowData.disabled ?
+        renderCheckBoxInRow(rowData, freezeCheckedColumnState, selectedRowIds) :
+        null
+    ),
+    cellProps: { style: { paddingRight: 0 } },
+    width: 72,
+    onHeaderClick: false
+  };
+  if (multiSelections) {
+    const header = renderCheckBoxInHeader(
+      areAnyChecked,
+      onChangeCheckBoxHeader,
+      selectableData,
+      selectedRowIds
+    );
+    checkboxColumn.header = header;
+  }
+  const stringCellProps = { style: { paddingRight: 0 } };
+  const numericCellProps = { align: 'right' };
+  const columns = columnConfig.map(c => ({
+    name: c.name,
+    header: c.label,
+    cellProps: c.type === 'numeric' ? numericCellProps : stringCellProps
+  }));
+  return [checkboxColumn, ...columns];
+};
+
+function mapStateToProps(state, props) {
+  return {
+    sortedData,
+    columns,
+    selectableData
+  };
+}
 
 function getDataRowIds(data) {
   return data.map(d => d.id);
@@ -75,68 +183,6 @@ class EnhancedTable extends Component<Props> {
       return { selectedRowIds: getDataRowIds(selectableData) };
     }, this.reportSelectedRowIds);
   }
-
-  headerCheckBoxProps = () => {
-    const { data } = this.props;
-    const selectableData = getSelectableData(data);
-    const { selectedRowIds } = this.state;
-    if (selectableData.length === 0) {
-      return {
-        disabled: true
-      };
-    }
-    if (this.areAnyChecked() &&
-        selectedRowIds.length !== selectableData.length) {
-      return {
-        indeterminate: true,
-        color: 'default'
-      };
-    }
-    return {};
-  }
-
-  isRowChecked = (rowData) => (
-    this.state.selectedRowIds.some(id => rowData.id === id));
-
-  renderCheckBoxInRow = (rowData) => (
-    <Checkbox
-      disabled={this.props.freezeCheckedColumnState}
-      checked={this.isRowChecked(rowData)}
-    />);
-
-  renderCheckBoxInHeader = () => (
-    <Checkbox
-      checked={this.areAnyChecked()}
-      onChange={this.onChangeCheckBoxHeader}
-      {...this.headerCheckBoxProps()}
-    />);
-
-  columns = () => {
-    const { columnConfig } = this.props;
-    const checkboxColumn = {
-      name: 'checkbox',
-      cell: rowData => (
-        !rowData.disabled ?
-          this.renderCheckBoxInRow(rowData) :
-          null
-      ),
-      cellProps: { style: { paddingRight: 0 } },
-      width: 72,
-      onHeaderClick: false
-    };
-    if (this.props.multiSelections) {
-      const header = this.renderCheckBoxInHeader();
-      checkboxColumn.header = header;
-    }
-    const stringCellProps = { style: { paddingRight: 0 } };
-    const numericCellProps = { align: 'right' };
-    const columns = columnConfig.map(c => ({
-      name: c.name,
-      header: c.label,
-      cellProps: c.type === 'numeric' ? numericCellProps : stringCellProps
-    }));
-    return [checkboxColumn, ...columns];
-  };
 
   handleRequestSort = ({ column }) => {
     const { name: property } = column;
@@ -177,39 +223,20 @@ class EnhancedTable extends Component<Props> {
   isCellHovered = ({ rowData, hoveredRowData }) =>
     !rowData.disabled && rowData.id && rowData.id === hoveredRowData.id;
 
-  getSortMethod = (orderBy) => {
-    const { customSorts } = this.props;
-    const customSort = customSorts[orderBy];
-    if (customSort) {
-      return customSort;
-    }
-    return orderBy;
-  }
-
-  getSortedData = () => {
-    const { data, secondarySorts } = this.props;
-    const { orderBy, order } = this.state;
-    const secondaryOrderBys = secondarySorts.filter(s => s !== orderBy).map((s) =>
-      ({ asc: this.getSortMethod(s) }));
-    const orderByConfig = [{ [order]: this.getSortMethod(orderBy) }, ...secondaryOrderBys];
-    const sorted = sort(data).by(orderByConfig);
-    return sorted;
-  }
-
   bodyRowProps = ({ rowData }) => {
     const { classes } = this.props;
     return rowData.disabled ? { className: classes.rowDisabled } : {};
   }
 
   render() {
-    const { classes } = this.props;
+    const { classes, sortedData, columns } = this.props;
     const { orderBy, order } = this.state;
 
     return (
       <Paper className={classes.root}>
         <MuiTable
-          data={this.getSortedData()}
-          columns={this.columns()}
+          data={sortedData}
+          columns={columns}
           includeHeaders
           headerCellProps={{
             className: classes.stickyHeaderClass,
@@ -236,4 +263,10 @@ EnhancedTable.defaultProps = {
   freezeCheckedColumnState: false
 };
 
-export default withStyles(styles)(EnhancedTable);
+export default compose(
+  withStyles(styles),
+  connect(
+    mapStateToProps,
+    null
+  ),
+)(EnhancedTable);
