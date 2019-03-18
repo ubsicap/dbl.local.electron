@@ -26,6 +26,7 @@ export function bundleManageResourcesUx(state = initialState, action) {
     case bundleResourceManagerConstants.RESOURCES_SELECTED: {
       return updateStateFromActionProps({ autoSelectAllResources: false });
     }
+    case bundleResourceManagerConstants.UPDATE_MAIN_TABLE_SORT_ORDER:
     case bundleResourceManagerConstants.REVISIONS_SELECTED: {
       return updateStateFromActionProps();
     }

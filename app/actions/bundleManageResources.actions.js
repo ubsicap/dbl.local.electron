@@ -18,7 +18,8 @@ export const bundleManageResourceActions = {
   addManifestResources,
   deleteManifestResources,
   checkPublicationsHealth,
-  editContainers
+  editContainers,
+  updateSortOrder
 };
 
 export function openResourceManager(_bundleId, _mode) {
@@ -401,6 +402,20 @@ export function updateAddedFilePaths(addedFilePaths, fullToRelativePaths) {
     type: bundleResourceManagerConstants.UPDATE_ADDED_FILEPATHS,
     addedFilePaths,
     fullToRelativePaths
+  };
+}
+
+export function updateSortOrder(orderDirection, orderBy) {
+  return (dispatch, getState) => {
+    const { mode } = getState().bundleManageResourcesUx;
+    return dispatch({
+      type: bundleResourceManagerConstants.UPDATE_MAIN_TABLE_SORT_ORDER,
+      sortOrder: {
+        mode,
+        orderDirection,
+        orderBy
+      }
+    });
   };
 }
 

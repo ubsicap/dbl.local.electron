@@ -21,7 +21,7 @@ import path from 'path';
 import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources,
-  getMapperReport, selectResources, selectRevisions, appendAddedFilePaths, editContainers
+  getMapperReport, selectResources, selectRevisions, appendAddedFilePaths, editContainers, updateSortOrder
 } from '../actions/bundleManageResources.actions';
 import { selectItemsToPaste, pasteItems, clearClipboard } from '../actions/clipboard.actions';
 import { downloadResources, removeResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
@@ -69,6 +69,8 @@ type Props = {
   autoSelectAllResources: boolean,
   tableData: [],
   selectedResourcesByStatus: {},
+  orderDirection?: string,
+  orderBy?: string,
   closeResourceManager: () => {},
   getManifestResources: () => {},
   getEntryRevisions: () => {},
@@ -86,7 +88,13 @@ type Props = {
   selectResources: () => {},
   selectRevisions: () => {},
   appendAddedFilePaths: () => {},
-  editContainers: () => {}
+  editContainers: () => {},
+  updateSortOrder: () => {}
+};
+
+const defaultProps = {
+  orderDirection: 'asc',
+  orderBy: 'container'
 };
 
 const addStatus = 'add?';
@@ -591,6 +599,15 @@ function filterSelectedResourceIds(mode, autoSelectAllResources, selectedResourc
   return filteredSelectedResourceIds;
 }
 
+function getSortOrderOrDefault(mode, sortOrder) {
+  const orderDirectionDefault = (mode === 'revisions' ? 'desc' : defaultProps.orderDirection);
+  const orderByDefault = (mode === 'revisions' ? 'revision' : defaultProps.orderBy);
+  if (!sortOrder || sortOrder.mode !== mode) {
+    return { orderDirection: orderDirectionDefault, orderBy: orderByDefault };
+  }
+  return sortOrder;
+}
+
 function mapStateToProps(state, props) {
   const {
     bundleEditMetadata, bundleManageResources, bundleManageResourcesUx, clipboard
@@ -602,7 +619,8 @@ function mapStateToProps(state, props) {
   } = bundleManageResources;
   const {
     autoSelectAllResources = false,
-    selectedRevisionIds = emptyArray
+    selectedRevisionIds = emptyArray,
+    sortOrder,
   } = bundleManageResourcesUx;
   const { selectedItemsToPaste = emptyObject } = clipboard;
   const {
@@ -632,6 +650,7 @@ function mapStateToProps(state, props) {
   const selectedRowIds = mode === 'revisions' ?
     selectedRevisionIds : getSelectAllOrFilterSelectedResourceIdsSelector(state, props);
   const selectedResourcesByStatus = getSelectedResourcesByStatusSelector(state, props);
+  const { orderDirection, orderBy } = getSortOrderOrDefault(mode, sortOrder);
   return {
     loading: loading || fetchingMetadata || !isStoreMode,
     progress,
@@ -657,7 +676,9 @@ function mapStateToProps(state, props) {
     wizardsResults,
     selectedItemsToPaste,
     tableData,
-    selectedResourcesByStatus
+    selectedResourcesByStatus,
+    orderDirection,
+    orderBy
   };
 }
 
@@ -679,7 +700,8 @@ const mapDispatchToProps = {
   selectResources,
   selectRevisions,
   appendAddedFilePaths,
-  editContainers
+  editContainers,
+  updateSortOrder
 };
 
 const materialStyles = theme => ({
@@ -727,13 +749,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   props: Props;
   constructor(props) {
     super(props);
-    const { mode } = props;
-    const orderDirection = (mode === 'revisions' ? 'desc' : 'asc');
-    const orderBy = (mode === 'revisions' ? 'revision' : 'container');
     this.state = {
-      openDrawer: false,
-      orderDirection,
-      orderBy
+      openDrawer: false
     };
   }
 
@@ -1371,7 +1388,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   handleChangeSort = ({ order, orderBy }) => {
-    this.setState({ orderDirection: order, orderBy });
+    this.props.updateSortOrder(order, orderBy);
   }
 
   renderInputMapperReportTable = () => {
@@ -1390,9 +1407,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   renderTable = () => {
     const {
-      columnConfig, mode, selectedRowIds, tableData, loading
+      columnConfig, mode, selectedRowIds, tableData, loading,
+      orderBy, orderDirection
     } = this.props;
-    const { orderBy, orderDirection } = this.state;
     switch (mode) {
       case 'download': {
         return (
@@ -1578,6 +1595,8 @@ export default compose(
     mapDispatchToProps
   ),
 )(ManageBundleManifestResourcesDialog);
+
+ManageBundleManifestResourcesDialog.defaultProps = defaultProps;
 
 function sortLocalRevisions(bundle) {
   const effectiveRevision =
