@@ -7,7 +7,7 @@ import Checkbox from '@material-ui/core/Checkbox';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { createSelector } from 'reselect';
-import { emptyObject } from '../utils/defaultValues';
+import { emptyObject, emptyArray } from '../utils/defaultValues';
 
 const styles = theme => ({
   root: {
@@ -119,13 +119,13 @@ function getHeaderCheckBoxProps(selectableData, selectedRowIds, areAnyChecked) {
 
 function renderCheckBoxInHeader(
   areAnyChecked,
-  onChangeCheckBoxHeader,
+  onSelectedRowIds,
   selectableData,
   selectedRowIds
 ) {
   return (<Checkbox
     checked={areAnyChecked}
-    onChange={onChangeCheckBoxHeader}
+    onChange={onChangeCheckBoxHeader(selectedRowIds, selectableData, onSelectedRowIds)}
     {...getHeaderCheckBoxProps(selectableData, selectedRowIds, areAnyChecked)}
   />);
 }
@@ -137,7 +137,7 @@ const getMultiSelections = (state, props) =>
 const getFreezeCheckedColumnState = (state, props) =>
   props.freezeCheckedColumnState || defaultProps.freezeCheckedColumnState;
 const getSelectedRowIds = (state, props) => props.selectedIds;
-const getOnChangeCheckBoxHeader = (state, props) => props.onChangeCheckBoxHeader;
+const getOnSelectedRowIds = (state, props) => props.onSelectedRowIds;
 
 const getAreAnyCheckedSelector = createSelector(
   [getSelectedRowIds],
@@ -152,10 +152,18 @@ function getSelectableData(data) {
 
 const getColumnsSelector = createSelector(
   [getColumnConfig, getMultiSelections, getFreezeCheckedColumnState,
-    getSelectedRowIds, getAreAnyCheckedSelector, getOnChangeCheckBoxHeader,
-    getSelectableDataSelector],
+    getSelectedRowIds, getAreAnyCheckedSelector,
+    getSelectableDataSelector, getOnSelectedRowIds],
   getColumns
 );
+
+function onChangeCheckBoxHeader(selectedRowIds, selectableData, onSelectedRowsIds) {
+  return () => {
+    const newlySelectedRowIds = selectedRowIds.length === selectableData.length ?
+      emptyArray : getDataRowIds(selectableData);
+    onSelectedRowsIds(newlySelectedRowIds);
+  };
+}
 
 function getColumns(
   columnConfig,
@@ -163,8 +171,8 @@ function getColumns(
   freezeCheckedColumnState,
   selectedRowIds,
   areAnyChecked,
-  onChangeCheckBoxHeader,
-  selectableData
+  selectableData,
+  onSelectedRowIds
 ) {
   const checkboxColumn = {
     name: 'checkbox',
@@ -180,7 +188,7 @@ function getColumns(
   if (multiSelections) {
     const header = renderCheckBoxInHeader(
       areAnyChecked,
-      onChangeCheckBoxHeader,
+      onSelectedRowIds,
       selectableData,
       selectedRowIds
     );
@@ -227,18 +235,6 @@ class EnhancedTable extends Component<Props> {
   }
 
   areAnyChecked = () => this.state.selectedRowIds.length > 0;
-
-  onChangeCheckBoxHeader = () => {
-    const { data } = this.props;
-    this.setState(prevState => {
-      const selectableData = getSelectableData(data);
-      if (prevState.selectedRowIds.length === selectableData.length) {
-        // deselect all
-        return { selectedRowIds: [] };
-      }
-      return { selectedRowIds: getDataRowIds(selectableData) };
-    }, this.reportSelectedRowIds);
-  }
 
   handleRequestSort = ({ column }) => {
     const { name: property } = column;
