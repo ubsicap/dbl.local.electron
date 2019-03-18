@@ -727,10 +727,13 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   props: Props;
   constructor(props) {
     super(props);
+    const { mode } = props;
+    const orderDirection = (mode === 'revisions' ? 'desc' : 'asc');
+    const orderBy = (mode === 'revisions' ? 'revision' : 'container');
     this.state = {
       openDrawer: false,
-      orderDirection: 'asc',
-      orderBy: 'description'
+      orderDirection,
+      orderBy
     };
   }
 
@@ -1389,6 +1392,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const {
       columnConfig, mode, selectedRowIds, tableData, loading
     } = this.props;
+    const { orderBy, orderDirection } = this.state;
     switch (mode) {
       case 'download': {
         return (
@@ -1398,7 +1402,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               data={tableData}
               columnConfig={columnConfig}
               secondarySorts={secondarySorts}
-              orderBy="container"
+              orderBy={orderBy}
+              orderDirection={orderDirection}
               onSelectedRowIds={this.handleSelectedRowIds}
               onChangeSort={this.handleChangeSort}
               multiSelections
@@ -1417,8 +1422,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               columnConfig={columnConfig}
               customSorts={{ revision: rData => (rData.localBundle ? sortLocalRevisions(rData.localBundle) : parseInt(rData.revision, 10)) }}
               secondarySorts={['revision']}
-              orderBy="revision"
-              orderDirection="desc"
+              orderBy={orderBy}
+              orderDirection={orderDirection}
               onSelectedRowIds={this.handleSelectedRowIds}
               onChangeSort={this.handleChangeSort}
               selectedIds={selectedRowIds}
@@ -1435,7 +1440,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               data={tableData}
               columnConfig={columnConfig}
               secondarySorts={secondarySorts}
-              orderBy="container"
+              orderBy={orderBy}
+              orderDirection={orderDirection}
               multiSelections
               onSelectedRowIds={this.handleSelectedRowIds}
               onChangeSort={this.handleChangeSort}
