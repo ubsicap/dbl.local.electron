@@ -35,15 +35,16 @@ type Props = {
   sortedData: [],
   selectableData: [],
   orderDirection?: string,
+  orderBy: string,
   columnConfig: [],
   columns: [],
-  defaultOrderBy: string,
   secondarySorts: [],
   selectedIds: [],
   multiSelections?: boolean,
   customSorts?: {},
   freezeCheckedColumnState?: boolean,
-  onSelectedRowIds: () => {}
+  onSelectedRowIds: () => {},
+  onChangeSort: () => {}
 };
 
 const defaultProps = {
@@ -66,7 +67,7 @@ const getSecondarySorts = (state, props) => props.secondarySorts;
 const getCustomSorts = (state, props) =>
   props.customSorts || defaultProps.customSorts;
 const getOrderBy = (state, props) =>
-  props.defaultOrderBy || this.props.columnConfig[0].name; // TODO this can change
+  props.orderBy || this.props.columnConfig[0].name;
 const getOrder = (state, props) =>
   props.orderDirection || defaultProps.orderDirection;
 
@@ -78,7 +79,7 @@ const getSortedDataSelector = createSelector(
 /* TODO
   state = {
     order: this.props.orderDirection,
-    orderBy: this.props.defaultOrderBy || this.props.columnConfig[0].name,
+    orderBy: this.props.orderBy || this.props.columnConfig[0].name,
     selectedRowIds: this.props.selectedIds
   };
 */
@@ -222,8 +223,6 @@ function getDataRowIds(data) {
 class EnhancedTable extends Component<Props> {
   props: Props;
   state = {
-    order: this.props.orderDirection,
-    orderBy: this.props.defaultOrderBy || this.props.columnConfig[0].name,
     selectedRowIds: this.props.selectedIds
   };
 
@@ -239,12 +238,13 @@ class EnhancedTable extends Component<Props> {
   handleRequestSort = ({ column }) => {
     const { name: property } = column;
     const orderBy = property;
-    const order = (this.state.orderBy === property && this.state.order === 'desc') ? 'asc' : 'desc';
-    this.setState({ order, orderBy });
+    const order = (this.props.orderBy === property && this.props.orderDirection === 'desc') ? 'asc' : 'desc';
+    this.props.onChangeSort({ order, orderBy });
   };
 
-  reportSelectedRowIds = () => {
-    this.props.onSelectedRowIds(this.state.selectedRowIds);
+  reportSelectedRowIds = (selectedRowIds) => {
+    this.props.onSelectedRowIds(selectedRowIds);
+    return emptyObject;
   }
 
   onCellClick = ({ rowData }) => {
@@ -254,19 +254,13 @@ class EnhancedTable extends Component<Props> {
     this.setState(prevState => {
       if (prevState.selectedRowIds.some(id => rowData.id === id)) {
         // remove
-        return {
-          selectedRowIds: prevState.selectedRowIds.filter(id => id !== rowData.id)
-        };
+        return this.reportSelectedRowIds(prevState.selectedRowIds.filter(id => id !== rowData.id));
       }
       if (this.props.multiSelections) {
-        return {
-          selectedRowIds: [...prevState.selectedRowIds, rowData.id]
-        };
+        return this.reportSelectedRowIds([...prevState.selectedRowIds, rowData.id]);
       }
-      return {
-        selectedRowIds: [rowData.id]
-      };
-    }, this.reportSelectedRowIds);
+      return this.reportSelectedRowIds([rowData.id]);
+    });
   }
 
   isCellSelected = ({ rowData }) =>
@@ -281,8 +275,9 @@ class EnhancedTable extends Component<Props> {
   }
 
   render() {
-    const { classes, sortedData, columns } = this.props;
-    const { orderBy, order } = this.state;
+    const {
+      classes, sortedData, columns, orderBy, orderDirection
+    } = this.props;
 
     return (
       <Paper className={classes.root}>
@@ -300,7 +295,7 @@ class EnhancedTable extends Component<Props> {
           isCellSelected={this.isCellSelected}
           isCellHovered={this.isCellHovered}
           orderBy={orderBy}
-          orderDirection={order}
+          orderDirection={orderDirection}
           style={{ backgroundColor: 'white' }}
         />
       </Paper>

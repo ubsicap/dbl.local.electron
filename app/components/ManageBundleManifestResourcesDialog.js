@@ -725,8 +725,13 @@ function mapSuggestions(suggestions) {
 
 class ManageBundleManifestResourcesDialog extends Component<Props> {
   props: Props;
-  state = {
-    openDrawer: false,
+  constructor(props) {
+    super(props);
+    this.state = {
+      openDrawer: false,
+      orderDirection: 'asc',
+      orderBy: 'description'
+    };
   }
 
   componentDidMount() {
@@ -1362,6 +1367,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       </React.Fragment>);
   }
 
+  handleChangeSort = ({ order, orderBy }) => {
+    this.setState({ orderDirection: order, orderBy });
+  }
+
   renderInputMapperReportTable = () => {
     const { mapperInputData = {} } = this.props;
     const { report = {} } = mapperInputData;
@@ -1389,8 +1398,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               data={tableData}
               columnConfig={columnConfig}
               secondarySorts={secondarySorts}
-              defaultOrderBy="container"
+              orderBy="container"
               onSelectedRowIds={this.handleSelectedRowIds}
+              onChangeSort={this.handleChangeSort}
               multiSelections
               selectedIds={selectedRowIds}
               freezeCheckedColumnState={loading}
@@ -1407,9 +1417,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               columnConfig={columnConfig}
               customSorts={{ revision: rData => (rData.localBundle ? sortLocalRevisions(rData.localBundle) : parseInt(rData.revision, 10)) }}
               secondarySorts={['revision']}
-              defaultOrderBy="revision"
+              orderBy="revision"
               orderDirection="desc"
               onSelectedRowIds={this.handleSelectedRowIds}
+              onChangeSort={this.handleChangeSort}
               selectedIds={selectedRowIds}
               freezeCheckedColumnState={loading}
             />
@@ -1424,9 +1435,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               data={tableData}
               columnConfig={columnConfig}
               secondarySorts={secondarySorts}
-              defaultOrderBy="container"
+              orderBy="container"
               multiSelections
               onSelectedRowIds={this.handleSelectedRowIds}
+              onChangeSort={this.handleChangeSort}
               selectedIds={selectedRowIds}
               freezeCheckedColumnState={loading}
             />
