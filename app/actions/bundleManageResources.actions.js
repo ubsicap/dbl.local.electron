@@ -216,8 +216,11 @@ export function addManifestResources(_bundleId, _fileToContainerPaths, inputMapp
             dispatch(success(_bundleId, filePath, containerPath, mapper));
           }
         }
-        const { bundleManageResources: { addedFilePaths: origAddedFilePaths, fullToRelativePaths } } = getState();
-        const remainingAddedFilePaths = utilities.difference(origAddedFilePaths, [filePath]);
+        const {
+          bundleManageResources:
+          { addedFilePaths: origAddedFilePaths, fullToRelativePaths }
+        } = getState();
+        const remainingAddedFilePaths = utilities.subtract(origAddedFilePaths, [filePath]);
         dispatch(updateAddedFilePaths(remainingAddedFilePaths, fullToRelativePaths));
       } catch (error) {
         dispatch(failure(_bundleId, error));
@@ -227,6 +230,11 @@ export function addManifestResources(_bundleId, _fileToContainerPaths, inputMapp
     await bundleService.waitStopCreateMode(_bundleId);
     dispatch(done(_bundleId));
     dispatch(saveMetadatFileToTempBundleFolder(_bundleId));
+    const {
+      bundleManageResources:
+      { addedFilePaths: remainingAddedFilePaths, fullToRelativePaths }
+    } = getState();
+    dispatch(appendAddedFilePaths(_bundleId, remainingAddedFilePaths, fullToRelativePaths, true));
     /*
     await Promise.all(Object.entries(_fileToContainerPaths)
       .map(async ([filePath, containerPath]) => {
@@ -377,7 +385,7 @@ export function appendAddedFilePaths(
   bundleId,
   newAddedFilePaths,
   fullToRelativePaths = null,
-  mapperReportUris = []
+  trimSelectedByAddedFiles = false
 ) {
   return (dispatch, getState) => {
     const state = getState();
@@ -387,14 +395,23 @@ export function appendAddedFilePaths(
     } = state.bundleManageResources;
     const { selectedResourceIds: origSelectedIds } = state.bundleManageResourcesUx;
     const addedFilePaths = utilities.union(origAddedFilePaths, newAddedFilePaths);
-    const selectedIds = utilities.union(origSelectedIds, addedFilePaths);
+    const selectedIds = trimSelectedByAddedFiles ?
+      utilities.intersect(origSelectedIds, addedFilePaths)
+      : utilities.union(origSelectedIds, addedFilePaths);
     dispatch(updateAddedFilePaths(addedFilePaths, fullToRelativePaths || fullToRelativePathsOrig));
     dispatch(selectResources(selectedIds));
-    if (mapperReportUris.length > 0) {
-      dispatch(getMapperReport('input', mapperReportUris, bundleId));
-    }
+    dispatch(updateInputMapperReports(bundleId, selectedIds, fullToRelativePaths));
     dispatch(getFileSizes(newAddedFilePaths));
   };
+}
+
+function updateInputMapperReports(bundleId, filePaths, fullToRelativePaths) {
+  const mapperReportUris = filePaths
+    .map(filePath => utilities.getFilePathResourceData(
+      filePath,
+      fullToRelativePaths
+    ).uri);
+  return getMapperReport('input', mapperReportUris, bundleId);
 }
 
 export function updateAddedFilePaths(addedFilePaths, fullToRelativePaths) {

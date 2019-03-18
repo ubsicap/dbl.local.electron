@@ -16,7 +16,8 @@ export const utilities = {
   onOpenLink,
   sleep,
   union,
-  difference,
+  intersect,
+  subtract,
   buildRouteUrl,
   calculatePercentage,
   formatBytesByKbs,
@@ -32,7 +33,12 @@ export function union(arrayA, arrayB = []) {
   return u.union(arrayB).toArray();
 }
 
-export function difference(arrayA, arrayB = []) {
+export function intersect(arrayA, arrayB = []) {
+  const u = Set(arrayA);
+  return u.intersect(arrayB).toArray();
+}
+
+export function subtract(arrayA, arrayB = []) {
   const diff = Set(arrayA);
   return diff.subtract(arrayB).toArray();
 }
@@ -126,7 +132,10 @@ function getFilePathResourceData(filePath, fullToRelativePaths, editedContainers
   const editedContainer = utilities.getOrDefault(editedContainers, filePath, null);
   const relativePath = upath.normalizeTrim(utilities.getOrDefault(fullToRelativePaths, filePath, ''));
   const relativeFolder = formatContainer(path.dirname(relativePath));
-  return { fileName, relativeFolder, container: editedContainer || relativeFolder };
+  const uri = utilities.formatUri(relativeFolder, fileName);
+  return {
+    fileName, relativeFolder, container: editedContainer || relativeFolder, uri
+  };
 }
 
 function formatUri(container, name) {

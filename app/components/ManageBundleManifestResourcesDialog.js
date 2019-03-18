@@ -21,7 +21,8 @@ import path from 'path';
 import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
   getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources,
-  getMapperReport, selectResources, selectRevisions, appendAddedFilePaths, editContainers, updateSortOrder
+  selectResources, selectRevisions, updateSortOrder,
+  appendAddedFilePaths, editContainers,
 } from '../actions/bundleManageResources.actions';
 import { selectItemsToPaste, pasteItems, clearClipboard } from '../actions/clipboard.actions';
 import { downloadResources, removeResources, getEntryRevisions, createBundleFromDBL, selectBundleEntryRevision } from '../actions/bundle.actions';
@@ -81,7 +82,6 @@ type Props = {
   createBundleFromDBL: () => {},
   selectBundleEntryRevision: () => {},
   removeResources: () => {},
-  getMapperReport: () => {},
   selectItemsToPaste: () => {},
   pasteItems: () => {},
   clearClipboard: () => {},
@@ -102,10 +102,6 @@ const addAndOverwrite = 'add (revise)?';
 const addAndConvert = 'add / convert?';
 const addAndConvertOverwrite = 'add / convert (revise)?';
 const addStatuses = [addStatus, addAndOverwrite, addAndConvert, addAndConvertOverwrite];
-
-function createUpdatedTotalResources(origTotalResources, filePath, updateFunc) {
-  return origTotalResources.map(r => (r.id === filePath ? { ...r, ...updateFunc(r) } : r));
-}
 
 function formatUriForApi(resource) {
   const { container, name } = resource;
@@ -213,9 +209,9 @@ function createAddedResource(
   conversions, conversionOverwrites, fileSizes = emptyObject, editedContainers = emptyObject
 ) {
   return (filePath) => {
-    const { fileName, relativeFolder, container } =
-      utilities.getFilePathResourceData(filePath, fullToRelativePaths, editedContainers);
-    const uri = utilities.formatUri(relativeFolder, fileName);
+    const {
+      fileName, relativeFolder, container, uri
+    } = utilities.getFilePathResourceData(filePath, fullToRelativePaths, editedContainers);
     const [id, name] = [filePath, fileName];
     const size = fileSizes[filePath] || '';
     const status = getAddStatus(uri, resourcesInParent, conversions, conversionOverwrites);
@@ -537,12 +533,24 @@ function createRevisionData(entryRevision, localEntryBundle, bundleManifestResou
   const id = href;
   const is_on_disk = Boolean(Object.keys(localEntryBundle || emptyObject).length);
   const localBundle = localEntryBundle || null;
-  const { storedFiles = emptyObject, rawManifestResources = emptyObject } = bundleManifestResources || emptyObject;
+  const {
+    storedFiles = emptyObject, rawManifestResources = emptyObject
+  } = bundleManifestResources || emptyObject;
   const storedFromManifest = Object.values(rawManifestResources).filter(r => r.uri in storedFiles);
   const stored = is_on_disk ? storedFromManifest.length : '';
   const manifest = is_on_disk ? Object.values(rawManifestResources).length : '';
   return {
-    disabled, id, href, localBundle, created_on, revision, version, archivist, comments, stored, manifest
+    disabled,
+    id,
+    href,
+    localBundle,
+    created_on,
+    revision,
+    version,
+    archivist,
+    comments,
+    stored,
+    manifest
   };
 }
 
@@ -568,7 +576,12 @@ const getEntryRevisionsDataSelector = createSelector(
         const { id: localBundleId } = localEntryBundle || emptyObject;
         const { [localBundleId]: bundleManifestResources = emptyArray } = manifestResources;
         const disabled = bundleId === localBundleId || !getIsCompatibleVersion(entryRevision);
-        return createRevisionData(entryRevision, localEntryBundle, bundleManifestResources, disabled);
+        return createRevisionData(
+          entryRevision,
+          localEntryBundle,
+          bundleManifestResources,
+          disabled
+        );
       });
     const draftData = Object.values(localEntryBundles).filter(localBundle => [0, '0'].includes(localBundle.revision)).map(localEntryBundle => {
       const { id: localBundleId } = localEntryBundle || emptyObject;
@@ -582,7 +595,12 @@ const getEntryRevisionsDataSelector = createSelector(
         comments: localEntryBundle.raw.metadata.comments,
         href: '',
       };
-      return createRevisionData(mockEntryRevision, localEntryBundle, bundleManifestResources, bundleId === localBundleId);
+      return createRevisionData(
+        mockEntryRevision,
+        localEntryBundle,
+        bundleManifestResources,
+        bundleId === localBundleId
+      );
     });
     return [...entryRevData, ...draftData];
   }
@@ -693,7 +711,6 @@ const mapDispatchToProps = {
   createBundleFromDBL,
   selectBundleEntryRevision,
   removeResources,
-  getMapperReport,
   selectItemsToPaste,
   pasteItems,
   clearClipboard,
@@ -805,27 +822,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         this.props.getManifestResources(this.props.bundlePreviousRevision.id);
       }
     }
-    /* todo: the following do setState, which is unorthodox/anti-pattern
-    if (hasResourceDataChanged(prevProps.manifestResources, this.props.manifestResources) ||
-      (this.props.mode === 'revisions' && !utilities.areEqualArrays(this.props.entryRevisions, prevProps.entryRevisions)) ||
-      !utilities.haveEqualKeys(
-        this.props.previousManifestResources,
-        prevProps.previousManifestResources
-      )) {
-      this.updateTableData(this.props);
-    } else if (hasMapperInputDataChanged(prevProps.mapperInputData, this.props.mapperInputData) ||
-      !utilities.areEqualObjectsDeep(
-        prevProps.selectedIdsInputConverters,
-        this.props.selectedIdsInputConverters
-      )) {
-      this.updateTotalResources(
-        this.state.addedFilePaths,
-        this.state.fullToRelativePaths,
-        false,
-        false
-      )();
-    }
-    */
   }
 
   handleDrawerOpen = () => {
@@ -836,33 +832,12 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.setState({ openDrawer: false });
   };
 
-  /* todo: memoize tableData */
-  updateTableData = (props) => {
-    /*
-    const { tableData } = props;
-    const selectedIds = this.getSelectedIds(tableData, props.mode);
-    this.setState({
-      tableData, selectedIds, addedFilePaths: [], fullToRelativePaths: undefined
-    }, this.getMapperReport);
-    */
-  }
-
-  getSelectedIds = (tableData, mode) => {
-    /*
-    const isDownloadMode = mode === 'download';
-    const selectedIds = this.state.selectAll ?
-      tableData.filter(row => !isDownloadMode || (!row.stored && !row.disabled)).map(row => row.id) :
-      this.state.selectedIds.filter(id => tableData.some(row => row.id === id && !row.disabled));
-    return selectedIds;
-    */
-  }
-
   handleDownloadOrClean = () => {
     const {
       storedResources, manifestResources, inEffect
     } = this.getSelectedResourcesByStatus();
     const { bundleId } = this.props;
-    const effectiveSelectedIds = inEffect.map(row => row.id);
+    const effectiveSelectedIds = (inEffect || emptyArray).map(row => row.id);
     if (manifestResources === inEffect) {
       this.props.downloadResources(bundleId, effectiveSelectedIds);
       this.handleClose();
@@ -930,7 +905,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       const selectedMappers = Object.keys(inputMappers)
         .filter(mapperKey => selectedMapperKeys.includes(mapperKey))
         .reduce((acc, mapperKey) => ({ ...acc, [mapperKey]: inputMappers[mapperKey] }), {});
-      const filesToContainers = toAddResources.reduce((acc, selectedResource) =>
+      const filesToContainers = sort(toAddResources).asc('uri').reduce((acc, selectedResource) =>
         ({ ...acc, [selectedResource.id]: formatUriForApi(selectedResource) }), {});
       this.props.addManifestResources(bundleId, filesToContainers, selectedMappers);
     }
@@ -943,24 +918,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   handleGoFixError = () => {
     this.props.goFixPublications();
-  }
-
-  getMapperReportUris = () => {
-    if (!this.isModifyFilesMode()) {
-      return [];
-    }
-    const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
-    if (toAddResources !== inEffect && inEffect) {
-      return [];
-    }
-    const uris = (toAddResources || []).map(r => r.uri);
-    return uris;
-  }
-
-  getMapperReport = () => {
-    const { bundleId } = this.props;
-    const uris = this.getMapperReportUris();
-    this.props.getMapperReport('input', uris, bundleId);
   }
 
   handleSelectedRowIds = (selectedIds) => {
@@ -1030,62 +987,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return false;
   }
 
-  /*
-  updateAddedResourcesWithFileStats = (newlyAddedFilePaths) => async () => {
-    const fileSizesPromises = newlyAddedFilePaths.map(async (filePath) => {
-      const stats = await fs.stat(filePath);
-      const { size: sizeRaw } = stats;
-      const size = utilities.formatBytesByKbs(sizeRaw);
-      return { filePath, size };
-      // const checksum = size < 268435456 ? await md5File(filePath) : '(too expensive)';
-    });
-    const fileSizesList = await Promise.all(fileSizesPromises);
-    const fileSizes = fileSizesList.reduce((acc, data) => { acc[data.filePath] = data.size; return acc; }, {});
-    const updatedTotalResources = Object.entries(fileSizes)
-      .reduce((acc, [filePath, size]) =>
-        (createUpdatedTotalResources(acc, filePath, () => ({ size }))), this.state.tableData);
-    this.setState({ tableData: updatedTotalResources });
-  }
-  */
-
-  getUpdateSelectedResourcesContainers = (newContainer) => {
-    const { tableData: origTotalResources } = this.props;
-    const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
-    if (toAddResources !== inEffect) {
-      return origTotalResources;
-    }
-    const parentRawManifestResourceUris =
-      getRawManifestResourceUris(this.props.previousManifestResources);
-    const tableData = toAddResources.map(resource => resource.id).reduce((acc, filePath) => {
-      const container = utilities.formatContainer(newContainer);
-      const updatedTotalResources = createUpdatedTotalResources(
-        acc,
-        filePath,
-        (resource) => {
-          const updatedContainer = (resource.relativeFolder ?
-            utilities.formatContainer(upath.joinSafe(container, resource.relativeFolder)) :
-            container);
-          const updatedUri = utilities.formatUri(updatedContainer, resource.name);
-          const status = getAddStatus(updatedUri, parentRawManifestResourceUris);
-          return {
-            container: updatedContainer,
-            uri: updatedUri,
-            status
-          };
-        }
-      );
-      return updatedTotalResources;
-    }, origTotalResources);
-    return tableData;
-  }
-
-  updateSelectedResourcesContainersSetState = (newContainer) => {
-    const tableData = this.getUpdateSelectedResourcesContainers(newContainer);
-    /* 
-    this.setState({ tableData }); 
-    */
-  }
-
   handleAddByFile = () => {
     const newAddedFilePaths = dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] });
     // console.log(newAddedFilePaths);
@@ -1099,18 +1000,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.props.appendAddedFilePaths(
       this.props.bundleId,
       newAddedFilePaths,
-      fullToRelativePaths,
-      this.getMapperReportUris()
+      fullToRelativePaths
     );
-    /*
-    this.setState(
-      { addedFilePaths, selectedIds, fullToRelativePaths },
-      this.updateTotalResources(newAddedFilePaths, fullToRelativePaths, true, true)
-    );
-    */
-    // this.setState({ selectAll: true });
   };
-
 
   handleAddByFolder = async () => {
     const folderPaths = dialog.showOpenDialog({ properties: ['openFile', 'openDirectory', 'multiSelections'] });
@@ -1335,7 +1227,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       .some(r => selectedIdSet.has(r.id));
   }
 
-  handleAutosuggestInputChanged = (newValue, method) => {
+  handleAutosuggestInputChanged = (newValue) => {
     // console.log({ handleAutosuggestInputChanged: true, newValue, method });
     if (newValue === undefined) {
       return;
@@ -1345,7 +1237,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       return;
     }
     this.props.editContainers(newValue.trim());
-    // this.updateSelectedResourcesContainersSetState(newValue.trim());
   }
 
   renderWizardsResults = () => {
@@ -1437,7 +1328,11 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             <EnhancedTable
               data={tableData}
               columnConfig={columnConfig}
-              customSorts={{ revision: rData => (rData.localBundle ? sortLocalRevisions(rData.localBundle) : parseInt(rData.revision, 10)) }}
+              customSorts={{
+                revision: rData =>
+                (rData.localBundle ?
+                  sortLocalRevisions(rData.localBundle) : parseInt(rData.revision, 10))
+              }}
               secondarySorts={['revision']}
               orderBy={orderBy}
               orderDirection={orderDirection}
