@@ -6,6 +6,8 @@ import Paper from '@material-ui/core/Paper';
 import Checkbox from '@material-ui/core/Checkbox';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
+import { createSelector } from 'reselect';
+import { emptyObject } from '../utils/defaultValues';
 
 const styles = theme => ({
   root: {
@@ -44,6 +46,12 @@ type Props = {
   onSelectedRowIds: () => {}
 };
 
+const defaultProps = {
+  orderDirection: 'asc',
+  customSorts: emptyObject,
+  multiSelections: false,
+  freezeCheckedColumnState: false
+};
 
 function getSortMethod(customSorts, orderBy) {
   const customSort = customSorts[orderBy];
@@ -52,6 +60,20 @@ function getSortMethod(customSorts, orderBy) {
   }
   return orderBy;
 }
+
+const getData = (state, props) => props.data;
+const getSecondarySorts = (state, props) => props.secondarySorts;
+const getCustomSorts = (state, props) =>
+  props.customSorts || defaultProps.customSorts;
+const getOrderBy = (state, props) =>
+  props.defaultOrderBy || this.props.columnConfig[0].name; // TODO this can change
+const getOrder = (state, props) =>
+  props.orderDirection || defaultProps.orderDirection;
+
+const getSortedDataSelector = createSelector(
+  [getData, getSecondarySorts, getCustomSorts, getOrderBy, getOrder],
+  getSortedData
+);
 
 /* TODO
   state = {
@@ -108,7 +130,42 @@ function renderCheckBoxInHeader(
   />);
 }
 
-function getColumns(columnConfig, multiSelections) {
+
+const getColumnConfig = (state, props) => props.columnConfig;
+const getMultiSelections = (state, props) =>
+  props.multiSelections || defaultProps.multiSelections;
+const getFreezeCheckedColumnState = (state, props) =>
+  props.freezeCheckedColumnState || defaultProps.freezeCheckedColumnState;
+const getSelectedRowIds = (state, props) => props.selectedIds;
+const getOnChangeCheckBoxHeader = (state, props) => props.onChangeCheckBoxHeader;
+
+const getAreAnyCheckedSelector = createSelector(
+  [getSelectedRowIds],
+  (selectedRowIds) => selectedRowIds.length > 0
+);
+
+const getSelectableDataSelector = createSelector([getData], getSelectableData);
+
+function getSelectableData(data) {
+  return data.filter(d => !d.disabled);
+}
+
+const getColumnsSelector = createSelector(
+  [getColumnConfig, getMultiSelections, getFreezeCheckedColumnState,
+    getSelectedRowIds, getAreAnyCheckedSelector, getOnChangeCheckBoxHeader,
+    getSelectableDataSelector],
+  getColumns
+);
+
+function getColumns(
+  columnConfig,
+  multiSelections,
+  freezeCheckedColumnState,
+  selectedRowIds,
+  areAnyChecked,
+  onChangeCheckBoxHeader,
+  selectableData
+) {
   const checkboxColumn = {
     name: 'checkbox',
     cell: rowData => (
@@ -137,9 +194,12 @@ function getColumns(columnConfig, multiSelections) {
     cellProps: c.type === 'numeric' ? numericCellProps : stringCellProps
   }));
   return [checkboxColumn, ...columns];
-};
+}
 
 function mapStateToProps(state, props) {
+  const sortedData = getSortedDataSelector(state, props);
+  const columns = getColumnsSelector(state, props);
+  const selectableData = getSelectableDataSelector(state, props);
   return {
     sortedData,
     columns,
@@ -149,10 +209,6 @@ function mapStateToProps(state, props) {
 
 function getDataRowIds(data) {
   return data.map(d => d.id);
-}
-
-function getSelectableData(data) {
-  return data.filter(d => !d.disabled);
 }
 
 class EnhancedTable extends Component<Props> {
@@ -256,12 +312,7 @@ class EnhancedTable extends Component<Props> {
   }
 }
 
-EnhancedTable.defaultProps = {
-  orderDirection: 'asc',
-  customSorts: {},
-  multiSelections: false,
-  freezeCheckedColumnState: false
-};
+EnhancedTable.defaultProps = defaultProps;
 
 export default compose(
   withStyles(styles),
