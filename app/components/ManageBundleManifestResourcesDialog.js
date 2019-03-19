@@ -1040,7 +1040,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   isDownloadMode = () => this.props.mode === 'download';
 
   getOkButtonDataModifyResources = () => {
-    const { classes } = this.props;
+    const { classes, loading } = this.props;
     const resourceSelectionStatus = this.getSelectedResourcesByStatus();
     const {
       discardableResources, storedResources, manifestResources, toAddResources, inEffect = []
@@ -1066,8 +1066,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         addMessageBuilder.push(` (Revise ${revisions.length + conversionOverwrites.length})`);
       }
       OkButtonLabel = addMessageBuilder.join('');
+    } else if (loading) {
+      OkButtonLabel = 'Adding...';
     }
-    const OkButtonIcon = this.getOkButtonIcon(resourceSelectionStatus);
+    const OkButtonIcon = this.getOkButtonIcon(resourceSelectionStatus, loading);
     const OkButtonProps = {
       classes,
       color: 'secondary',
@@ -1078,12 +1080,12 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return { OkButtonLabel, OkButtonIcon, OkButtonProps };
   }
 
-  getOkButtonIcon = ({ inEffect, toAddResources }) => {
+  getOkButtonIcon = ({ inEffect, toAddResources }, loading) => {
     const { classes } = this.props;
-    if (!inEffect || inEffect.length === 0) {
+    if (!loading && (!inEffect || inEffect.length === 0)) {
       return (null);
     }
-    if (toAddResources === inEffect) {
+    if (toAddResources === inEffect || loading) {
       return <CheckIcon className={classNames(classes.leftIcon)} />;
     }
     return <Delete className={classNames(classes.leftIcon)} />;
