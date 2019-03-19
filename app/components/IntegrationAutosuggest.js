@@ -1,5 +1,6 @@
 import React from 'react';
 import Autosuggest from 'react-autosuggest';
+import { DebounceInput } from 'react-debounce-input';
 import TextField from '@material-ui/core/TextField';
 import Paper from '@material-ui/core/Paper';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -17,9 +18,10 @@ function renderInputComponent(inputProps) {
   const {
     classes, inputRef = () => {}, ref, ...other
   } = inputProps;
-
   return (
-    <TextField
+    <DebounceInput
+      debounceTimeout={300}
+      element={TextField}
       fullWidth
       InputProps={{
         inputRef: node => {
@@ -28,11 +30,10 @@ function renderInputComponent(inputProps) {
         },
         classes: {
           input: classes.input,
-        },
+        }
       }}
       {...other}
-    />
-  );
+    />);
 }
 
 /*

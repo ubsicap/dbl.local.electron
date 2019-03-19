@@ -49,6 +49,10 @@ const styles = theme => ({
 
 class MapperTable extends Component<Props> {
   props: Props;
+  constructor(props) {
+    super(props);
+    this.state = { orderDirection: 'asc', orderBy: 'description' };
+  }
 
   componentDidMount() {
     this.props.selectMappers(this.props.direction, this.props.selectedIds);
@@ -89,10 +93,17 @@ class MapperTable extends Component<Props> {
     this.props.selectMappers(this.props.direction, selectedIds);
   }
 
+  handleChangeSort = ({ order, orderBy }) => {
+    this.setState({ orderDirection: order, orderBy });
+  }
+
   render() {
     const {
       columnConfig, tableData, selectedIds, classes
     } = this.props;
+    const {
+      orderBy, orderDirection
+    } = this.state;
     const mapperMessage = this.getMapperMessage();
     return (
       <React.Fragment>
@@ -116,8 +127,10 @@ class MapperTable extends Component<Props> {
             data={tableData}
             columnConfig={columnConfig}
             secondarySorts={secondarySorts}
-            defaultOrderBy="description"
+            orderBy={orderBy}
+            orderDirection={orderDirection}
             onSelectedRowIds={this.handleSelectedIds}
+            onChangeSort={this.handleChangeSort}
             multiSelections
             selectedIds={selectedIds}
           />

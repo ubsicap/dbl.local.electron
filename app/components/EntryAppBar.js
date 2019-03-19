@@ -9,7 +9,6 @@ import MenuIcon from '@material-ui/icons/Menu';
 import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import Grid from '@material-ui/core/Grid';
-import FolderOpen from '@material-ui/icons/FolderOpen';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import CloseIcon from '@material-ui/icons/Close';
@@ -21,6 +20,7 @@ import EntryTitle from '../components/EntryTitle';
 import { bundleService } from '../services/bundle.service';
 import { utilities } from '../utils/utilities';
 import { selectItemsToPaste } from '../actions/clipboard.actions';
+import { emptyObject } from '../utils/defaultValues';
 
 type Props = {
   classes: {},
@@ -76,9 +76,9 @@ const materialStyles = theme => ({
 
 
 const getBundleId = (state, props) => props.origBundle.id;
-const getBundlesById = (state) => state.bundles.addedByBundleIds || {};
+const getBundlesById = (state) => state.bundles.addedByBundleIds || emptyObject;
 const getDblBaseUrl = (state) => state.dblDotLocalConfig.dblBaseUrl;
-const makeGetEntryPageUrl = () => createSelector(
+const getEntryPageUrl = createSelector(
   [getDblBaseUrl, getBundlesById, getBundleId],
   (dblBaseUrl, bundlesById, bundleId) => {
     const origBundle = bundlesById[bundleId];
@@ -91,7 +91,6 @@ const makeGetEntryPageUrl = () => createSelector(
 );
 
 function mapStateToProps(state, props) {
-  const getEntryPageUrl = makeGetEntryPageUrl();
   return {
     entryPageUrl: getEntryPageUrl(state, props)
   };
