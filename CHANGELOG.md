@@ -1,3 +1,14 @@
+### Version 0.30.0
+#### Features
+- Add Revisions to side-menu (drawer) to allow user to switch to/from it
+- Try to show more info as resources are being added
+- Try to improve performance of adding many resources
+- Add debounce to Edit Container suggestions
+- dbl_dot_local_app (3/7/2019) - fix video role/wizard
+
+#### Fixes
+- Fix resource dialog state to not crash and show trash icon
+
 ### Version 0.29.2
 #### Fixes
 - Fix upload status progress to avoid seeming stuck at the end sometimes
