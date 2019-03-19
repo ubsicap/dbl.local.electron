@@ -306,15 +306,18 @@ const getPreviousManifestResourcesDataSelector = createSelector(
     )
 );
 
+const getIsLoading = (state) => state.bundleManageResources.loading || false;
+
 const getManifestResourcesDataSelector = createSelector(
   [getAllManifestResources, getMode, getBundleId, getBundlesById,
     getPreviousManifestResourcesDataSelector,
     getAddedFilePaths, getFullToRelativePaths, getFileSizes,
-    getMapperInputData, getMapperInputReport, getSelectedMappers, getEditedContainers],
+    getMapperInputData, getMapperInputReport, getSelectedMappers, getEditedContainers,
+    getIsLoading],
   (
     manifestResources, mode, bundleId, bundlesById, prevManifestResourcesData,
     addedFilePaths, fullToRelativePaths, fileSizes, mapperInputData, mapperReport, selectedMappers,
-    editedContainers
+    editedContainers, isLoading
   ) => {
     const bundleManifestResources = utilities.getOrDefault(
       manifestResources,
@@ -340,7 +343,7 @@ const getManifestResourcesDataSelector = createSelector(
         .map(pr => createResourceData(null, pr, parentStoredFiles[pr.uri], pr));
     const selectedIdsInputConverters =
       selectedMappers.input || Object.keys(mapperReport);
-    const addedResources = getTableDataForAddedResources(
+    const addedResources = isLoading ? emptyArray : getTableDataForAddedResources(
       mapperInputData,
       selectedIdsInputConverters,
       previousManifestResources,
