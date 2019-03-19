@@ -246,7 +246,7 @@ function createColumnConfig(mode) {
 
 const getAllManifestResources = (state) =>
   state.bundleManageResources.manifestResources || emptyObject;
-const getMode = (state) => state.bundleManageResources.mode;
+const getMode = (state, props) => props.match.params.mode;
 const getBundleId = (state, props) => props.match.params.bundleId;
 const getAllEntryRevisions = (state) => state.bundles.allEntryRevisions || emptyObject;
 const getBundlesById = (state) => state.bundles.addedByBundleIds || emptyObject;
@@ -359,16 +359,6 @@ const getManifestResourcesDataSelector = createSelector(
 const getSelectedResourceIds = (state) =>
   state.bundleManageResourcesUx.selectedResourceIds || emptyArray;
 
-const getSelectedResourcesSelector = createSelector(
-  [getSelectedResourceIds, getManifestResourcesDataSelector],
-  getSelectedRowData
-);
-
-function getSelectedRowData(selectedRowIds, tableData) {
-  const selectedIdSet = Set(selectedRowIds);
-  return tableData.filter(r => selectedIdSet.has(r.id));
-}
-
 const getAutoSelectAllResources = (state) =>
   state.bundleManageResourcesUx.autoSelectAllResources || false;
 
@@ -376,6 +366,16 @@ const getSelectAllOrFilterSelectedResourceIdsSelector = createSelector(
   [getMode, getAutoSelectAllResources, getSelectedResourceIds, getManifestResourcesDataSelector],
   filterSelectedResourceIds
 );
+
+const getSelectedResourcesSelector = createSelector(
+  [getSelectAllOrFilterSelectedResourceIdsSelector, getManifestResourcesDataSelector],
+  getSelectedRowData
+);
+
+function getSelectedRowData(selectedRowIds, tableData) {
+  const selectedIdSet = Set(selectedRowIds);
+  return tableData.filter(r => selectedIdSet.has(r.id));
+}
 
 const getSelectedResourcesByStatusSelector = createSelector(
   [getSelectedResourcesSelector, getPreviousManifestResourcesDataSelector, getMode],
