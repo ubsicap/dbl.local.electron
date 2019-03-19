@@ -385,7 +385,7 @@ export function appendAddedFilePaths(
   bundleId,
   newAddedFilePaths,
   fullToRelativePaths = null,
-  trimSelectedByAddedFiles = false
+  setSelectedToNewAdded = false
 ) {
   return (dispatch, getState) => {
     const state = getState();
@@ -395,8 +395,8 @@ export function appendAddedFilePaths(
     } = state.bundleManageResources;
     const { selectedResourceIds: origSelectedIds } = state.bundleManageResourcesUx;
     const addedFilePaths = utilities.union(origAddedFilePaths, newAddedFilePaths);
-    const selectedIds = trimSelectedByAddedFiles ?
-      utilities.intersect(origSelectedIds, addedFilePaths)
+    const selectedIds = setSelectedToNewAdded ?
+      newAddedFilePaths
       : utilities.union(origSelectedIds, addedFilePaths);
     dispatch(updateAddedFilePaths(addedFilePaths, fullToRelativePaths || fullToRelativePathsOrig));
     dispatch(selectResources(selectedIds));
