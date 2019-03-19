@@ -1,4 +1,4 @@
-### Version 0.30.0
+### Version 0.30.1
 #### Features
 - Add Revisions to side-menu (drawer) to allow user to switch to/from it
 - Try to show more info as resources are being added
