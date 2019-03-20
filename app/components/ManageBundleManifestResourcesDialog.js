@@ -215,8 +215,9 @@ function createAddedResource(
     const [id, name] = [filePath, fileName];
     const size = fileSizes[filePath] || '';
     const status = getAddStatus(uri, resourcesInParent, conversions, conversionOverwrites);
+    const stored = '';
     return {
-      id, uri, status, mimeType: '', container: container || NEED_CONTAINER, relativeFolder, name, size, checksum: '', disabled: false
+      id, uri, stored, status, mimeType: '', container: container || NEED_CONTAINER, relativeFolder, name, size, checksum: '', disabled: false
     };
   };
 }
