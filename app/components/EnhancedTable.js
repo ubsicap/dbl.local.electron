@@ -65,11 +65,11 @@ const getCustomSorts = (state, props) =>
   props.customSorts || defaultProps.customSorts;
 const getOrderBy = (state, props) =>
   props.orderBy || this.props.columnConfig[0].name;
-const getOrder = (state, props) =>
+const getOrderDirection = (state, props) =>
   props.orderDirection || defaultProps.orderDirection;
 
 const getSortedDataSelector = createSelector(
-  [getData, getSecondarySorts, getCustomSorts, getOrderBy, getOrder],
+  [getData, getSecondarySorts, getCustomSorts, getOrderBy, getOrderDirection],
   getSortedData
 );
 
@@ -106,19 +106,22 @@ function getSelectableData(data) {
 }
 
 const getColumnsSelector = createSelector(
-  [getColumnConfig, getSortedDataSelector],
+  [getColumnConfig, getSortedDataSelector, getOrderBy, getOrderDirection],
   getColumns
 );
 
 function getColumns(
   columnConfig,
-  sortedData
+  sortedData,
+  orderBy,
+  orderDirection,
 ) {
   const columns = columnConfig.map(c => ({
     name: c.name,
     label: c.label,
     options: {
       filter: !(['name', 'size'].includes(c.name)),
+      sortDirection: c.name === orderBy ? orderDirection : undefined,
       setCellProps: (row, dataIndex) => getCellProps(c, row, dataIndex, sortedData),
     }
   }));
@@ -128,8 +131,9 @@ function getColumns(
 function getCellProps(columnData, row, dataIndex, sortedData) {
   const fullRowData = sortedData[dataIndex] || emptyObject;
   const { disabled = false } = fullRowData;
+  // how can I right-align header as well?
+  // columnData.type === 'numeric' ? { align: 'right' } : undefined;
   return disabled ? { style: { backgroundColor: 'lightgrey' } } : {};
-  // columnData.type === 'numeric' ? { align: 'right' } : undefined; // // how can I right-align header as well?
 }
 
 function mapStateToProps(state, props) {
