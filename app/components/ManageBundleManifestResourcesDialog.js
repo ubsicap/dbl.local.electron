@@ -343,7 +343,7 @@ const getManifestResourcesDataSelector = createSelector(
         .map(pr => createResourceData(null, pr, parentStoredFiles[pr.uri], pr));
     const selectedIdsInputConverters =
       selectedMappers.input || Object.keys(mapperReport);
-    const addedResources = isLoading ? emptyArray : getTableDataForAddedResources(
+    const addedResources = getTableDataForAddedResources(
       mapperInputData,
       selectedIdsInputConverters,
       previousManifestResources,

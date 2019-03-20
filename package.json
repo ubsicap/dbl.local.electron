@@ -1,7 +1,7 @@
 {
   "name": "nathanael",
   "productName": "nathanael",
-  "version": "0.30.1",
+  "version": "0.30.2",
   "description": "Electron frontend to DBL dot Local",
   "scripts": {
     "build": "concurrently \"npm run build-main\" \"npm run build-renderer\"",
@@ -210,6 +210,7 @@
     "material-ui": "^0.20.0",
     "material-ui-superselectfield": "^1.9.8",
     "md5-file": "^4.0.0",
+    "mui-datatables": "^2.0.0-beta.58",
     "mui-table": "^2.2.0",
     "node-wait-until": "^1.0.0",
     "popper.js": "^1.14.2",

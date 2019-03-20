@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import MuiTable from 'mui-table';
+import MUIDataTable from "mui-datatables";
 import { withStyles } from '@material-ui/core/styles';
 import sort from 'fast-sort';
 import Paper from '@material-ui/core/Paper';
@@ -199,10 +199,11 @@ function getColumns(
   const numericCellProps = { align: 'right' };
   const columns = columnConfig.map(c => ({
     name: c.name,
-    header: c.label,
-    cellProps: c.type === 'numeric' ? numericCellProps : stringCellProps
+    label: c.label,
+    options: { filter: !(['name', 'size'].includes(c.name)) }
+//    options: { cellProps: c.type === 'numeric' ? numericCellProps : stringCellProps }
   }));
-  return [checkboxColumn, ...columns];
+  return columns;
 }
 
 function mapStateToProps(state, props) {
@@ -278,25 +279,18 @@ class EnhancedTable extends Component<Props> {
     const {
       classes, sortedData, columns, orderBy, orderDirection
     } = this.props;
-
+    const { selectedRowIds } = this.state;
+    const options = {
+      filterType: 'checkbox',
+      fixedHeader: false,
+    };
     return (
       <Paper className={classes.root}>
-        <MuiTable
+        <MUIDataTable
           data={sortedData}
           columns={columns}
-          includeHeaders
-          headerCellProps={{
-            className: classes.stickyHeaderClass,
-            style: { background: '#eee', zIndex: 1 }
-          }}
-          cellProps={this.bodyRowProps}
-          onHeaderClick={this.handleRequestSort}
-          onCellClick={this.onCellClick}
-          isCellSelected={this.isCellSelected}
-          isCellHovered={this.isCellHovered}
-          orderBy={orderBy}
-          orderDirection={orderDirection}
-          style={{ backgroundColor: 'white' }}
+          options={options}
+          rowsSelected={selectedRowIds}
         />
       </Paper>
     );
