@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import MUIDataTable from "mui-datatables";
+import MUIDataTable from 'mui-datatables';
 import { withStyles } from '@material-ui/core/styles';
 import sort from 'fast-sort';
 import Paper from '@material-ui/core/Paper';
@@ -40,6 +40,7 @@ type Props = {
   columns: [],
   secondarySorts: [],
   selectedIds: [],
+  selectedDataIndexes: [],
   multiSelections?: boolean,
   customSorts?: {},
   freezeCheckedColumnState?: boolean,
@@ -145,6 +146,14 @@ const getAreAnyCheckedSelector = createSelector(
   (selectedRowIds) => selectedRowIds.length > 0
 );
 
+const getSelectedDataIndexesSelector =
+  createSelector([getData, getSelectedRowIds], getSelectedDataIndexes);
+
+function getSelectedDataIndexes(data, selectedIds) {
+  const dataIdToIndex = data.reduce((acc, row, index) => { acc[row.id] = index; return acc; }, {});
+  return selectedIds.map(rowId => dataIdToIndex[rowId]);
+}
+
 const getSelectableDataSelector = createSelector([getData], getSelectableData);
 
 function getSelectableData(data) {
@@ -210,10 +219,12 @@ function mapStateToProps(state, props) {
   const sortedData = getSortedDataSelector(state, props);
   const columns = getColumnsSelector(state, props);
   const selectableData = getSelectableDataSelector(state, props);
+  const selectedDataIndexes = getSelectedDataIndexesSelector(state, props);
   return {
     sortedData,
     columns,
-    selectableData
+    selectableData,
+    selectedDataIndexes
   };
 }
 
@@ -275,14 +286,42 @@ class EnhancedTable extends Component<Props> {
     return rowData.disabled ? { className: classes.rowDisabled } : {};
   }
 
+  handleRowsSelect = (currentRowsSelected: array, allRowsSelected: array) => {
+    console.log('onRowsSelect:');
+    console.log(currentRowsSelected);
+    console.log(allRowsSelected);
+    const { data } = this.props;
+    const allSelectedIds = allRowsSelected.map(rowMeta => data[rowMeta.dataIndex].id);
+    return this.reportSelectedRowIds(allSelectedIds);
+  }
+
+  handleRowClick = (rowData, rowMeta: { dataIndex: number, rowIndex: number }) => {
+    console.log('onRowClick:');
+    console.log(rowData);
+    console.log(rowMeta);
+    const { selectedDataIndexes, selectedIds, data } = this.props;
+    const fullRowData = data[rowMeta.dataIndex];
+    console.log(fullRowData);
+    if (selectedDataIndexes.some(idx => rowMeta.dataIndex === idx)) {
+      // remove
+      return this.reportSelectedRowIds(selectedIds.filter(id => id !== fullRowData.id));
+    }
+    if (this.props.multiSelections) {
+      return this.reportSelectedRowIds([...selectedIds, fullRowData.id]);
+    }
+    return this.reportSelectedRowIds([fullRowData.id]);
+  };
+
   render() {
     const {
-      classes, sortedData, columns, orderBy, orderDirection
+      classes, sortedData, columns, selectedDataIndexes
     } = this.props;
-    const { selectedRowIds } = this.state;
     const options = {
       filterType: 'checkbox',
       fixedHeader: false,
+      rowsSelected: selectedDataIndexes,
+      onRowsSelect: this.handleRowsSelect,
+      onRowClick: this.handleRowClick
     };
     return (
       <Paper className={classes.root}>
@@ -290,7 +329,6 @@ class EnhancedTable extends Component<Props> {
           data={sortedData}
           columns={columns}
           options={options}
-          rowsSelected={selectedRowIds}
         />
       </Paper>
     );
