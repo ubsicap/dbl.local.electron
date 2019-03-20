@@ -3,11 +3,10 @@ import MUIDataTable from 'mui-datatables';
 import { withStyles } from '@material-ui/core/styles';
 import sort from 'fast-sort';
 import Paper from '@material-ui/core/Paper';
-import Checkbox from '@material-ui/core/Checkbox';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { createSelector } from 'reselect';
-import { emptyObject, emptyArray } from '../utils/defaultValues';
+import { emptyObject } from '../utils/defaultValues';
 
 const styles = theme => ({
   root: {
@@ -19,9 +18,6 @@ const styles = theme => ({
   },
   tableWrapper: {
     overflowX: 'auto',
-  },
-  rowDisabled: {
-    backgroundColor: 'lightgrey'
   },
   stickyHeaderClass: {
     position: 'sticky',
@@ -92,59 +88,8 @@ function getSortedData(data, secondarySorts, customSorts, orderBy, order) {
   return sorted;
 }
 
-function isRowChecked(rowData, selectedRowIds) {
-  return selectedRowIds.some(id => rowData.id === id);
-}
-
-function renderCheckBoxInRow(rowData, freezeCheckedColumnState, selectedRowIds) {
-  return (<Checkbox
-    disabled={freezeCheckedColumnState}
-    checked={isRowChecked(rowData, selectedRowIds)}
-  />);
-}
-
-function getHeaderCheckBoxProps(selectableData, selectedRowIds, areAnyChecked) {
-  if (selectableData.length === 0) {
-    return {
-      disabled: true
-    };
-  }
-  if (areAnyChecked &&
-      selectedRowIds.length !== selectableData.length) {
-    return {
-      indeterminate: true,
-      color: 'default'
-    };
-  }
-  return {};
-}
-
-function renderCheckBoxInHeader(
-  areAnyChecked,
-  onSelectedRowIds,
-  selectableData,
-  selectedRowIds
-) {
-  return (<Checkbox
-    checked={areAnyChecked}
-    onChange={onChangeCheckBoxHeader(selectedRowIds, selectableData, onSelectedRowIds)}
-    {...getHeaderCheckBoxProps(selectableData, selectedRowIds, areAnyChecked)}
-  />);
-}
-
-
 const getColumnConfig = (state, props) => props.columnConfig;
-const getMultiSelections = (state, props) =>
-  props.multiSelections || defaultProps.multiSelections;
-const getFreezeCheckedColumnState = (state, props) =>
-  props.freezeCheckedColumnState || defaultProps.freezeCheckedColumnState;
 const getSelectedRowIds = (state, props) => props.selectedIds;
-const getOnSelectedRowIds = (state, props) => props.onSelectedRowIds;
-
-const getAreAnyCheckedSelector = createSelector(
-  [getSelectedRowIds],
-  (selectedRowIds) => selectedRowIds.length > 0
-);
 
 const getSelectedDataIndexesSelector =
   createSelector([getData, getSelectedRowIds], getSelectedDataIndexes);
@@ -161,62 +106,30 @@ function getSelectableData(data) {
 }
 
 const getColumnsSelector = createSelector(
-  [getColumnConfig, getMultiSelections, getFreezeCheckedColumnState,
-    getSelectedRowIds, getAreAnyCheckedSelector,
-    getSelectableDataSelector, getOnSelectedRowIds],
+  [getColumnConfig, getSortedDataSelector],
   getColumns
 );
 
-function onChangeCheckBoxHeader(selectedRowIds, selectableData, onSelectedRowsIds) {
-  return () => {
-    const newlySelectedRowIds = selectedRowIds.length === selectableData.length ?
-      emptyArray : getDataRowIds(selectableData);
-    onSelectedRowsIds(newlySelectedRowIds);
-  };
-}
-
 function getColumns(
   columnConfig,
-  multiSelections,
-  freezeCheckedColumnState,
-  selectedRowIds,
-  areAnyChecked,
-  selectableData,
-  onSelectedRowIds
+  sortedData
 ) {
-  const checkboxColumn = {
-    name: 'checkbox',
-    cell: rowData => (
-      !rowData.disabled ?
-        renderCheckBoxInRow(rowData, freezeCheckedColumnState, selectedRowIds) :
-        null
-    ),
-    cellProps: { style: { paddingRight: 0 } },
-    width: 72,
-    onHeaderClick: false
-  };
-  if (multiSelections) {
-    const header = renderCheckBoxInHeader(
-      areAnyChecked,
-      onSelectedRowIds,
-      selectableData,
-      selectedRowIds
-    );
-    checkboxColumn.header = header;
-  }
   const columns = columnConfig.map(c => ({
     name: c.name,
     label: c.label,
     options: {
       filter: !(['name', 'size'].includes(c.name)),
-      setCellProps: () => getCellProps(c),
+      setCellProps: (row, dataIndex) => getCellProps(c, row, dataIndex, sortedData),
     }
   }));
   return columns;
 }
 
-function getCellProps(columnData) {
-  return columnData.type === 'numeric' ? { align: 'right' } : undefined;
+function getCellProps(columnData, row, dataIndex, sortedData) {
+  const fullRowData = sortedData[dataIndex] || emptyObject;
+  const { disabled = false } = fullRowData;
+  return disabled ? { style: { backgroundColor: 'lightgrey' } } : {};
+  // columnData.type === 'numeric' ? { align: 'right' } : undefined; // // how can I right-align header as well?
 }
 
 function mapStateToProps(state, props) {
@@ -230,10 +143,6 @@ function mapStateToProps(state, props) {
     selectableData,
     selectedDataIndexes
   };
-}
-
-function getDataRowIds(data) {
-  return data.map(d => d.id);
 }
 
 class EnhancedTable extends Component<Props> {
@@ -251,20 +160,18 @@ class EnhancedTable extends Component<Props> {
     return emptyObject;
   }
 
-  bodyRowProps = ({ rowData }) => {
-    const { classes } = this.props;
-    return rowData.disabled ? { className: classes.rowDisabled } : {};
-  }
-
   handleRowsSelect = (currentRowsSelected: array, allRowsSelected: array) => {
-    const { data } = this.props;
-    const allSelectedIds = allRowsSelected.map(rowMeta => data[rowMeta.dataIndex].id);
+    const { sortedData } = this.props;
+    const allSelectedIds = allRowsSelected.map(rowMeta => sortedData[rowMeta.dataIndex].id);
     return this.reportSelectedRowIds(allSelectedIds);
   }
 
   handleRowClick = (rowData, rowMeta: { dataIndex: number, rowIndex: number }) => {
-    const { selectedDataIndexes, selectedIds, data } = this.props;
-    const fullRowData = data[rowMeta.dataIndex];
+    const { selectedDataIndexes, selectedIds, sortedData } = this.props;
+    const fullRowData = sortedData[rowMeta.dataIndex];
+    if (fullRowData.disabled) {
+      return;
+    }
     if (selectedDataIndexes.some(idx => rowMeta.dataIndex === idx)) {
       // remove
       return this.reportSelectedRowIds(selectedIds.filter(id => id !== fullRowData.id));
@@ -277,14 +184,16 @@ class EnhancedTable extends Component<Props> {
 
   render() {
     const {
-      classes, sortedData, columns, selectedDataIndexes
+      classes, sortedData, columns, selectedDataIndexes, selectableData, freezeCheckedColumnState
     } = this.props;
     const options = {
       filterType: 'checkbox',
       fixedHeader: false,
       rowsSelected: selectedDataIndexes,
       onRowsSelect: this.handleRowsSelect,
-      onRowClick: this.handleRowClick
+      onRowClick: this.handleRowClick,
+      selectableRows: selectableData.length > 0,
+      isRowSelectable: (dataIndex) => !freezeCheckedColumnState && !sortedData[dataIndex].disabled
     };
     return (
       <Paper className={classes.root}>
