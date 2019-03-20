@@ -204,15 +204,19 @@ function getColumns(
     );
     checkboxColumn.header = header;
   }
-  const stringCellProps = { style: { paddingRight: 0 } };
-  const numericCellProps = { align: 'right' };
   const columns = columnConfig.map(c => ({
     name: c.name,
     label: c.label,
-    options: { filter: !(['name', 'size'].includes(c.name)) }
-//    options: { cellProps: c.type === 'numeric' ? numericCellProps : stringCellProps }
+    options: {
+      filter: !(['name', 'size'].includes(c.name)),
+      setCellProps: () => getCellProps(c),
+    }
   }));
   return columns;
+}
+
+function getCellProps(columnData) {
+  return columnData.type === 'numeric' ? { align: 'right' } : undefined;
 }
 
 function mapStateToProps(state, props) {
@@ -234,18 +238,6 @@ function getDataRowIds(data) {
 
 class EnhancedTable extends Component<Props> {
   props: Props;
-  state = {
-    selectedRowIds: this.props.selectedIds
-  };
-
-  componentWillReceiveProps(nextProps) {
-    // TODO: phase this out by removing state.selectedRowIds
-    if (nextProps.selectedIds !== this.props.selectedIds) {
-      this.setState({ selectedRowIds: nextProps.selectedIds });
-    }
-  }
-
-  areAnyChecked = () => this.state.selectedRowIds.length > 0;
 
   handleRequestSort = ({ column }) => {
     const { name: property } = column;
@@ -259,49 +251,20 @@ class EnhancedTable extends Component<Props> {
     return emptyObject;
   }
 
-  onCellClick = ({ rowData }) => {
-    if (rowData.disabled) {
-      return;
-    }
-    this.setState(prevState => {
-      if (prevState.selectedRowIds.some(id => rowData.id === id)) {
-        // remove
-        return this.reportSelectedRowIds(prevState.selectedRowIds.filter(id => id !== rowData.id));
-      }
-      if (this.props.multiSelections) {
-        return this.reportSelectedRowIds([...prevState.selectedRowIds, rowData.id]);
-      }
-      return this.reportSelectedRowIds([rowData.id]);
-    });
-  }
-
-  isCellSelected = ({ rowData }) =>
-    this.state.selectedRowIds.some(id => rowData && rowData.id === id);
-
-  isCellHovered = ({ rowData, hoveredRowData }) =>
-    !rowData.disabled && rowData.id && rowData.id === hoveredRowData.id;
-
   bodyRowProps = ({ rowData }) => {
     const { classes } = this.props;
     return rowData.disabled ? { className: classes.rowDisabled } : {};
   }
 
   handleRowsSelect = (currentRowsSelected: array, allRowsSelected: array) => {
-    console.log('onRowsSelect:');
-    console.log(currentRowsSelected);
-    console.log(allRowsSelected);
     const { data } = this.props;
     const allSelectedIds = allRowsSelected.map(rowMeta => data[rowMeta.dataIndex].id);
     return this.reportSelectedRowIds(allSelectedIds);
   }
 
   handleRowClick = (rowData, rowMeta: { dataIndex: number, rowIndex: number }) => {
-    console.log('onRowClick:');
-    console.log(rowData);
-    console.log(rowMeta);
     const { selectedDataIndexes, selectedIds, data } = this.props;
     const fullRowData = data[rowMeta.dataIndex];
-    console.log(fullRowData);
     if (selectedDataIndexes.some(idx => rowMeta.dataIndex === idx)) {
       // remove
       return this.reportSelectedRowIds(selectedIds.filter(id => id !== fullRowData.id));
