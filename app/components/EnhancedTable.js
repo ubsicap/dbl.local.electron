@@ -169,6 +169,9 @@ class EnhancedTable extends Component<Props> {
   handleRowsSelect = (currentRowsSelected: array, allRowsSelected: array) => {
     const { sortedData } = this.props;
     const allSelectedIds = allRowsSelected.map(rowMeta => sortedData[rowMeta.dataIndex].id);
+    if (!this.props.multiSelections && allSelectedIds.length > 0) {
+      return this.reportSelectedRowIds([allSelectedIds[0]]);
+    }
     return this.reportSelectedRowIds(allSelectedIds);
   }
 
@@ -193,7 +196,7 @@ class EnhancedTable extends Component<Props> {
       classes, sortedData, columns, selectedDataIndexes, selectableData, freezeCheckedColumnState
     } = this.props;
     const options = {
-      filterType: 'checkbox',
+      filterType: 'multiselect',
       fixedHeader: false,
       rowsSelected: selectedDataIndexes,
       onRowsSelect: this.handleRowsSelect,
