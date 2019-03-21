@@ -121,11 +121,15 @@ function getColumns(
     label: c.label,
     options: {
       filter: !(['name', 'size'].includes(c.name)),
-      sortDirection: c.name === orderBy ? orderDirection : undefined,
+      ...getSortDirection(c, orderBy, orderDirection),
       setCellProps: (row, dataIndex) => getCellProps(c, row, dataIndex, sortedData),
     }
   }));
   return columns;
+}
+
+function getSortDirection(columnData, orderBy, orderDirection) {
+  return (columnData.name === orderBy) ? { sortDirection: orderDirection } : {};
 }
 
 function getCellProps(columnData, row, dataIndex, sortedData) {
