@@ -156,11 +156,9 @@ function mapStateToProps(state, props) {
 class EnhancedTable extends Component<Props> {
   props: Props;
 
-  handleRequestSort = ({ column }) => {
-    const { name: property } = column;
-    const orderBy = property;
-    const order = (this.props.orderBy === property && this.props.orderDirection === 'desc') ? 'asc' : 'desc';
-    this.props.onChangeSort({ order, orderBy });
+  handleRequestSort = (changedColumn: string, direction: string) => {
+    const orderDirection = direction === 'descending' ? 'desc' : 'asc';
+    this.props.onChangeSort({ order: orderDirection, orderBy: changedColumn });
   };
 
   reportSelectedRowIds = (selectedRowIds) => {
@@ -201,7 +199,9 @@ class EnhancedTable extends Component<Props> {
       onRowsSelect: this.handleRowsSelect,
       onRowClick: this.handleRowClick,
       selectableRows: selectableData.length > 0,
-      isRowSelectable: (dataIndex) => !freezeCheckedColumnState && !sortedData[dataIndex].disabled
+      isRowSelectable: (dataIndex) => !freezeCheckedColumnState && !sortedData[dataIndex].disabled,
+      customSort: (data) => data,
+      onColumnSortChange: this.handleRequestSort
     };
     return (
       <Paper className={classes.root}>
