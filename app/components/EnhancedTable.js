@@ -168,7 +168,18 @@ class EnhancedTable extends Component<Props> {
 
   handleRowsSelect = (currentRowsSelected: array, allRowsSelected: array) => {
     const { sortedData } = this.props;
-    const allSelectedIds = allRowsSelected.map(rowMeta => sortedData[rowMeta.dataIndex].id);
+    const currentDataIndexesSelected = currentRowsSelected.map(r => r.dataIndex);
+    // there seems to be a bug in using rowsSelected in context of an filter active
+    // (see https://github.com/gregnb/mui-datatables/issues/514)
+    // for now remove duplicate dataIndexes (assuming the user is disabling a checkbox)
+    const matchingDataIndexes =
+      allRowsSelected
+        .map(rowMeta => rowMeta.dataIndex)
+        .filter(dataIndex => currentDataIndexesSelected.includes(dataIndex));
+    const allSelectedIds =
+    allRowsSelected
+      .filter(filterOutDuplicateDataIndexes(matchingDataIndexes))
+      .map(rowMeta => sortedData[rowMeta.dataIndex].id);
     if (!this.props.multiSelections && allSelectedIds.length > 0) {
       return this.reportSelectedRowIds([allSelectedIds[0]]);
     }
@@ -228,3 +239,12 @@ export default compose(
     null
   ),
 )(EnhancedTable);
+
+function filterOutDuplicateDataIndexes(matchingDataIndexes) {
+  return (rowMeta) => {
+    const matchedDataIndexes =
+    matchingDataIndexes.filter(dataIndex => dataIndex === rowMeta.dataIndex);
+    return (matchedDataIndexes.length === 1 ?
+      true : !matchedDataIndexes.includes(rowMeta.dataIndex));
+  };
+}
