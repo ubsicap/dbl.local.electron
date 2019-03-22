@@ -198,6 +198,7 @@ class EnhancedTable extends Component<Props> {
     const options = {
       filterType: 'multiselect',
       fixedHeader: false,
+      responsive: 'scroll',
       rowsSelected: selectedDataIndexes,
       onRowsSelect: this.handleRowsSelect,
       onRowClick: this.handleRowClick,
