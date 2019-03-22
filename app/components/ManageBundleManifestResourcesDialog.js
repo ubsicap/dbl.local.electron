@@ -1313,6 +1313,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           <React.Fragment>
             {this.renderTableToolbar()}
             <EnhancedTable
+              title="Resources"
               data={tableData}
               columnConfig={columnConfig}
               secondarySorts={secondarySorts}
@@ -1332,6 +1333,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           <React.Fragment>
             {this.renderTableToolbar()}
             <EnhancedTable
+              title="Revisions"
               data={tableData}
               columnConfig={columnConfig}
               customSorts={{
@@ -1356,6 +1358,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             {this.renderTableToolbar()}
             <EnhancedTable
               data={tableData}
+              title="Resources"
               columnConfig={columnConfig}
               secondarySorts={secondarySorts}
               orderBy={orderBy}

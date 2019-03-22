@@ -78,19 +78,8 @@ class EnhancedTableToolbar extends Component<Props> {
     const { anchorEl } = this.state;
     return (
       <Toolbar
-        className={classNames(classes.root, {
-          [classes.highlight]: numSelected > 0,
-        })}
+        className={classNames(classes.root)}
       >
-        <div className={classes.title}>
-          {numSelected > 0 ? (
-            <Typography color="inherit" variant="subtitle1">
-              {numSelected} selected
-            </Typography>
-          ) : (
-            <Typography variant="h6" id="tableTitle" />
-          )}
-        </div>
         <div className={classes.spacer} />
         <div style={{ width: 700 }}>
           {enableEditContainer ? (
@@ -126,21 +115,6 @@ class EnhancedTableToolbar extends Component<Props> {
             </div>
           ) : null
         }
-        </div>
-        <div className={classes.actions}>
-          {numSelected > 0 ? (
-            <Tooltip title="Summary">
-              <IconButton aria-label="Summary">
-                <InfoIcon />
-              </IconButton>
-            </Tooltip>
-          ) : (
-            <Tooltip title="Filter list">
-              <IconButton aria-label="Filter list">
-                <FilterListIcon />
-              </IconButton>
-            </Tooltip>
-          )}
         </div>
       </Toolbar>
     );

@@ -6,6 +6,7 @@ import Paper from '@material-ui/core/Paper';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { createSelector } from 'reselect';
+import Typography from '@material-ui/core/Typography';
 import { emptyObject } from '../utils/defaultValues';
 
 const styles = theme => ({
@@ -22,6 +23,9 @@ const styles = theme => ({
   stickyHeaderClass: {
     position: 'sticky',
     top: 118
+  },
+  toolBarSelectTitleSelected: {
+    top: '50%', position: 'relative', paddingRight: '26px', transform: 'translateY(-50%)'
   }
 });
 
@@ -40,6 +44,7 @@ type Props = {
   multiSelections?: boolean,
   customSorts?: {},
   freezeCheckedColumnState?: boolean,
+  title?: string,
   onSelectedRowIds: () => {},
   onChangeSort: () => {}
 };
@@ -48,7 +53,8 @@ const defaultProps = {
   orderDirection: 'asc',
   customSorts: emptyObject,
   multiSelections: false,
-  freezeCheckedColumnState: false
+  freezeCheckedColumnState: false,
+  title: undefined
 };
 
 function getSortMethod(customSorts, orderBy) {
@@ -202,10 +208,25 @@ class EnhancedTable extends Component<Props> {
     return this.reportSelectedRowIds([fullRowData.id]);
   };
 
+  getCustomToolbarSelect = () => {
+    const { title } = this.props;
+    if (!title) {
+      return emptyObject;
+    }
+    const { classes } = this.props;
+    return {
+      customToolbarSelect:
+        (selectedRows, displayData, setSelectedRows) =>
+          <div><Typography variant="h6" className={classes.toolBarSelectTitleSelected}>{title}</Typography></div>
+    };
+  }
+
   render() {
     const {
-      classes, sortedData, columns, selectedDataIndexes, selectableData, freezeCheckedColumnState
+      classes, sortedData, columns, selectedDataIndexes, selectableData,
+      freezeCheckedColumnState, title
     } = this.props;
+    const customToolbarSelect = this.getCustomToolbarSelect();
     const options = {
       filterType: 'multiselect',
       fixedHeader: false,
@@ -216,11 +237,13 @@ class EnhancedTable extends Component<Props> {
       selectableRows: selectableData.length > 0,
       isRowSelectable: (dataIndex) => !freezeCheckedColumnState && !sortedData[dataIndex].disabled,
       customSort: (data) => data,
-      onColumnSortChange: this.handleRequestSort
+      ...customToolbarSelect,
+      onColumnSortChange: this.handleRequestSort,
     };
     return (
       <Paper className={classes.root}>
         <MUIDataTable
+          title={title}
           data={sortedData}
           columns={columns}
           options={options}
