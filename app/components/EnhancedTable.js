@@ -8,6 +8,8 @@ import { compose } from 'recompose';
 import { createSelector } from 'reselect';
 import Typography from '@material-ui/core/Typography';
 import { emptyObject } from '../utils/defaultValues';
+import IntegrationAutosuggest from '../components/IntegrationAutosuggest';
+import { ux } from '../utils/ux';
 
 const styles = theme => ({
   root: {
@@ -26,7 +28,8 @@ const styles = theme => ({
   },
   toolBarSelectTitleSelected: {
     top: '50%', position: 'relative', paddingRight: '26px', transform: 'translateY(-50%)'
-  }
+  },
+  highlight: ux.getHighlightTheme(theme, 'light'),
 });
 
 type Props = {
@@ -45,6 +48,7 @@ type Props = {
   customSorts?: {},
   freezeCheckedColumnState?: boolean,
   title?: string,
+  editContainer?: {},
   onSelectedRowIds: () => {},
   onChangeSort: () => {}
 };
@@ -54,7 +58,8 @@ const defaultProps = {
   customSorts: emptyObject,
   multiSelections: false,
   freezeCheckedColumnState: false,
-  title: undefined
+  title: undefined,
+  editContainer: undefined
 };
 
 function getSortMethod(customSorts, orderBy) {
@@ -213,11 +218,22 @@ class EnhancedTable extends Component<Props> {
     if (!title) {
       return emptyObject;
     }
-    const { classes } = this.props;
+    const { classes, editContainer } = this.props;
     return {
       customToolbarSelect:
         (selectedRows, displayData, setSelectedRows) =>
-          <div><Typography variant="h6" className={classes.toolBarSelectTitleSelected}>{title}</Typography></div>
+          (
+            <React.Fragment>
+              {editContainer ? (
+                <div className={classes.highlight} style={{ width: '500px', paddingLeft: '10px', paddingRight: '10px' }}>
+                  <IntegrationAutosuggest
+                    getSuggestions={editContainer.getSuggestions}
+                    onInputChanged={editContainer.onAutosuggestInputChanged}
+                  />
+                </div>) : null}
+              <div><Typography variant="h6" className={classes.toolBarSelectTitleSelected}>{title}</Typography></div>
+            </React.Fragment>
+          )
     };
   }
 

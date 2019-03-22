@@ -1265,14 +1265,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   renderTableToolbar = () => {
     const { mode, mapperInputData, selectedRowIds } = this.props;
-    const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
     const addModeProps = mode === 'addFiles' ? {
-      enableEditContainer: toAddResources === inEffect,
       handleAddByFile: this.getHandleAddByFile(),
       handleAddByFolder: this.getHandleAddByFolder(),
-      getSuggestions: this.getSuggestions,
       mapperInputData,
-      onAutosuggestInputChanged: this.handleAutosuggestInputChanged
     } : {};
     return (
       <React.Fragment>
@@ -1353,6 +1349,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         );
       }
       case 'addFiles': {
+        const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
+        const enableEditContainer = toAddResources === inEffect;
+        const editContainer = enableEditContainer ? {
+          editContainer: {
+            getSuggestions: this.getSuggestions,
+            onAutosuggestInputChanged: this.handleAutosuggestInputChanged
+          }
+        } : emptyObject;
         return (
           <React.Fragment>
             {this.renderTableToolbar()}
@@ -1368,6 +1372,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               onChangeSort={this.handleChangeSort}
               selectedIds={selectedRowIds}
               freezeCheckedColumnState={loading}
+              {...editContainer}
             />
           </React.Fragment>
         );
