@@ -1,13 +1,15 @@
 import React, { Component } from 'react';
-import MuiTable from 'mui-table';
+import MUIDataTable from 'mui-datatables';
 import { withStyles } from '@material-ui/core/styles';
 import sort from 'fast-sort';
 import Paper from '@material-ui/core/Paper';
-import Checkbox from '@material-ui/core/Checkbox';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { createSelector } from 'reselect';
-import { emptyObject, emptyArray } from '../utils/defaultValues';
+import Typography from '@material-ui/core/Typography';
+import { emptyObject } from '../utils/defaultValues';
+import IntegrationAutosuggest from '../components/IntegrationAutosuggest';
+import { ux } from '../utils/ux';
 
 const styles = theme => ({
   root: {
@@ -20,13 +22,14 @@ const styles = theme => ({
   tableWrapper: {
     overflowX: 'auto',
   },
-  rowDisabled: {
-    backgroundColor: 'lightgrey'
-  },
   stickyHeaderClass: {
     position: 'sticky',
     top: 118
-  }
+  },
+  toolBarSelectTitleSelected: {
+    top: '50%', position: 'relative', paddingRight: '26px', transform: 'translateY(-50%)'
+  },
+  highlight: ux.getHighlightTheme(theme, 'light'),
 });
 
 type Props = {
@@ -40,9 +43,12 @@ type Props = {
   columns: [],
   secondarySorts: [],
   selectedIds: [],
+  selectedDataIndexes: [],
   multiSelections?: boolean,
   customSorts?: {},
   freezeCheckedColumnState?: boolean,
+  title?: string,
+  editContainer?: {},
   onSelectedRowIds: () => {},
   onChangeSort: () => {}
 };
@@ -51,7 +57,9 @@ const defaultProps = {
   orderDirection: 'asc',
   customSorts: emptyObject,
   multiSelections: false,
-  freezeCheckedColumnState: false
+  freezeCheckedColumnState: false,
+  title: undefined,
+  editContainer: undefined
 };
 
 function getSortMethod(customSorts, orderBy) {
@@ -68,11 +76,11 @@ const getCustomSorts = (state, props) =>
   props.customSorts || defaultProps.customSorts;
 const getOrderBy = (state, props) =>
   props.orderBy || this.props.columnConfig[0].name;
-const getOrder = (state, props) =>
+const getOrderDirection = (state, props) =>
   props.orderDirection || defaultProps.orderDirection;
 
 const getSortedDataSelector = createSelector(
-  [getData, getSecondarySorts, getCustomSorts, getOrderBy, getOrder],
+  [getData, getSecondarySorts, getCustomSorts, getOrderBy, getOrderDirection],
   getSortedData
 );
 
@@ -91,59 +99,16 @@ function getSortedData(data, secondarySorts, customSorts, orderBy, order) {
   return sorted;
 }
 
-function isRowChecked(rowData, selectedRowIds) {
-  return selectedRowIds.some(id => rowData.id === id);
-}
-
-function renderCheckBoxInRow(rowData, freezeCheckedColumnState, selectedRowIds) {
-  return (<Checkbox
-    disabled={freezeCheckedColumnState}
-    checked={isRowChecked(rowData, selectedRowIds)}
-  />);
-}
-
-function getHeaderCheckBoxProps(selectableData, selectedRowIds, areAnyChecked) {
-  if (selectableData.length === 0) {
-    return {
-      disabled: true
-    };
-  }
-  if (areAnyChecked &&
-      selectedRowIds.length !== selectableData.length) {
-    return {
-      indeterminate: true,
-      color: 'default'
-    };
-  }
-  return {};
-}
-
-function renderCheckBoxInHeader(
-  areAnyChecked,
-  onSelectedRowIds,
-  selectableData,
-  selectedRowIds
-) {
-  return (<Checkbox
-    checked={areAnyChecked}
-    onChange={onChangeCheckBoxHeader(selectedRowIds, selectableData, onSelectedRowIds)}
-    {...getHeaderCheckBoxProps(selectableData, selectedRowIds, areAnyChecked)}
-  />);
-}
-
-
 const getColumnConfig = (state, props) => props.columnConfig;
-const getMultiSelections = (state, props) =>
-  props.multiSelections || defaultProps.multiSelections;
-const getFreezeCheckedColumnState = (state, props) =>
-  props.freezeCheckedColumnState || defaultProps.freezeCheckedColumnState;
 const getSelectedRowIds = (state, props) => props.selectedIds;
-const getOnSelectedRowIds = (state, props) => props.onSelectedRowIds;
 
-const getAreAnyCheckedSelector = createSelector(
-  [getSelectedRowIds],
-  (selectedRowIds) => selectedRowIds.length > 0
-);
+const getSelectedDataIndexesSelector =
+  createSelector([getData, getSelectedRowIds], getSelectedDataIndexes);
+
+function getSelectedDataIndexes(data, selectedIds) {
+  const dataIdToIndex = data.reduce((acc, row, index) => { acc[row.id] = index; return acc; }, {});
+  return selectedIds.map(rowId => dataIdToIndex[rowId]);
+}
 
 const getSelectableDataSelector = createSelector([getData], getSelectableData);
 
@@ -152,94 +117,73 @@ function getSelectableData(data) {
 }
 
 const getColumnsSelector = createSelector(
-  [getColumnConfig, getMultiSelections, getFreezeCheckedColumnState,
-    getSelectedRowIds, getAreAnyCheckedSelector,
-    getSelectableDataSelector, getOnSelectedRowIds],
+  [getColumnConfig, getSortedDataSelector, getOrderBy, getOrderDirection],
   getColumns
 );
 
-function onChangeCheckBoxHeader(selectedRowIds, selectableData, onSelectedRowsIds) {
-  return () => {
-    const newlySelectedRowIds = selectedRowIds.length === selectableData.length ?
-      emptyArray : getDataRowIds(selectableData);
-    onSelectedRowsIds(newlySelectedRowIds);
-  };
-}
-
 function getColumns(
   columnConfig,
-  multiSelections,
-  freezeCheckedColumnState,
-  selectedRowIds,
-  areAnyChecked,
-  selectableData,
-  onSelectedRowIds
+  sortedData,
+  orderBy,
+  orderDirection,
 ) {
-  const checkboxColumn = {
-    name: 'checkbox',
-    cell: rowData => (
-      !rowData.disabled ?
-        renderCheckBoxInRow(rowData, freezeCheckedColumnState, selectedRowIds) :
-        null
-    ),
-    cellProps: { style: { paddingRight: 0 } },
-    width: 72,
-    onHeaderClick: false
-  };
-  if (multiSelections) {
-    const header = renderCheckBoxInHeader(
-      areAnyChecked,
-      onSelectedRowIds,
-      selectableData,
-      selectedRowIds
-    );
-    checkboxColumn.header = header;
-  }
-  const stringCellProps = { style: { paddingRight: 0 } };
-  const numericCellProps = { align: 'right' };
   const columns = columnConfig.map(c => ({
     name: c.name,
-    header: c.label,
-    cellProps: c.type === 'numeric' ? numericCellProps : stringCellProps
+    label: c.label,
+    options: {
+      filter: !(['name', 'size'].includes(c.name)),
+      ...getSortDirection(c, orderBy, orderDirection),
+      setCellProps: (row, dataIndex) => getCellProps(c, row, dataIndex, sortedData),
+    }
   }));
-  return [checkboxColumn, ...columns];
+  return columns;
+}
+
+function getSortDirection(columnData, orderBy, orderDirection) {
+  return (columnData.name === orderBy) ? { sortDirection: orderDirection } : {};
+}
+
+function getCellProps(columnData, row, dataIndex, sortedData) {
+  const fullRowData = sortedData[dataIndex] || emptyObject;
+  const { disabled = false } = fullRowData;
+  // how can I right-align header as well?
+  // columnData.type === 'numeric' ? { align: 'right' } : undefined;
+  return disabled ? { style: { backgroundColor: 'lightgrey' } } : {};
 }
 
 function mapStateToProps(state, props) {
   const sortedData = getSortedDataSelector(state, props);
   const columns = getColumnsSelector(state, props);
   const selectableData = getSelectableDataSelector(state, props);
+  const selectedDataIndexes = getSelectedDataIndexesSelector(state, props);
   return {
     sortedData,
     columns,
-    selectableData
+    selectableData,
+    selectedDataIndexes
   };
-}
-
-function getDataRowIds(data) {
-  return data.map(d => d.id);
 }
 
 class EnhancedTable extends Component<Props> {
   props: Props;
-  state = {
-    selectedRowIds: this.props.selectedIds
-  };
 
-  componentWillReceiveProps(nextProps) {
-    // TODO: phase this out by removing state.selectedRowIds
-    if (nextProps.selectedIds !== this.props.selectedIds) {
-      this.setState({ selectedRowIds: nextProps.selectedIds });
-    }
+  constructor(props) {
+    super(props);
+    this.state = {
+      page: 0
+    };
   }
 
-  areAnyChecked = () => this.state.selectedRowIds.length > 0;
+  componentDidCatch(error, info) {
+    // https://github.com/gregnb/mui-datatables/issues/370
+    console.log(error);
+    console.log(info);
+    this.setState({ page: 0 });
+  }
 
-  handleRequestSort = ({ column }) => {
-    const { name: property } = column;
-    const orderBy = property;
-    const order = (this.props.orderBy === property && this.props.orderDirection === 'desc') ? 'asc' : 'desc';
-    this.props.onChangeSort({ order, orderBy });
+  handleRequestSort = (changedColumn: string, direction: string) => {
+    const orderDirection = direction === 'descending' ? 'desc' : 'asc';
+    this.props.onChangeSort({ order: orderDirection, orderBy: changedColumn });
   };
 
   reportSelectedRowIds = (selectedRowIds) => {
@@ -247,56 +191,99 @@ class EnhancedTable extends Component<Props> {
     return emptyObject;
   }
 
-  onCellClick = ({ rowData }) => {
-    if (rowData.disabled) {
-      return;
+  handleRowsSelect = (currentRowsSelected: array, allRowsSelected: array) => {
+    const { sortedData } = this.props;
+    const currentDataIndexesSelected = currentRowsSelected.map(r => r.dataIndex);
+    // there seems to be a bug in using rowsSelected in context of an filter active
+    // (see https://github.com/gregnb/mui-datatables/issues/514)
+    // for now remove duplicate dataIndexes (assuming the user is disabling a checkbox)
+    const matchingDataIndexes =
+      allRowsSelected
+        .map(rowMeta => rowMeta.dataIndex)
+        .filter(dataIndex => currentDataIndexesSelected.includes(dataIndex));
+    const allSelectedIds =
+    allRowsSelected
+      .filter(filterOutDuplicateDataIndexes(matchingDataIndexes))
+      .map(rowMeta => sortedData[rowMeta.dataIndex].id);
+    if (!this.props.multiSelections && allSelectedIds.length > 0) {
+      return this.reportSelectedRowIds([allSelectedIds[0]]);
     }
-    this.setState(prevState => {
-      if (prevState.selectedRowIds.some(id => rowData.id === id)) {
-        // remove
-        return this.reportSelectedRowIds(prevState.selectedRowIds.filter(id => id !== rowData.id));
-      }
-      if (this.props.multiSelections) {
-        return this.reportSelectedRowIds([...prevState.selectedRowIds, rowData.id]);
-      }
-      return this.reportSelectedRowIds([rowData.id]);
-    });
+    return this.reportSelectedRowIds(allSelectedIds);
   }
 
-  isCellSelected = ({ rowData }) =>
-    this.state.selectedRowIds.some(id => rowData && rowData.id === id);
+  handleRowClick = (rowData, rowMeta: { dataIndex: number, rowIndex: number }) => {
+    const { selectedDataIndexes, selectedIds, sortedData } = this.props;
+    const fullRowData = sortedData[rowMeta.dataIndex];
+    if (fullRowData.disabled) {
+      return;
+    }
+    if (selectedDataIndexes.some(idx => rowMeta.dataIndex === idx)) {
+      // remove
+      return this.reportSelectedRowIds(selectedIds.filter(id => id !== fullRowData.id));
+    }
+    if (this.props.multiSelections) {
+      return this.reportSelectedRowIds([...selectedIds, fullRowData.id]);
+    }
+    return this.reportSelectedRowIds([fullRowData.id]);
+  };
 
-  isCellHovered = ({ rowData, hoveredRowData }) =>
-    !rowData.disabled && rowData.id && rowData.id === hoveredRowData.id;
+  handleFilterChange = () => {
+    // https://github.com/gregnb/mui-datatables/issues/370
+    this.setState({ page: 0 });
+  }
 
-  bodyRowProps = ({ rowData }) => {
-    const { classes } = this.props;
-    return rowData.disabled ? { className: classes.rowDisabled } : {};
+  getCustomToolbarSelect = () => {
+    const { title } = this.props;
+    if (!title) {
+      return emptyObject;
+    }
+    const { classes, editContainer } = this.props;
+    return {
+      customToolbarSelect:
+        (selectedRows, displayData, setSelectedRows) =>
+          (
+            <React.Fragment>
+              {editContainer ? (
+                <div className={classes.highlight} style={{ width: '500px', paddingLeft: '10px', paddingRight: '10px' }}>
+                  <IntegrationAutosuggest
+                    getSuggestions={editContainer.getSuggestions}
+                    onInputChanged={editContainer.onAutosuggestInputChanged}
+                  />
+                </div>) : null}
+              <div><Typography variant="h6" className={classes.toolBarSelectTitleSelected}>{title}</Typography></div>
+            </React.Fragment>
+          )
+    };
   }
 
   render() {
     const {
-      classes, sortedData, columns, orderBy, orderDirection
+      classes, sortedData, columns, selectedDataIndexes, selectableData,
+      freezeCheckedColumnState, title
     } = this.props;
-
+    const customToolbarSelect = this.getCustomToolbarSelect();
+    const options = {
+      filterType: 'multiselect',
+      fixedHeader: false,
+      responsive: 'scroll',
+      rowsSelected: selectedDataIndexes,
+      onRowsSelect: this.handleRowsSelect,
+      onRowClick: this.handleRowClick,
+      selectableRows: selectableData.length > 0,
+      isRowSelectable: (dataIndex) => !freezeCheckedColumnState && !sortedData[dataIndex].disabled,
+      customSort: (data) => data,
+      ...customToolbarSelect,
+      onColumnSortChange: this.handleRequestSort,
+      onFilterChange: this.handleFilterChange,
+      page: this.state.page
+    };
     return (
       <Paper className={classes.root}>
-        <MuiTable
+        <MUIDataTable
+          title={title}
           data={sortedData}
           columns={columns}
-          includeHeaders
-          headerCellProps={{
-            className: classes.stickyHeaderClass,
-            style: { background: '#eee', zIndex: 1 }
-          }}
-          cellProps={this.bodyRowProps}
-          onHeaderClick={this.handleRequestSort}
-          onCellClick={this.onCellClick}
-          isCellSelected={this.isCellSelected}
-          isCellHovered={this.isCellHovered}
-          orderBy={orderBy}
-          orderDirection={orderDirection}
-          style={{ backgroundColor: 'white' }}
+          options={options}
         />
       </Paper>
     );
@@ -312,3 +299,12 @@ export default compose(
     null
   ),
 )(EnhancedTable);
+
+function filterOutDuplicateDataIndexes(matchingDataIndexes) {
+  return (rowMeta) => {
+    const matchedDataIndexes =
+    matchingDataIndexes.filter(dataIndex => dataIndex === rowMeta.dataIndex);
+    return (matchedDataIndexes.length === 1 ?
+      true : !matchedDataIndexes.includes(rowMeta.dataIndex));
+  };
+}

@@ -1,3 +1,8 @@
+### Version 0.31.0
+#### Features
+- upgrade table component with filter, searching, paging and to improve performance
+- show reduction of selected items to add as they are being added
+
 ### Version 0.30.1
 #### Features
 - Add Revisions to side-menu (drawer) to allow user to switch to/from it

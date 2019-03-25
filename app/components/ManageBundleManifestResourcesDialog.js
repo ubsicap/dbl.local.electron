@@ -215,8 +215,9 @@ function createAddedResource(
     const [id, name] = [filePath, fileName];
     const size = fileSizes[filePath] || '';
     const status = getAddStatus(uri, resourcesInParent, conversions, conversionOverwrites);
+    const stored = '';
     return {
-      id, uri, status, mimeType: '', container: container || NEED_CONTAINER, relativeFolder, name, size, checksum: '', disabled: false
+      id, uri, stored, status, mimeType: '', container: container || NEED_CONTAINER, relativeFolder, name, size, checksum: '', disabled: false
     };
   };
 }
@@ -343,7 +344,7 @@ const getManifestResourcesDataSelector = createSelector(
         .map(pr => createResourceData(null, pr, parentStoredFiles[pr.uri], pr));
     const selectedIdsInputConverters =
       selectedMappers.input || Object.keys(mapperReport);
-    const addedResources = isLoading ? emptyArray : getTableDataForAddedResources(
+    const addedResources = getTableDataForAddedResources(
       mapperInputData,
       selectedIdsInputConverters,
       previousManifestResources,
@@ -1264,14 +1265,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   renderTableToolbar = () => {
     const { mode, mapperInputData, selectedRowIds } = this.props;
-    const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
     const addModeProps = mode === 'addFiles' ? {
-      enableEditContainer: toAddResources === inEffect,
       handleAddByFile: this.getHandleAddByFile(),
       handleAddByFolder: this.getHandleAddByFolder(),
-      getSuggestions: this.getSuggestions,
       mapperInputData,
-      onAutosuggestInputChanged: this.handleAutosuggestInputChanged
     } : {};
     return (
       <React.Fragment>
@@ -1312,6 +1309,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           <React.Fragment>
             {this.renderTableToolbar()}
             <EnhancedTable
+              title="Resources"
               data={tableData}
               columnConfig={columnConfig}
               secondarySorts={secondarySorts}
@@ -1331,6 +1329,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           <React.Fragment>
             {this.renderTableToolbar()}
             <EnhancedTable
+              title="Revisions"
               data={tableData}
               columnConfig={columnConfig}
               customSorts={{
@@ -1350,11 +1349,20 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         );
       }
       case 'addFiles': {
+        const { toAddResources, inEffect } = this.getSelectedResourcesByStatus();
+        const enableEditContainer = toAddResources === inEffect;
+        const editContainer = enableEditContainer ? {
+          editContainer: {
+            getSuggestions: this.getSuggestions,
+            onAutosuggestInputChanged: this.handleAutosuggestInputChanged
+          }
+        } : emptyObject;
         return (
           <React.Fragment>
             {this.renderTableToolbar()}
             <EnhancedTable
               data={tableData}
+              title="Resources"
               columnConfig={columnConfig}
               secondarySorts={secondarySorts}
               orderBy={orderBy}
@@ -1364,6 +1372,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
               onChangeSort={this.handleChangeSort}
               selectedIds={selectedRowIds}
               freezeCheckedColumnState={loading}
+              {...editContainer}
             />
           </React.Fragment>
         );

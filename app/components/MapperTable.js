@@ -72,23 +72,6 @@ class MapperTable extends Component<Props> {
     };
   }
 
-  getMapperMessage = () => {
-    const {
-      mapperReports, mappersUris, selectedMapperUris
-    } = this.getMapperData();
-    const { selectedIds } = this.props;
-    if (!mapperReports) {
-      return '';
-    }
-    if (mappersUris.length === 0) {
-      return 'No matches found for converters';
-    }
-    if (selectedIds.length === 0) {
-      return `Select converter(s) below (${mappersUris.length} matches)`;
-    }
-    return `${selectedMapperUris.length} of ${mappersUris.length} matches in ${selectedIds.length} converters`;
-  }
-
   handleSelectedIds = (selectedIds) => {
     this.props.selectMappers(this.props.direction, selectedIds);
   }
@@ -104,26 +87,15 @@ class MapperTable extends Component<Props> {
     const {
       orderBy, orderDirection
     } = this.state;
-    const mapperMessage = this.getMapperMessage();
     return (
       <React.Fragment>
-        <Toolbar
-          className={classNames(classes.root, {
-            [classes.highlight]: true,
-          })}
-        >
-          <div className={classes.title}>
-            <Typography color="inherit" variant="subtitle1">
-              {mapperMessage}
-            </Typography>
-          </div>
-        </Toolbar>
         <Toolbar
           className={classNames({
             [classes.highlight]: true,
           })}
         >
           <EnhancedTable
+            title="Converters"
             data={tableData}
             columnConfig={columnConfig}
             secondarySorts={secondarySorts}
