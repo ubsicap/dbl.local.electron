@@ -167,6 +167,13 @@ function mapStateToProps(state, props) {
 class EnhancedTable extends Component<Props> {
   props: Props;
 
+  constructor(props) {
+    super(props);
+    this.state = {
+      page: 0
+    };
+  }
+
   handleRequestSort = (changedColumn: string, direction: string) => {
     const orderDirection = direction === 'descending' ? 'desc' : 'asc';
     this.props.onChangeSort({ order: orderDirection, orderBy: changedColumn });
@@ -213,6 +220,10 @@ class EnhancedTable extends Component<Props> {
     return this.reportSelectedRowIds([fullRowData.id]);
   };
 
+  handleFilterChange = () => {
+    this.setState({ page: 0 });
+  }
+
   getCustomToolbarSelect = () => {
     const { title } = this.props;
     if (!title) {
@@ -255,6 +266,8 @@ class EnhancedTable extends Component<Props> {
       customSort: (data) => data,
       ...customToolbarSelect,
       onColumnSortChange: this.handleRequestSort,
+      onFilterChange: this.handleFilterChange,
+      page: this.state.page
     };
     return (
       <Paper className={classes.root}>
