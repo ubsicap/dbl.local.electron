@@ -1,3 +1,7 @@
+### Version 0.31.1
+#### Fix
+- allow download of resources when some have already been stored and others have been revised
+
 ### Version 0.31.0
 #### Features
 - upgrade table component with filter, searching, paging and to improve performance
