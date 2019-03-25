@@ -394,38 +394,24 @@ function getSelectedResourcesByStatus(
     = List(mode === 'revisions' ? [] : selectedResources).reduce(
       (acc, r) => {
         const resourceInParent = parentRawManifestResourceUris.has(r.uri);
-        const resourcesInParent = resourceInParent ?
-          acc.resourcesInParent.push(r) : acc.resourcesInParent;
+        const resourcesInParentOrNot = resourceInParent ?
+          { resourcesInParent: acc.resourcesInParent.push(r) } : null;
         const discardableResources = !resourceInParent ?
           acc.discardableResources.push(r) : acc.discardableResources;
-        if (r.status === 'revised') {
-          return {
-            ...acc,
-            revisedResources: acc.revisedResources.push(r),
-            manifestResources: !r.stored ? acc.manifestResources.push(r) : acc.manifestResources,
-            storedResources: r.stored ? acc.storedResources.push(r) : acc.storedResources,
-            resourcesInParent,
-            discardableResources
-          };
-        } else if (r.stored) {
-          return {
-            ...acc,
-            storedResources: acc.storedResources.push(r),
-            resourcesInParent,
-            discardableResources
-          };
-        } else if (addStatuses.includes(r.status)) {
-          const toAddResources = acc.toAddResources.push(r);
-          return { ...acc, toAddResources, resourcesInParent };
-        } else if (!r.stored) {
-          return {
-            ...acc,
-            manifestResources: acc.manifestResources.push(r),
-            resourcesInParent,
-            discardableResources
-          };
-        }
-        return acc;
+        const storedOrNot = r.stored ?
+          { storedResources: acc.storedResources.push(r) } :
+          { manifestResources: acc.manifestResources.push(r) };
+        const revisedOrNot = r.status === 'revised' ?
+          { revisedResources: acc.revisedResources.push(r) } : null;
+        const toAddResourcesOrNot = addStatuses.includes(r.status) ?
+          { toAddResources: acc.toAddResources.push(r) } : null;
+        return {
+          ...acc,
+          discardableResources,
+          ...(resourcesInParentOrNot || {}),
+          ...(revisedOrNot || {}),
+          ...(toAddResourcesOrNot || storedOrNot)
+        };
       },
       {
         revisedResources: List(),
