@@ -174,6 +174,13 @@ class EnhancedTable extends Component<Props> {
     };
   }
 
+  componentDidCatch(error, info) {
+    // https://github.com/gregnb/mui-datatables/issues/370
+    console.log(error);
+    console.log(info);
+    this.setState({ page: 0 });
+  }
+
   handleRequestSort = (changedColumn: string, direction: string) => {
     const orderDirection = direction === 'descending' ? 'desc' : 'asc';
     this.props.onChangeSort({ order: orderDirection, orderBy: changedColumn });
@@ -221,6 +228,7 @@ class EnhancedTable extends Component<Props> {
   };
 
   handleFilterChange = () => {
+    // https://github.com/gregnb/mui-datatables/issues/370
     this.setState({ page: 0 });
   }
 
