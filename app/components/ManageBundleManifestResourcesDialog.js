@@ -402,6 +402,9 @@ function getSelectedResourcesByStatus(
           return {
             ...acc,
             revisedResources: acc.revisedResources.push(r),
+            manifestResources: !r.stored ? acc.manifestResources.push(r) : acc.manifestResources,
+            storedResources: r.stored ? acc.storedResources.push(r) : acc.storedResources,
+            resourcesInParent,
             discardableResources
           };
         } else if (r.stored) {
