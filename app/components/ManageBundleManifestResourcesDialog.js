@@ -318,7 +318,8 @@ const getManifestResourcesDataSelector = createSelector(
   (
     manifestResources, mode, bundleId, bundlesById, prevManifestResourcesData,
     addedFilePaths, fullToRelativePaths, fileSizes, mapperInputData, mapperReport, selectedMappers,
-    editedContainers, isLoading
+    editedContainers,
+    isLoading /* warning: disabling all checkboxes during isLoading can result in hiding checkbox column */
   ) => {
     const bundleManifestResources = utilities.getOrDefault(
       manifestResources,
@@ -825,20 +826,14 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     this.setState({ openDrawer: false });
   };
 
-  handleDownloadOrClean = () => {
-    const {
-      storedResources, manifestResources, inEffect
-    } = this.getSelectedResourcesByStatus();
-    const { bundleId } = this.props;
-    const effectiveSelectedIds = (inEffect || emptyArray).map(row => row.id);
-    if (manifestResources === inEffect) {
-      this.props.downloadResources(bundleId, effectiveSelectedIds);
-      this.handleClose();
-      return;
-    }
-    if (storedResources === inEffect) {
-      this.props.removeResources(bundleId, storedResources.map(r => r.uri));
-    }
+  handleDownloadResources = (bundleId, manifestResources) => () => {
+    const effectiveSelectedIds = (manifestResources || emptyArray).map(row => row.id);
+    this.props.downloadResources(bundleId, effectiveSelectedIds);
+    this.handleClose();
+  }
+
+  handleCleanResources = (bundleId, storedResources) => () => {
+    this.props.removeResources(bundleId, storedResources.map(r => r.uri));
   }
 
   handleDownloadRevision = () => {
@@ -868,13 +863,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
   }
 
-  handleModifyFiles = () => {
-    const { bundleId } = this.props;
-    const {
-      storedResources, manifestResources, toAddResources, discardableResources, inEffect
-    } = this.getSelectedResourcesByStatus();
-    const discardableUris = discardableResources.map(r => r.uri);
-    if (storedResources === inEffect || discardableUris.length > 0) {
+  handleCleanAndDiscardFiles = (bundleId, storedResources, discardableResources) =>
+    () => {
+      const discardableUris = discardableResources.map(r => r.uri);
       if (discardableUris.length > 0) {
         this.clearResourceSelectionsForPaste(discardableUris);
         this.props.deleteManifestResources(bundleId, discardableUris);
@@ -888,20 +879,23 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           uris
         );
       }
-    } else if (manifestResources === inEffect) {
-      const inEffectUris = inEffect.map(r => r.uri);
-      this.props.deleteManifestResources(bundleId, inEffectUris);
-    } else if (toAddResources === inEffect) {
-      const { mapperInputData = {} } = this.props;
-      const { report: inputMappers = {} } = mapperInputData;
-      const { selectedIdsInputConverters: selectedMapperKeys = [] } = this.props;
-      const selectedMappers = Object.keys(inputMappers)
-        .filter(mapperKey => selectedMapperKeys.includes(mapperKey))
-        .reduce((acc, mapperKey) => ({ ...acc, [mapperKey]: inputMappers[mapperKey] }), {});
-      const filesToContainers = sort(toAddResources).asc('uri').reduce((acc, selectedResource) =>
-        ({ ...acc, [selectedResource.id]: formatUriForApi(selectedResource) }), {});
-      this.props.addManifestResources(bundleId, filesToContainers, selectedMappers);
     }
+
+  handleDeleteFromManifest = (bundleId, manifestResources) => () => {
+    const manifestResourceUris = manifestResources.map(r => r.uri);
+    this.props.deleteManifestResources(bundleId, manifestResourceUris);
+  }
+
+  handleAddConvertRevise = (bundleId, toAddResources) => () => {
+    const { mapperInputData = {} } = this.props;
+    const { report: inputMappers = {} } = mapperInputData;
+    const { selectedIdsInputConverters: selectedMapperKeys = [] } = this.props;
+    const selectedMappers = Object.keys(inputMappers)
+      .filter(mapperKey => selectedMapperKeys.includes(mapperKey))
+      .reduce((acc, mapperKey) => ({ ...acc, [mapperKey]: inputMappers[mapperKey] }), {});
+    const filesToContainers = sort(toAddResources).asc('uri').reduce((acc, selectedResource) =>
+      ({ ...acc, [selectedResource.id]: formatUriForApi(selectedResource) }), {});
+    this.props.addManifestResources(bundleId, filesToContainers, selectedMappers);
   }
 
   handleClose = () => {
@@ -1030,18 +1024,22 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   isDownloadMode = () => this.props.mode === 'download';
 
   getOkButtonDataModifyResources = () => {
-    const { classes, loading } = this.props;
+    const { classes, loading, bundleId } = this.props;
     const resourceSelectionStatus = this.getSelectedResourcesByStatus();
     const {
       discardableResources, storedResources, manifestResources, toAddResources, inEffect = []
     } = resourceSelectionStatus;
     const inEffectCount = inEffect.length;
     let OkButtonLabel = '';
+    let OkButtonClickHandler;
     if ([storedResources, discardableResources].includes(inEffect)) {
       const discardMsg = discardableResources.length ? ` / Discard (${discardableResources.length})` : '';
       OkButtonLabel = `Clean (${inEffectCount - discardableResources.length})${discardMsg}`;
+      OkButtonClickHandler =
+        this.handleCleanAndDiscardFiles(bundleId, storedResources, discardableResources);
     } else if (manifestResources === inEffect) {
       OkButtonLabel = `Delete from Manifest (${inEffectCount})`;
+      OkButtonClickHandler = this.handleDeleteFromManifest(bundleId, manifestResources);
     } else if (toAddResources === inEffect) {
       const revisions = toAddResources.filter(r => r.status === addAndOverwrite);
       const conversions = toAddResources.filter(r => r.status === addAndConvert);
@@ -1055,16 +1053,18 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       if (revisions.length || conversionOverwrites.length) {
         addMessageBuilder.push(` (Revise ${revisions.length + conversionOverwrites.length})`);
       }
+      OkButtonClickHandler = this.handleAddConvertRevise(bundleId, toAddResources);
       OkButtonLabel = addMessageBuilder.join('');
     } else if (loading) {
       OkButtonLabel = 'Adding...';
+      OkButtonClickHandler = () => {}
     }
     const OkButtonIcon = this.getOkButtonIcon(resourceSelectionStatus, loading);
     const OkButtonProps = {
       classes,
       color: 'secondary',
       variant: 'contained',
-      onClick: this.handleModifyFiles,
+      onClick: OkButtonClickHandler,
       disabled: this.shouldDisableModifyFiles()
     };
     return { OkButtonLabel, OkButtonIcon, OkButtonProps };
@@ -1082,18 +1082,21 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   }
 
   getOkButtonDataDownloadOrCleanResources = () => {
-    const { classes } = this.props;
+    const { classes, bundleId } = this.props;
     const resourceSelectionStatus = this.getSelectedResourcesByStatus();
     const {
       storedResources, manifestResources, inEffect
     } = resourceSelectionStatus;
     const isManifestResourcesInEffect = manifestResources === inEffect;
     let OkButtonLabel;
+    let OkButtonClickHandler;
     if (manifestResources === inEffect) {
       OkButtonLabel = `Download${this.getSelectedCountMessage(this.shouldDisableDownload)}`;
+      OkButtonClickHandler = this.handleDownloadResources(bundleId, manifestResources);
     }
     if (storedResources === inEffect) {
       OkButtonLabel = `Clean (${storedResources.length})`;
+      OkButtonClickHandler = this.handleCleanResources(bundleId, storedResources);
     }
     const OkButtonIcon = this.getDownloadOkButtonIcon(resourceSelectionStatus);
     const OkButtonProps = {
@@ -1101,7 +1104,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       confirmingProps: { variant: 'contained' },
       color: isManifestResourcesInEffect ? 'inherit' : 'secondary',
       variant: isManifestResourcesInEffect ? 'text' : 'contained',
-      onClick: this.handleDownloadOrClean,
+      onClick: OkButtonClickHandler,
       disabled: this.shouldDisableDownload()
     };
     return { OkButtonLabel, OkButtonIcon, OkButtonProps };

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import MUIDataTable from 'mui-datatables';
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles, createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles';
 import sort from 'fast-sort';
 import Paper from '@material-ui/core/Paper';
 import { connect } from 'react-redux';
@@ -10,6 +10,13 @@ import Typography from '@material-ui/core/Typography';
 import { emptyObject } from '../utils/defaultValues';
 import IntegrationAutosuggest from '../components/IntegrationAutosuggest';
 import { ux } from '../utils/ux';
+
+const getMuiTheme = () => createMuiTheme({
+  overrides: {
+    /* don't responsively hide checkbox column https://github.com/gregnb/mui-datatables/issues/495#issuecomment-472903814 */
+    MUIDataTableSelectCell: { root: { '@media (max-width:959.95px)': { display: 'table-cell' } } }
+  }
+});
 
 const styles = theme => ({
   root: {
@@ -192,7 +199,10 @@ class EnhancedTable extends Component<Props> {
   }
 
   handleRowsSelect = (currentRowsSelected: array, allRowsSelected: array) => {
-    const { sortedData } = this.props;
+    const { sortedData, freezeCheckedColumnState } = this.props;
+    if (freezeCheckedColumnState) {
+      return;
+    }
     const currentDataIndexesSelected = currentRowsSelected.map(r => r.dataIndex);
     // there seems to be a bug in using rowsSelected in context of an filter active
     // (see https://github.com/gregnb/mui-datatables/issues/514)
@@ -212,6 +222,10 @@ class EnhancedTable extends Component<Props> {
   }
 
   handleRowClick = (rowData, rowMeta: { dataIndex: number, rowIndex: number }) => {
+    const { freezeCheckedColumnState } = this.props;
+    if (freezeCheckedColumnState) {
+      return;
+    }
     const { selectedDataIndexes, selectedIds, sortedData } = this.props;
     const fullRowData = sortedData[rowMeta.dataIndex];
     if (fullRowData.disabled) {
@@ -264,7 +278,7 @@ class EnhancedTable extends Component<Props> {
     const customToolbarSelect = this.getCustomToolbarSelect();
     const options = {
       filterType: 'multiselect',
-      fixedHeader: false,
+      fixedHeader: true,
       responsive: 'scroll',
       rowsSelected: selectedDataIndexes,
       onRowsSelect: this.handleRowsSelect,
@@ -279,12 +293,14 @@ class EnhancedTable extends Component<Props> {
     };
     return (
       <Paper className={classes.root}>
-        <MUIDataTable
-          title={title}
-          data={sortedData}
-          columns={columns}
-          options={options}
-        />
+        <MuiThemeProvider theme={getMuiTheme()}>
+          <MUIDataTable
+            title={title}
+            data={sortedData}
+            columns={columns}
+            options={options}
+          />
+        </MuiThemeProvider>
       </Paper>
     );
   }

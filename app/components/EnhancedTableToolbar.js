@@ -15,7 +15,7 @@ const toolbarStyles = theme => ({
     position: 'sticky',
     top: 60,
     backgroundColor: 'white',
-    zIndex: 2,
+    zIndex: 101,
   },
   highlight: ux.getHighlightTheme(theme, theme.palette.type),
   spacer: {
@@ -34,8 +34,6 @@ const toolbarStyles = theme => ({
 
 type Props = {
   classes: {},
-  numSelected: number,
-  enableEditContainer?: boolean,
   handleAddByFile?: () => {},
   handleAddByFolder?: () => {}
 };
@@ -66,7 +64,7 @@ class EnhancedTableToolbar extends Component<Props> {
 
   render() {
     const {
-      numSelected, classes, handleAddByFile, enableEditContainer
+      classes, handleAddByFile
     } = this.props;
     const { anchorEl } = this.state;
     return (
