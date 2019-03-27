@@ -1,0 +1,7 @@
+export const reportConstants = {
+  REPORT_STARTED: 'REPORT_STARTED',
+  REPORT_COMPLETED: 'REPORT_COMPLETED',
+  REPORT_LISTENERS_STARTED: 'REPORT_LISTENERS_STARTED'
+};
+
+export default reportConstants;
