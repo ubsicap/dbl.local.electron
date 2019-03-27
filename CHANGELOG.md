@@ -1,3 +1,12 @@
+### Version 0.31.2
+#### Fix
+- (really) allow download of resources when some have already been stored and others have been revised
+- Fix click handlers in resources dialog
+- don't responsively hide checkbox column
+- keep header row showing in table while scrolling
+- keep add button showing while scrolling
+- Disable selecting rows when adding/loading resources
+
 ### Version 0.31.1
 #### Fix
 - allow download of resources when some have already been stored and others have been revised
