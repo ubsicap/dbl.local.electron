@@ -12,9 +12,15 @@ export function reports(state = initialState, action) {
     }
     case reportConstants.REPORT_STARTED: {
       const { reportsStarted: reportsStartedOrig = {} } = state;
-      const { referenceToken, date, reportType } = action;
-      const reportsStarted =
-        { ...reportsStartedOrig, [referenceToken]: { date, referenceToken, reportType } };
+      const {
+        referenceToken, date, reportType, bundleId
+      } = action;
+      const reportsStarted = {
+        ...reportsStartedOrig,
+        [referenceToken]: {
+          date, referenceToken, reportType, bundleId
+        }
+      };
       return {
         ...state,
         reportsStarted
