@@ -109,7 +109,7 @@ type Props = {
   pasteItems: () => {}
 };
 
-class EditEntryMetadataDialog extends PureComponent<Props> {
+class EntryReports extends PureComponent<Props> {
   props: Props;
   state = {
     sectionSelections: {}
@@ -241,10 +241,8 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
       <div>
         <EntryAppBar
           origBundle={selectedBundle}
-          mode="metadata"
+          mode="reports"
           modeUi={modeUi}
-          selectedItemsForCopy={sectionsSelected}
-          itemsTypeForCopy="metadata sections"
           actionButton={this.conditionallyRenderPrimaryActionButton()}
           handleClose={this.handleClose}
         />
@@ -277,9 +275,9 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
 }
 
 export default compose(
-  withStyles(materialStyles, { name: 'EditEntryMetadataDialog' }),
+  withStyles(materialStyles),
   connect(
     mapStateToProps,
     mapDispatchToProps
   ),
-)(EditEntryMetadataDialog);
+)(EntryReports);

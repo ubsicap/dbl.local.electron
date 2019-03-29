@@ -19,6 +19,7 @@ import CopyForPasteButton from './CopyForPasteButton';
 import EntryTitle from '../components/EntryTitle';
 import { bundleService } from '../services/bundle.service';
 import { utilities } from '../utils/utilities';
+import { openEntryDrawer, resetEntryAppBar } from '../actions/entryAppBar.actions';
 import { selectItemsToPaste } from '../actions/clipboard.actions';
 import { emptyObject } from '../utils/defaultValues';
 
@@ -29,12 +30,18 @@ type Props = {
   openDrawer: boolean,
   mode: string,
   modeUi: {},
-  selectedItemsForCopy: [],
-  itemsTypeForCopy: string,
+  selectedItemsForCopy?: [],
+  itemsTypeForCopy?: string,
   actionButton: React.Node,
   selectItemsToPaste: () => {},
-  handleDrawerOpen: () => {},
+  openEntryDrawer: () => {},
+  resetEntryAppBar: () => {},
   handleClose: () => {}
+};
+
+const defaultProps = {
+  selectedItemsForCopy: undefined,
+  itemsTypeForCopy: undefined
 };
 
 const materialStyles = theme => ({
@@ -92,16 +99,27 @@ const getEntryPageUrl = createSelector(
 
 function mapStateToProps(state, props) {
   return {
-    entryPageUrl: getEntryPageUrl(state, props)
+    entryPageUrl: getEntryPageUrl(state, props),
+    openDrawer: state.entryAppBar.openDrawer,
   };
 }
 
 const mapDispatchToProps = {
   selectItemsToPaste,
+  openEntryDrawer,
+  resetEntryAppBar
 };
 
 class EntryAppBar extends Component<Props> {
   props: Props;
+
+  componentDidMount() {
+    this.props.resetEntryAppBar();
+  }
+
+  componentWillUnmount() {
+    this.props.resetEntryAppBar();
+  }
 
   onOpenDBLEntryLink = (event) => {
     utilities.onOpenLink(this.props.entryPageUrl)(event);
@@ -131,7 +149,7 @@ class EntryAppBar extends Component<Props> {
         <Toolbar className={classes.toolBar} disableGutters={!openDrawer}>
           <IconButton
             aria-label="Open drawer"
-            onClick={this.props.handleDrawerOpen}
+            onClick={this.props.openEntryDrawer}
             className={classNames(classes.menuButton, openDrawer && classes.hide)}
             color="inherit"
           >
@@ -161,7 +179,7 @@ class EntryAppBar extends Component<Props> {
             </Grid>
           </Grid>
           <div className={classes.flex} />
-          {mode !== 'revisions' &&
+          {mode !== 'revisions' && selectedItemsForCopy &&
           <CopyForPasteButton
             key="btnCopyForPaste"
             classes={classes}
@@ -179,6 +197,8 @@ class EntryAppBar extends Component<Props> {
     );
   }
 }
+
+EntryAppBar.defaultProps = defaultProps;
 
 export default compose(
   withStyles(materialStyles, { withTheme: true }),

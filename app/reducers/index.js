@@ -12,6 +12,7 @@ import { dblDotLocalConfig } from './dblDotLocalConfig.reducer';
 import { alert } from './alert.reducer';
 import { clipboard } from './clipboard.reducer';
 import { reports } from './report.reducer';
+import { entryAppBar } from './entryAppBar.reducer';
 
 const rootReducer = combineReducers({
   router,
@@ -25,7 +26,8 @@ const rootReducer = combineReducers({
   bundlesSaveTo,
   alert,
   clipboard,
-  reports
+  reports,
+  entryAppBar
 });
 
 export default rootReducer;

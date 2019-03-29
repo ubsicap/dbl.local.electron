@@ -14,6 +14,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import OpenInNew from '@material-ui/icons/OpenInNew';
 import { openMetadataFile, openEditMetadata } from '../actions/bundleEditMetadata.actions';
 import { openResourceManager } from '../actions/bundleManageResources.actions';
+import { closeEntryDrawer } from '../actions/entryAppBar.actions';
 import { ux } from '../utils/ux';
 
 
@@ -23,7 +24,7 @@ type Props = {
   bundleId: string,
   activeBundle: {},
   openDrawer: boolean,
-  handleDrawerClose: () => {},
+  closeEntryDrawer: () => {},
   openMetadataFile: () => {},
   openEditMetadata: () => {},
   openResourceManager: () => {}
@@ -33,7 +34,8 @@ type Props = {
 function mapStateToProps(state, props) {
   const { id: bundleId } = props.activeBundle;
   return {
-    bundleId
+    bundleId,
+    openDrawer: state.entryAppBar.openDrawer,
   };
 }
 
@@ -41,6 +43,7 @@ const mapDispatchToProps = {
   openMetadataFile,
   openEditMetadata,
   openResourceManager,
+  closeEntryDrawer,
 };
 
 const materialStyles = theme => ({
@@ -154,7 +157,7 @@ class EntryDrawer extends PureComponent<Props> {
         }}
       >
         <div className={classes.drawerHeader}>
-          <IconButton onClick={this.props.handleDrawerClose}>
+          <IconButton onClick={this.props.closeEntryDrawer}>
             {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
           </IconButton>
         </div>
