@@ -1,9 +1,7 @@
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
-import { reportConstants } from '../constants/report.constants';
 
 export const reportService = {
   checksUseContent,
-  setupReportListeners
 };
 export default reportService;
 
@@ -25,42 +23,4 @@ function checksUseContent(reference, bundleId) {
       </data>
   </useContent>
 </tasks>`);
-}
-
-export function setupReportListeners() {
-  return (dispatch, getState) => {
-    const { authentication: { eventSource } } = getState();
-    if (!eventSource) {
-      console.error('EventSource undefined');
-      return;
-    }
-    const dispatchListenStorerReport = (e) => dispatch(listenStorerReport(e));
-
-    const listeners = {
-      'storer/report': dispatchListenStorerReport
-    };
-    Object.keys(listeners).forEach((evType) => {
-      const handler = listeners[evType];
-      eventSource.addEventListener(evType, handler);
-    });
-    return dispatch({ type: reportConstants.REPORT_LISTENERS_STARTED, listeners });
-  };
-}
-
-/*
-  [2019-03-27 15:28:54,356] INFO storer: storer, report, 1a01, 13375b5d-5b8a-4d8a-8f0f-32397484fa17
- */
-function listenStorerReport(event) {
-  return (dispatch, getState) => {
-    const { reports } = getState();
-    const data = JSON.parse(event.data);
-    const [bundleId, task] = data.args;
-    if (bundleId !== bundleIdTarget) {
-      return;
-    }
-    console.log(`report listenStorerExecuteTask: ${event.data}`);
-    if (['copyMetadata', 'copyResources'].includes(task)) {
-      dispatch({ type: reportConstants.REPORT_COMPLETED, task });
-    }
-  };
 }
