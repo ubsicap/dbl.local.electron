@@ -7,7 +7,8 @@ import EntryDrawer from '../components/EntryDrawer';
 import EntryDialogBody from '../components/EntryDialogBody';
 import { ux } from '../utils/ux';
 import { closeEntryReports } from '../actions/report.actions';
-import { emptyArray, emptyObject } from '../utils/defaultValues';
+import EnhancedTable from './EnhancedTable';
+import { emptyObject } from '../utils/defaultValues';
 
 const getBundlesById = (state) => state.bundles.addedByBundleIds || emptyObject;
 
@@ -34,6 +35,8 @@ type Props = {
   activeBundle: {},
   closeEntryReports: () => {}
 };
+
+const reports = [{ type: 'content checks' }];
 
 class EntryReports extends PureComponent<Props> {
   props: Props;
@@ -67,7 +70,16 @@ class EntryReports extends PureComponent<Props> {
           activeBundle={activeBundle}
         />
         <EntryDialogBody>
-          <div>hello world</div>
+          <EnhancedTable
+            data={reports}
+            title="Reports"
+            columnConfig={{ name: 'type', label: 'type' }}
+            orderBy={'type'}
+            orderDirection={'asc'}
+            onSelectedRowIds={this.handleSelectedRowIds}
+            onChangeSort={this.handleChangeSort}
+            selectedIds={[]}
+          />
         </EntryDialogBody>
       </div>
     );
