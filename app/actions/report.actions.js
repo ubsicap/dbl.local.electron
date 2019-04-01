@@ -1,11 +1,34 @@
 import uuidv1 from 'uuid/v1';
+import { history } from '../store/configureStore';
 import { reportConstants } from '../constants/report.constants';
+import { navigationConstants } from '../constants/navigation.constants';
 import { reportService } from '../services/report.service';
+import { utilities } from '../utils/utilities';
 
 export const reportActions = {
+  openEntryReports,
+  closeEntryReports,
   setupReportListeners,
-  startReport
+  startReport,
 };
+
+export function openEntryReports(bundleId) {
+  return dispatch => {
+    const url =
+    utilities.buildRouteUrl(
+      navigationConstants.NAVIGATION_ENTRY_REPORTS,
+      { bundleId }
+    );
+    history.push(url);
+    dispatch({ type: reportConstants.ENTRY_REPORTS_OPENED, bundleId });
+    dispatch(setupReportListeners());
+  };
+}
+
+export function closeEntryReports(bundleId) {
+  history.push(navigationConstants.NAVIGATION_BUNDLES);
+  return { type: reportConstants.ENTRY_REPORTS_OPENED, bundleId };
+}
 
 export function setupReportListeners() {
   return (dispatch, getState) => {

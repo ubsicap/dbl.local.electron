@@ -14,6 +14,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import OpenInNew from '@material-ui/icons/OpenInNew';
 import { openMetadataFile, openEditMetadata } from '../actions/bundleEditMetadata.actions';
 import { openResourceManager } from '../actions/bundleManageResources.actions';
+import { openEntryReports } from '../actions/report.actions';
 import { closeEntryDrawer } from '../actions/entryAppBar.actions';
 import { ux } from '../utils/ux';
 
@@ -27,7 +28,8 @@ type Props = {
   closeEntryDrawer: () => {},
   openMetadataFile: () => {},
   openEditMetadata: () => {},
-  openResourceManager: () => {}
+  openResourceManager: () => {},
+  openEntryReports: () => {}
 };
 
 
@@ -44,6 +46,7 @@ const mapDispatchToProps = {
   openEditMetadata,
   openResourceManager,
   closeEntryDrawer,
+  openEntryReports
 };
 
 const materialStyles = theme => ({
@@ -111,6 +114,11 @@ class EntryDrawer extends PureComponent<Props> {
         icon: ux.getModeIcon('revisions'),
         handleClick: this.handleSwitchToRevisions
       },
+      {
+        label: 'Reports',
+        icon: ux.getModeIcon('reports'),
+        handleClick: this.handleSwitchToReports
+      },
     ]
   );
 
@@ -138,6 +146,11 @@ class EntryDrawer extends PureComponent<Props> {
   handleSwitchToRevisions = () => {
     const { bundleId } = this.props;
     this.props.openResourceManager(bundleId, 'revisions', false);
+  }
+
+  handleSwitchToReports = () => {
+    const { bundleId } = this.props;
+    this.props.openEntryReports(bundleId, 'reports');
   }
 
   render() {

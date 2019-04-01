@@ -2,6 +2,7 @@ import React from 'react';
 import Badge from '@material-ui/core/Badge';
 import Description from '@material-ui/icons/Description';
 import FolderOpen from '@material-ui/icons/FolderOpen';
+import InsertChartOutlined from '@material-ui/icons/InsertChartOutlined';
 import ListAltIcon from '@material-ui/icons/FormatListNumberedRtl';
 import { lighten } from '@material-ui/core/styles/colorManipulator';
 import { bundleService } from '../services/bundle.service';
@@ -186,8 +187,17 @@ function getClipboardTooltip(selectedItemsToPaste) {
 }
 
 function getModeIcon(mode, props) {
-  if (mode === 'revisions') {
-    return <ListAltIcon {...props} />;
+  switch (mode) {
+    case 'revisions':
+      return <ListAltIcon {...props} />;
+    case 'metadata':
+      return <Description {...props} />;
+    case 'reports':
+      return <InsertChartOutlined {...props} />;
+    case 'download':
+    case 'addFiles':
+    case 'store':
+    default:
+      return <FolderOpen {...props} />;
   }
-  return mode === 'metadata' ? <Description {...props} /> : <FolderOpen {...props} />;
 }
