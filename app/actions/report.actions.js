@@ -10,6 +10,7 @@ export const reportActions = {
   closeEntryReports,
   setupReportListeners,
   startReport,
+  selectReportsToRun,
 };
 
 export function openEntryReports(bundleId) {
@@ -80,3 +81,6 @@ function listenStorerReport(event) {
   };
 }
 
+export function selectReportsToRun(bundleId, selectedReportIds) {
+  return { type: reportConstants.REPORTS_SELECTED_TO_RUN, bundleId, selectedReportIds };
+}

@@ -6,11 +6,18 @@ import EntryAppBar from '../components/EntryAppBar';
 import EntryDrawer from '../components/EntryDrawer';
 import EntryDialogBody from '../components/EntryDialogBody';
 import { ux } from '../utils/ux';
-import { closeEntryReports } from '../actions/report.actions';
+import { closeEntryReports, selectReportsToRun } from '../actions/report.actions';
 import EnhancedTable from './EnhancedTable';
-import { emptyObject } from '../utils/defaultValues';
+import { utilities } from '../utils/utilities';
+import { emptyObject, emptyArray } from '../utils/defaultValues';
 
 const getBundlesById = (state) => state.bundles.addedByBundleIds || emptyObject;
+const getSelectedReportIdsToRun = (state, props) =>
+  utilities.getOrDefault(
+    state.reports.selectedReportIdsToRun,
+    props.match.params.bundleId,
+    emptyArray
+  );
 
 function mapStateToProps(state, props) {
   const { bundleId } = props.match.params;
@@ -18,12 +25,14 @@ function mapStateToProps(state, props) {
   const activeBundle = bundleId ? bundlesById[bundleId] : emptyObject;
   return {
     bundleId,
-    activeBundle
+    activeBundle,
+    selectedReportIdsToRun: getSelectedReportIdsToRun(state, props),
   };
 }
 
 const mapDispatchToProps = {
-  closeEntryReports
+  closeEntryReports,
+  selectReportsToRun
 };
 
 const materialStyles = theme => ({
@@ -33,10 +42,16 @@ const materialStyles = theme => ({
 type Props = {
   bundleId: string,
   activeBundle: {},
-  closeEntryReports: () => {}
+  selectedReportIdsToRun: [],
+  closeEntryReports: () => {},
+  selectReportsToRun: () => {}
 };
 
-const reports = [{ type: 'content checks' }];
+function createReportRowData(type) {
+  return { id: type, type };
+}
+const reports = [createReportRowData('content checks')];
+const columnsConfig = ux.mapColumns(createReportRowData(), () => false, () => null);
 
 class EntryReports extends PureComponent<Props> {
   props: Props;
@@ -73,12 +88,13 @@ class EntryReports extends PureComponent<Props> {
           <EnhancedTable
             data={reports}
             title="Reports"
-            columnConfig={{ name: 'type', label: 'type' }}
-            orderBy={'type'}
-            orderDirection={'asc'}
-            onSelectedRowIds={this.handleSelectedRowIds}
-            onChangeSort={this.handleChangeSort}
-            selectedIds={[]}
+            columnConfig={columnsConfig}
+            orderBy="type"
+            secondarySorts={emptyArray}
+            orderDirection="asc"
+            onSelectedRowIds={this.props.selectReportsToRun}
+            onChangeSort={() => {}}
+            selectedIds={this.props.selectedReportIdsToRun}
           />
         </EntryDialogBody>
       </div>

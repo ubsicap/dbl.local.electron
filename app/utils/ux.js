@@ -136,7 +136,7 @@ function getEntryDrawerStyles(theme) {
 }
 
 function mapColumns(columns, getIsNumeric, getColumnLabel) {
-  return Object.keys(columns)
+  return Object.keys(columns).filter(c => c !== 'id')
     .map(c => ({ name: c, type: getIsNumeric(c) ? 'numeric' : 'string', label: getColumnLabel(c) }));
 }
 

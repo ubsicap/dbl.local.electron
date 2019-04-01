@@ -223,7 +223,7 @@ function createAddedResource(
   };
 }
 
-function isNumeric(columnName) {
+function getIsNumeric(columnName) {
   return ['size', 'revision', 'stored', 'manifest'].includes(columnName);
 }
 
@@ -238,12 +238,12 @@ function createColumnConfig(mode) {
     const {
       id, href, localBundle, disabled, ...columns
     } = createRevisionData();
-    return ux.mapColumns(columns, isNumeric, getLabel);
+    return ux.mapColumns(columns, getIsNumeric, getLabel);
   }
   const {
     id, uri, disabled, checksum, ...columns
   } = createResourceData(null, emptyObject, emptyObject);
-  return ux.mapColumns(columns, isNumeric, getLabel);
+  return ux.mapColumns(columns, getIsNumeric, getLabel);
 }
 
 const getAllManifestResources = (state) =>
