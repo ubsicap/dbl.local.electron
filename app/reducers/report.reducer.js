@@ -37,8 +37,8 @@ export function reports(state = initialState, action) {
       };
     }
     case reportConstants.REPORTS_SELECTED_TO_RUN: {
-      const { selectedReportIds: selectedReportIdsOrig, bundleId } = state;
-      const selectedReportIdsToRun = { ...selectedReportIdsOrig, [bundleId]: action.selectedReportIds };
+      const { selectedReportIds: selectedReportIdsOrig } = state;
+      const selectedReportIdsToRun = { ...selectedReportIdsOrig, [action.bundleId]: action.selectedReportIds };
       return {
         ...state,
         selectedReportIdsToRun

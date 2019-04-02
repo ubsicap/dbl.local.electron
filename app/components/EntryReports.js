@@ -67,6 +67,10 @@ class EntryReports extends PureComponent<Props> {
     return { appBar: { title, OkButtonLabel: '', OkButtonIcon: (null) } };
   }
 
+  handleSelectedRowIds = (selectedRowIds) => {
+    this.props.selectReportsToRun(this.props.bundleId, selectedRowIds);
+  }
+
   render() {
     const {
       activeBundle, bundleId
@@ -92,7 +96,7 @@ class EntryReports extends PureComponent<Props> {
             orderBy="type"
             secondarySorts={emptyArray}
             orderDirection="asc"
-            onSelectedRowIds={this.props.selectReportsToRun}
+            onSelectedRowIds={this.handleSelectedRowIds}
             onChangeSort={() => {}}
             selectedIds={this.props.selectedReportIdsToRun}
           />
