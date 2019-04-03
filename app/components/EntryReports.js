@@ -51,7 +51,6 @@ function createReportRowData(type) {
   return { id: type, type };
 }
 const reports = [createReportRowData('content checks')];
-const columnsConfig = ux.mapColumns(createReportRowData(), () => false, () => null);
 
 class EntryReports extends PureComponent<Props> {
   props: Props;
@@ -75,6 +74,7 @@ class EntryReports extends PureComponent<Props> {
     const {
       activeBundle, bundleId
     } = this.props;
+    const columnsConfig = ux.mapColumns(createReportRowData(), () => false, () => null);
     const modeUi = this.modeUi();
     return (
       <div>
