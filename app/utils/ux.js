@@ -12,6 +12,7 @@ export const ux = {
   getDblRowStyles,
   getDblRowBackgroundColor,
   getEntryDrawerStyles,
+  getEntryUxStyles,
   mapColumns,
   getHighlightTheme,
   conditionallyRenderBadge,
@@ -133,6 +134,43 @@ function getEntryDrawerStyles(theme) {
       marginLeft: drawerWidth,
     },
   };
+}
+
+function getEntryUxStyles(theme) {
+  return {
+    errorBar: {
+      color: theme.palette.secondary.light,
+    },
+    successBar: {
+      color: theme.palette.primary.light,
+    },
+    toolBar: {
+      paddingLeft: '10px',
+    },
+    flex: {
+      flex: 1,
+    },
+    leftIcon: {
+      marginRight: theme.spacing.unit,
+    },
+    iconSmall: {
+      fontSize: 20,
+    },
+    button: {
+      margin: theme.spacing.unit,
+    },
+    input: {
+      display: 'none',
+    },
+    buttonProgress: {
+      color: theme.palette.secondary.main,
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      marginTop: -25,
+      marginLeft: -23,
+    }
+  }
 }
 
 function mapColumns(columns, getIsNumeric, getColumnLabel) {

@@ -11,6 +11,7 @@ export const reportActions = {
   setupReportListeners,
   startReport,
   selectReportsToRun,
+  startSelectedReports,
 };
 
 export function openEntryReports(bundleId) {
@@ -52,19 +53,32 @@ export function setupReportListeners() {
 }
 
 export function startReport(bundleId, reportType) {
-  const uuid1 = uuidv1();
-  const referenceToken = uuid1.substr(0, 5);
-  switch (reportType) {
-    case 'ChecksUseContent': {
-      reportService.checksUseContent(bundleId, referenceToken);
-      break;
+  return async (dispatch) => {
+    const uuid1 = uuidv1();
+    const referenceToken = uuid1.substr(0, 5);
+    switch (reportType) {
+      case reportConstants.ChecksUseContent: {
+        await reportService.checksUseContent({ bundleId, reference: referenceToken });
+        break;
+      }
+      default: {
+        throw new Error(`Unhandled reportType: ${reportType}`);
+      }
     }
-    default: {
-      throw new Error(`Unhandled reportType: ${reportType}`);
-    }
-  }
-  return {
-    type: reportConstants.REPORT_STARTED, bundleId, referenceToken, reportType
+    return dispatch({
+      type: reportConstants.REPORT_STARTED, bundleId, referenceToken, reportType
+    });
+  };
+}
+
+export function startSelectedReports(bundleId) {
+  return (dispatch, getState) => {
+    const { selectedReportIdsToRun } = getState().reports;
+    const selectedReportIdsToRunNow = selectedReportIdsToRun[bundleId] || [];
+    selectedReportIdsToRunNow.forEach(reportId => {
+      dispatch(startReport(bundleId, reportId));
+    });
+    dispatch(selectReportsToRun([])); // finished starting selected reports
   };
 }
 

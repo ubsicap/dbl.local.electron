@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import CircularProgress from 'material-ui/CircularProgress';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import DBLEntryRow from './DBLEntryRow';
 import { fetchAll, setupBundlesEventSource } from '../actions/bundle.actions';
 
