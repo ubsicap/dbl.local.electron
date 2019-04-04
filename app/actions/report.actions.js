@@ -23,7 +23,6 @@ export function openEntryReports(bundleId) {
     );
     history.push(url);
     dispatch({ type: reportConstants.ENTRY_REPORTS_OPENED, bundleId });
-    dispatch(setupReportListeners());
   };
 }
 
