@@ -3,6 +3,7 @@ import { history } from '../store/configureStore';
 import { reportConstants } from '../constants/report.constants';
 import { navigationConstants } from '../constants/navigation.constants';
 import { reportService } from '../services/report.service';
+import { browserWindowService } from '../services/browserWindow.service';
 import { utilities } from '../utils/utilities';
 
 export const reportActions = {
@@ -55,6 +56,9 @@ export function startReport(bundleId, reportType) {
   return async (dispatch) => {
     const uuid1 = uuidv1();
     const referenceToken = uuid1.substr(0, 5);
+    dispatch({
+      type: reportConstants.REPORT_STARTED, bundleId, referenceToken, reportType
+    });
     switch (reportType) {
       case reportConstants.ChecksUseContent: {
         await reportService.checksUseContent({ bundleId, reference: referenceToken });
@@ -64,9 +68,6 @@ export function startReport(bundleId, reportType) {
         throw new Error(`Unhandled reportType: ${reportType}`);
       }
     }
-    return dispatch({
-      type: reportConstants.REPORT_STARTED, bundleId, referenceToken, reportType
-    });
   };
 }
 
@@ -85,9 +86,13 @@ export function startSelectedReports(bundleId) {
   [2019-03-27 15:28:54,356] INFO storer: storer, report, 1a01, 13375b5d-5b8a-4d8a-8f0f-32397484fa17
  */
 function listenStorerReport(event) {
-  return (dispatch) => {
+  return async (dispatch, getState) => {
     const data = JSON.parse(event.data);
     const [referenceToken, reportId] = data.args;
+    const { reportsStarted = {} } = getState().reports;
+    const { bundleId } = reportsStarted[referenceToken];
+    const reportFilePath = await reportService.saveReportToFile(bundleId, referenceToken, reportId);
+    browserWindowService.openFileInChromeBrowser(reportFilePath, false);
     dispatch({
       type: reportConstants.REPORT_COMPLETED, referenceToken, reportId, date: Date.now()
     });

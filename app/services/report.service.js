@@ -1,9 +1,16 @@
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
+import { bundleService } from '../services/bundle.service';
+import download from '../services/download-with-fetch.flow';
+import dblDotLocalConfigConstants from '../constants/dblDotLocal.constants';
+import { authHeader } from '../helpers';
 
 export const reportService = {
   checksUseContent,
+  saveReportToFile
 };
 export default reportService;
+
+const REPORTS_API = 'report';
 
 /*
   [2019-03-27 15:28:54,214] INFO pywsgi: 127.0.0.1 - - [2019-03-27 15:28:54] "POST /session/add-tasks HTTP/1.1" 200 118 0.014043
@@ -22,4 +29,14 @@ function checksUseContent({ bundleId, reference }) {
           <bundle_id>${bundleId}</bundle_id>
       </data>
   </useContent>`);
+}
+
+
+async function saveReportToFile(bundleId, referenceToken, reportId) {
+  const { filePath }
+    = bundleService.getTempFolderForFile(bundleId, `${referenceToken}-${reportId}.html`);
+  // todo
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${REPORTS_API}/${reportId}`;
+  await download(url, filePath, () => {}, authHeader());
+  return filePath;
 }
