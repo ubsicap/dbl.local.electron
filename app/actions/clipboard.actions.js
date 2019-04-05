@@ -7,7 +7,8 @@ import { clipboardHelpers } from '../helpers/clipboard';
 export const clipboardActions = {
   selectItemsToPaste,
   pasteItems,
-  clearClipboard
+  clearClipboard,
+  setupClipboardListeners
 };
 
 export function selectItemsToPaste(bundleId, items, type) {
@@ -40,7 +41,6 @@ export function pasteItems(bundleId) {
     if (bundleId === selectedItemsToPaste.bundleId) {
       return;
     }
-    dispatch(setupClipboardListeners());
     dispatch(request(bundleId, selectedItemsToPaste.items));
     if (selectedItemsToPaste.itemsType === 'resources') {
       await bundleService.copyResources(

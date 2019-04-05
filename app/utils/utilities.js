@@ -24,7 +24,7 @@ export const utilities = {
   formatContainer,
   getOrDefault,
   getFilePathResourceData,
-  formatUri
+  formatUri,
 };
 export default utilities;
 

@@ -63,7 +63,8 @@ export const bundleService = {
   getSubsystemDownloadQueue,
   getSubsystemUploadQueue,
   getRevisionOrParentRevision,
-  getMapperInputOverwrites
+  getMapperInputOverwrites,
+  getTempFolderForFile
 };
 export default bundleService;
 

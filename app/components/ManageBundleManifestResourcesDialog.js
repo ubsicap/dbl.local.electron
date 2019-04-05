@@ -36,6 +36,7 @@ import PasteButton from './PasteButton';
 import MapperTable from '../components/MapperTable';
 import EntryAppBar from '../components/EntryAppBar';
 import EntryDrawer from '../components/EntryDrawer';
+import EntryDialogBody from '../components/EntryDialogBody';
 import { emptyArray, emptyObject } from '../utils/defaultValues';
 
 const { dialog } = require('electron').remote;
@@ -222,7 +223,7 @@ function createAddedResource(
   };
 }
 
-function isNumeric(columnName) {
+function getIsNumeric(columnName) {
   return ['size', 'revision', 'stored', 'manifest'].includes(columnName);
 }
 
@@ -237,12 +238,12 @@ function createColumnConfig(mode) {
     const {
       id, href, localBundle, disabled, ...columns
     } = createRevisionData();
-    return ux.mapColumns(columns, isNumeric, getLabel);
+    return ux.mapColumns(columns, getIsNumeric, getLabel);
   }
   const {
     id, uri, disabled, checksum, ...columns
   } = createResourceData(null, emptyObject, emptyObject);
-  return ux.mapColumns(columns, isNumeric, getLabel);
+  return ux.mapColumns(columns, getIsNumeric, getLabel);
 }
 
 const getAllManifestResources = (state) =>
@@ -761,9 +762,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   constructor(props) {
     super(props);
     this.state = {
-      openDrawer: false
+      closing: false
     };
   }
+
 
   componentDidMount() {
     const { bundleId, mode } = this.props;
@@ -817,14 +819,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       }
     }
   }
-
-  handleDrawerOpen = () => {
-    this.setState({ openDrawer: true });
-  };
-
-  handleDrawerClose = () => {
-    this.setState({ openDrawer: false });
-  };
 
   handleDownloadResources = (bundleId, manifestResources) => () => {
     const effectiveSelectedIds = (manifestResources || emptyArray).map(row => row.id);
@@ -1429,7 +1423,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       classes, origBundle = {}, mode,
       publicationsHealthMessage = '', publicationsHealthSuccessMessage, loading
     } = this.props;
-    const { openDrawer } = this.state;
     const { storedResources } = this.getSelectedResourcesByStatus();
     const selectedItemsForCopy = storedResources.map(r => r.uri);
     const modeUi = this.modeUi();
@@ -1438,25 +1431,17 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       <div>
         <EntryAppBar
           origBundle={origBundle}
-          openDrawer={openDrawer}
           mode={mode}
           modeUi={modeUi}
           selectedItemsForCopy={selectedItemsForCopy}
           itemsTypeForCopy="resources"
           actionButton={this.renderOkOrPasteResourcesButton()}
-          handleDrawerOpen={this.handleDrawerOpen}
           handleClose={this.handleClose}
         />
         <EntryDrawer
           activeBundle={origBundle}
-          openDrawer={openDrawer}
-          handleDrawerClose={this.handleDrawerClose}
         />
-        <main
-          className={classNames(classes.content, {
-            [classes.contentShift]: openDrawer,
-          })}
-        >
+        <EntryDialogBody>
           {isModifyFilesMode && publicationsHealthMessage &&
             <Toolbar className={classes.errorBar}>
               <Typography variant="subtitle1" color="inherit">
@@ -1483,7 +1468,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
             </Card>
           }
           {this.renderTable()}
-        </main>
+        </EntryDialogBody>
       </div>
     );
   }

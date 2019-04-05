@@ -15,7 +15,7 @@ import VerifiedUserOutlined from '@material-ui/icons/VerifiedUserOutlined';
 import VerifiedUser from '@material-ui/icons/VerifiedUser';
 import AddCircle from '@material-ui/icons/AddCircle';
 import Button from '@material-ui/core/Button';
-import FileDownload from 'material-ui/svg-icons/file/file-download';
+import FileDownload from '@material-ui/icons/CloudDownload';
 import Folder from '@material-ui/icons/Folder';
 import StarBorderIcon from '@material-ui/icons/StarBorder';
 import StarIcon from '@material-ui/icons/Star';

@@ -14,6 +14,8 @@ import ListItemText from '@material-ui/core/ListItemText';
 import OpenInNew from '@material-ui/icons/OpenInNew';
 import { openMetadataFile, openEditMetadata } from '../actions/bundleEditMetadata.actions';
 import { openResourceManager } from '../actions/bundleManageResources.actions';
+import { openEntryReports } from '../actions/report.actions';
+import { closeEntryDrawer } from '../actions/entryAppBar.actions';
 import { ux } from '../utils/ux';
 
 
@@ -23,17 +25,19 @@ type Props = {
   bundleId: string,
   activeBundle: {},
   openDrawer: boolean,
-  handleDrawerClose: () => {},
+  closeEntryDrawer: () => {},
   openMetadataFile: () => {},
   openEditMetadata: () => {},
-  openResourceManager: () => {}
+  openResourceManager: () => {},
+  openEntryReports: () => {}
 };
 
 
 function mapStateToProps(state, props) {
   const { id: bundleId } = props.activeBundle;
   return {
-    bundleId
+    bundleId,
+    openDrawer: state.entryAppBar.openDrawer,
   };
 }
 
@@ -41,43 +45,14 @@ const mapDispatchToProps = {
   openMetadataFile,
   openEditMetadata,
   openResourceManager,
+  closeEntryDrawer,
+  openEntryReports
 };
 
 const materialStyles = theme => ({
   ...ux.getDblRowStyles(theme),
   ...ux.getEntryDrawerStyles(theme),
-  errorBar: {
-    color: theme.palette.secondary.light,
-  },
-  successBar: {
-    color: theme.palette.primary.light,
-  },
-  toolBar: {
-    paddingLeft: '10px',
-  },
-  flex: {
-    flex: 1,
-  },
-  leftIcon: {
-    marginRight: theme.spacing.unit,
-  },
-  iconSmall: {
-    fontSize: 20,
-  },
-  button: {
-    margin: theme.spacing.unit,
-  },
-  input: {
-    display: 'none',
-  },
-  buttonProgress: {
-    color: theme.palette.secondary.main,
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    marginTop: -25,
-    marginLeft: -23,
-  }
+  ...ux.getEntryUxStyles(theme)
 });
 
 
@@ -108,6 +83,11 @@ class EntryDrawer extends PureComponent<Props> {
         icon: ux.getModeIcon('revisions'),
         handleClick: this.handleSwitchToRevisions
       },
+      {
+        label: 'Reports',
+        icon: ux.getModeIcon('reports'),
+        handleClick: this.handleSwitchToReports
+      },
     ]
   );
 
@@ -137,6 +117,11 @@ class EntryDrawer extends PureComponent<Props> {
     this.props.openResourceManager(bundleId, 'revisions', false);
   }
 
+  handleSwitchToReports = () => {
+    const { bundleId } = this.props;
+    this.props.openEntryReports(bundleId, 'reports');
+  }
+
   render() {
     const {
       classes
@@ -154,7 +139,7 @@ class EntryDrawer extends PureComponent<Props> {
         }}
       >
         <div className={classes.drawerHeader}>
-          <IconButton onClick={this.props.handleDrawerClose}>
+          <IconButton onClick={this.props.closeEntryDrawer}>
             {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
           </IconButton>
         </div>
