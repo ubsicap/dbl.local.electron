@@ -1,3 +1,10 @@
+### Version 0.32.0
+#### Feature
+- Add Reports to entry side-menu
+
+#### Fix
+- Fix clipboard listener afer computer comes back from sleep/hibernation
+
 ### Version 0.31.2
 #### Fix
 - (really) allow download of resources when some have already been stored and others have been revised
