@@ -5,7 +5,7 @@ import { withStyles } from '@material-ui/core/styles';
 import { Set } from 'immutable';
 import classNames from 'classnames';
 import { createSelector } from 'reselect';
-import LinearProgress from '@material-ui/core/LinearProgress';
+import LinearProgress from 'material-ui/LinearProgress';
 import { Menu, MenuItem, Toolbar, Tooltip } from '@material-ui/core';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
