@@ -3,7 +3,7 @@
 - Add Reports to entry side-menu
 
 #### Fix
-- Fix clipboard listener afer computer comes back from sleep/hibernation
+- Fix clipboard listener after computer comes back from sleep/hibernation
 
 ### Version 0.31.2
 #### Fix
