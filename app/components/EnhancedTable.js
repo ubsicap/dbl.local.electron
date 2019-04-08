@@ -289,7 +289,9 @@ class EnhancedTable extends Component<Props> {
       ...customToolbarSelect,
       onColumnSortChange: this.handleRequestSort,
       onFilterChange: this.handleFilterChange,
-      page: this.state.page
+      page: this.state.page,
+      rowsPerPage: 50,
+      rowsPerPageOptions: [50, 100, 150, sortedData.length]
     };
     return (
       <Paper className={classes.root}>
