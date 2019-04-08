@@ -251,13 +251,13 @@ class EnhancedTable extends Component<Props> {
     if (!title) {
       return emptyObject;
     }
-    const { classes, editContainer } = this.props;
+    const { classes, editContainer, freezeCheckedColumnState } = this.props;
     return {
       customToolbarSelect:
         (selectedRows, displayData, setSelectedRows) =>
           (
             <React.Fragment>
-              {editContainer ? (
+              {editContainer && !freezeCheckedColumnState ? (
                 <div className={classes.highlight} style={{ width: '500px', paddingLeft: '10px', paddingRight: '10px' }}>
                   <IntegrationAutosuggest
                     getSuggestions={editContainer.getSuggestions}
