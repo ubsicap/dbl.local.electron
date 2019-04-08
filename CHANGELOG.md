@@ -1,3 +1,10 @@
+### Version 0.33.0
+#### Feature
+- Add better table page options (last option being the total resources)
+
+#### Fix
+- Fix: hide "Edit containers" box while adding resources
+
 ### Version 0.32.0
 #### Feature
 - Add Reports to entry side-menu
