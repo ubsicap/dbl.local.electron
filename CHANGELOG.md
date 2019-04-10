@@ -1,3 +1,8 @@
+### Version 0.33.1
+#### Fix
+- save user's selected table pagination option
+- dbl_dot_local_app: retry 408 errors as non-fatal (e.g during uploads)
+
 ### Version 0.33.0
 #### Feature
 - Add better table page options (last option being the total resources)
