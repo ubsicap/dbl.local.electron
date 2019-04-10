@@ -177,7 +177,8 @@ class EnhancedTable extends Component<Props> {
   constructor(props) {
     super(props);
     this.state = {
-      page: 0
+      page: 0,
+      rowsPerPage: 10
     };
   }
 
@@ -270,11 +271,16 @@ class EnhancedTable extends Component<Props> {
     };
   }
 
+  handleChangeRowsPerPage = (numberOfRows) => {
+    this.setState({ rowsPerPage: numberOfRows });
+  }
+
   render() {
     const {
       classes, sortedData, columns, selectedDataIndexes, selectableData,
       freezeCheckedColumnState, title
     } = this.props;
+    const { rowsPerPage } = this.state;
     const customToolbarSelect = this.getCustomToolbarSelect();
     const options = {
       filterType: 'multiselect',
@@ -290,8 +296,9 @@ class EnhancedTable extends Component<Props> {
       onColumnSortChange: this.handleRequestSort,
       onFilterChange: this.handleFilterChange,
       page: this.state.page,
-      rowsPerPage: 50,
-      rowsPerPageOptions: [50, 100, 150, sortedData.length]
+      rowsPerPage,
+      rowsPerPageOptions: [10, 50, 100, 150, sortedData.length],
+      onChangeRowsPerPage: this.handleChangeRowsPerPage
     };
     return (
       <Paper className={classes.root}>
