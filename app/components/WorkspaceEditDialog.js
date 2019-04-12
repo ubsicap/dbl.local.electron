@@ -33,7 +33,7 @@ const hostOptions = ['api.thedigitalbiblelibrary.org', 'api-demo.thedigitalbible
 function importSettingsToState(settings) {
   const { configXmlSettings, workspace } = settings;
   const workspaceName = workspace.name;
-  const { settings: { dbl } } = configXmlSettings;
+  const { settings: { dbl, storer } } = configXmlSettings;
   const {
     accessToken, secretKey, organizationType, downloadOpenAccessEntries = [false],
     host
@@ -43,13 +43,17 @@ function importSettingsToState(settings) {
   const settings_dbl_secretKey = secretKey[0];
   const settings_dbl_organizationType = organizationType[0];
   const settings_dbl_downloadOpenAccessEntries = downloadOpenAccessEntries[0] === 'true';
+  const { metadataTemplateDirOrNot = [null] } = storer[0];
+  const [metadataTemplateDir] = metadataTemplateDirOrNot;
+  const settings_storer_metadataTemplateDir = metadataTemplateDir ? { metadataTemplateDir } : {};
   return {
     workspaceName,
     settings_dbl_host,
     settings_dbl_accessToken,
     settings_dbl_secretKey,
     settings_dbl_organizationType,
-    settings_dbl_downloadOpenAccessEntries
+    settings_dbl_downloadOpenAccessEntries,
+    settings_storer_metadataTemplateDir
   };
 }
 
@@ -67,12 +71,15 @@ function exportStateToSettings(state, origSettings) {
     settings_dbl_accessToken,
     settings_dbl_secretKey,
     settings_dbl_organizationType,
-    settings_dbl_downloadOpenAccessEntries
+    settings_dbl_downloadOpenAccessEntries,
+    settings_storer_metadataTemplateDir,
   } = state;
   const workspacesDir = dblDotLocalService.getWorkspacesDir();
   const newFullPath = path.join(workspacesDir, workspaceName);
   const workspace = { ...origSettings.workspace, name: workspaceName, fullPath: newFullPath };
-  const downloadOpenAccessEntries = origSettings.configXmlSettings.settings.dbl[0].downloadOpenAccessEntries ? { downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries] } : {};
+  const downloadOpenAccessEntries =
+    origSettings.configXmlSettings.settings.dbl[0].downloadOpenAccessEntries ?
+      { downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries] } : {};
   const configXmlSettings = {
     settings: {
       ...origSettings.configXmlSettings.settings,
@@ -85,7 +92,11 @@ function exportStateToSettings(state, origSettings) {
         organizationType: [settings_dbl_organizationType],
         ...downloadOpenAccessEntries
         /* downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries] */
-      }]
+      }],
+      storer: [{
+        ...origSettings.configXmlSettings.settings.storer[0],
+        ...settings_storer_metadataTemplateDir,
+      }],
     }
   };
   return { workspace, configXmlSettings };
@@ -98,12 +109,14 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
   componentDidMount() {
     const { getInitialFormErrors } = this.props;
     if (getInitialFormErrors) {
-      const errors = Object.keys(this.state).map(name => this.getErrorText(name)).filter(v => v.length);
+      const errors =
+        Object.keys(this.state).map(name => this.getErrorText(name)).filter(v => v.length);
       getInitialFormErrors(errors);
     }
   }
 
-  renderHostMenuItems = () => hostOptions.map((option) => (<MenuItem key={option} value={option}>{option}</MenuItem>));
+  renderHostMenuItems = () =>
+    hostOptions.map((option) => (<MenuItem key={option} value={option}>{option}</MenuItem>));
 
   getOrganizationTypeValues = () => this.state.settings_dbl_organizationType || '';
 
@@ -223,6 +236,7 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
             />
             <SuperSelectField
               name="settings_dbl_organizationType"
+              checkPosition="left"
               multiple
               floatingLabel="Organization Type(s) *"
               floatingLabelStyle={{ color: 'rgba(0, 0, 0, 0.54)' }}
