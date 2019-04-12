@@ -275,6 +275,10 @@ class EnhancedTable extends Component<Props> {
     this.setState({ rowsPerPage: numberOfRows });
   }
 
+  handleChangePage = (currentPage) => {
+    this.setState({ page: currentPage });
+  }
+
   render() {
     const {
       classes, sortedData, columns, selectedDataIndexes, selectableData,
@@ -296,6 +300,7 @@ class EnhancedTable extends Component<Props> {
       onColumnSortChange: this.handleRequestSort,
       onFilterChange: this.handleFilterChange,
       page: this.state.page,
+      onChangePage: this.handleChangePage,
       rowsPerPage,
       rowsPerPageOptions: [10, 50, 100, 150, sortedData.length],
       onChangeRowsPerPage: this.handleChangeRowsPerPage
