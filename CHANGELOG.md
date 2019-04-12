@@ -1,3 +1,7 @@
+### Version 0.33.2
+#### Fix
+- preserve user's table page (don't jump to page 1 if user selects row on page 2)
+
 ### Version 0.33.1
 #### Fix
 - save user's selected table pagination option
