@@ -6,10 +6,15 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
+import Grid from '@material-ui/core/Grid';
+import Folder from '@material-ui/icons/Folder';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import CloseIcon from '@material-ui/icons/Close';
 import Switch from '@material-ui/core/Switch';
+import Tooltip from '@material-ui/core/Tooltip';
 import SuperSelectField from 'material-ui-superselectfield/es';
 import path from 'path';
+import fs from 'fs-extra';
 import filenamify from 'filenamify';
 import Select from '@material-ui/core/Select';
 import FormControl from '@material-ui/core/FormControl';
@@ -17,6 +22,8 @@ import InputLabel from '@material-ui/core/InputLabel';
 import Input from '@material-ui/core/Input';
 import MenuItem from '@material-ui/core/MenuItem';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
+
+const { dialog } = require('electron').remote;
 
 type Props = {
   open: boolean,
@@ -53,7 +60,7 @@ function importSettingsToState(settings) {
     settings_dbl_secretKey,
     settings_dbl_organizationType,
     settings_dbl_downloadOpenAccessEntries,
-    settings_storer_metadataTemplateDir
+    ...settings_storer_metadataTemplateDir
   };
 }
 
@@ -145,6 +152,12 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
       case 'settings_dbl_organizationType': {
         return value.length === 0 ? 'Requires ipc or lch (or both)' : '';
       }
+      case 'settings_storer_metadataTemplateDir': {
+        if (value.length === 0) {
+          return '';
+        }
+        return fs.existsSync(value) ? '' : `Metadata template dir ${value} no longer exists. Please pick another directory`;
+      }
       default: {
         return '';
       }
@@ -159,12 +172,29 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
     const { target } = event;
     const value = target.type === 'checkbox' ? target.checked : target.value;
     const { name } = target;
-    this.setState({
-      [name]: value
-    });
+    this.updateInputValue(name, value);
   }
 
+  updateInputValue = (name, value) => this.setState({ [name]: value });
+
   getInputValue = (name) => this.state[name] || '';
+
+  handlePickStorerMetadataTemplateDir = () => {
+    const defaultPath = this.getInputValue('settings_storer_metadataTemplateDir');
+    const [newFolder] = dialog.showOpenDialog({
+      defaultPath,
+      properties: ['openDirectory']
+    }) || [];
+    if (!newFolder) {
+      return;
+    }
+    this.updateInputValue('settings_storer_metadataTemplateDir', newFolder);
+  }
+
+  shouldShowResetMetadataTemplateDir = () =>
+    this.getInputValue('settings_storer_metadataTemplateDir').length > 0;
+
+  handleResetStorerMetadataTemplateDir = () => this.updateInputValue('settings_storer_metadataTemplateDir', '');
 
   render() {
     const organizationTypeValues = this.getOrganizationTypeValues().split(' ').filter(v => v.length).map(val => ({ value: val }));
@@ -259,6 +289,23 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
               }
               label="Download Open Access Entries"
             />
+            <Grid container>
+              <Grid item>
+                <Button id="metadataTemplateDir" size="small" color="primary" onClick={this.handlePickStorerMetadataTemplateDir}>
+                  <Folder />
+                  Metadata template directory
+                </Button>
+                {this.shouldShowResetMetadataTemplateDir() &&
+                  <Tooltip title="Clear">
+                    <Button size="small" color="primary" onClick={this.handleResetStorerMetadataTemplateDir}>
+                      <CloseIcon />
+                    </Button>
+                  </Tooltip>}
+              </Grid>
+              <Grid item>
+                {this.getInputValue('settings_storer_metadataTemplateDir')}
+              </Grid>
+            </Grid>
           </DialogContent>
           <DialogActions>
             <Button onClick={this.props.handleClickCancel} color="primary">
