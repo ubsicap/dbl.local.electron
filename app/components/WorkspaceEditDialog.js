@@ -21,11 +21,13 @@ import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
 import Input from '@material-ui/core/Input';
 import MenuItem from '@material-ui/core/MenuItem';
+import Typography from '@material-ui/core/Typography';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 
 const { dialog } = require('electron').remote;
 
 type Props = {
+  classes: {},
   open: boolean,
   settings: ?{},
   handleClickOk: () => {},
@@ -203,6 +205,7 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
         {option}
       </div>
     ));
+    const { classes } = this.props;
     return (
       <div>
         <Dialog
@@ -292,7 +295,7 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
             <Grid container>
               <Grid item>
                 <Button id="metadataTemplateDir" size="small" color="primary" onClick={this.handlePickStorerMetadataTemplateDir}>
-                  <Folder />
+                  <Folder className={classes.icon} />
                   Metadata template directory
                 </Button>
                 {this.shouldShowResetMetadataTemplateDir() &&
@@ -303,7 +306,9 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
                   </Tooltip>}
               </Grid>
               <Grid item>
-                {this.getInputValue('settings_storer_metadataTemplateDir')}
+                <Typography variant="caption" align="left" color="textSecondary" paragraph>
+                  {this.getInputValue('settings_storer_metadataTemplateDir')}
+                </Typography>
               </Grid>
             </Grid>
           </DialogContent>

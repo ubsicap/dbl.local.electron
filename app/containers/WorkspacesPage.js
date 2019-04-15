@@ -357,6 +357,7 @@ class WorkspacesPage extends PureComponent<Props> {
                         handleClickOk={this.handleClickOkEdit}
                         handleClickCancel={this.handleClickCancelEdit}
                         getInitialFormErrors={this.getInitialFormErrors(card)}
+                        classes={classes}
                       />}
                       <Button disabled={this.shouldDisableLogin(card)} variant="contained" size="small" color="primary" onClick={this.handleLogin(card)}>
                         Login
