@@ -153,9 +153,11 @@ class MenuAppBar extends React.PureComponent {
     return (
       <AppBar position="sticky">
         <Toolbar>
+          {/*
           <IconButton className={classes.menuButton} color="inherit" aria-label="Menu">
             <MenuIcon />
           </IconButton>
+          */}
           <Typography variant="h6" color="inherit" className={classes.flex}>
             {this.props.title}
           </Typography>
