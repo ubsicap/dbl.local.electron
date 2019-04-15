@@ -299,10 +299,12 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
             />
             <Grid container>
               <Grid item>
-                <Button id="metadataTemplateDir" size="small" color="primary" onClick={this.handlePickStorerMetadataTemplateDir}>
-                  <Folder className={classes.icon} />
-                  Metadata template directory
-                </Button>
+                <Tooltip title="Metadata Templates for each medium (e.g. audio.xml)">
+                  <Button id="metadataTemplateDir" size="small" color="primary" onClick={this.handlePickStorerMetadataTemplateDir}>
+                    <Folder className={classes.icon} />
+                    Metadata template directory
+                  </Button>
+                </Tooltip>
                 {this.shouldShowResetMetadataTemplateDir() &&
                   <Tooltip title="Clear Metadata template directory">
                     <Button size="small" color="primary" onClick={this.handleResetStorerMetadataTemplateDir}>
