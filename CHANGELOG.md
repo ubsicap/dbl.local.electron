@@ -1,3 +1,8 @@
+### Version 0.34.0 (Workspace Settings - Metadata Templates)
+#### Feature
+- Add Metadata Template Folder chooser for {medium}.xml templates
+- Add checkboxes to ipc/lch chooser
+
 ### Version 0.33.2
 #### Fix
 - preserve user's table page (don't jump to page 1 if user selects row on page 2)
