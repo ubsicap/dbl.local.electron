@@ -52,18 +52,21 @@ function importSettingsToState(settings) {
   const settings_dbl_secretKey = secretKey[0];
   const settings_dbl_organizationType = organizationType[0];
   const settings_dbl_downloadOpenAccessEntries = downloadOpenAccessEntries[0] === 'true';
-  const { metadataTemplateDirOrNot = [null] } = storer[0];
+  const { metadataTemplateDir: metadataTemplateDirOrNot = [null] } = storer[0];
   const [metadataTemplateDir] = metadataTemplateDirOrNot;
-  const settings_storer_metadataTemplateDir = metadataTemplateDir ? { metadataTemplateDir } : {};
-  return {
+  const settings_storer_metadataTemplateDirOrNot = metadataTemplateDir ?
+    { settings_storer_metadataTemplateDir: metadataTemplateDir } : {};
+  const imported = {
     workspaceName,
     settings_dbl_host,
     settings_dbl_accessToken,
     settings_dbl_secretKey,
     settings_dbl_organizationType,
     settings_dbl_downloadOpenAccessEntries,
-    ...settings_storer_metadataTemplateDir
+    ...settings_storer_metadataTemplateDirOrNot
   };
+  console.log(imported);
+  return imported;
 }
 
 function selectHtmlSetting(host) {
@@ -81,7 +84,7 @@ function exportStateToSettings(state, origSettings) {
     settings_dbl_secretKey,
     settings_dbl_organizationType,
     settings_dbl_downloadOpenAccessEntries,
-    settings_storer_metadataTemplateDir,
+    settings_storer_metadataTemplateDir: metadataTemplateDir,
   } = state;
   const workspacesDir = dblDotLocalService.getWorkspacesDir();
   const newFullPath = path.join(workspacesDir, workspaceName);
@@ -89,6 +92,8 @@ function exportStateToSettings(state, origSettings) {
   const downloadOpenAccessEntries =
     origSettings.configXmlSettings.settings.dbl[0].downloadOpenAccessEntries ?
       { downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries] } : {};
+  const settings_storer_metadataTemplateDirOrNot = metadataTemplateDir ?
+    { metadataTemplateDir } : {};
   const configXmlSettings = {
     settings: {
       ...origSettings.configXmlSettings.settings,
@@ -104,7 +109,7 @@ function exportStateToSettings(state, origSettings) {
       }],
       storer: [{
         ...origSettings.configXmlSettings.settings.storer[0],
-        ...settings_storer_metadataTemplateDir,
+        ...settings_storer_metadataTemplateDirOrNot,
       }],
     }
   };
@@ -299,7 +304,7 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
                   Metadata template directory
                 </Button>
                 {this.shouldShowResetMetadataTemplateDir() &&
-                  <Tooltip title="Clear">
+                  <Tooltip title="Clear Metadata template directory">
                     <Button size="small" color="primary" onClick={this.handleResetStorerMetadataTemplateDir}>
                       <CloseIcon />
                     </Button>
