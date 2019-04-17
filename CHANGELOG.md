@@ -1,3 +1,7 @@
+### Version 0.34.2
+#### Fix
+- dbl_dot_local_app (4/17/2019) - include all recent changesets in master
+
 ### Version 0.34.1
 #### Fix
 - dbl_dot_local_app (4/17/2019) - retry on 408 errors (AGAIN)
