@@ -5,7 +5,7 @@ import { createSelector } from 'reselect';
 import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import AppBar from '@material-ui/core/AppBar';
-import MenuIcon from '@material-ui/icons/Menu';
+import MoreVertIcon from '@material-ui/icons/MoreVert';
 import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import Grid from '@material-ui/core/Grid';
@@ -122,7 +122,7 @@ class EntryAppBar extends Component<Props> {
             className={classNames(classes.menuButton, openDrawer && classes.hide)}
             color="inherit"
           >
-            <MenuIcon />
+            <MoreVertIcon />
           </IconButton>
           <Grid container justify="flex-start" alignItems="center" spacing={24}>
             <Grid item>
