@@ -1,3 +1,8 @@
+### Version 0.34.1
+#### Fix
+- dbl_dot_local_app (4/17/2019) - retry on 408 errors (AGAIN)
+- changed Entry dialog Menu icon (3 stacked lines) to More icon (3 stacked dots)
+
 ### Version 0.34.0 (Workspace Settings - Metadata Templates)
 #### Feature
 - Add Metadata Template Folder chooser for {medium}.xml templates
