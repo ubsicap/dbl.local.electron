@@ -1,4 +1,4 @@
-### Version 0.35.0
+### Version 0.35.1
 #### Feature (Report - Checks - Stylesheet)
 - add bootstrap type stylesheet to checks report
 - add verbose title to checks report
