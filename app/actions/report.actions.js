@@ -91,7 +91,13 @@ function listenStorerReport(event) {
     const [referenceToken, reportId] = data.args;
     const { reportsStarted = {} } = getState().reports;
     const { bundleId } = reportsStarted[referenceToken];
-    const reportFilePath = await reportService.saveReportToFile(bundleId, referenceToken, reportId);
+    const { addedByBundleIds } = getState().bundles;
+    const bundle = addedByBundleIds[bundleId];
+    const {
+      name, dblId, revision, languageAndCountry
+    } = bundle.displayAs;
+    const title = `Report - Checks - ${bundle.medium} (${languageAndCountry}) ${name} ${dblId}, ${revision}`;
+    const reportFilePath = await reportService.saveReportToFile(bundleId, referenceToken, reportId, title);
     browserWindowService.openFileInChromeBrowser(reportFilePath, false);
     dispatch({
       type: reportConstants.REPORT_COMPLETED, referenceToken, reportId, date: Date.now()

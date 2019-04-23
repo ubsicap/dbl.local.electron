@@ -17,7 +17,7 @@ export default browserWindowService;
 
 
 function saveFileToFolder(browserWin) {
-  const fileUrl = browserWin.webContents.getURL();
+  const fileUrl = decodeURIComponent(browserWin.webContents.getURL());
   const fileName = path.basename(fileUrl);
   const ext = path.extname(fileName).replace('.', '');
   const defaultFolder = app.getPath('documents');

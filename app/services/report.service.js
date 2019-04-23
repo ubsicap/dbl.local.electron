@@ -1,12 +1,17 @@
+import fs from 'fs-extra';
+import filenamify from 'filenamify';
+import xml2js from 'xml2js';
+import waitUntil from 'node-wait-until';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { bundleService } from '../services/bundle.service';
 import download from '../services/download-with-fetch.flow';
 import dblDotLocalConfigConstants from '../constants/dblDotLocal.constants';
 import { authHeader } from '../helpers';
+import { getResourcePath, parseAsJson } from '../helpers/services';
 
 export const reportService = {
   checksUseContent,
-  saveReportToFile
+  saveReportToFile,
 };
 export default reportService;
 
@@ -32,11 +37,29 @@ function checksUseContent({ bundleId, reference }) {
 }
 
 
-async function saveReportToFile(bundleId, referenceToken, reportId) {
+async function saveReportToFile(bundleId, referenceToken, reportId, title) {
+  const { filePath: filePathRaw }
+    = bundleService.getTempFolderForFile(bundleId, `${filenamify(title)}_${referenceToken}-${reportId}-raw.html`);
   const { filePath }
-    = bundleService.getTempFolderForFile(bundleId, `${referenceToken}-${reportId}.html`);
-  // todo
+    = bundleService.getTempFolderForFile(bundleId, `${filenamify(title)}_${referenceToken}-${reportId}.html`);
   const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${REPORTS_API}/${reportId}`;
-  await download(url, filePath, () => {}, authHeader());
+  await download(url, filePathRaw, () => {}, authHeader());
+  const reportHtmlContent = await waitUntil(() => fs.readFileSync(filePathRaw, 'utf8'));
+  const reportAsJson = await parseAsJson(reportHtmlContent);
+  const reportsCss = fs.readFileSync(getReportsCssPath(), 'utf8');
+  reportAsJson.html.head[0].title[0] = title;
+  reportAsJson.html.head[0] = {
+    ...reportAsJson.html.head[0],
+    style: [reportsCss]
+  };
+  const builder = new xml2js.Builder({ headless: true });
+  const xml = builder.buildObject(reportAsJson);
+  fs.writeFileSync(filePath, xml);
   return filePath;
 }
+
+
+function getReportsCssPath() {
+  return getResourcePath(['extraFiles', 'reports', 'reports.css']);
+}
+

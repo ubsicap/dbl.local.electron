@@ -6,7 +6,7 @@ import xml2js from 'xml2js';
 import log from 'electron-log';
 import dblDotLocalConstants from '../constants/dblDotLocal.constants';
 import { authHeader } from '../helpers';
-import { servicesHelpers } from '../helpers/services';
+import { servicesHelpers, getApp, getResourcePath, parseAsJson } from '../helpers/services';
 
 export const dblDotLocalService = {
   health,
@@ -32,7 +32,8 @@ export const dblDotLocalService = {
   getEntryRevisions,
   getMapperReport,
   getMappers,
-  getIsClosedEventSource
+  getIsClosedEventSource,
+  getApp
 };
 export default dblDotLocalService;
 
@@ -207,18 +208,7 @@ function startDblDotLocalSubProcess(configXmlFile) {
 }
 
 function getDblDotLocalExecCwd() {
-  // https://github.com/chentsulin/electron-react-boilerplate/issues/1047#issuecomment-319359165
-  const app = getApp();
-  const isMainProcess = Boolean(electron.app);
-  const resourcesPath = path.resolve(app.getAppPath(), '../');
-  const anotherParentDirectory = isMainProcess ? '..' : '';
-  // console.log(resourcesPath);
-  const extaFilesPath = ['extraFiles', 'dbl_dot_local_app'];
-  const cwd = (process.env.NODE_ENV === 'production' ?
-    path.join(resourcesPath, ...extaFilesPath) :
-    path.join(__dirname, anotherParentDirectory, '..', 'resources', ...extaFilesPath));
-  // console.log(cwd);
-  return cwd;
+  return getResourcePath(['extraFiles', 'dbl_dot_local_app']);
 }
 
 const electron = require('electron');
@@ -231,11 +221,6 @@ function getElectronShared() {
   } else if (electron.app) {
     return electron;
   }
-}
-
-function getApp() {
-  const app = remote.app || electron.app;
-  return app;
 }
 
 function getCurrentWindow() {
@@ -347,23 +332,10 @@ function ensureWorkspacesDir() {
   }
 }
 
-function parseAsJson(configFile) {
-  return new Promise((resolve, reject) => {
-    const parser = new xml2js.Parser();
-    parser.parseString(configFile, (err, result) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(result);
-      }
-    });
-  });
-}
-
 function convertConfigXmlToJson(workspace) {
   const configXmlPath = dblDotLocalService.getConfigXmlFullPath(workspace);
-  const configFile = readFileOrTemplate(configXmlPath);
-  return parseAsJson(configFile);
+  const configFileContent = readFileOrTemplate(configXmlPath);
+  return parseAsJson(configFileContent);
 }
 
 function readFileOrTemplate(configXmlPath) {
