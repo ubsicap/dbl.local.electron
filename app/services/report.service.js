@@ -45,16 +45,14 @@ async function saveReportToFile(bundleId, referenceToken, reportId, title) {
   const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${REPORTS_API}/${reportId}`;
   await download(url, filePathRaw, () => {}, authHeader());
   const reportHtmlContent = await waitUntil(() => (fs.existsSync(filePathRaw) ? fs.readFileSync(filePathRaw, 'utf8') : false));
-  const reportAsJson = await parseAsJson(reportHtmlContent);
+  const reportHtmlDom = new DOMParser().parseFromString(reportHtmlContent, 'text/html');
   const reportsCss = fs.readFileSync(getReportsCssPath(), 'utf8');
-  reportAsJson.html.head[0].title[0] = title;
-  reportAsJson.html.head[0] = {
-    ...reportAsJson.html.head[0],
-    style: [reportsCss]
-  };
-  const builder = new xml2js.Builder({ headless: true });
-  const xml = builder.buildObject(reportAsJson);
-  fs.writeFileSync(filePath, xml);
+  reportHtmlDom.title = title;
+  const styleEl = document.createElement('style');
+  const styleContent = document.createTextNode(reportsCss);
+  styleEl.appendChild(styleContent);
+  reportHtmlDom.head.appendChild(styleEl);
+  fs.writeFileSync(filePath, reportHtmlDom.documentElement.innerHTML);
   return filePath;
 }
 
