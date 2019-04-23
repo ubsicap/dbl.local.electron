@@ -1,3 +1,7 @@
+### Version 0.35.2
+#### Fix (Report - Checks - Stylesheet)
+- add gray badge to SKIP status 
+
 ### Version 0.35.1
 #### Feature (Report - Checks - Stylesheet)
 - add bootstrap type stylesheet to checks report
