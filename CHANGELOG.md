@@ -1,3 +1,8 @@
+### Version 0.35.0
+#### Feature (Report - Checks - Stylesheet)
+- add bootstrap type stylesheet to checks report
+- add verbose title to checks report
+
 ### Version 0.34.2
 #### Fix
 - dbl_dot_local_app (4/17/2019) - include all recent changesets in master
