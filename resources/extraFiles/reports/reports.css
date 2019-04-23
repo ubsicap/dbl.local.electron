@@ -3396,7 +3396,8 @@ blockquote h4 {
 }
 .badge,
 .checks-pass,
-.checks-fail {
+.checks-fail,
+.checks-skip {
   display: inline-block;
   padding: 0.25em 0.4em;
   font-size: 75%;
@@ -3430,7 +3431,8 @@ blockquote h4 {
   text-decoration: none;
   background-color: #0062cc;
 }
-.badge-secondary {
+.badge-secondary,
+.checks-skip {
   color: #fff;
   background-color: #868e96;
 }
