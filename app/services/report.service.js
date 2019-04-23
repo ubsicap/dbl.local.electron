@@ -44,7 +44,7 @@ async function saveReportToFile(bundleId, referenceToken, reportId, title) {
     = bundleService.getTempFolderForFile(bundleId, `${filenamify(title)}_${referenceToken}-${reportId}.html`);
   const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${REPORTS_API}/${reportId}`;
   await download(url, filePathRaw, () => {}, authHeader());
-  const reportHtmlContent = await waitUntil(() => fs.readFileSync(filePathRaw, 'utf8'));
+  const reportHtmlContent = await waitUntil(() => (fs.existsSync(filePathRaw) ? fs.readFileSync(filePathRaw, 'utf8') : false));
   const reportAsJson = await parseAsJson(reportHtmlContent);
   const reportsCss = fs.readFileSync(getReportsCssPath(), 'utf8');
   reportAsJson.html.head[0].title[0] = title;
