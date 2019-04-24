@@ -1,3 +1,7 @@
+### Version 0.35.3
+#### Fix (Report - Checks - Stylesheet)
+- dbl_dot_local_app(4/24/2019): Match 3-digit chapter numbers (PSA)
+
 ### Version 0.35.2
 #### Fix (Report - Checks - Stylesheet)
 - add gray badge to SKIP status 
