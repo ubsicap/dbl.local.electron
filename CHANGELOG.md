@@ -1,3 +1,8 @@
+### Version 0.35.4
+#### Fix (Report - Checks - Stylesheet)
+- close all child windows (e.g. report, metadata) if main app is closed
+- dbl_dot_local_app(4/25/2019): Fix regex for checking source files
+
 ### Version 0.35.3
 #### Fix (Report - Checks - Stylesheet)
 - dbl_dot_local_app(4/24/2019): Match 3-digit chapter numbers (PSA)
