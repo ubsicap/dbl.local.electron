@@ -5,7 +5,7 @@ import { withStyles } from '@material-ui/core/styles';
 import { Set } from 'immutable';
 import classNames from 'classnames';
 import { createSelector } from 'reselect';
-import LinearProgress from 'material-ui/LinearProgress';
+import LinearProgress from '@material-ui/core/LinearProgress';
 import { Menu, MenuItem, Toolbar, Tooltip } from '@material-ui/core';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
@@ -567,14 +567,13 @@ class DBLEntryRow extends PureComponent<Props> {
             )}
           </Grid>
         </Grid>
-        {status === 'IN_PROGRESS' && (
-          <div
-            className="row"
-            style={{ marginLeft: '20px', marginRight: '20px', paddingBottom: '10px' }}
-          >
-            <LinearProgress style={{ height: '8px' }} mode="determinate" value={progress} />
-          </div>
-        )}
+        {status === 'IN_PROGRESS' && (<LinearProgress
+          style={{
+            marginLeft: '20px', marginRight: '20px', marginBottom: '5px', paddingBottom: '10px', height: '8px'
+          }}
+          variant="determinate"
+          value={progress}
+        />)}
         {isSelected && (
           <Toolbar style={{ minHeight: '36px' }} className={this.pickBackgroundColor()}>
             {
