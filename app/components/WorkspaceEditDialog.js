@@ -1,4 +1,5 @@
 import React from 'react';
+import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import Dialog from '@material-ui/core/Dialog';
@@ -12,14 +13,16 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import CloseIcon from '@material-ui/icons/Close';
 import Switch from '@material-ui/core/Switch';
 import Tooltip from '@material-ui/core/Tooltip';
-import SuperSelectField from 'material-ui-superselectfield/es';
 import path from 'path';
 import fs from 'fs-extra';
 import filenamify from 'filenamify';
 import Select from '@material-ui/core/Select';
 import FormControl from '@material-ui/core/FormControl';
+import FormHelperText from '@material-ui/core/FormHelperText';
 import InputLabel from '@material-ui/core/InputLabel';
 import Input from '@material-ui/core/Input';
+import Checkbox from '@material-ui/core/Checkbox';
+import ListItemText from '@material-ui/core/ListItemText';
 import MenuItem from '@material-ui/core/MenuItem';
 import Typography from '@material-ui/core/Typography';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
@@ -36,6 +39,26 @@ type Props = {
 };
 
 const hostOptions = ['api.thedigitalbiblelibrary.org', 'api-demo.thedigitalbiblelibrary.org'];
+
+const styles = theme => ({
+  formControl: {
+    display: 'flex',
+  },
+  icon: {
+    marginRight: theme.spacing.unit * 2,
+  },
+});
+
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: (ITEM_HEIGHT * 4.5) + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
 
 /* eslint-disable camelcase */
 
@@ -116,7 +139,7 @@ function exportStateToSettings(state, origSettings) {
   return { workspace, configXmlSettings };
 }
 
-export default class WorkspaceEditDialog extends React.Component<Props> {
+class WorkspaceEditDialog extends React.Component<Props> {
   props: Props;
   state = importSettingsToState(this.props.settings);
 
@@ -134,8 +157,9 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
 
   getOrganizationTypeValues = () => this.state.settings_dbl_organizationType || '';
 
-  handleChangeOrganizationType = (selectedValues, name) => {
-    const newValue = selectedValues.map(val => val.value).join(' ');
+  handleChangeOrganizationType = name => event => {
+    const selectedValues = event.target.value;
+    const newValue = selectedValues.join(' ');
     this.setState({ [name]: newValue });
   }
 
@@ -204,11 +228,12 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
   handleResetStorerMetadataTemplateDir = () => this.updateInputValue('settings_storer_metadataTemplateDir', '');
 
   render() {
-    const organizationTypeValues = this.getOrganizationTypeValues().split(' ').filter(v => v.length).map(val => ({ value: val }));
+    const organizationTypeValues = this.getOrganizationTypeValues().split(' ').filter(v => v.length);
     const organizationTypeOptions = ['lch', 'ipc'].map(option => (
-      <div key={option} value={option} >
-        {option}
-      </div>
+      <MenuItem key={option} value={option}>
+        <Checkbox checked={this.state.settings_dbl_organizationType.split(' ').indexOf(option) > -1} />
+        <ListItemText primary={option} />
+      </MenuItem>
     ));
     const { classes } = this.props;
     return (
@@ -272,20 +297,24 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
               type="password"
               onChange={this.handleInputChange}
             />
-            <SuperSelectField
-              name="settings_dbl_organizationType"
-              checkPosition="left"
-              multiple
-              floatingLabel="Organization Type(s) *"
-              floatingLabelStyle={{ color: 'rgba(0, 0, 0, 0.54)' }}
-              floatingLabelFocusStyle={{ color: '#303f9f' }}
-              value={organizationTypeValues}
-              errorText={this.getErrorText('settings_dbl_organizationType')}
-              onChange={this.handleChangeOrganizationType}
-              style={{ display: 'flex', marginTop: 20 }}
+            <FormControl
+              className={classes.formControl}
+              margin="dense"
+              error={this.hasError('settings_dbl_organizationType')}
             >
-              {organizationTypeOptions}
-            </SuperSelectField>
+              <InputLabel htmlFor="select-multiple-checkbox">Organization Type(s) *</InputLabel>
+              <Select
+                multiple
+                value={organizationTypeValues}
+                onChange={this.handleChangeOrganizationType('settings_dbl_organizationType')}
+                input={<Input id="select-multiple-checkbox" />}
+                renderValue={selected => selected.join(', ')}
+                MenuProps={MenuProps}
+              >
+                {organizationTypeOptions}
+              </Select>
+              <FormHelperText>{this.getErrorText('settings_dbl_organizationType')}</FormHelperText>
+            </FormControl>
             <FormControlLabel
               control={
                 <Switch
@@ -332,3 +361,5 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
     );
   }
 }
+
+export default withStyles(styles, { withTheme: true })(WorkspaceEditDialog);
