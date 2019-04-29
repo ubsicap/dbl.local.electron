@@ -231,7 +231,7 @@ class WorkspaceEditDialog extends React.Component<Props> {
     const organizationTypeValues = this.getOrganizationTypeValues().split(' ').filter(v => v.length);
     const organizationTypeOptions = ['lch', 'ipc'].map(option => (
       <MenuItem key={option} value={option}>
-        <Checkbox checked={this.state.settings_dbl_organizationType.split(' ').indexOf(option) > -1} />
+        <Checkbox checked={organizationTypeValues.indexOf(option) > -1} />
         <ListItemText primary={option} />
       </MenuItem>
     ));
