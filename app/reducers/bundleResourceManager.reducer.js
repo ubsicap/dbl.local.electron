@@ -164,9 +164,23 @@ export function bundleManageResources(state = initialState, action) {
         selectedMappers: { ...selectedMappersOrig, [direction]: mapperIds }
       };
     }
+
+    case bundleResourceManagerConstants.UPDATE_ADDED_FILEPATHS:
+    case bundleResourceManagerConstants.UPDATE_FILE_STATS_SIZES:
+    case bundleResourceManagerConstants.EDIT_RESOURCE_CONTAINERS: {
+      return updateStateFromActionProps();
+    }
     default: {
       return state;
     }
+  }
+
+  function updateStateFromActionProps() {
+    const { type, ...restProps } = action;
+    return {
+      ...state,
+      ...restProps
+    };
   }
 }
 

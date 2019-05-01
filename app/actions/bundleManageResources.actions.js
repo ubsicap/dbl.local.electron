@@ -1,4 +1,7 @@
 import log from 'electron-log';
+import fs from 'fs-extra';
+import upath from 'upath';
+import { Set } from 'immutable';
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
@@ -14,7 +17,9 @@ export const bundleManageResourceActions = {
   getManifestResources,
   addManifestResources,
   deleteManifestResources,
-  checkPublicationsHealth
+  checkPublicationsHealth,
+  editContainers,
+  updateSortOrder
 };
 
 export function openResourceManager(_bundleId, _mode) {
@@ -145,7 +150,10 @@ export function checkPublicationsHealth(_bundleId) {
       const { wizard: wizardName } = bestPubWizard;
       const { description, documentation } = applicableWizards.find(w => w.name === wizardName);
       const { wizardsResults: prevWizardsResults = {} } = acc;
-      return { wizardsResults: { ...prevWizardsResults, [wizardName]: { ...bestPubWizard, description, documentation } } };
+      return {
+        wizardsResults:
+          { ...prevWizardsResults, [wizardName]: { ...bestPubWizard, description, documentation } }
+      };
     }, { wizardsResults: {} });
     dispatch({
       type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_SUCCESS,
@@ -208,6 +216,12 @@ export function addManifestResources(_bundleId, _fileToContainerPaths, inputMapp
             dispatch(success(_bundleId, filePath, containerPath, mapper));
           }
         }
+        const {
+          bundleManageResources:
+          { addedFilePaths: origAddedFilePaths, fullToRelativePaths }
+        } = getState();
+        const remainingAddedFilePaths = utilities.subtract(origAddedFilePaths, [filePath]);
+        dispatch(updateAddedFilePaths(remainingAddedFilePaths, fullToRelativePaths));
       } catch (error) {
         dispatch(failure(_bundleId, error));
       }
@@ -216,6 +230,11 @@ export function addManifestResources(_bundleId, _fileToContainerPaths, inputMapp
     await bundleService.waitStopCreateMode(_bundleId);
     dispatch(done(_bundleId));
     dispatch(saveMetadatFileToTempBundleFolder(_bundleId));
+    const {
+      bundleManageResources:
+      { addedFilePaths: remainingAddedFilePaths, fullToRelativePaths }
+    } = getState();
+    dispatch(appendAddedFilePaths(_bundleId, remainingAddedFilePaths, fullToRelativePaths, true));
     /*
     await Promise.all(Object.entries(_fileToContainerPaths)
       .map(async ([filePath, containerPath]) => {
@@ -345,5 +364,121 @@ export function selectMappers(direction, mapperIds) {
     type: bundleResourceManagerConstants.MAPPERS_SELECTED,
     direction,
     mapperIds
+  };
+}
+
+export function selectResources(selectedResourceIds) {
+  return {
+    type: bundleResourceManagerConstants.RESOURCES_SELECTED,
+    selectedResourceIds
+  };
+}
+
+export function selectRevisions(selectedRevisionIds) {
+  return {
+    type: bundleResourceManagerConstants.REVISIONS_SELECTED,
+    selectedRevisionIds
+  };
+}
+
+export function appendAddedFilePaths(
+  bundleId,
+  newAddedFilePaths,
+  fullToRelativePaths = null,
+  setSelectedToNewAdded = false
+) {
+  return (dispatch, getState) => {
+    const state = getState();
+    const {
+      addedFilePaths: origAddedFilePaths = [],
+      fullToRelativePaths: fullToRelativePathsOrig
+    } = state.bundleManageResources;
+    const { selectedResourceIds: origSelectedIds } = state.bundleManageResourcesUx;
+    const addedFilePaths = utilities.union(origAddedFilePaths, newAddedFilePaths);
+    const selectedIds = setSelectedToNewAdded ?
+      newAddedFilePaths
+      : utilities.union(origSelectedIds, addedFilePaths);
+    dispatch(updateAddedFilePaths(addedFilePaths, fullToRelativePaths || fullToRelativePathsOrig));
+    dispatch(selectResources(selectedIds));
+    dispatch(updateInputMapperReports(bundleId, selectedIds, fullToRelativePaths));
+    dispatch(getFileSizes(newAddedFilePaths));
+  };
+}
+
+function updateInputMapperReports(bundleId, filePaths, fullToRelativePaths) {
+  const mapperReportUris = filePaths
+    .map(filePath => utilities.getFilePathResourceData(
+      filePath,
+      fullToRelativePaths
+    ).uri);
+  return getMapperReport('input', mapperReportUris, bundleId);
+}
+
+export function updateAddedFilePaths(addedFilePaths, fullToRelativePaths) {
+  return {
+    type: bundleResourceManagerConstants.UPDATE_ADDED_FILEPATHS,
+    addedFilePaths,
+    fullToRelativePaths
+  };
+}
+
+export function updateSortOrder(orderDirection, orderBy) {
+  return (dispatch, getState) => {
+    const { mode } = getState().bundleManageResourcesUx;
+    return dispatch({
+      type: bundleResourceManagerConstants.UPDATE_MAIN_TABLE_SORT_ORDER,
+      sortOrder: {
+        mode,
+        orderDirection,
+        orderBy
+      }
+    });
+  };
+}
+
+function getFileSizes(newlyAddedFilePaths) {
+  return async (dispatch, getState) => {
+    const { fileSizes: fileSizesOrig = {} } = getState().bundleManageResources;
+    const fileSizesPromises = newlyAddedFilePaths.map(async (filePath) => {
+      const stats = await fs.stat(filePath);
+      const { size: sizeRaw } = stats;
+      const size = utilities.formatBytesByKbs(sizeRaw);
+      return { filePath, size };
+      // const checksum = size < 268435456 ? await md5File(filePath) : '(too expensive)';
+    });
+    const fileSizesList = await Promise.all(fileSizesPromises);
+    const fileSizes =
+      fileSizesList.reduce((acc, data) => { acc[data.filePath] = data.size; return acc; }, fileSizesOrig);
+    dispatch({
+      type: bundleResourceManagerConstants.UPDATE_FILE_STATS_SIZES,
+      fileSizes
+    });
+  };
+}
+
+export function editContainers(newContainer) {
+  return (dispatch, getState) => {
+    const state = getState();
+    const {
+      addedFilePaths = [],
+      fullToRelativePaths = {},
+      editedContainers: editedContainersOrig = {}
+    } = state.bundleManageResources;
+    const { selectedResourceIds = [] } = state.bundleManageResourcesUx;
+    const toAddResourceIds = Set(addedFilePaths).intersect(selectedResourceIds).toArray();
+    const newlyEditedContainers = toAddResourceIds.reduce((acc, filePath) => {
+      const finalContainer = utilities.formatContainer(newContainer);
+      const { relativeFolder } = utilities.getFilePathResourceData(filePath, fullToRelativePaths);
+      const updatedContainer = (relativeFolder ?
+        utilities.formatContainer(upath.joinSafe(finalContainer, relativeFolder)) :
+        finalContainer);
+      acc[filePath] = updatedContainer;
+      return acc;
+    }, {});
+    const editedContainers = { ...editedContainersOrig, ...newlyEditedContainers };
+    dispatch({
+      type: bundleResourceManagerConstants.EDIT_RESOURCE_CONTAINERS,
+      editedContainers
+    });
   };
 }

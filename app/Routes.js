@@ -8,6 +8,7 @@ import ManageBundleManifestResourcesDialog from './components/ManageBundleManife
 import { PrivateRoute } from './components/PrivateRoute';
 import { navigationConstants } from './constants/navigation.constants';
 import WorkspacesPage from './containers/WorkspacesPage';
+import EntryReports from './components/EntryReports';
 
 export default () => (
   <App>
@@ -21,6 +22,7 @@ export default () => (
       <PrivateRoute exact path={navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_SECTION} component={EditMetadataDialog} />
       <PrivateRoute exact path={navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA_FORMKEY} component={EditMetadataDialog} />
       <PrivateRoute exact path={navigationConstants.NAVIGATION_BUNDLE_MANAGE_RESOURCES} component={ManageBundleManifestResourcesDialog} />
+      <PrivateRoute exact path={navigationConstants.NAVIGATION_ENTRY_REPORTS} component={EntryReports} />
     </Switch>
   </App>
 );

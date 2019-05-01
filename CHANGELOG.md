@@ -1,9 +1,130 @@
-### Version 0.29.2
+### Version 0.35.4
+
+#### Fix (Report - Checks - Stylesheet)
+
+- close all child windows (e.g. report, metadata) if main app is closed
+- dbl_dot_local_app(4/25/2019): Fix regex for checking source files
+
+### Version 0.35.3
+
+#### Fix (Report - Checks - Stylesheet)
+
+- dbl_dot_local_app(4/24/2019): Match 3-digit chapter numbers (PSA)
+
+### Version 0.35.2
+
+#### Fix (Report - Checks - Stylesheet)
+
+- add gray badge to SKIP status
+
+### Version 0.35.1
+
+#### Feature (Report - Checks - Stylesheet)
+
+- add bootstrap type stylesheet to checks report
+- add verbose title to checks report
+
+### Version 0.34.2
+
+#### Fix
+
+- dbl_dot_local_app (4/17/2019) - include all recent changesets in master
+
+### Version 0.34.1
+
+#### Fix
+
+- dbl_dot_local_app (4/17/2019) - retry on 408 errors (AGAIN)
+- changed Entry dialog Menu icon (3 stacked lines) to More icon (3 stacked dots)
+
+### Version 0.34.0 (Workspace Settings - Metadata Templates)
+
+#### Feature
+
+- Add Metadata Template Folder chooser for {medium}.xml templates
+- Add checkboxes to ipc/lch chooser
+
+### Version 0.33.2
+
+#### Fix
+
+- preserve user's table page (don't jump to page 1 if user selects row on page 2)
+
+### Version 0.33.1
+
+#### Fix
+
+- save user's selected table pagination option
+- dbl_dot_local_app: retry 408 errors as non-fatal (e.g during uploads)
+
+### Version 0.33.0
+
+#### Feature
+
+- Add better table page options (last option being the total resources)
+
+#### Fix
+
+- Fix: hide "Edit containers" box while adding resources
+
+### Version 0.32.0
+
+#### Feature
+
+- Add Reports to entry side-menu
+
+#### Fix
+
+- Fix clipboard listener after computer comes back from sleep/hibernation
+
+### Version 0.31.2
+
+#### Fix
+
+- (really) allow download of resources when some have already been stored and others have been revised
+- Fix click handlers in resources dialog
+- don't responsively hide checkbox column
+- keep header row showing in table while scrolling
+- keep add button showing while scrolling
+- Disable selecting rows when adding/loading resources
+
+### Version 0.31.1
+
+#### Fix
+
+- allow download of resources when some have already been stored and others have been revised
+
+### Version 0.31.0
+
+#### Features
+
+- upgrade table component with filter, searching, paging and to improve performance
+- show reduction of selected items to add as they are being added
+
+### Version 0.30.1
+
+#### Features
+
+- Add Revisions to side-menu (drawer) to allow user to switch to/from it
+- Try to show more info as resources are being added
+- Try to improve performance of adding many resources
+- Add debounce to Edit Container suggestions
+- dbl_dot_local_app (3/7/2019) - fix video role/wizard
+
 #### Fixes
+
+- Fix resource dialog state to not crash and show trash icon
+
+### Version 0.29.2
+
+#### Fixes
+
 - Fix upload status progress to avoid seeming stuck at the end sometimes
 
 ### Version 0.29.1
+
 #### Fixes
+
 - Fix `Actions must be plain objects` warning
 
 ### Version 0.29.0 (Debug Info for Adding Resources)

@@ -49,6 +49,10 @@ const styles = theme => ({
 
 class MapperTable extends Component<Props> {
   props: Props;
+  constructor(props) {
+    super(props);
+    this.state = { orderDirection: 'asc', orderBy: 'description' };
+  }
 
   componentDidMount() {
     this.props.selectMappers(this.props.direction, this.props.selectedIds);
@@ -68,56 +72,37 @@ class MapperTable extends Component<Props> {
     };
   }
 
-  getMapperMessage = () => {
-    const {
-      mapperReports, mappersUris, selectedMapperUris
-    } = this.getMapperData();
-    const { selectedIds } = this.props;
-    if (!mapperReports) {
-      return '';
-    }
-    if (mappersUris.length === 0) {
-      return 'No matches found for converters';
-    }
-    if (selectedIds.length === 0) {
-      return `Select converter(s) below (${mappersUris.length} matches)`;
-    }
-    return `${selectedMapperUris.length} of ${mappersUris.length} matches in ${selectedIds.length} converters`;
-  }
-
   handleSelectedIds = (selectedIds) => {
     this.props.selectMappers(this.props.direction, selectedIds);
+  }
+
+  handleChangeSort = ({ order, orderBy }) => {
+    this.setState({ orderDirection: order, orderBy });
   }
 
   render() {
     const {
       columnConfig, tableData, selectedIds, classes
     } = this.props;
-    const mapperMessage = this.getMapperMessage();
+    const {
+      orderBy, orderDirection
+    } = this.state;
     return (
       <React.Fragment>
-        <Toolbar
-          className={classNames(classes.root, {
-            [classes.highlight]: true,
-          })}
-        >
-          <div className={classes.title}>
-            <Typography color="inherit" variant="subtitle1">
-              {mapperMessage}
-            </Typography>
-          </div>
-        </Toolbar>
         <Toolbar
           className={classNames({
             [classes.highlight]: true,
           })}
         >
           <EnhancedTable
+            title="Converters"
             data={tableData}
             columnConfig={columnConfig}
             secondarySorts={secondarySorts}
-            defaultOrderBy="description"
+            orderBy={orderBy}
+            orderDirection={orderDirection}
             onSelectedRowIds={this.handleSelectedIds}
+            onChangeSort={this.handleChangeSort}
             multiSelections
             selectedIds={selectedIds}
           />

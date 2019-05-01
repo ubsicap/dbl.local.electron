@@ -17,7 +17,7 @@ export default browserWindowService;
 
 
 function saveFileToFolder(browserWin) {
-  const fileUrl = browserWin.webContents.getURL();
+  const fileUrl = decodeURIComponent(browserWin.webContents.getURL());
   const fileName = path.basename(fileUrl);
   const ext = path.extname(fileName).replace('.', '');
   const defaultFolder = app.getPath('documents');
@@ -121,6 +121,7 @@ function buildBrowserMenu(browserWin) {
 }
 
 function openFileInChromeBrowser(filePath, hotReload = false, webPreferences = {}) {
+  const currentWindow = remote.getCurrentWindow();
   const normalizedFilePath = upath.normalize(filePath);
   const url = `file:///${normalizedFilePath}`;
   const browserWin = new BrowserWindow({
@@ -140,6 +141,9 @@ function openFileInChromeBrowser(filePath, hotReload = false, webPreferences = {
   });
   browserWin.on('closed', () => {
     fs.unwatchFile(filePath);
+  });
+  currentWindow.on('close', () => {
+    browserWin.close();
   });
   browserWin.show();
   browserWin.focus();

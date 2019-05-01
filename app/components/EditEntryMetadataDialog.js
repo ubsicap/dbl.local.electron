@@ -19,8 +19,12 @@ import EditMetadataStepper from './EditMetadataStepper';
 import { clipboardHelpers } from '../helpers/clipboard';
 import EntryAppBar from '../components/EntryAppBar';
 import EntryDrawer from '../components/EntryDrawer';
+import EntryDialogBody from '../components/EntryDialogBody';
 import PasteButton from './PasteButton';
 import { ux } from '../utils/ux';
+
+
+const getFormsErrors = editMetadataService.makeGetFormsErrors();
 
 function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundles, clipboard } = state;
@@ -31,7 +35,6 @@ function mapStateToProps(state, props) {
   } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
-  const getFormsErrors = editMetadataService.makeGetFormsErrors();
   const formsErrors = getFormsErrors(state, selectedBundle);
   const currentFormNumWithErrors = Object.keys(formsErrors).indexOf(currentFormWithErrors) + 1;
   const {
@@ -109,8 +112,7 @@ type Props = {
 class EditEntryMetadataDialog extends PureComponent<Props> {
   props: Props;
   state = {
-    sectionSelections: {},
-    openDrawer: false
+    sectionSelections: {}
   };
 
   componentDidUpdate(prevProps) {
@@ -221,14 +223,6 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     this.setState({ sectionSelections });
   }
 
-  handleDrawerOpen = () => {
-    this.setState({ openDrawer: true });
-  };
-
-  handleDrawerClose = () => {
-    this.setState({ openDrawer: false });
-  };
-
   modeUi = () => {
     const title = 'Metadata';
     return { appBar: { title, OkButtonLabel: '', OkButtonIcon: (null) } };
@@ -236,9 +230,9 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
 
   render() {
     const {
-      classes, selectedBundle = {}, bundleId
+      selectedBundle = {}, bundleId
     } = this.props;
-    const { sectionSelections, openDrawer } = this.state;
+    const { sectionSelections } = this.state;
     const sectionsSelected = Object.entries(sectionSelections)
       .filter(([, isSelected]) => isSelected).map(([s]) => s);
     const areAllSelected = this.getAreAllSectionsSelected();
@@ -247,26 +241,17 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
       <div>
         <EntryAppBar
           origBundle={selectedBundle}
-          openDrawer={openDrawer}
           mode="metadata"
           modeUi={modeUi}
           selectedItemsForCopy={sectionsSelected}
           itemsTypeForCopy="metadata sections"
           actionButton={this.conditionallyRenderPrimaryActionButton()}
-          handleDrawerOpen={this.handleDrawerOpen}
           handleClose={this.handleClose}
         />
         <EntryDrawer
           activeBundle={selectedBundle}
-          bundleId={selectedBundle.id}
-          openDrawer={openDrawer}
-          handleDrawerClose={this.handleDrawerClose}
         />
-        <main
-          className={classNames(classes.content, {
-            [classes.contentShift]: openDrawer,
-          })}
-        >
+        <EntryDialogBody>
           <FormControlLabel
             style={{ paddingTop: '8px', paddingLeft: '55px' }}
             control={
@@ -285,7 +270,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
             sectionSelections={sectionSelections}
             onClickSectionSelection={this.handleClickSectionSelection}
           />
-        </main>
+        </EntryDialogBody>
       </div>
     );
   }

@@ -4,7 +4,13 @@ import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
 import MenuItem from '@material-ui/core/MenuItem';
 import TextField from '@material-ui/core/TextField';
-import SuperSelectField from 'material-ui-superselectfield/es';
+import Select from '@material-ui/core/Select';
+import FormControl from '@material-ui/core/FormControl';
+import FormHelperText from '@material-ui/core/FormHelperText';
+import InputLabel from '@material-ui/core/InputLabel';
+import Input from '@material-ui/core/Input';
+import Checkbox from '@material-ui/core/Checkbox';
+import ListItemText from '@material-ui/core/ListItemText';
 import {
   saveMetadata, saveMetadataSuccess, fetchActiveFormInputs, editActiveFormInput
 } from '../actions/bundleEditMetadata.actions';
@@ -70,6 +76,17 @@ const materialStyles = theme => ({
   },
 });
 
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: (ITEM_HEIGHT * 4.5) + ITEM_PADDING_TOP,
+      width: 400,
+    },
+  },
+};
+
 class EditMetadataForm extends React.PureComponent<Props> {
   props: Props;
 
@@ -111,15 +128,16 @@ class EditMetadataForm extends React.PureComponent<Props> {
     this.props.editActiveFormInput(formKey, name, event.target.value);
   };
 
-  handleChangeMulti = (field) => (selectedValues, name) => {
+  handleChangeMulti = (field) => event => {
+    const selectedValues = event.target.value;
     const { formKey } = this.props;
-    const newValues = selectedValues.map(selected => selected.value).filter(v => v);
+    const newValues = selectedValues.filter(v => v);
     const origValue = this.getValue(field);
     const newValue = `${newValues}`;
     if (newValue === origValue) {
       return; // nothing changed.
     }
-    this.props.editActiveFormInput(formKey, name, newValues);
+    this.props.editActiveFormInput(formKey, field.name, newValues);
   };
 
   getErrorInField = (field) => {
@@ -179,44 +197,37 @@ class EditMetadataForm extends React.PureComponent<Props> {
     const isRequired = editMetadataService.getIsRequired(field);
     if (editMetadataService.getIsMulti(field)) {
       const selectedValues = this.getMultiValues(field).filter(v => v);
-      const value = selectedValues.map(val => ({ value: val }));
       const options = (field.options && field.options.map((option) => (
-        <div key={`${formKey}/${field.name}/${option}`} value={option}>
-          {getLabelWithOrderInSelectedValues(option, selectedValues)}
-        </div>
+        <MenuItem key={`${formKey}/${field.name}/${option}`} value={option}>
+          <Checkbox checked={selectedValues.indexOf(option) > -1} />
+          <ListItemText primary={getLabelWithOrderInSelectedValues(option, selectedValues)} />
+        </MenuItem>
       )));
       if (field.name === 'component') {
         options.reverse();
       }
-      const greyish = 'rgba(0, 0, 0, 0.54)';
-      const floatingLabelStyle = { color: greyish };
-      const errorStyle = hasError ? {} : { errorStyle: floatingLabelStyle };
-      const underlineStyle = hasError ? { underlineStyle: { borderBottomColor: 'red' } }
-        : { underlineStyle: { borderBottomColor: greyish }, underlineFocusStyle: { borderBottomColor: greyish, borderBottomWidth: 'thick' } };
       return (
-        <SuperSelectField
+        <FormControl
           key={id}
           id={id}
-          name={field.name}
+          className={classes.textField}
+          margin="normal"
+          error={hasError}
           disabled={this.getIsReadonly(field)}
-          checkPosition="left"
-          multiple
-          floatingLabel={`${field.label}${isRequired ? ' *' : ''}`}
-          errorText={helperText}
-          {...errorStyle}
-          {...underlineStyle}
-          floatingLabelStyle={floatingLabelStyle}
-          floatingLabelFocusStyle={{ color: '#303f9f' }}
-          onSelect={this.handleChangeMulti(field)}
-          useLayerForClickAway
-          value={value}
-          /* elementHeight={58} */
-          /* selectionsRenderer={this.handleCustomDisplaySelections('state31')} */
-          style={{ width: 300, marginTop: 29, marginRight: 40 }}
         >
-          {options}
-        </SuperSelectField>
-      );
+          <InputLabel htmlFor="select-multiple-checkbox">{`${field.label}${isRequired ? ' *' : ''}`}</InputLabel>
+          <Select
+            multiple
+            value={selectedValues}
+            onChange={this.handleChangeMulti(field, field.name)}
+            input={<Input id="select-multiple-checkbox" />}
+            renderValue={selected => selected.join(', ')}
+            MenuProps={MenuProps}
+          >
+            {options}
+          </Select>
+          <FormHelperText>{helperText}</FormHelperText>
+        </FormControl>);
     }
     return (
       <TextField

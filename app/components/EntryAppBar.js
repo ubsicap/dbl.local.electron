@@ -5,11 +5,10 @@ import { createSelector } from 'reselect';
 import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import AppBar from '@material-ui/core/AppBar';
-import MenuIcon from '@material-ui/icons/Menu';
+import MoreVertIcon from '@material-ui/icons/MoreVert';
 import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import Grid from '@material-ui/core/Grid';
-import FolderOpen from '@material-ui/icons/FolderOpen';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import CloseIcon from '@material-ui/icons/Close';
@@ -20,7 +19,9 @@ import CopyForPasteButton from './CopyForPasteButton';
 import EntryTitle from '../components/EntryTitle';
 import { bundleService } from '../services/bundle.service';
 import { utilities } from '../utils/utilities';
+import { openEntryDrawer, resetEntryAppBar } from '../actions/entryAppBar.actions';
 import { selectItemsToPaste } from '../actions/clipboard.actions';
+import { emptyObject } from '../utils/defaultValues';
 
 type Props = {
   classes: {},
@@ -29,56 +30,31 @@ type Props = {
   openDrawer: boolean,
   mode: string,
   modeUi: {},
-  selectedItemsForCopy: [],
-  itemsTypeForCopy: string,
+  selectedItemsForCopy?: [],
+  itemsTypeForCopy?: string,
   actionButton: React.Node,
   selectItemsToPaste: () => {},
-  handleDrawerOpen: () => {},
+  openEntryDrawer: () => {},
+  resetEntryAppBar: () => {},
   handleClose: () => {}
+};
+
+const defaultProps = {
+  selectedItemsForCopy: undefined,
+  itemsTypeForCopy: undefined
 };
 
 const materialStyles = theme => ({
   ...ux.getDblRowStyles(theme),
   ...ux.getEntryDrawerStyles(theme),
-  errorBar: {
-    color: theme.palette.secondary.light,
-  },
-  successBar: {
-    color: theme.palette.primary.light,
-  },
-  toolBar: {
-    paddingLeft: '10px',
-  },
-  flex: {
-    flex: 1,
-  },
-  leftIcon: {
-    marginRight: theme.spacing.unit,
-  },
-  iconSmall: {
-    fontSize: 20,
-  },
-  button: {
-    margin: theme.spacing.unit,
-  },
-  input: {
-    display: 'none',
-  },
-  buttonProgress: {
-    color: theme.palette.secondary.main,
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    marginTop: -25,
-    marginLeft: -23,
-  }
+  ...ux.getEntryUxStyles(theme)
 });
 
 
 const getBundleId = (state, props) => props.origBundle.id;
-const getBundlesById = (state) => state.bundles.addedByBundleIds || {};
+const getBundlesById = (state) => state.bundles.addedByBundleIds || emptyObject;
 const getDblBaseUrl = (state) => state.dblDotLocalConfig.dblBaseUrl;
-const makeGetEntryPageUrl = () => createSelector(
+const getEntryPageUrl = createSelector(
   [getDblBaseUrl, getBundlesById, getBundleId],
   (dblBaseUrl, bundlesById, bundleId) => {
     const origBundle = bundlesById[bundleId];
@@ -91,18 +67,28 @@ const makeGetEntryPageUrl = () => createSelector(
 );
 
 function mapStateToProps(state, props) {
-  const getEntryPageUrl = makeGetEntryPageUrl();
   return {
-    entryPageUrl: getEntryPageUrl(state, props)
+    entryPageUrl: getEntryPageUrl(state, props),
+    openDrawer: state.entryAppBar.openDrawer,
   };
 }
 
 const mapDispatchToProps = {
   selectItemsToPaste,
+  openEntryDrawer,
+  resetEntryAppBar
 };
 
 class EntryAppBar extends Component<Props> {
   props: Props;
+
+  componentDidMount() {
+    this.props.resetEntryAppBar();
+  }
+
+  componentWillUnmount() {
+    this.props.resetEntryAppBar();
+  }
 
   onOpenDBLEntryLink = (event) => {
     utilities.onOpenLink(this.props.entryPageUrl)(event);
@@ -132,11 +118,11 @@ class EntryAppBar extends Component<Props> {
         <Toolbar className={classes.toolBar} disableGutters={!openDrawer}>
           <IconButton
             aria-label="Open drawer"
-            onClick={this.props.handleDrawerOpen}
+            onClick={this.props.openEntryDrawer}
             className={classNames(classes.menuButton, openDrawer && classes.hide)}
             color="inherit"
           >
-            <MenuIcon />
+            <MoreVertIcon />
           </IconButton>
           <Grid container justify="flex-start" alignItems="center" spacing={24}>
             <Grid item>
@@ -162,7 +148,7 @@ class EntryAppBar extends Component<Props> {
             </Grid>
           </Grid>
           <div className={classes.flex} />
-          {mode !== 'revisions' &&
+          {mode !== 'revisions' && selectedItemsForCopy &&
           <CopyForPasteButton
             key="btnCopyForPaste"
             classes={classes}
@@ -180,6 +166,8 @@ class EntryAppBar extends Component<Props> {
     );
   }
 }
+
+EntryAppBar.defaultProps = defaultProps;
 
 export default compose(
   withStyles(materialStyles, { withTheme: true }),

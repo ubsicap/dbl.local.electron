@@ -5,7 +5,7 @@ import { withStyles } from '@material-ui/core/styles';
 import { Set } from 'immutable';
 import classNames from 'classnames';
 import { createSelector } from 'reselect';
-import LinearProgress from 'material-ui/LinearProgress';
+import LinearProgress from '@material-ui/core/LinearProgress';
 import { Menu, MenuItem, Toolbar, Tooltip } from '@material-ui/core';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
@@ -15,7 +15,7 @@ import VerifiedUserOutlined from '@material-ui/icons/VerifiedUserOutlined';
 import VerifiedUser from '@material-ui/icons/VerifiedUser';
 import AddCircle from '@material-ui/icons/AddCircle';
 import Button from '@material-ui/core/Button';
-import FileDownload from 'material-ui/svg-icons/file/file-download';
+import FileDownload from '@material-ui/icons/CloudDownload';
 import Folder from '@material-ui/icons/Folder';
 import StarBorderIcon from '@material-ui/icons/StarBorder';
 import StarIcon from '@material-ui/icons/Star';
@@ -38,6 +38,7 @@ import { ux } from '../utils/ux';
 import DeleteOrCleanButton from './DeleteOrCleanButton';
 import ConfirmButton from './ConfirmButton';
 import MediumIcon from './MediumIcon';
+import { emptyArray, emptyObject } from '../utils/defaultValues';
 
 const { dialog, app } = require('electron').remote;
 const { shell } = require('electron');
@@ -101,8 +102,7 @@ const getTask = (state, props) => props.task;
 const getStatus = (state, props) => props.status;
 const getIsSearchActive = (state) => state.bundlesFilter.isSearchActive;
 const getStarredEntries = (state) => state.bundlesFilter.starredEntries;
-const emptyBundleMatches = {};
-const emptyObj = {};
+const emptyBundleMatches = emptyObject;
 const getEmptryBundleMatches = () => emptyBundleMatches;
 const getBundleId = (state, props) => props.bundleId;
 const getDblId = (state, props) => props.dblId;
@@ -135,10 +135,10 @@ const makeGetIsRequestingRevision = () => createSelector(
 );
 
 const getSelectedBundleEntryRevisions = state =>
-  state.bundles.selectedBundleEntryRevisions || emptyObj;
+  state.bundles.selectedBundleEntryRevisions || emptyObject;
 const getSelectedBundleEntryRevision = (state, props) =>
   getSelectedBundleEntryRevisions(state)[props.dblId];
-const getAllBundles = (state) => state.bundles.allBundles || emptyObj;
+const getAllBundles = (state) => state.bundles.allBundles || emptyObject;
 const getRevision = (state, props) => props.revision;
 const getParent = (state, props) => props.parent;
 
@@ -159,7 +159,7 @@ const makeGetLaterEntryRevisions = () => createSelector(
   [getSelectedBundleEntryRevision, getAllBundles, getBundleId, getDblId, getRevision, getParent],
   (selectedBundleEntryRevision, allBundles, bundleId, dblId, revision, parent) => {
     if (!selectedBundleEntryRevision) {
-      return []; // todo: remove this optimization if (it doesn't effect initial downloads)
+      return emptyArray; // todo: remove this optimization if (it doesn't effect initial downloads)
     }
     const effectiveRevision = bundleService.getRevisionOrParentRevision(dblId, revision, parent);
     const allRevisions = allBundles.filter(b => b.dblId === dblId);
@@ -182,7 +182,7 @@ const makeMapStateToProps = () => {
   const getFormsErrors = editMetadataService.makeGetFormsErrors();
   const getLaterEntryRevisions = makeGetLaterEntryRevisions();
   const mapStateToProps = (state, props) => {
-    const { bundlesSaveTo, bundles: { newMediaTypes = [] } } = state;
+    const { bundlesSaveTo, bundles: { newMediaTypes = emptyArray } } = state;
     return {
       isRequestingRevision: getIsRequestingRevision(state, props),
       laterEntryRevisions: getLaterEntryRevisions(state, props),
@@ -305,7 +305,7 @@ class DBLEntryRow extends PureComponent<Props> {
     return this.getIsUploading() || this.shouldDisableRevise();
   }
 
-  emptyMatches = [];
+  emptyMatches = emptyArray;
 
   getMatches = (textToHighlight) => {
     const { bundleMatches } = this.props;
@@ -567,14 +567,13 @@ class DBLEntryRow extends PureComponent<Props> {
             )}
           </Grid>
         </Grid>
-        {status === 'IN_PROGRESS' && (
-          <div
-            className="row"
-            style={{ marginLeft: '20px', marginRight: '20px', paddingBottom: '10px' }}
-          >
-            <LinearProgress style={{ height: '8px' }} mode="determinate" value={progress} />
-          </div>
-        )}
+        {status === 'IN_PROGRESS' && (<LinearProgress
+          style={{
+            marginLeft: '20px', marginRight: '20px', marginBottom: '5px', paddingBottom: '10px', height: '8px'
+          }}
+          variant="determinate"
+          value={progress}
+        />)}
         {isSelected && (
           <Toolbar style={{ minHeight: '36px' }} className={this.pickBackgroundColor()}>
             {

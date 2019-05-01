@@ -1,4 +1,6 @@
 import sort from 'fast-sort';
+import upath from 'upath';
+import path from 'path';
 import { Set } from 'immutable';
 
 const { shell } = require('electron');
@@ -14,9 +16,15 @@ export const utilities = {
   onOpenLink,
   sleep,
   union,
-  difference,
+  intersect,
+  subtract,
   buildRouteUrl,
-  calculatePercentage
+  calculatePercentage,
+  formatBytesByKbs,
+  formatContainer,
+  getOrDefault,
+  getFilePathResourceData,
+  formatUri,
 };
 export default utilities;
 
@@ -25,9 +33,14 @@ export function union(arrayA, arrayB = []) {
   return u.union(arrayB).toArray();
 }
 
-export function difference(arrayA, arrayB = []) {
+export function intersect(arrayA, arrayB = []) {
+  const u = Set(arrayA);
+  return u.intersect(arrayB).toArray();
+}
+
+export function subtract(arrayA, arrayB = []) {
   const diff = Set(arrayA);
-  return diff.subtract(arrayB);
+  return diff.subtract(arrayB).toArray();
 }
 
 /* from https://stackoverflow.com/a/19746771 */
@@ -91,4 +104,40 @@ function buildRouteUrl(routeUrl, params) {
 
 function calculatePercentage(completed, total) {
   return parseFloat(((completed / total) * 100).toFixed(2));
+}
+
+function formatBytesByKbs(bytes) {
+  return (Math.round(Number(bytes) / 1024)).toLocaleString();
+}
+
+function formatContainer(containerInput) {
+  const trimmed = containerInput.trim();
+  if (trimmed === '' || trimmed === '/' || trimmed === '.') {
+    return '/';
+  }
+  const prefix = containerInput[0] !== '/' ? '/' : '';
+  const postfix = containerInput.slice(-1) !== '/' ? '/' : '';
+  return `${prefix}${containerInput}${postfix}`;
+}
+
+function getOrDefault(obj, prop, defaultValue) {
+  if (!obj) {
+    return defaultValue;
+  }
+  return obj[prop] || defaultValue;
+}
+
+function getFilePathResourceData(filePath, fullToRelativePaths, editedContainers = {}) {
+  const fileName = path.basename(filePath);
+  const editedContainer = utilities.getOrDefault(editedContainers, filePath, null);
+  const relativePath = upath.normalizeTrim(utilities.getOrDefault(fullToRelativePaths, filePath, ''));
+  const relativeFolder = formatContainer(path.dirname(relativePath));
+  const uri = utilities.formatUri(relativeFolder, fileName);
+  return {
+    fileName, relativeFolder, container: editedContainer || relativeFolder, uri
+  };
+}
+
+function formatUri(container, name) {
+  return `${container.substr(1)}${name}`;
 }

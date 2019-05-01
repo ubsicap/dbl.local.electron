@@ -27,6 +27,7 @@ import editMetadataService from '../services/editMetadata.service';
 import { utilities } from '../utils/utilities';
 import { clipboardHelpers } from '../helpers/clipboard';
 import ConfirmButton from './ConfirmButton';
+import { emptyArray, emptyObject } from '../utils/defaultValues';
 
 const materialStyles = theme => ({
   root: {
@@ -65,10 +66,10 @@ const getActiveFormEdits = (state) => state.bundleEditMetadata.activeFormEdits;
 const getFormStructure = (state, props) =>
   props.formStructure || state.bundleEditMetadata.formStructure;
 
-const emptyErrorTree = {};
+const emptyErrorTree = emptyObject;
 const getErrorTree = (state) => state.bundleEditMetadata.errorTree || emptyErrorTree;
 
-const emptyFormFieldIssues = {};
+const emptyFormFieldIssues = emptyObject;
 const getStructurePath = (state, props) => props.myStructurePath;
 const getShouldLoadDetails = (state, props) => props.shouldLoadDetails;
 const getFormFieldIssues = (state) => state.bundleEditMetadata.formFieldIssues
@@ -86,7 +87,7 @@ const makeGetSteps = () => createSelector(
     const msgLoadingForm = 'loading form...';
     const steps = formStructure
       .reduce((accSteps, section) => {
-        const instances = Object.keys(section.instances || {});
+        const instances = Object.keys(section.instances || emptyObject);
         const instanceSteps = instances
           .reduce((accInstances, instanceKey) => {
             const label = `${section.id} ${instanceKey}`;
@@ -113,7 +114,7 @@ const makeGetSteps = () => createSelector(
                 instanceOf,
                 ...instance
               }];
-          }, []);
+          }, emptyArray);
         const formKey = getStepFormKey(section.id, myStructurePath);
         const formErrors = getErrorsInForm(formFieldIssues, formKey, errorTree);
         const label = formatStepLabel(section);
@@ -125,7 +126,7 @@ const makeGetSteps = () => createSelector(
           {
             ...section, formKey, label, isFactory, content, formErrors
           }];
-      }, []);
+      }, emptyArray);
     if (shouldLoadDetails) {
       const formKey = getStepFormKey(detailsStep.id, myStructurePath);
       const formErrors = getErrorsInForm(formFieldIssues, formKey, emptyErrorTree);

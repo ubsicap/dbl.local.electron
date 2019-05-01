@@ -2,6 +2,8 @@ import React from 'react';
 import Badge from '@material-ui/core/Badge';
 import Description from '@material-ui/icons/Description';
 import FolderOpen from '@material-ui/icons/FolderOpen';
+import InsertChartOutlined from '@material-ui/icons/InsertChartOutlined';
+import ListAltIcon from '@material-ui/icons/FormatListNumberedRtl';
 import { lighten } from '@material-ui/core/styles/colorManipulator';
 import { bundleService } from '../services/bundle.service';
 
@@ -10,6 +12,7 @@ export const ux = {
   getDblRowStyles,
   getDblRowBackgroundColor,
   getEntryDrawerStyles,
+  getEntryUxStyles,
   mapColumns,
   getHighlightTheme,
   conditionallyRenderBadge,
@@ -133,8 +136,45 @@ function getEntryDrawerStyles(theme) {
   };
 }
 
+function getEntryUxStyles(theme) {
+  return {
+    errorBar: {
+      color: theme.palette.secondary.light,
+    },
+    successBar: {
+      color: theme.palette.primary.light,
+    },
+    toolBar: {
+      paddingLeft: '10px',
+    },
+    flex: {
+      flex: 1,
+    },
+    leftIcon: {
+      marginRight: theme.spacing.unit,
+    },
+    iconSmall: {
+      fontSize: 20,
+    },
+    button: {
+      margin: theme.spacing.unit,
+    },
+    input: {
+      display: 'none',
+    },
+    buttonProgress: {
+      color: theme.palette.secondary.main,
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      marginTop: -25,
+      marginLeft: -23,
+    }
+  }
+}
+
 function mapColumns(columns, getIsNumeric, getColumnLabel) {
-  return Object.keys(columns)
+  return Object.keys(columns).filter(c => c !== 'id')
     .map(c => ({ name: c, type: getIsNumeric(c) ? 'numeric' : 'string', label: getColumnLabel(c) }));
 }
 
@@ -185,5 +225,17 @@ function getClipboardTooltip(selectedItemsToPaste) {
 }
 
 function getModeIcon(mode, props) {
-  return mode === 'metadata' ? <Description {...props} /> : <FolderOpen {...props} />;
+  switch (mode) {
+    case 'revisions':
+      return <ListAltIcon {...props} />;
+    case 'metadata':
+      return <Description {...props} />;
+    case 'reports':
+      return <InsertChartOutlined {...props} />;
+    case 'download':
+    case 'addFiles':
+    case 'store':
+    default:
+      return <FolderOpen {...props} />;
+  }
 }

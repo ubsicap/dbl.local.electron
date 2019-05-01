@@ -1,4 +1,5 @@
 import React from 'react';
+import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import Dialog from '@material-ui/core/Dialog';
@@ -6,19 +7,30 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
+import Grid from '@material-ui/core/Grid';
+import Folder from '@material-ui/icons/Folder';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import CloseIcon from '@material-ui/icons/Close';
 import Switch from '@material-ui/core/Switch';
-import SuperSelectField from 'material-ui-superselectfield/es';
+import Tooltip from '@material-ui/core/Tooltip';
 import path from 'path';
+import fs from 'fs-extra';
 import filenamify from 'filenamify';
 import Select from '@material-ui/core/Select';
 import FormControl from '@material-ui/core/FormControl';
+import FormHelperText from '@material-ui/core/FormHelperText';
 import InputLabel from '@material-ui/core/InputLabel';
 import Input from '@material-ui/core/Input';
+import Checkbox from '@material-ui/core/Checkbox';
+import ListItemText from '@material-ui/core/ListItemText';
 import MenuItem from '@material-ui/core/MenuItem';
+import Typography from '@material-ui/core/Typography';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 
+const { dialog } = require('electron').remote;
+
 type Props = {
+  classes: {},
   open: boolean,
   settings: ?{},
   handleClickOk: () => {},
@@ -28,12 +40,32 @@ type Props = {
 
 const hostOptions = ['api.thedigitalbiblelibrary.org', 'api-demo.thedigitalbiblelibrary.org'];
 
+const styles = theme => ({
+  formControl: {
+    display: 'flex',
+  },
+  icon: {
+    marginRight: theme.spacing.unit * 2,
+  },
+});
+
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: (ITEM_HEIGHT * 4.5) + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
+
 /* eslint-disable camelcase */
 
 function importSettingsToState(settings) {
   const { configXmlSettings, workspace } = settings;
   const workspaceName = workspace.name;
-  const { settings: { dbl } } = configXmlSettings;
+  const { settings: { dbl, storer } } = configXmlSettings;
   const {
     accessToken, secretKey, organizationType, downloadOpenAccessEntries = [false],
     host
@@ -43,14 +75,21 @@ function importSettingsToState(settings) {
   const settings_dbl_secretKey = secretKey[0];
   const settings_dbl_organizationType = organizationType[0];
   const settings_dbl_downloadOpenAccessEntries = downloadOpenAccessEntries[0] === 'true';
-  return {
+  const { metadataTemplateDir: metadataTemplateDirOrNot = [null] } = storer[0];
+  const [metadataTemplateDir] = metadataTemplateDirOrNot;
+  const settings_storer_metadataTemplateDirOrNot = metadataTemplateDir ?
+    { settings_storer_metadataTemplateDir: metadataTemplateDir } : {};
+  const imported = {
     workspaceName,
     settings_dbl_host,
     settings_dbl_accessToken,
     settings_dbl_secretKey,
     settings_dbl_organizationType,
-    settings_dbl_downloadOpenAccessEntries
+    settings_dbl_downloadOpenAccessEntries,
+    ...settings_storer_metadataTemplateDirOrNot
   };
+  console.log(imported);
+  return imported;
 }
 
 function selectHtmlSetting(host) {
@@ -67,12 +106,17 @@ function exportStateToSettings(state, origSettings) {
     settings_dbl_accessToken,
     settings_dbl_secretKey,
     settings_dbl_organizationType,
-    settings_dbl_downloadOpenAccessEntries
+    settings_dbl_downloadOpenAccessEntries,
+    settings_storer_metadataTemplateDir: metadataTemplateDir,
   } = state;
   const workspacesDir = dblDotLocalService.getWorkspacesDir();
   const newFullPath = path.join(workspacesDir, workspaceName);
   const workspace = { ...origSettings.workspace, name: workspaceName, fullPath: newFullPath };
-  const downloadOpenAccessEntries = origSettings.configXmlSettings.settings.dbl[0].downloadOpenAccessEntries ? { downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries] } : {};
+  const downloadOpenAccessEntries =
+    origSettings.configXmlSettings.settings.dbl[0].downloadOpenAccessEntries ?
+      { downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries] } : {};
+  const settings_storer_metadataTemplateDirOrNot = metadataTemplateDir ?
+    { metadataTemplateDir } : {};
   const configXmlSettings = {
     settings: {
       ...origSettings.configXmlSettings.settings,
@@ -85,13 +129,17 @@ function exportStateToSettings(state, origSettings) {
         organizationType: [settings_dbl_organizationType],
         ...downloadOpenAccessEntries
         /* downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries] */
-      }]
+      }],
+      storer: [{
+        ...origSettings.configXmlSettings.settings.storer[0],
+        ...settings_storer_metadataTemplateDirOrNot,
+      }],
     }
   };
   return { workspace, configXmlSettings };
 }
 
-export default class WorkspaceEditDialog extends React.Component<Props> {
+class WorkspaceEditDialog extends React.Component<Props> {
   props: Props;
   constructor(props) {
     super(props);
@@ -101,17 +149,20 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
   componentDidMount() {
     const { getInitialFormErrors } = this.props;
     if (getInitialFormErrors) {
-      const errors = Object.keys(this.state).map(name => this.getErrorText(name)).filter(v => v.length);
+      const errors =
+        Object.keys(this.state).map(name => this.getErrorText(name)).filter(v => v.length);
       getInitialFormErrors(errors);
     }
   }
 
-  renderHostMenuItems = () => hostOptions.map((option) => (<MenuItem key={option} value={option}>{option}</MenuItem>));
+  renderHostMenuItems = () =>
+    hostOptions.map((option) => (<MenuItem key={option} value={option}>{option}</MenuItem>));
 
   getOrganizationTypeValues = () => this.state.settings_dbl_organizationType || '';
 
-  handleChangeOrganizationType = (selectedValues, name) => {
-    const newValue = selectedValues.map(val => val.value).join(' ');
+  handleChangeOrganizationType = name => event => {
+    const selectedValues = event.target.value;
+    const newValue = selectedValues.join(' ');
     this.setState({ [name]: newValue });
   }
 
@@ -135,6 +186,12 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
       case 'settings_dbl_organizationType': {
         return value.length === 0 ? 'Requires ipc or lch (or both)' : '';
       }
+      case 'settings_storer_metadataTemplateDir': {
+        if (value.length === 0) {
+          return '';
+        }
+        return fs.existsSync(value) ? '' : `Metadata template dir ${value} no longer exists. Please pick another directory`;
+      }
       default: {
         return '';
       }
@@ -149,20 +206,39 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
     const { target } = event;
     const value = target.type === 'checkbox' ? target.checked : target.value;
     const { name } = target;
-    this.setState({
-      [name]: value
-    });
+    this.updateInputValue(name, value);
   }
+
+  updateInputValue = (name, value) => this.setState({ [name]: value });
 
   getInputValue = (name) => this.state[name] || '';
 
+  handlePickStorerMetadataTemplateDir = () => {
+    const defaultPath = this.getInputValue('settings_storer_metadataTemplateDir');
+    const [newFolder] = dialog.showOpenDialog({
+      defaultPath,
+      properties: ['openDirectory']
+    }) || [];
+    if (!newFolder) {
+      return;
+    }
+    this.updateInputValue('settings_storer_metadataTemplateDir', newFolder);
+  }
+
+  shouldShowResetMetadataTemplateDir = () =>
+    this.getInputValue('settings_storer_metadataTemplateDir').length > 0;
+
+  handleResetStorerMetadataTemplateDir = () => this.updateInputValue('settings_storer_metadataTemplateDir', '');
+
   render() {
-    const organizationTypeValues = this.getOrganizationTypeValues().split(' ').filter(v => v.length).map(val => ({ value: val }));
+    const organizationTypeValues = this.getOrganizationTypeValues().split(' ').filter(v => v.length);
     const organizationTypeOptions = ['lch', 'ipc'].map(option => (
-      <div key={option} value={option} >
-        {option}
-      </div>
+      <MenuItem key={option} value={option}>
+        <Checkbox checked={organizationTypeValues.indexOf(option) > -1} />
+        <ListItemText primary={option} />
+      </MenuItem>
     ));
+    const { classes } = this.props;
     return (
       <div>
         <Dialog
@@ -224,19 +300,24 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
               type="password"
               onChange={this.handleInputChange}
             />
-            <SuperSelectField
-              name="settings_dbl_organizationType"
-              multiple
-              floatingLabel="Organization Type(s) *"
-              floatingLabelStyle={{ color: 'rgba(0, 0, 0, 0.54)' }}
-              floatingLabelFocusStyle={{ color: '#303f9f' }}
-              value={organizationTypeValues}
-              errorText={this.getErrorText('settings_dbl_organizationType')}
-              onChange={this.handleChangeOrganizationType}
-              style={{ display: 'flex', marginTop: 20 }}
+            <FormControl
+              className={classes.formControl}
+              margin="dense"
+              error={this.hasError('settings_dbl_organizationType')}
             >
-              {organizationTypeOptions}
-            </SuperSelectField>
+              <InputLabel htmlFor="select-multiple-checkbox">Organization Type(s) *</InputLabel>
+              <Select
+                multiple
+                value={organizationTypeValues}
+                onChange={this.handleChangeOrganizationType('settings_dbl_organizationType')}
+                input={<Input id="select-multiple-checkbox" />}
+                renderValue={selected => selected.join(', ')}
+                MenuProps={MenuProps}
+              >
+                {organizationTypeOptions}
+              </Select>
+              <FormHelperText>{this.getErrorText('settings_dbl_organizationType')}</FormHelperText>
+            </FormControl>
             <FormControlLabel
               control={
                 <Switch
@@ -248,6 +329,27 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
               }
               label="Download Open Access Entries"
             />
+            <Grid container>
+              <Grid item>
+                <Tooltip title="Metadata Templates for each medium (e.g. audio.xml)">
+                  <Button id="metadataTemplateDir" size="small" color="primary" onClick={this.handlePickStorerMetadataTemplateDir}>
+                    <Folder className={classes.icon} />
+                    Metadata template directory
+                  </Button>
+                </Tooltip>
+                {this.shouldShowResetMetadataTemplateDir() &&
+                  <Tooltip title="Clear Metadata template directory">
+                    <Button size="small" color="primary" onClick={this.handleResetStorerMetadataTemplateDir}>
+                      <CloseIcon />
+                    </Button>
+                  </Tooltip>}
+              </Grid>
+              <Grid item>
+                <Typography variant="caption" align="left" color="textSecondary" paragraph>
+                  {this.getInputValue('settings_storer_metadataTemplateDir')}
+                </Typography>
+              </Grid>
+            </Grid>
           </DialogContent>
           <DialogActions>
             <Button onClick={this.props.handleClickCancel} color="primary">
@@ -262,3 +364,5 @@ export default class WorkspaceEditDialog extends React.Component<Props> {
     );
   }
 }
+
+export default withStyles(styles, { withTheme: true })(WorkspaceEditDialog);

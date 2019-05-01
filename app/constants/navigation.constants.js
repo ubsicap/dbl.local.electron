@@ -7,6 +7,7 @@ export const navigationConstants = {
   NAVIGATION_BUNDLE_EDIT_METADATA_SECTION: '/bundles/:bundleId/edit-metadata/:section',
   NAVIGATION_BUNDLE_EDIT_METADATA_FORMKEY: '/bundles/:bundleId/edit-metadata:formKey',
   NAVIGATION_BUNDLE_MANAGE_RESOURCES: '/bundles/:bundleId/manage-resources/:mode',
+  NAVIGATION_ENTRY_REPORTS: '/entries/:bundleId/reports',
 };
 
 export default navigationConstants;

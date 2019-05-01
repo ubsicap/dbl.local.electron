@@ -2,13 +2,15 @@ import log from 'electron-log';
 import path from 'path';
 import { userConstants } from '../constants';
 import { userService } from '../services';
-import { alertActions } from './';
+import { alertActions } from '../actions/alert.actions';
 import { history } from '../store/configureStore';
 import dblDotLocalConstants from '../constants/dblDotLocal.constants';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { workspaceUserSettingsStoreServices } from '../services/workspaces.service';
 import { navigationConstants } from '../constants/navigation.constants';
 import { setupBundlesEventSource } from '../actions/bundle.actions';
+import { clipboardActions } from '../actions/clipboard.actions';
+import { reportActions } from '../actions/report.actions';
 
 const electron = require('electron');
 
@@ -78,6 +80,8 @@ function connectSSE(authToken) {
   return (dispatch, getState) => {
     const eventSource = dblDotLocalService.startEventSource(authToken, getState);
     dispatch({ type: userConstants.SERVER_SENT_EVENTS_SOURCE_CREATED, eventSource });
+    dispatch(clipboardActions.setupClipboardListeners());
+    dispatch(reportActions.setupReportListeners());
   };
 }
 
