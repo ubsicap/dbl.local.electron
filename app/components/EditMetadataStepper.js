@@ -247,18 +247,19 @@ function findFormKeyStepIndex(steps, formKey) {
 
 class _EditMetadataStepper extends React.Component<Props> {
   props: Props;
+  
   constructor(props) {
     super(props);
     this.state = {
       activeStepIndex: -1,
       completed: {}
     };
-    const { moveNext } = this.props;
+    const { moveNext } = props;
     const { formKey: moveNextFormKey = null } = moveNext || {};
     if (!moveNextFormKey) {
       this.state.activeStepIndex = 0;
     } else {
-      const { steps } = this.props;
+      const { steps } = props;
       const { newActiveStepIndex } = findFormKeyStepIndex(steps, moveNextFormKey);
       this.state.activeStepIndex = newActiveStepIndex !== -1 ? newActiveStepIndex : 0;
     }
