@@ -13,7 +13,11 @@ const router = routerMiddleware(history);
 const enhancer = applyMiddleware(createDebounce(), thunk, router);
 
 function configureStore(initialState?: counterStateType) {
-  return createStore(rootReducer, initialState, enhancer);
+  return createStore<*, counterStateType, *>(
+    rootReducer,
+    initialState,
+    enhancer
+  );
 }
 
 export default { configureStore, history };

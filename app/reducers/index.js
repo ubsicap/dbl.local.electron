@@ -16,7 +16,7 @@ import { entryAppBar } from './entryAppBar.reducer';
 
 
 export default function createRootReducer(history: History) {
-  return combineReducers({
+  return combineReducers<{}, *>({
     router: connectRouter(history),
     dblDotLocalConfig,
   	authentication,
