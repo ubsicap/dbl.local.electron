@@ -74,6 +74,8 @@ class LoginForm extends React.Component {
   }
 
   componentDidMount() {
+    const { clearAlerts } = this.props;
+    clearAlerts();
     this.mounted = true;
     this.startWaitUntil();
   }
