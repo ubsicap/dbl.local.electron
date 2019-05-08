@@ -1,3 +1,7 @@
+### Version 0.35.5
+#### Fix
+- dbl_dot_local_app(5/7/2019): auto link upload job
+
 ### Version 0.35.4
 #### Fix (Report - Checks - Stylesheet)
 - close all child windows (e.g. report, metadata) if main app is closed
