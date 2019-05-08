@@ -635,16 +635,16 @@ function postResource(bundleId, filePath, bundlePath, mapper) {
   const uri = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/resource/${bundlePath}`;
   const fullUri = mapper ? `${uri}?mapper=${mapper}` : uri;
   log.info(`postResource uri: ${fullUri}`);
+  const filename = path.basename(filePath);
   // const data = new FormData();
   // data.append('content', fs.createReadStream(filePath), filename);
   /*
   return fetch(fullUri, {
       headers: { ...authHeader() },
       method: 'POST',
-      body: fs.createReadStream(filePath)
+      body: data
   });
   */
-  const filename = path.basename(filePath);
   // 'content-type': 'multipart/form-data' // Is set automatically
   const options = {
     method: 'POST',
