@@ -287,7 +287,7 @@
     "redux-debounced": "^0.5.0",
     "redux-thunk": "^2.3.0",
     "request": "2.34",
-    "request-promise-native": "^1.0.5",
+    "request-promise-native": "^1.0.7",
     "reselect": "^3.0.1",
     "source-map-support": "^0.5.11",
     "split-string": "^5.0.4",
