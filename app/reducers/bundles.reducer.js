@@ -361,9 +361,7 @@ export function bundles(state = initialState, action) {
 export default bundles;
 
 function addBundleDecorators(bundle, addCustomDecoration) {
-  const isDownloaded = bundle.task === 'DOWNLOAD' && bundle.status === 'COMPLETED';
-  const isUploaded = bundle.task === 'UPLOAD' && bundle.status === 'COMPLETED';
-  const coreDecorated = { ...bundle, ...formatDisplayAs(bundle), isDownloaded, isUploaded };
+  const coreDecorated = { ...bundle, ...formatDisplayAs(bundle) };
   if (!addCustomDecoration) {
     return coreDecorated;
   }
@@ -405,11 +403,8 @@ function formatStatus(bundle) {
   const stored = (bundle.resourceCountStored === bundle.resourceCountManifest) ?
     bundle.resourceCountManifest : `${bundle.resourceCountStored}/${bundle.resourceCountManifest || '...'}`;
   let newStatusDisplayAs;
-  if (bundle.isUploading) {
-    const uploadingMessage = (!bundle.resourceCountStored || bundle.resourceCountStored === 0) ? 'metadata' : formattedProgress;
-    newStatusDisplayAs = `Uploading ${uploadingMessage}`;
-  } else if (bundle.task === 'UPLOAD' && bundle.status === 'IN_PROGRESS') {
-    newStatusDisplayAs = 'Uploading';
+  if (bundle.task === 'UPLOAD' && bundle.status === 'IN_PROGRESS') {
+    newStatusDisplayAs = `Uploading ${formattedProgress}`;
   } else if (bundle.status === 'NOT_STARTED') {
     newStatusDisplayAs = 'Download';
   } else if (bundle.task === 'DOWNLOAD' && bundle.status === 'IN_PROGRESS') {
