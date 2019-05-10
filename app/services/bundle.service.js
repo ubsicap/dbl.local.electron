@@ -540,7 +540,7 @@ function checkAllFields(bundleId) {
 function startUploadBundle(bundleId) {
   return bundleAddTasks(
     bundleId,
-    '<cancelUploadJobs/><createUploadJob/><uploadResources/><submitJobIfComplete><forkAfterUpload>true</forkAfterUpload></submitJobIfComplete>'
+    '<findUploadJob/><uploadResources/><submitJobIfComplete><forkAfterUpload>true</forkAfterUpload></submitJobIfComplete>'
   );
 }
 

@@ -58,7 +58,6 @@ type Props = {
   bundleMatches: {},
   bundlesSaveTo: {},
   progress?: ?number,
-  isDownloaded: ?boolean,
   isUploading?: ?boolean,
   isDownloading?: ?boolean,
   isSelected: ?boolean,

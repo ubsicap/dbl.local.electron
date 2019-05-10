@@ -88,7 +88,6 @@ function importSettingsToState(settings) {
     settings_dbl_downloadOpenAccessEntries,
     ...settings_storer_metadataTemplateDirOrNot
   };
-  console.log(imported);
   return imported;
 }
 
