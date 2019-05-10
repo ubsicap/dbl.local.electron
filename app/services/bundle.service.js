@@ -502,7 +502,7 @@ function checkAllFields(bundleId) {
 }
 
 function startUploadBundle(bundleId) {
-  return bundleAddTasks(bundleId, '<cancelUploadJobs/><createUploadJob/><uploadResources/><submitJobIfComplete><forkAfterUpload>true</forkAfterUpload></submitJobIfComplete>');
+  return bundleAddTasks(bundleId, '<findUploadJob/><uploadResources/><submitJobIfComplete><forkAfterUpload>true</forkAfterUpload></submitJobIfComplete>');
 }
 
 function deleteForm(bundleId, formKey) {

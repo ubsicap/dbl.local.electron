@@ -1,5 +1,6 @@
-### Version 0.35.5
-#### Fix
+### Version 0.36.0
+#### Feature
+- allow resume upload if upload job had stopped
 - dbl_dot_local_app(5/7/2019): auto link upload job
 
 ### Version 0.35.4
