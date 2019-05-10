@@ -15,7 +15,10 @@ const getMuiTheme = () => createMuiTheme({
   overrides: {
     /* don't responsively hide checkbox column https://github.com/gregnb/mui-datatables/issues/495#issuecomment-472903814 */
     MUIDataTableSelectCell: { root: { '@media (max-width:959.95px)': { display: 'table-cell' } } }
-  }
+  },
+  typography: {
+    useNextVariants: true,
+  },
 });
 
 const styles = theme => ({
