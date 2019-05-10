@@ -3,6 +3,8 @@ import traverse from 'traverse';
 import fs from 'fs-extra';
 import path from 'path';
 import rp from 'request-promise-native';
+import got from 'got';
+import FormData from 'form-data';
 import uuidv1 from 'uuid/v1';
 import waitUntil from 'node-wait-until';
 import { authHeader } from '../helpers';
@@ -636,15 +638,23 @@ function postResource(bundleId, filePath, bundlePath, mapper) {
   const fullUri = mapper ? `${uri}?mapper=${mapper}` : uri;
   log.info(`postResource uri: ${fullUri}`);
   const filename = path.basename(filePath);
-  // const data = new FormData();
-  // data.append('content', fs.createReadStream(filePath), filename);
+  const data = new FormData();
+  data.append('content', fs.createReadStream(filePath), filename);
+  return got.post(fullUri, {
+    headers: { ...authHeader() },
+    body: data /* use import FormData from 'form-data' */,
+    useElectronNet: false /* has issues https://github.com/sindresorhus/got/issues/315 and see https://github.com/sindresorhus/got/blob/dfb46ad0bf2427f387968f67ac943476597f0a3b/readme.md */
+  });
   /*
+  // fetch does not support posting files as multipart/form-data
+  // https://github.com/electron/electron/issues/9684
   return fetch(fullUri, {
       headers: { ...authHeader() },
       method: 'POST',
       body: data
   });
   */
+  /*
   // 'content-type': 'multipart/form-data' // Is set automatically
   const options = {
     method: 'POST',
@@ -663,9 +673,8 @@ function postResource(bundleId, filePath, bundlePath, mapper) {
       ...authHeader()
     }
   };
-  // fetch does not support posting files as multipart/form-data
-  // https://github.com/electron/electron/issues/9684
   return rp(options);
+  */
 }
 
 function updateManifestResource(bundleId, bundlePath) {
