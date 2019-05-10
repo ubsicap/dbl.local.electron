@@ -112,16 +112,28 @@ app.on('ready', async () => {
       mainWindow.focus();
     }
     const myAutoUpdater = autoUpdaterServices.setupAutoUpdater(mainWindow);
-    myAutoUpdater.logger.info(`logger level? ${myAutoUpdater.logger.transports.file.level}`);
-    myAutoUpdater.logger.info(`autoUpdater config path: ${myAutoUpdater._appUpdateConfigPath}`);
+    myAutoUpdater.logger.info(
+      `logger level? ${myAutoUpdater.logger.transports.file.level}`
+    );
     if (process.env.NODE_ENV === 'development') {
-      myAutoUpdater.updateConfigPath = path.join(__dirname, 'dev-app-update.yml');
+      myAutoUpdater.updateConfigPath = path.join(
+        __dirname,
+        'dev-app-update.yml'
+      );
     } else {
-      myAutoUpdater.updateConfigPath = path.join(__dirname, '..', '..', 'app-update.yml');
+      myAutoUpdater.updateConfigPath = path.join(
+        __dirname,
+        '..',
+        '..',
+        'app-update.yml'
+      );
     }
     myAutoUpdater.logger.info('Request checkForUpdatesAndNotify');
     myAutoUpdater.checkForUpdatesAndNotify();
-    myAutoUpdater.logger.info(`autoUpdater config path: ${myAutoUpdater._appUpdateConfigPath}`);
+    myAutoUpdater.logger.info(
+      // eslint-disable-next-line no-underscore-dangle
+      `autoUpdater config path: ${myAutoUpdater._appUpdateConfigPath}`
+    );
   });
 
   mainWindow.on('focus', () => {

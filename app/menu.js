@@ -24,7 +24,7 @@ export default class MenuBuilder {
 
   setupDevelopmentEnvironment() {
     console.log('setupDevelopmentEnvironment');
-    this.mainWindow.openDevTools();
+    this.mainWindow.openDevTools({ mode: 'right' });
     this.mainWindow.webContents.on('context-menu', (e, props) => {
       const { x, y } = props;
 
@@ -234,7 +234,12 @@ export default class MenuBuilder {
           label: 'Toggle &Developer Tools',
           accelerator: 'Alt+Ctrl+I',
           click: () => {
-            this.mainWindow.toggleDevTools();
+            const opened: boolean = this.mainWindow.webContents.isDevToolsOpened();
+            if (opened) {
+              this.mainWindow.webContents.closeDevTools();
+            } else {
+              this.mainWindow.webContents.openDevTools({ mode: 'right' });
+            }
           }
         }] : [{
           label: 'Toggle &Full Screen',
