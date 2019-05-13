@@ -7,6 +7,7 @@ import { bundleConstants } from '../constants/bundle.constants';
 import { bundleService } from '../services/bundle.service';
 import { updateSearchResultsForBundleId } from './bundleFilter.actions';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
+// eslint-disable-next-line import/no-cycle
 import { bundleManageResourceActions } from './bundleManageResources.actions';
 import { workspaceHelpers } from '../helpers/workspaces.helpers';
 import { browserWindowService } from '../services/browserWindow.service';
