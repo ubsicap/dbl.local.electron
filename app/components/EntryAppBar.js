@@ -116,13 +116,8 @@ class EntryAppBar extends Component<Props> {
       })}
       >
         <Toolbar className={classes.toolBar} disableGutters={!openDrawer}>
-          <IconButton
-            aria-label="Open drawer"
-            onClick={this.props.openEntryDrawer}
-            className={classNames(classes.menuButton, openDrawer && classes.hide)}
-            color="inherit"
-          >
-            <MoreVertIcon />
+          <IconButton color="inherit" onClick={this.props.handleClose} aria-label="Close">
+            <CloseIcon />
           </IconButton>
           <Grid container justify="flex-start" alignItems="center" spacing={24}>
             <Grid item>
@@ -158,8 +153,13 @@ class EntryAppBar extends Component<Props> {
             selectedItems={selectedItemsForCopy}
           />}
           {this.props.actionButton}
-          <IconButton color="inherit" onClick={this.props.handleClose} aria-label="Close">
-            <CloseIcon />
+          <IconButton
+            aria-label="Open drawer"
+            onClick={this.props.openEntryDrawer}
+            className={classNames(classes.menuButton, openDrawer && classes.hide)}
+            color="inherit"
+          >
+            <MoreVertIcon />
           </IconButton>
         </Toolbar>
       </AppBar>

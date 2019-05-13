@@ -90,7 +90,7 @@ function getEntryDrawerStyles(theme) {
     },
     appBarShift: {
       width: `calc(100% - ${drawerWidth}px)`,
-      marginLeft: drawerWidth,
+      marginRight: drawerWidth,
       transition: theme.transitions.create(['margin', 'width'], {
         easing: theme.transitions.easing.easeOut,
         duration: theme.transitions.duration.enteringScreen,
@@ -115,7 +115,7 @@ function getEntryDrawerStyles(theme) {
       alignItems: 'center',
       padding: '0 8px',
       ...theme.mixins.toolbar,
-      justifyContent: 'flex-end',
+      justifyContent: 'flex-start',
     },
     content: {
       flexGrow: 1,
@@ -124,14 +124,14 @@ function getEntryDrawerStyles(theme) {
         easing: theme.transitions.easing.sharp,
         duration: theme.transitions.duration.leavingScreen,
       }),
-      marginLeft: 0,
+      marginRight: 0,
     },
     contentShift: {
       transition: theme.transitions.create('margin', {
         easing: theme.transitions.easing.easeOut,
         duration: theme.transitions.duration.enteringScreen,
       }),
-      marginLeft: drawerWidth,
+      marginRight: drawerWidth,
     },
   };
 }
