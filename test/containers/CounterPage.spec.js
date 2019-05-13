@@ -3,7 +3,7 @@ import Enzyme, { mount } from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
 import { Provider } from 'react-redux';
 import { createBrowserHistory } from 'history';
-import { ConnectedRouter } from 'react-router-redux';
+import { ConnectedRouter } from 'connected-react-router';
 import CounterPage from '../../app/containers/CounterPage';
 import { configureStore } from '../../app/store/configureStore';
 
@@ -40,7 +40,7 @@ describe('containers', () => {
       expect(p.text()).toMatch(/^1$/);
     });
 
-    it('should display updated count after descrement button click', () => {
+    it('should display updated count after decrement button click', () => {
       const { buttons, p } = setup();
       buttons.at(1).simulate('click');
       expect(p.text()).toMatch(/^-1$/);

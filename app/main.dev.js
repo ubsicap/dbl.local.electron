@@ -1,35 +1,46 @@
-/* eslint global-require: 0, flowtype-errors/show-errors: 0 */
+/* eslint global-require: off */
 
 /**
  * This module executes inside of electron's main process. You can start
  * electron renderer process from here and communicate with the other processes
  * through IPC.
  *
- * When running `npm run build` or `npm run build-main`, this file is compiled to
+ * When running `yarn build` or `yarn build-main`, this file is compiled to
  * `./app/main.prod.js` using webpack. This gives us some performance wins.
  *
  * @flow
  */
-import { app, BrowserWindow, /* session */} from 'electron';
+import { app, BrowserWindow } from 'electron';
+// import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import path from 'path';
 import MenuBuilder from './menu';
 import { autoUpdaterServices } from './main-process/autoUpdater.services';
 import { navigationConstants } from './constants/navigation.constants';
 
+/*
+export default class AppUpdater {
+  constructor() {
+    log.transports.file.level = 'info';
+    autoUpdater.logger = log;
+    autoUpdater.checkForUpdatesAndNotify();
+  }
+}
+*/
+
 let mainWindow = null;
 
 /*
-   * from https://github.com/megahertz/electron-log
-   * on Linux: ~/.config/<app name>/log.log
-   * on OS X: ~/Library/Logs/<app name>/log.log
-   * on Windows: %USERPROFILE%\AppData\Roaming\<app name>\log.log
-   */
+ * from https://github.com/megahertz/electron-log
+ * on Linux: ~/.config/<app name>/log.log
+ * on OS X: ~/Library/Logs/<app name>/log.log
+ * on Windows: %USERPROFILE%\AppData\Roaming\<app name>\log.log
+ */
 if (process.env.NODE_ENV === 'development') {
   log.transports.file.level = 'debug';
   log.transports.file.file = path.join(__dirname, 'log-dev.txt');
 } else {
-  log.transports.file.level = 'info';
+  log.transports.file.level = 'debug';
 }
 log.info('App starting...');
 log.info(`Log file: ${log.transports.file.file}`);
@@ -39,25 +50,22 @@ if (process.env.NODE_ENV === 'production') {
   sourceMapSupport.install();
 }
 
-if (process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true') {
+if (
+  process.env.NODE_ENV === 'development' ||
+  process.env.DEBUG_PROD === 'true'
+) {
   require('electron-debug')();
-  const p = path.join(__dirname, '..', 'app', 'node_modules');
-  require('module').globalPaths.push(p);
 }
 
 const installExtensions = async () => {
   const installer = require('electron-devtools-installer');
   const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
-  const extensions = [
-    'REACT_DEVELOPER_TOOLS',
-    'REDUX_DEVTOOLS'
-  ];
+  const extensions = ['REACT_DEVELOPER_TOOLS', 'REDUX_DEVTOOLS'];
 
-  return Promise
-    .all(extensions.map(name => installer.default(installer[name] || name, forceDownload)))
-    .catch(console.log);
+  return Promise.all(
+    extensions.map(name => installer.default(installer[name], forceDownload))
+  ).catch(console.log);
 };
-
 
 /**
  * Add event listeners...
@@ -70,9 +78,11 @@ app.on('window-all-closed', () => {
   }
 });
 
-
 app.on('ready', async () => {
-  if (process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true') {
+  if (
+    process.env.NODE_ENV === 'development' ||
+    process.env.DEBUG_PROD === 'true'
+  ) {
     await installExtensions();
   }
 
@@ -85,7 +95,9 @@ app.on('ready', async () => {
     }
   });
 
-  mainWindow.loadURL(`file://${__dirname}/app.html#${navigationConstants.NAVIGATION_WORKSPACES}`);
+  mainWindow.loadURL(
+    `file://${__dirname}/app.html#${navigationConstants.NAVIGATION_WORKSPACES}`
+  );
 
   // @TODO: Use 'ready-to-show' event
   //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
@@ -93,27 +105,50 @@ app.on('ready', async () => {
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
     }
-    mainWindow.show();
-    mainWindow.focus();
-    const autoUpdater = autoUpdaterServices.setupAutoUpdater(mainWindow);
-    autoUpdater.logger.info('Request checkForUpdatesAndNotify');
-    autoUpdater.checkForUpdatesAndNotify();
+    if (process.env.START_MINIMIZED) {
+      mainWindow.minimize();
+    } else {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+    const myAutoUpdater = autoUpdaterServices.setupAutoUpdater(mainWindow);
+    myAutoUpdater.logger.info(
+      `logger level? ${myAutoUpdater.logger.transports.file.level}`
+    );
+    if (process.env.NODE_ENV === 'development') {
+      myAutoUpdater.updateConfigPath = path.join(
+        __dirname,
+        'dev-app-update.yml'
+      );
+    } else {
+      myAutoUpdater.updateConfigPath = path.join(
+        __dirname,
+        '..',
+        '..',
+        'app-update.yml'
+      );
+    }
+    myAutoUpdater.logger.info('Request checkForUpdatesAndNotify');
+    myAutoUpdater.checkForUpdatesAndNotify();
+    myAutoUpdater.logger.info(
+      // eslint-disable-next-line no-underscore-dangle
+      `autoUpdater config path: ${myAutoUpdater._appUpdateConfigPath}`
+    );
   });
 
   mainWindow.on('focus', () => {
     const menuBuilder = new MenuBuilder(mainWindow);
     menuBuilder.buildMainMenu();
   });
-
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 
-  mainWindow.onerror = (err) => {
+  mainWindow.onerror = err => {
     log.error(JSON.stringify(err));
   };
 
-  process.on('uncaughtException', (err) => {
+  process.on('uncaughtException', err => {
     log.error(JSON.stringify(err));
   });
 
@@ -122,4 +157,9 @@ app.on('ready', async () => {
     log.error(JSON.stringify(details));
   });
    */
+  /*
+  // Remove this if your app does not use auto updates
+  // eslint-disable-next-line
+  new AppUpdater();
+  */
 });

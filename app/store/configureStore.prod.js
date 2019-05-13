@@ -2,17 +2,22 @@
 import { createStore, applyMiddleware } from 'redux';
 import thunk from 'redux-thunk';
 import { createHashHistory } from 'history';
-import { routerMiddleware } from 'react-router-redux';
+import { routerMiddleware } from 'connected-react-router';
 import createDebounce from 'redux-debounced';
-import rootReducer from '../reducers';
+import createRootReducer from '../reducers';
 import type { counterStateType } from '../reducers/counter';
 
 const history = createHashHistory();
+const rootReducer = createRootReducer(history);
 const router = routerMiddleware(history);
 const enhancer = applyMiddleware(createDebounce(), thunk, router);
 
 function configureStore(initialState?: counterStateType) {
-  return createStore(rootReducer, initialState, enhancer);
+  return createStore<*, counterStateType, *>(
+    rootReducer,
+    initialState,
+    enhancer
+  );
 }
 
 export default { configureStore, history };

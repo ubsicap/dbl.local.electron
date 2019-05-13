@@ -766,7 +766,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     };
   }
 
-
   componentDidMount() {
     const { bundleId, mode } = this.props;
     this.props.getEntryRevisions(bundleId);
