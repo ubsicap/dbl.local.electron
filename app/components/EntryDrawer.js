@@ -132,7 +132,7 @@ class EntryDrawer extends PureComponent<Props> {
       <Drawer
         className={classes.drawer}
         variant="persistent"
-        anchor="left"
+        anchor="right"
         open={openDrawer}
         classes={{
           paper: classes.drawerPaper,
@@ -140,7 +140,7 @@ class EntryDrawer extends PureComponent<Props> {
       >
         <div className={classes.drawerHeader}>
           <IconButton onClick={this.props.closeEntryDrawer}>
-            {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+            {theme.direction === 'rtl' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
           </IconButton>
         </div>
         <Divider />
