@@ -2,7 +2,6 @@ import log from 'electron-log';
 import traverse from 'traverse';
 import fs from 'fs-extra';
 import path from 'path';
-import rp from 'request-promise-native';
 import got from 'got';
 import FormData from 'form-data';
 import uuidv1 from 'uuid/v1';
@@ -430,8 +429,11 @@ function getResourcePaths(bundleId) {
 }
 
 async function saveMetadataToTempFolder(bundleId) {
-  const { tmpFolder, filePath: metadataFile, fileName: metadataXmlResource }
-    = getTempFolderForFile(bundleId, 'metadata.xml');
+  const {
+    tmpFolder,
+    filePath: metadataFile,
+    fileName: metadataXmlResource
+  } = getTempFolderForFile(bundleId, 'metadata.xml');
   await bundleService.requestSaveResourceTo(
     tmpFolder,
     bundleId,
@@ -446,13 +448,18 @@ function getTempFolderForFile(bundleId, fileName) {
   const tmpFolder = path.join(temp, bundleId);
   const filePath = path.join(tmpFolder, fileName);
   return {
-    temp, tmpFolder, filePath, fileName
+    temp,
+    tmpFolder,
+    filePath,
+    fileName
   };
 }
 
 async function saveJobSpecToTempFolder(bundleId) {
-  const { filePath: jobSpecPath }
-    = getTempFolderForFile(bundleId, 'job-spec.xml');
+  const { filePath: jobSpecPath } = getTempFolderForFile(
+    bundleId,
+    'job-spec.xml'
+  );
   const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${DEBUG_API}/${bundleId}/job-spec`;
   await download(url, jobSpecPath, () => {}, authHeader());
   return jobSpecPath;
@@ -504,7 +511,10 @@ function getFormFields(bundleId, formKey) {
     "response_valid": false
   }
  */
-async function waitUntilPostFormFields(postFormFieldArgs, doStopCreateMode = false) {
+async function waitUntilPostFormFields(
+  postFormFieldArgs,
+  doStopCreateMode = false
+) {
   const { bundleId } = postFormFieldArgs;
   await bundleService.waitStartCreateMode(bundleId);
   try {
