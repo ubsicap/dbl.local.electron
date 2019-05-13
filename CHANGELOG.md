@@ -1,3 +1,9 @@
+### Version 0.37.1
+
+#### Fix
+
+- dbl_dot_local_app (5/13/2019): find matching job and cancel_old_upload_jobs
+
 ### Version 0.37.0
 
 #### Feature
