@@ -226,15 +226,20 @@ async function convertApiBundleToNathanaelBundle(apiBundle, lazyLoads = {}) {
       status = 'COMPLETED'; // even if only some are stored
     }
   }
+  const sep = '/';
   return {
     id: bundleId,
-    name: metadata.name,
+    name: metadata.identification.name,
     revision: dbl.currentRevision,
     dblId: dbl.id,
     medium: dbl.medium,
-    countryIso: metadata.countries || '',
-    languageIso: metadata.language,
-    rightsHolders: metadata.rightsHolders || '',
+    countryIso: Object.keys(metadata.countries).join(sep) || '',
+    languageIso: metadata.language.iso,
+    rightsHolders:
+      metadata.agencies
+        .filter(a => a.type === 'rightsHolder')
+        .map(a => a.abbr)
+        .join(sep) || '',
     license: dbl.license || 'owned',
     mode,
     task,
