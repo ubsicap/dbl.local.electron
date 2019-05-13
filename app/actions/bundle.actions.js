@@ -11,6 +11,7 @@ import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { bundleManageResourceActions } from './bundleManageResources.actions';
 import { workspaceHelpers } from '../helpers/workspaces.helpers';
 import { browserWindowService } from '../services/browserWindow.service';
+import { getAddedBundle, getResourcesDetails } from '../helpers/bundle.helpers';
 
 export const bundleActions = {
   fetchAll,
@@ -123,7 +124,7 @@ function updateOrAddBundle(rawBundle, updateManifestResources = false) {
       updateManifestResources ||
       hasStoredResources ||
       (addedBundle && Object.keys(addedBundle.manifestResources || []).length)
-        ? await bundleService.getManifestResourceDetails(bundleId)
+        ? getResourcesDetails(getState, bundleId)
         : {};
     const { status } = bundleService.getInitialTaskAndStatus(rawBundle);
     const formsErrorStatus =
@@ -672,13 +673,6 @@ export function fetchUploadQueueCounts() {
   };
 }
 
-function getAddedBundle(getState, bundleId) {
-  const { bundles } = getState();
-  const { addedByBundleIds = {} } = bundles;
-  const addedBundles = addedByBundleIds[bundleId];
-  return addedBundles;
-}
-
 export function uploadBundle(id) {
   return async dispatch => {
     try {
@@ -707,11 +701,9 @@ export function openJobSpecInBrowser(bundleId) {
 }
 
 export function downloadResources(_id, _uris = []) {
-  return async dispatch => {
+  return async (dispatch, getState) => {
     try {
-      const manifestResourcePaths = await bundleService.getManifestResourcePaths(
-        _id
-      );
+      const manifestResourcePaths = getResourcePaths(getState, _id);
       dispatch(request(_id, manifestResourcePaths, _uris));
       dispatch(updateSearchResultsForBundleId(_id));
       await bundleService.downloadResources(_id, _uris);
@@ -733,10 +725,14 @@ export function downloadResources(_id, _uris = []) {
   }
 }
 
+function getResourcePaths(getState, id) {
+  return Object.keys(getResourcesDetails(getState, id)) || [];
+}
+
 export function removeResources(id, selected = []) {
-  return async dispatch => {
+  return async (dispatch, getState) => {
     try {
-      const resourcePaths = await bundleService.getResourcePaths(id);
+      const resourcePaths = getResourcePaths(getState, id);
       const resourcePathsToRemove = resourcePaths.filter(
         path => !selected.length || selected.includes(path)
       );
@@ -792,13 +788,13 @@ function removeBundleSuccess(id) {
 }
 
 export function requestSaveBundleTo(id, selectedFolder) {
-  return async dispatch => {
+  return async (dispatch, getState) => {
     const bundleInfo = await bundleService.fetchById(id);
     const bundleBytesToSave = traverse(bundleInfo.store.file_info).reduce(
       addByteSize,
       0
     );
-    const resourcePaths = await bundleService.getResourcePaths(id);
+    const resourcePaths = getResourcePaths(getState, id);
     resourcePaths.unshift('metadata.xml');
     const resourcePathsProgress = resourcePaths.reduce((acc, resourcePath) => {
       acc[resourcePath] = 0;
