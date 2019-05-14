@@ -35,7 +35,7 @@ export const bundleActions = {
 
 export default bundleActions;
 
-export function updateBundle(bundleId, updateManifestResources = false) {
+export function updateBundle(bundleId) {
   return async dispatch => {
     try {
       const rawBundle = await bundleService.fetchById(bundleId);
@@ -43,7 +43,7 @@ export function updateBundle(bundleId, updateManifestResources = false) {
         // console.log(`Skipping updateBundle for ${bundleId}`);
         return; // hasn't downloaded metadata yet. (don't expect to be in our list)
       }
-      dispatch(updateOrAddBundle(rawBundle, updateManifestResources));
+      dispatch(updateOrAddBundle(rawBundle));
     } catch (error) {
       if (error.status === 404) {
         // this has been deleted.
@@ -115,25 +115,17 @@ async function getAllFormsErrorStatus(bundleId) {
   return { ...formsErrorStatus, ...formTreeErrors };
 }
 
-function updateOrAddBundle(rawBundle, updateManifestResources = false) {
+function updateOrAddBundle(rawBundle) {
   return async (dispatch, getState) => {
     const { local_id: bundleId } = rawBundle;
     const addedBundle = getAddedBundle(getState, bundleId);
     const hasStoredResources = bundleService.getHasStoredResources(rawBundle);
-    const manifestResources =
-      updateManifestResources ||
-      hasStoredResources ||
-      (addedBundle && Object.keys(addedBundle.manifestResources || []).length)
-        ? getResourcesDetails(getState, bundleId)
-        : {};
     const { status } = bundleService.getInitialTaskAndStatus(rawBundle);
     const formsErrorStatus =
       status === 'DRAFT' ? await getAllFormsErrorStatus(bundleId) : {};
-    const resourceCountManifest = (Object.values(manifestResources) || [])
-      .length;
     const bundle = await bundleService.convertApiBundleToNathanaelBundle(
       rawBundle,
-      { resourceCountManifest, formsErrorStatus, manifestResources }
+      { formsErrorStatus }
     );
     if (addedBundle) {
       // console.log(`Updated bundle ${bundleId} from ${context}`);

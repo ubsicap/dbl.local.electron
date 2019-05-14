@@ -1,12 +1,18 @@
 export const bundleHelpers = {
   getResourcesDetails,
-  getAddedBundle
+  getAddedBundle,
+  getRawBundleResourcesDetails
 };
 export default bundleHelpers;
 
 export function getResourcesDetails(getState, id) {
   const bundle = getAddedBundle(getState, id);
-  const { metadata } = bundle.raw;
+  return getRawBundleResourcesDetails(bundle.raw);
+}
+
+// TODO: make a separate helper for raw bundles than for getState?
+export function getRawBundleResourcesDetails(rawBundle) {
+  const { metadata } = rawBundle;
   return metadata.manifest;
 }
 

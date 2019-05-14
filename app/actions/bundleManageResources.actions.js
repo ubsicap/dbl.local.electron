@@ -26,7 +26,7 @@ export const bundleManageResourceActions = {
 export function openResourceManager(_bundleId, _mode) {
   return async (dispatch, getState) => {
     await bundleService.waitStopCreateMode(_bundleId);
-    dispatch(bundleActions.updateBundle(_bundleId, true));
+    dispatch(bundleActions.updateBundle(_bundleId));
     const { addedByBundleIds } = getState().bundles;
     const bundleId = _bundleId;
     const bundle = addedByBundleIds[bundleId];

@@ -10,6 +10,7 @@ import { authHeader } from '../helpers';
 import { servicesHelpers } from '../helpers/services';
 import dblDotLocalConfigConstants from '../constants/dblDotLocal.constants';
 import download from './download-with-fetch.flow';
+import { getRawBundleResourcesDetails } from '../helpers/bundle.helpers';
 
 const { app } = require('electron').remote;
 
@@ -207,9 +208,7 @@ function getResourceFileStoredCount(apiBundle) {
 async function convertApiBundleToNathanaelBundle(apiBundle, lazyLoads = {}) {
   const { mode, metadata, dbl, upload } = apiBundle;
   const {
-    resourceCountManifest = null,
-    formsErrorStatus = {},
-    manifestResources = []
+    formsErrorStatus = {}
   } = lazyLoads;
   const { jobId: uploadJob } = upload || {};
   const { parent } = dbl;
@@ -226,6 +225,8 @@ async function convertApiBundleToNathanaelBundle(apiBundle, lazyLoads = {}) {
     }
   }
   const sep = '/';
+  const manifestResources = getRawBundleResourcesDetails(apiBundle);
+  const resourceCountManifest = (Object.values(manifestResources) || []).length;
   return {
     id: bundleId,
     name: metadata.identification.name,
