@@ -25,12 +25,9 @@ export const bundleService = {
   apiBundleHasMetadata,
   convertApiBundleToNathanaelBundle,
   getInitialTaskAndStatus,
-  getManifestResourcePaths,
-  getManifestResourceDetails,
   deleteManifestResource,
   downloadResources,
   removeResources,
-  getResourcePaths,
   requestSaveResourceTo,
   saveMetadataToTempFolder,
   saveJobSpecToTempFolder,
@@ -73,13 +70,11 @@ export default bundleService;
 const BUNDLE_API = 'bundle';
 const BUNDLE_API_LIST = `${BUNDLE_API}/list`;
 const RESOURCE_API = 'resource';
-const RESOURCE_API_LIST = RESOURCE_API;
 const FORM_API = 'form';
 const FORM_BUNDLE_API = `${FORM_API}/bundle`;
 const FORM_BUNDLE_API_DELETE = `${FORM_API}/delete`;
 const MANIFEST_API = 'manifest';
 const DEBUG_API = 'debug';
-const MANIFEST_DETAILS = 'details';
 const PUBLICATION_API = 'publication';
 const SUBSYSTEM_API = 'subsystem';
 
@@ -207,9 +202,7 @@ function getResourceFileStoredCount(apiBundle) {
 
 async function convertApiBundleToNathanaelBundle(apiBundle, lazyLoads = {}) {
   const { mode, metadata, dbl, upload } = apiBundle;
-  const {
-    formsErrorStatus = {}
-  } = lazyLoads;
+  const { formsErrorStatus = {} } = lazyLoads;
   const { jobId: uploadJob } = upload || {};
   const { parent } = dbl;
   const bundleId = apiBundle.local_id;
@@ -307,24 +300,6 @@ function handlePostFormResponse(response) {
   return response.text();
 }
 
-function getManifestResourcePaths(bundleId) {
-  const requestOptions = {
-    method: 'GET',
-    headers: authHeader()
-  };
-  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${MANIFEST_API}/${bundleId}`;
-  return fetch(url, requestOptions).then(handleResponse);
-}
-
-function getManifestResourceDetails(bundleId) {
-  const requestOptions = {
-    method: 'GET',
-    headers: authHeader()
-  };
-  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${MANIFEST_API}/${bundleId}/${MANIFEST_DETAILS}`;
-  return fetch(url, requestOptions).then(handleResponse);
-}
-
 function deleteManifestResource(bundleId, uri) {
   const requestOptions = {
     method: 'POST',
@@ -418,15 +393,6 @@ function bundleAddTasks(bundleId, innerTasks) {
   };
   const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/add-tasks`;
   return fetch(url, requestOptions).then(handlePostFormResponse);
-}
-
-function getResourcePaths(bundleId) {
-  const requestOptions = {
-    method: 'GET',
-    headers: authHeader()
-  };
-  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${RESOURCE_API_LIST}`;
-  return fetch(url, requestOptions).then(handleResponse);
 }
 
 async function saveMetadataToTempFolder(bundleId) {
