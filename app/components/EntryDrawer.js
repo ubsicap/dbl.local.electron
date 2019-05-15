@@ -3,6 +3,7 @@ import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
+import CreateNewFolder from '@material-ui/icons/CreateNewFolder';
 import Drawer from '@material-ui/core/Drawer';
 import MaterialUiList from '@material-ui/core/List';
 import Divider from '@material-ui/core/Divider';
@@ -16,6 +17,7 @@ import {
   openMetadataFile,
   openEditMetadata
 } from '../actions/bundleEditMetadata.actions';
+import { createDraftRevision } from '../actions/bundle.actions';
 import { openResourceManager } from '../actions/bundleManageResources.actions';
 import { openEntryReports } from '../actions/report.actions';
 import { closeEntryDrawer } from '../actions/entryAppBar.actions';
@@ -31,7 +33,8 @@ type Props = {
   openEntryMetadataFile: () => {},
   openEditEntryMetadata: () => {},
   openEntryResourceManager: () => {},
-  switchToEntryReports: () => {}
+  switchToEntryReports: () => {},
+  createEntryDraftRevision: () => {}
 };
 
 function mapStateToProps(state, props) {
@@ -47,7 +50,8 @@ const mapDispatchToProps = {
   openEditEntryMetadata: openEditMetadata,
   openEntryResourceManager: openResourceManager,
   hideEntryDrawer: closeEntryDrawer,
-  switchToEntryReports: openEntryReports
+  switchToEntryReports: openEntryReports,
+  createEntryDraftRevision: createDraftRevision
 };
 
 const materialStyles = theme => ({
@@ -66,7 +70,7 @@ class EntryDrawer extends PureComponent<Props> {
     return mode;
   };
 
-  getDrawerItems = () => [
+  getNavigationDrawerItems = () => [
     {
       label: 'Metadata',
       icon: ux.getModeIcon('metadata'),
@@ -122,10 +126,25 @@ class EntryDrawer extends PureComponent<Props> {
     switchToEntryReports(bundleId, 'reports');
   };
 
+  shouldShowDraftRevision = () => {
+    const {
+      activeBundle: { status, license }
+    } = this.props;
+    return status !== 'DRAFT' && license === 'owned';
+  };
+
+  handleClickDraftRevision = event => {
+    const { bundleId, createEntryDraftRevision } = this.props;
+    createEntryDraftRevision(bundleId);
+    this.handleSwitchToRevisions();
+    event.stopPropagation();
+  };
+
   render() {
     const { classes } = this.props;
-    const items = this.getDrawerItems();
-    const { theme, openDrawer, hideEntryDrawer } = this.props;
+    const navItems = this.getNavigationDrawerItems();
+    const { theme, openDrawer, hideEntryDrawer, activeBundle } = this.props;
+    const { revision } = activeBundle;
     return (
       <Drawer
         className={classes.drawer}
@@ -157,9 +176,22 @@ class EntryDrawer extends PureComponent<Props> {
             </ListItemIcon>
             <ListItemText primary="Review metadata.xml" />
           </ListItem>
+          {this.shouldShowDraftRevision() && (
+            <ListItem
+              button
+              color="secondary"
+              key="draftRevision"
+              onClick={this.handleClickDraftRevision}
+            >
+              <ListItemIcon>
+                <CreateNewFolder />
+              </ListItemIcon>
+              <ListItemText primary={`Draft > Rev ${revision}`} />
+            </ListItem>
+          )}
         </MaterialUiList>
         <Divider />
-        <MaterialUiList>{items.map(this.renderListItem)}</MaterialUiList>
+        <MaterialUiList>{navItems.map(this.renderListItem)}</MaterialUiList>
         {/*
         <Divider />
         <MaterialUiList>
