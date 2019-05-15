@@ -12,12 +12,14 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import OpenInNew from '@material-ui/icons/OpenInNew';
-import { openMetadataFile, openEditMetadata } from '../actions/bundleEditMetadata.actions';
+import {
+  openMetadataFile,
+  openEditMetadata
+} from '../actions/bundleEditMetadata.actions';
 import { openResourceManager } from '../actions/bundleManageResources.actions';
 import { openEntryReports } from '../actions/report.actions';
 import { closeEntryDrawer } from '../actions/entryAppBar.actions';
 import { ux } from '../utils/ux';
-
 
 type Props = {
   classes: {},
@@ -25,28 +27,27 @@ type Props = {
   bundleId: string,
   activeBundle: {},
   openDrawer: boolean,
-  closeEntryDrawer: () => {},
-  openMetadataFile: () => {},
-  openEditMetadata: () => {},
-  openResourceManager: () => {},
-  openEntryReports: () => {}
+  hideEntryDrawer: () => {},
+  openEntryMetadataFile: () => {},
+  openEditEntryMetadata: () => {},
+  openEntryResourceManager: () => {},
+  switchToEntryReports: () => {}
 };
-
 
 function mapStateToProps(state, props) {
   const { id: bundleId } = props.activeBundle;
   return {
     bundleId,
-    openDrawer: state.entryAppBar.openDrawer,
+    openDrawer: state.entryAppBar.openDrawer
   };
 }
 
 const mapDispatchToProps = {
-  openMetadataFile,
-  openEditMetadata,
-  openResourceManager,
-  closeEntryDrawer,
-  openEntryReports
+  openEntryMetadataFile: openMetadataFile,
+  openEditEntryMetadata: openEditMetadata,
+  openEntryResourceManager: openResourceManager,
+  hideEntryDrawer: closeEntryDrawer,
+  switchToEntryReports: openEntryReports
 };
 
 const materialStyles = theme => ({
@@ -54,7 +55,6 @@ const materialStyles = theme => ({
   ...ux.getEntryDrawerStyles(theme),
   ...ux.getEntryUxStyles(theme)
 });
-
 
 class EntryDrawer extends PureComponent<Props> {
   props: Props;
@@ -64,34 +64,32 @@ class EntryDrawer extends PureComponent<Props> {
     const { status } = activeBundle;
     const mode = status === 'DRAFT' ? 'addFiles' : 'download';
     return mode;
-  }
+  };
 
-  getDrawerItems = () => (
-    [
-      {
-        label: 'Metadata',
-        icon: ux.getModeIcon('metadata'),
-        handleClick: this.handleSwitchToMetadata
-      },
-      {
-        label: 'Resources',
-        icon: ux.getModeIcon(this.getResourceMode()),
-        handleClick: this.handleSwitchToResources
-      },
-      {
-        label: 'Revisions',
-        icon: ux.getModeIcon('revisions'),
-        handleClick: this.handleSwitchToRevisions
-      },
-      {
-        label: 'Reports',
-        icon: ux.getModeIcon('reports'),
-        handleClick: this.handleSwitchToReports
-      },
-    ]
-  );
+  getDrawerItems = () => [
+    {
+      label: 'Metadata',
+      icon: ux.getModeIcon('metadata'),
+      handleClick: this.handleSwitchToMetadata
+    },
+    {
+      label: 'Resources',
+      icon: ux.getModeIcon(this.getResourceMode()),
+      handleClick: this.handleSwitchToResources
+    },
+    {
+      label: 'Revisions',
+      icon: ux.getModeIcon('revisions'),
+      handleClick: this.handleSwitchToRevisions
+    },
+    {
+      label: 'Reports',
+      icon: ux.getModeIcon('reports'),
+      handleClick: this.handleSwitchToReports
+    }
+  ];
 
-  renderListItem = (item) => (
+  renderListItem = item => (
     <ListItem button key={item.label} onClick={item.handleClick}>
       <ListItemIcon>{item.icon}</ListItemIcon>
       <ListItemText primary={item.label} />
@@ -99,35 +97,35 @@ class EntryDrawer extends PureComponent<Props> {
   );
 
   handleOpenMetadataXml = () => {
-    this.props.openMetadataFile(this.props.bundleId);
-  }
+    const { openEntryMetadataFile, bundleId } = this.props;
+    openEntryMetadataFile(bundleId);
+  };
 
   handleSwitchToMetadata = () => {
-    this.props.openEditMetadata(this.props.bundleId, undefined, false);
-  }
+    const { openEditEntryMetadata, bundleId } = this.props;
+    openEditEntryMetadata(bundleId, undefined, false);
+  };
 
   handleSwitchToResources = () => {
-    const { bundleId } = this.props;
+    const { openEntryResourceManager, bundleId } = this.props;
     const mode = this.getResourceMode();
-    this.props.openResourceManager(bundleId, mode, false);
-  }
+    openEntryResourceManager(bundleId, mode, false);
+  };
 
   handleSwitchToRevisions = () => {
-    const { bundleId } = this.props;
-    this.props.openResourceManager(bundleId, 'revisions', false);
-  }
+    const { openEntryResourceManager, bundleId } = this.props;
+    openEntryResourceManager(bundleId, 'revisions', false);
+  };
 
   handleSwitchToReports = () => {
-    const { bundleId } = this.props;
-    this.props.openEntryReports(bundleId, 'reports');
-  }
+    const { switchToEntryReports, bundleId } = this.props;
+    switchToEntryReports(bundleId, 'reports');
+  };
 
   render() {
-    const {
-      classes
-    } = this.props;
+    const { classes } = this.props;
     const items = this.getDrawerItems();
-    const { theme, openDrawer } = this.props;
+    const { theme, openDrawer, hideEntryDrawer } = this.props;
     return (
       <Drawer
         className={classes.drawer}
@@ -135,26 +133,34 @@ class EntryDrawer extends PureComponent<Props> {
         anchor="right"
         open={openDrawer}
         classes={{
-          paper: classes.drawerPaper,
+          paper: classes.drawerPaper
         }}
       >
         <div className={classes.drawerHeader}>
-          <IconButton onClick={this.props.closeEntryDrawer}>
-            {theme.direction === 'rtl' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+          <IconButton onClick={hideEntryDrawer}>
+            {theme.direction === 'rtl' ? (
+              <ChevronLeftIcon />
+            ) : (
+              <ChevronRightIcon />
+            )}
           </IconButton>
         </div>
         <Divider />
         <MaterialUiList>
-          <ListItem button key="metadataXml" onClick={this.handleOpenMetadataXml}>
-            <ListItemIcon><OpenInNew /></ListItemIcon>
+          <ListItem
+            button
+            key="metadataXml"
+            onClick={this.handleOpenMetadataXml}
+          >
+            <ListItemIcon>
+              <OpenInNew />
+            </ListItemIcon>
             <ListItemText primary="Review metadata.xml" />
           </ListItem>
         </MaterialUiList>
         <Divider />
-        <MaterialUiList>
-          {items.map(this.renderListItem)}
-        </MaterialUiList>
-        { /*
+        <MaterialUiList>{items.map(this.renderListItem)}</MaterialUiList>
+        {/*
         <Divider />
         <MaterialUiList>
           {['Make Revision', 'Export To', 'Copy As'].map((text, index) => (
