@@ -61,6 +61,7 @@ type Props = {
   status: string,
   medium: string,
   displayAs: {},
+  mode: string,
   resourceCountStored?: number,
   resourceCountManifest?: ?number,
   bundleMatches: {},
@@ -80,29 +81,29 @@ type Props = {
   newMediaTypes: [],
   toggleSelectEntry: () => {},
   downloadResources: () => {},
-  openResourceManager: () => {},
-  requestSaveBundleTo: () => {},
-  forkIntoNewBundle: () => {},
-  openEditMetadata: () => {},
-  uploadBundle: () => {},
-  updateBundle: () => {},
-  createDraftRevision: () => {},
-  openJobSpecInBrowser: () => {},
-  toggleEntryStar: () => {}
+  openEntryResourceManager: () => {},
+  requestSaveEntryBundleTo: () => {},
+  forkEntryIntoNewBundle: () => {},
+  openEntryEditMetadata: () => {},
+  uploadEntryBundle: () => {},
+  updateEntryBundle: () => {},
+  createEntryDraftRevision: () => {},
+  openEntryJobSpecInBrowser: () => {},
+  toggleEntryStarBtn: () => {}
 };
 
 const mapDispatchToProps = {
   toggleSelectEntry,
   downloadResources,
-  openResourceManager,
-  requestSaveBundleTo,
-  forkIntoNewBundle,
-  openEditMetadata,
-  uploadBundle,
-  updateBundle,
-  createDraftRevision,
-  openJobSpecInBrowser,
-  toggleEntryStar
+  openEntryResourceManager: openResourceManager,
+  requestSaveEntryBundleTo: requestSaveBundleTo,
+  forkEntryIntoNewBundle: forkIntoNewBundle,
+  openEntryEditMetadata: openEditMetadata,
+  uploadEntryBundle: uploadBundle,
+  updateEntryBundle: updateBundle,
+  createEntryDraftRevision: createDraftRevision,
+  openEntryJobSpecInBrowser: openJobSpecInBrowser,
+  toggleEntryStarBtn: toggleEntryStar
 };
 
 const getTask = (state, props) => props.task;
@@ -253,32 +254,20 @@ class DBLEntryRow extends PureComponent<Props> {
 
   componentDidMount() {
     const {
-      resourceCountManifest,
-      resourceCountStored,
       status,
-      formsErrorStatus
+      formsErrorStatus,
+      updateEntryBundle,
+      bundleId
     } = this.props;
-    if (
-      (resourceCountManifest === null && resourceCountStored) ||
-      (status === 'DRAFT' && Object.keys(formsErrorStatus).length === 0)
-    ) {
-      this.props.updateBundle(this.props.bundleId);
+    if (status === 'DRAFT' && Object.keys(formsErrorStatus).length === 0) {
+      updateEntryBundle(bundleId);
     }
   }
 
   componentWillReceiveProps(nextProps) {
-    if (this.props.task === 'SAVETO' && nextProps.task !== 'SAVETO') {
+    const { task } = this.props;
+    if (task === 'SAVETO' && nextProps.task !== 'SAVETO') {
       this.openInFolder();
-    }
-    // recompute manifest count for drafts if we have changed resource count
-    if (
-      (nextProps.resourceCountManifest === null &&
-        nextProps.resourceCountStored) ||
-      (nextProps.status === 'DRAFT' &&
-        (this.props.resourceCountStored !== nextProps.resourceCountStored ||
-          Object.keys(nextProps.formsErrorStatus).length === 0))
-    ) {
-      this.props.updateBundle(this.props.bundleId);
     }
   }
 
@@ -290,14 +279,19 @@ class DBLEntryRow extends PureComponent<Props> {
   };
 
   onClickBundleRow = () => {
-    const { bundleId: id, dblId, displayAs } = this.props;
-    this.props.toggleSelectEntry({ id, dblId, displayAs });
+    const {
+      bundleId: id,
+      dblId,
+      displayAs,
+      toggleSelectEntry: toggleSelectedEntry
+    } = this.props;
+    toggleSelectedEntry({ id, dblId, displayAs });
   };
 
   handleClickStar = event => {
-    const { dblId } = this.props;
+    const { dblId, toggleEntryStarBtn } = this.props;
     event.stopPropagation();
-    this.props.toggleEntryStar(dblId);
+    toggleEntryStarBtn(dblId);
   };
 
   showStatusAsText = () => {
@@ -340,13 +334,20 @@ class DBLEntryRow extends PureComponent<Props> {
     return status === 'DRAFT' || this.getIsUploading();
   };
 
-  shouldShowDraftRevision = () =>
-    this.props.status !== 'DRAFT' && this.props.license === 'owned';
+  shouldShowDraftRevision = () => {
+    const { status, license } = this.props;
+    return status !== 'DRAFT' && license === 'owned';
+  };
 
-  shouldShowSaveAsNew = () => this.props.status !== 'DRAFT';
+  shouldShowSaveAsNew = () => {
+    const { status } = this.props;
+    return status !== 'DRAFT';
+  };
 
-  shouldShowEdit = () =>
-    this.props.status === 'DRAFT' && this.props.license === 'owned';
+  shouldShowEdit = () => {
+    const { status, license } = this.props;
+    return status === 'DRAFT' && license === 'owned';
+  };
 
   isNewDraftEntry = () => {
     const { status, revision, parent, dblId } = this.props;
@@ -356,13 +357,19 @@ class DBLEntryRow extends PureComponent<Props> {
     );
   };
 
-  shouldDisableRevise = () =>
-    this.props.isRequestingRevision || this.props.isDownloading;
+  shouldDisableRevise = () => {
+    const { isRequestingRevision, isDownloading } = this.props;
+    return isRequestingRevision || isDownloading;
+  };
 
-  shouldDisableUpload = () =>
-    this.shouldDisableDraftRevisionOrEdit() ||
-    Object.keys(this.props.formsErrors).length > 0 ||
-    (this.isNewDraftEntry() && this.props.resourceCountStored === 0);
+  shouldDisableUpload = () => {
+    const { formsErrors, resourceCountStored } = this.props;
+    return (
+      this.shouldDisableDraftRevisionOrEdit() ||
+      Object.keys(formsErrors).length > 0 ||
+      (this.isNewDraftEntry() && resourceCountStored === 0)
+    );
+  };
 
   shouldDisableDraftRevisionOrEdit = () => {
     return this.getIsUploading() || this.shouldDisableRevise();
@@ -382,20 +389,20 @@ class DBLEntryRow extends PureComponent<Props> {
   });
 
   onClickManageResources = mode => event => {
-    const { bundleId } = this.props;
-    this.props.openResourceManager(bundleId, mode, true);
+    const { bundleId, openEntryResourceManager } = this.props;
+    openEntryResourceManager(bundleId, mode, true);
     event.stopPropagation();
   };
 
   onClickEditMetadata = event => {
-    const { bundleId } = this.props;
-    this.props.openEditMetadata(bundleId, undefined, true);
+    const { bundleId, openEntryEditMetadata } = this.props;
+    openEntryEditMetadata(bundleId, undefined, true);
     event.stopPropagation();
   };
 
   onClickDraftRevision = event => {
-    const { bundleId } = this.props;
-    this.props.createDraftRevision(bundleId);
+    const { bundleId, createEntryDraftRevision } = this.props;
+    createEntryDraftRevision(bundleId);
     event.stopPropagation();
   };
 
@@ -410,25 +417,25 @@ class DBLEntryRow extends PureComponent<Props> {
   };
 
   handleClickMediaType = medium => event => {
-    const { bundleId } = this.props;
-    this.props.forkIntoNewBundle(bundleId, medium);
+    const { bundleId, forkEntryIntoNewBundle } = this.props;
+    forkEntryIntoNewBundle(bundleId, medium);
     this.handleCloseMediaTypeMenu(event);
     event.stopPropagation();
   };
 
   handleClickUploadInfo = () => {
-    const { bundleId } = this.props;
-    this.props.openJobSpecInBrowser(bundleId);
+    const { bundleId, openEntryJobSpecInBrowser } = this.props;
+    openEntryJobSpecInBrowser(bundleId);
   };
 
   onClickUploadBundle = event => {
-    const { bundleId } = this.props;
-    this.props.uploadBundle(bundleId);
+    const { bundleId, uploadEntryBundle } = this.props;
+    uploadEntryBundle(bundleId);
     event.stopPropagation();
   };
 
   startSaveBundleTo = event => {
-    const { bundlesSaveTo, bundleId } = this.props;
+    const { bundlesSaveTo, bundleId, requestSaveEntryBundleTo } = this.props;
     const { savedToHistory } = bundlesSaveTo;
     stopPropagation(event);
     const bundleSavedToInfo = getBundleExportInfo(bundleId, savedToHistory);
@@ -445,7 +452,7 @@ class DBLEntryRow extends PureComponent<Props> {
           return; // canceled.
         }
         console.log(folderName.toString());
-        this.props.requestSaveBundleTo(bundleId, folderName.toString());
+        requestSaveEntryBundleTo(bundleId, folderName.toString());
       }
     );
   };
@@ -460,11 +467,14 @@ class DBLEntryRow extends PureComponent<Props> {
     }
   };
 
-  renderStatus = () => (
-    <ControlledHighlighter
-      {...this.getHighlighterSharedProps(this.props.displayAs.status)}
-    />
-  );
+  renderStatus = () => {
+    const { displayAs } = this.props;
+    return (
+      <ControlledHighlighter
+        {...this.getHighlighterSharedProps(displayAs.status)}
+      />
+    );
+  };
 
   renderEditIcon = () => {
     const { status, classes, formsErrors } = this.props;
@@ -533,7 +543,8 @@ class DBLEntryRow extends PureComponent<Props> {
       isStarred,
       shouldShowStarred,
       classes,
-      newMediaTypes
+      newMediaTypes,
+      laterEntryRevisions
     } = this.props;
     const { anchorEl } = this.state;
     if (!shouldShowRow || (shouldShowStarred && !isStarred)) {
@@ -541,7 +552,7 @@ class DBLEntryRow extends PureComponent<Props> {
     }
     const isUploading = this.getIsUploading();
     const resourceManagerMode = status === 'DRAFT' ? 'addFiles' : 'download';
-    const laterEntryRevisionsCount = this.props.laterEntryRevisions.length;
+    const laterEntryRevisionsCount = laterEntryRevisions.length;
     const laterRevisionsBadge = laterEntryRevisionsCount
       ? `${laterEntryRevisionsCount}+`
       : '';

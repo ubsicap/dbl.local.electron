@@ -119,7 +119,6 @@ function updateOrAddBundle(rawBundle) {
   return async (dispatch, getState) => {
     const { local_id: bundleId } = rawBundle;
     const addedBundle = getAddedBundle(getState, bundleId);
-    const hasStoredResources = bundleService.getHasStoredResources(rawBundle);
     const { status } = bundleService.getInitialTaskAndStatus(rawBundle);
     const formsErrorStatus =
       status === 'DRAFT' ? await getAllFormsErrorStatus(bundleId) : {};
