@@ -11,7 +11,11 @@ import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { bundleManageResourceActions } from './bundleManageResources.actions';
 import { workspaceHelpers } from '../helpers/workspaces.helpers';
 import { browserWindowService } from '../services/browserWindow.service';
-import { getAddedBundle, getResourcesDetails } from '../helpers/bundle.helpers';
+import {
+  getAddedBundle,
+  getResourcePaths,
+  getStoredResourcePaths
+} from '../helpers/bundle.helpers';
 
 export const bundleActions = {
   fetchAll,
@@ -716,14 +720,10 @@ export function downloadResources(_id, _uris = []) {
   }
 }
 
-function getResourcePaths(getState, id) {
-  return Object.keys(getResourcesDetails(getState, id)) || [];
-}
-
 export function removeResources(id, selected = []) {
   return async (dispatch, getState) => {
     try {
-      const resourcePaths = getResourcePaths(getState, id);
+      const resourcePaths = getStoredResourcePaths(getState, id);
       const resourcePathsToRemove = resourcePaths.filter(
         path => !selected.length || selected.includes(path)
       );
@@ -785,7 +785,7 @@ export function requestSaveBundleTo(id, selectedFolder) {
       addByteSize,
       0
     );
-    const resourcePaths = getResourcePaths(getState, id);
+    const resourcePaths = getStoredResourcePaths(getState, id);
     resourcePaths.unshift('metadata.xml');
     const resourcePathsProgress = resourcePaths.reduce((acc, resourcePath) => {
       acc[resourcePath] = 0;
