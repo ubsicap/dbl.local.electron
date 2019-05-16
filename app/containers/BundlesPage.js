@@ -24,7 +24,8 @@ type Props = {
   starredEntries: [],
   createNewBundle: () => {},
   setStarredEntries: () => {},
-  setEntriesFilters: () => {}
+  setEntriesFilters: () => {},
+  cacheLifecycles: {}
 };
 
 function mapStateToProps(state) {
@@ -58,14 +59,33 @@ const mapDispatchToProps = {
 
 class BundlesPage extends PureComponent<Props> {
   props: Props;
-  state = {
-    anchorEl: null
+
+  constructor(props, ...args) {
+    super(props, ...args);
+    this.state = {
+      anchorEl: null,
+      hidden: false
+    };
+    // eslint-disable-next-line react/prop-types
+    props.cacheLifecycles.didCache(this.componentDidCache);
+    // eslint-disable-next-line react/prop-types
+    props.cacheLifecycles.didRecover(this.componentDidRecover);
   }
 
   componentDidMount() {
     this.props.setEntriesFilters(this.props.entriesFilters);
     this.props.setStarredEntries(Set(this.props.starredEntries));
   }
+
+  componentDidCache = () => {
+    console.log('List cached');
+    this.setState({ hidden: true });
+  };
+
+  componentDidRecover = () => {
+    this.setState({ hidden: false });
+    console.log('List recovered');
+  };
 
   handleClick = event => {
     this.setState({ anchorEl: event.currentTarget });
@@ -82,9 +102,9 @@ class BundlesPage extends PureComponent<Props> {
 
   render() {
     const { classes, newMediaTypes } = this.props;
-    const { anchorEl } = this.state;
+    const { anchorEl, hidden } = this.state;
     return (
-      <div data-tid="container">
+      <div data-tid="container" style={hidden ? { display: 'none' } : {}}>
         <MenuAppBar showSearch showClipboard title="Entries" />
         <Bundles />
         <div style={{ paddingBottom: '100px' }} />
