@@ -5,11 +5,17 @@ import { List, Map } from 'immutable';
 import throttledQueue from 'throttled-queue';
 import { bundleConstants } from '../constants/bundle.constants';
 import { bundleService } from '../services/bundle.service';
-import { updateSearchResultsForBundleId } from '../actions/bundleFilter.actions';
+import { updateSearchResultsForBundleId } from './bundleFilter.actions';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
-import { bundleManageResourceActions } from '../actions/bundleManageResources.actions';
+// eslint-disable-next-line import/no-cycle
+import { bundleManageResourceActions } from './bundleManageResources.actions';
 import { workspaceHelpers } from '../helpers/workspaces.helpers';
 import { browserWindowService } from '../services/browserWindow.service';
+import {
+  getAddedBundle,
+  getResourcePaths,
+  getStoredResourcePaths
+} from '../helpers/bundle.helpers';
 
 export const bundleActions = {
   fetchAll,
@@ -33,15 +39,15 @@ export const bundleActions = {
 
 export default bundleActions;
 
-export function updateBundle(bundleId, updateManifestResources = false) {
-  return async (dispatch) => {
+export function updateBundle(bundleId) {
+  return async dispatch => {
     try {
       const rawBundle = await bundleService.fetchById(bundleId);
       if (!bundleService.apiBundleHasMetadata(rawBundle)) {
         // console.log(`Skipping updateBundle for ${bundleId}`);
         return; // hasn't downloaded metadata yet. (don't expect to be in our list)
       }
-      dispatch(updateOrAddBundle(rawBundle, updateManifestResources));
+      dispatch(updateOrAddBundle(rawBundle));
     } catch (error) {
       if (error.status === 404) {
         // this has been deleted.
@@ -53,8 +59,10 @@ export function updateBundle(bundleId, updateManifestResources = false) {
 }
 
 function tryAddNewEntry(rawBundle) {
-  return (dispatch) => {
-    const { dbl: { parent, id: dblId } } = rawBundle;
+  return dispatch => {
+    const {
+      dbl: { parent, id: dblId }
+    } = rawBundle;
     if (parent && parent.dblId === dblId) {
       return;
     }
@@ -83,45 +91,44 @@ function getFormBundleTreeErrors(acc, treeNode) {
   }
   const treeError = {
     field_issues: [],
-    document_issues: [
-      [
-        'missing_instance',
-        'requires at least one instance'
-      ]
-    ],
+    document_issues: [['missing_instance', 'requires at least one instance']],
     response_format_valid: true,
     response_valid: false
   };
 
   // build formKey recusively from node.id -> parent.node.id
   const formKey = [...parents, this]
-    .filter(context => context.key && context.node.id &&
-      !['contains', 'instances'].includes(context.key))
-    .map(context => context.node.id).join('/');
+    .filter(
+      context =>
+        context.key &&
+        context.node.id &&
+        !['contains', 'instances'].includes(context.key)
+    )
+    .map(context => context.node.id)
+    .join('/');
   return { ...acc, [formKey]: treeError };
 }
 
 async function getAllFormsErrorStatus(bundleId) {
   const formsErrorStatus = await bundleService.checkAllFields(bundleId);
   const formStructure = await bundleService.getFormBundleTree(bundleId);
-  const formTreeErrors = traverse(formStructure).reduce(getFormBundleTreeErrors, {});
+  const formTreeErrors = traverse(formStructure).reduce(
+    getFormBundleTreeErrors,
+    {}
+  );
   return { ...formsErrorStatus, ...formTreeErrors };
 }
 
-function updateOrAddBundle(rawBundle, updateManifestResources = false) {
+function updateOrAddBundle(rawBundle) {
   return async (dispatch, getState) => {
     const { local_id: bundleId } = rawBundle;
     const addedBundle = getAddedBundle(getState, bundleId);
-    const hasStoredResources = bundleService.getHasStoredResources(rawBundle);
-    const manifestResources = (updateManifestResources || hasStoredResources ||
-      (addedBundle && Object.keys(addedBundle.manifestResources || []).length)) ?
-      await bundleService.getManifestResourceDetails(bundleId) : {};
     const { status } = bundleService.getInitialTaskAndStatus(rawBundle);
-    const formsErrorStatus = status === 'DRAFT' ? await getAllFormsErrorStatus(bundleId) : {};
-    const resourceCountManifest = (Object.values(manifestResources) || []).length;
+    const formsErrorStatus =
+      status === 'DRAFT' ? await getAllFormsErrorStatus(bundleId) : {};
     const bundle = await bundleService.convertApiBundleToNathanaelBundle(
       rawBundle,
-      { resourceCountManifest, formsErrorStatus, manifestResources }
+      { formsErrorStatus }
     );
     if (addedBundle) {
       // console.log(`Updated bundle ${bundleId} from ${context}`);
@@ -161,7 +168,10 @@ export function createDraftRevision(_bundleId) {
 
 function updateUploadJobs(bundleId, uploadJob, removeJobOrBundle) {
   return {
-    type: bundleConstants.UPDATE_UPLOAD_JOBS, bundleId, uploadJob, removeJobOrBundle
+    type: bundleConstants.UPDATE_UPLOAD_JOBS,
+    bundleId,
+    uploadJob,
+    removeJobOrBundle
   };
 }
 
@@ -209,7 +219,6 @@ export function forkIntoNewBundle(_bundleId, _medium) {
   }
 }
 
-
 export function createNewBundle(_medium) {
   return async dispatch => {
     try {
@@ -232,9 +241,17 @@ export function createNewBundle(_medium) {
 }
 
 /* should this move to bundleManagerResources.actions? */
-function bundleForEntryRevisionHasBeenMade(getState, dblIdTarget, revisionTarget) {
-  const { bundles: { allBundles } } = getState();
-  const targetBundle = allBundles.find(b => b.dblId === dblIdTarget && b.revision === `${revisionTarget}`);
+function bundleForEntryRevisionHasBeenMade(
+  getState,
+  dblIdTarget,
+  revisionTarget
+) {
+  const {
+    bundles: { allBundles }
+  } = getState();
+  const targetBundle = allBundles.find(
+    b => b.dblId === dblIdTarget && b.revision === `${revisionTarget}`
+  );
   return targetBundle;
 }
 
@@ -244,26 +261,34 @@ export function createBundleFromDBL(dblId, revision, license) {
     try {
       dispatch(request());
       await dblDotLocalService.downloadMetadata(dblId, revision, license);
-      const targetBundle =
-        await waitUntil(
-          () => bundleForEntryRevisionHasBeenMade(getState, dblId, revision),
-          60000,
-          500
-        );
+      const targetBundle = await waitUntil(
+        () => bundleForEntryRevisionHasBeenMade(getState, dblId, revision),
+        60000,
+        500
+      );
       dispatch(success(targetBundle));
-      dispatch(bundleManageResourceActions.getManifestResources(targetBundle.id));
+      dispatch(
+        bundleManageResourceActions.getManifestResources(targetBundle.id)
+      );
     } catch (error) {
       dispatch(failure(error));
     }
   };
   function request() {
     return {
-      type: bundleConstants.CREATE_FROM_DBL_REQUEST, dblId, revision, license
+      type: bundleConstants.CREATE_FROM_DBL_REQUEST,
+      dblId,
+      revision,
+      license
     };
   }
   function success(targetBundle) {
     return {
-      type: bundleConstants.CREATE_FROM_DBL_SUCCESS, dblId, revision, license, targetBundle
+      type: bundleConstants.CREATE_FROM_DBL_SUCCESS,
+      dblId,
+      revision,
+      license,
+      targetBundle
     };
   }
   function failure(error) {
@@ -273,26 +298,30 @@ export function createBundleFromDBL(dblId, revision, license) {
 
 export function setupBundlesEventSource() {
   return (dispatch, getState) => {
-    const { authentication: { eventSource } } = getState();
+    const {
+      authentication: { eventSource }
+    } = getState();
     if (!eventSource) {
       console.error('EventSource undefined');
       return;
     }
     const listeners = {
-      error: (e) => dispatch(listenError(e)),
+      error: e => dispatch(listenError(e)),
       'storer/execute_task': listenStorerExecuteTaskDownloadResources,
-      'storer/change_mode': (e) => dispatch(listenStorerChangeMode(e)),
-      'uploader/job': (e) => dispatch(listenUploaderJob(e)),
-      'uploader/createJob': (e) => listenUploaderCreateJob(e, dispatch),
+      'storer/change_mode': e => dispatch(listenStorerChangeMode(e)),
+      'uploader/job': e => dispatch(listenUploaderJob(e)),
+      'uploader/createJob': e => listenUploaderCreateJob(e, dispatch),
       'downloader/receiver': listenDownloaderReceiver,
-      'downloader/spec_status': (e) => dispatch(listenDownloaderSpecStatus(e)),
-      'downloader/global_status': (e) => dispatch(listenDownloaderGlobalStatus(e)),
-      'uploader/global_status': (e) => dispatch(listenUploaderGlobalStatus(e)),
-      'storer/delete_resource': (e) => listenStorerDeleteResource(e, dispatch, getState),
-      'storer/delete_bundle': (e) => dispatch(listenStorerDeleteBundle(e)),
-      'storer/write_resource': (e) => dispatch(listenStorerWriteResource(e))
+      'downloader/spec_status': e => dispatch(listenDownloaderSpecStatus(e)),
+      'downloader/global_status': e =>
+        dispatch(listenDownloaderGlobalStatus(e)),
+      'uploader/global_status': e => dispatch(listenUploaderGlobalStatus(e)),
+      'storer/delete_resource': e =>
+        listenStorerDeleteResource(e, dispatch, getState),
+      'storer/delete_bundle': e => dispatch(listenStorerDeleteBundle(e)),
+      'storer/write_resource': e => dispatch(listenStorerWriteResource(e))
     };
-    Object.keys(listeners).forEach((evType) => {
+    Object.keys(listeners).forEach(evType => {
       const handler = listeners[evType];
       eventSource.addEventListener(evType, handler);
     });
@@ -310,7 +339,11 @@ export function setupBundlesEventSource() {
       log.error(data);
     }
     return {
-      type: 'SSE_ERROR', dispatcher: 'bundle.actions', rawData, data, event
+      type: 'SSE_ERROR',
+      dispatcher: 'bundle.actions',
+      rawData,
+      data,
+      event
     };
   }
 
@@ -347,7 +380,7 @@ export function setupBundlesEventSource() {
   }
 
   function listenStorerWriteResource(event) {
-    return async (dispatch) => {
+    return async dispatch => {
       /*
       {'event': 'storer/write_resource',
        'data': {'args': ('50501698-e832-4db5-8973-f85340dc2e39', 'metadata.xml'),
@@ -385,7 +418,7 @@ export function setupBundlesEventSource() {
    */
   function listenUploaderJob(e) {
     return (dispatch, getState) => {
-      const uploadJobs = getState().bundles.uploadJobs;
+      const { uploadJobs } = getState().bundles;
       const data = JSON.parse(e.data);
       const [type, ...nextArgs] = data.args;
       if (type === 'updated') {
@@ -393,8 +426,19 @@ export function setupBundlesEventSource() {
         const bundleId = uploadJobs[jobId];
         const addedBundle = getAddedBundle(getState, bundleId);
         if (addedBundle.mode === 'upload') {
-          const [resourceCountToUpload, resourceCountUploaded] = [payload[0], payload[5]];
-          dispatch(updateUploadProgress(bundleId, entryId, jobId, resourceCountUploaded, resourceCountToUpload));
+          const [resourceCountToUpload, resourceCountUploaded] = [
+            payload[0],
+            payload[5]
+          ];
+          dispatch(
+            updateUploadProgress(
+              bundleId,
+              entryId,
+              jobId,
+              resourceCountUploaded,
+              resourceCountToUpload
+            )
+          );
         }
         dispatch(fetchUploadQueueCounts());
         return;
@@ -410,11 +454,17 @@ export function setupBundlesEventSource() {
           return dispatch(updateUploadMessage(bundleId, jobId, payload));
         }
       }
-    }
+    };
   }
 
-  function updateUploadProgress(bundleId, entryId, jobId, resourceCountUploaded, resourceCountToUpload) {
-    return async (dispatch) => {
+  function updateUploadProgress(
+    bundleId,
+    entryId,
+    jobId,
+    resourceCountUploaded,
+    resourceCountToUpload
+  ) {
+    return async dispatch => {
       await bundleService.saveJobSpecToTempFolder(bundleId);
       return dispatch({
         type: bundleConstants.UPLOAD_RESOURCES_UPDATE_PROGRESS,
@@ -424,7 +474,7 @@ export function setupBundlesEventSource() {
         resourceCountUploaded,
         resourceCountToUpload
       });
-    }
+    };
   }
 
   function updateUploadMessage(bundleId, jobId, message) {
@@ -459,7 +509,9 @@ export function setupBundlesEventSource() {
       if (!addedBundle) {
         return; // hasn't been added yet, so doesn't need to be updated.
       }
-      dispatch(updateDownloadStatus(bundleId, resourcesDownloaded, resourcesToDownload));
+      dispatch(
+        updateDownloadStatus(bundleId, resourcesDownloaded, resourcesToDownload)
+      );
       dispatch(updateSearchResultsForBundleId(bundleId));
       dispatch(fetchDownloadQueueCounts());
     };
@@ -497,13 +549,12 @@ export function setupBundlesEventSource() {
       const bundleId = data.args[0];
       dispatch(removeBundleSuccess(bundleId));
       dispatch(updateUploadJobs(bundleId, null, bundleId));
-      await waitUntil(
-        () => !getAddedBundle(getState, bundleId),
-        60000,
-        500
-      );
+      await waitUntil(() => !getAddedBundle(getState, bundleId), 60000, 500);
       const gotState = getState();
-      workspaceHelpers.persistStarredEntries(gotState, gotState.bundlesFilter.starredEntries);
+      workspaceHelpers.persistStarredEntries(
+        gotState,
+        gotState.bundlesFilter.starredEntries
+      );
     };
   }
 }
@@ -511,14 +562,15 @@ export function setupBundlesEventSource() {
 const throttleAddBundle = throttledQueue(4, 1000, true);
 
 function addBundle(bundle, rawBundle) {
-  return dispatch => throttleAddBundle(() => {
-    dispatch({
-      type: bundleConstants.ADD_BUNDLE,
-      bundle,
-      rawBundle
+  return dispatch =>
+    throttleAddBundle(() => {
+      dispatch({
+        type: bundleConstants.ADD_BUNDLE,
+        bundle,
+        rawBundle
+      });
+      dispatch(updateSearchResultsForBundleId(bundle.id));
     });
-    dispatch(updateSearchResultsForBundleId(bundle.id));
-  });
 }
 
 function isInDraftMode(bundle) {
@@ -529,10 +581,16 @@ export function removeExcessBundles() {
   return (dispatch, getState) => {
     const { bundles } = getState();
     const { addedByBundleIds, items } = bundles;
-    const itemsByBundleIds = List(items).map(bundle => bundle.id).toSet();
-    const itemsByParentIds = List(items).filter(b => b.parent).reduce((acc, bundle) =>
-      acc.set(bundle.parent.bundleId, bundle), Map());
-    const itemsByDblId = items.reduce((acc, bundle) => ({ ...acc, [bundle.dblId]: bundle }), {});
+    const itemsByBundleIds = List(items)
+      .map(bundle => bundle.id)
+      .toSet();
+    const itemsByParentIds = List(items)
+      .filter(b => b.parent)
+      .reduce((acc, bundle) => acc.set(bundle.parent.bundleId, bundle), Map());
+    const itemsByDblId = items.reduce(
+      (acc, bundle) => ({ ...acc, [bundle.dblId]: bundle }),
+      {}
+    );
     const bundleIdsToRemove = Object.keys(addedByBundleIds).filter(addedId => {
       if (itemsByBundleIds.includes(addedId)) {
         return false;
@@ -560,20 +618,20 @@ export function removeExcessBundles() {
       return true;
     });
     console.log(`Deleting ${bundleIdsToRemove.length} empty/unused revisions`);
-    bundleIdsToRemove.forEach((idBundleToRemove) => {
+    bundleIdsToRemove.forEach(idBundleToRemove => {
       dispatch(removeBundle(idBundleToRemove));
     });
   };
 }
 
 function updateDownloadQueue(nSpecs, nAtoms) {
-  return (dispatch) => {
+  return dispatch => {
     dispatch({ type: bundleConstants.UPDATE_DOWNLOAD_QUEUE, nSpecs, nAtoms });
   };
 }
 
 function updateUploadQueue(nSpecs, nAtoms) {
-  return (dispatch) => {
+  return dispatch => {
     dispatch({ type: bundleConstants.UPDATE_UPLOAD_QUEUE, nSpecs, nAtoms });
   };
 }
@@ -583,7 +641,10 @@ export function fetchDownloadQueueCounts() {
     try {
       const downloadQueueList = await bundleService.getSubsystemDownloadQueue();
       const nSpecs = Object.keys(downloadQueueList).length;
-      const nAtoms = downloadQueueList.reduce((acc, spec) => acc + (spec.n_atoms - spec.n_downloaded), 0);
+      const nAtoms = downloadQueueList.reduce(
+        (acc, spec) => acc + (spec.n_atoms - spec.n_downloaded),
+        0
+      );
       return dispatch(updateDownloadQueue(nSpecs, nAtoms));
     } catch (error) {
       log.error(error);
@@ -596,21 +657,16 @@ export function fetchUploadQueueCounts() {
     try {
       const uploadQueueList = await bundleService.getSubsystemUploadQueue();
       const nSpecs = Object.keys(uploadQueueList).length;
-      const nAtoms = uploadQueueList.reduce((acc, spec) => acc + (spec.n_atoms - spec.n_uploaded), 0);
+      const nAtoms = uploadQueueList.reduce(
+        (acc, spec) => acc + (spec.n_atoms - spec.n_uploaded),
+        0
+      );
       return dispatch(updateUploadQueue(nSpecs, nAtoms));
     } catch (error) {
       log.error(error);
     }
   };
 }
-
-function getAddedBundle(getState, bundleId) {
-  const { bundles } = getState();
-  const { addedByBundleIds = {} } = bundles;
-  const addedBundles = addedByBundleIds[bundleId];
-  return addedBundles;
-}
-
 
 export function uploadBundle(id) {
   return async dispatch => {
@@ -632,7 +688,7 @@ export function uploadBundle(id) {
 }
 
 export function openJobSpecInBrowser(bundleId) {
-  return async (dispatch) => {
+  return async dispatch => {
     const jobSpecFile = await bundleService.saveJobSpecToTempFolder(bundleId);
     browserWindowService.openFileInChromeBrowser(jobSpecFile, false);
     dispatch({ type: 'BUNDLE_OPEN_JOB_SPEC', jobSpecFile });
@@ -640,9 +696,9 @@ export function openJobSpecInBrowser(bundleId) {
 }
 
 export function downloadResources(_id, _uris = []) {
-  return async dispatch => {
+  return async (dispatch, getState) => {
     try {
-      const manifestResourcePaths = await bundleService.getManifestResourcePaths(_id);
+      const manifestResourcePaths = getResourcePaths(getState, _id);
       dispatch(request(_id, manifestResourcePaths, _uris));
       dispatch(updateSearchResultsForBundleId(_id));
       await bundleService.downloadResources(_id, _uris);
@@ -652,7 +708,12 @@ export function downloadResources(_id, _uris = []) {
     }
   };
   function request(id, manifestResourcePaths, uris) {
-    return { type: bundleConstants.DOWNLOAD_RESOURCES_REQUEST, id, manifestResourcePaths, uris };
+    return {
+      type: bundleConstants.DOWNLOAD_RESOURCES_REQUEST,
+      id,
+      manifestResourcePaths,
+      uris
+    };
   }
   function failure(id, error) {
     return { type: bundleConstants.DOWNLOAD_RESOURCES_FAILURE, id, error };
@@ -660,11 +721,12 @@ export function downloadResources(_id, _uris = []) {
 }
 
 export function removeResources(id, selected = []) {
-  return async (dispatch) => {
+  return async (dispatch, getState) => {
     try {
-      const resourcePaths = await bundleService.getResourcePaths(id);
-      const resourcePathsToRemove = resourcePaths
-        .filter(path => !selected.length || selected.includes(path));
+      const resourcePaths = getStoredResourcePaths(getState, id);
+      const resourcePathsToRemove = resourcePaths.filter(
+        path => !selected.length || selected.includes(path)
+      );
       dispatch(request(id, resourcePathsToRemove));
       dispatch(updateSearchResultsForBundleId(id));
       await bundleService.removeResources(id, resourcePathsToRemove);
@@ -674,7 +736,11 @@ export function removeResources(id, selected = []) {
     }
   };
   function request(_id, resourcesToRemove) {
-    return { type: bundleConstants.REMOVE_RESOURCES_REQUEST, id: _id, resourcesToRemove };
+    return {
+      type: bundleConstants.REMOVE_RESOURCES_REQUEST,
+      id: _id,
+      resourcesToRemove
+    };
   }
   function failure(_id, error) {
     return { type: bundleConstants.REMOVE_RESOURCES_FAILURE, id, error };
@@ -704,16 +770,22 @@ function removeBundleSuccess(id) {
   return (dispatch, getState) => {
     const deletedBundle = getAddedBundle(getState, id);
     dispatch({
-      type: bundleConstants.DELETE_SUCCESS, id, appStateSnapshot: getState(), deletedBundle
+      type: bundleConstants.DELETE_SUCCESS,
+      id,
+      appStateSnapshot: getState(),
+      deletedBundle
     });
   };
 }
 
 export function requestSaveBundleTo(id, selectedFolder) {
-  return async dispatch => {
+  return async (dispatch, getState) => {
     const bundleInfo = await bundleService.fetchById(id);
-    const bundleBytesToSave = traverse(bundleInfo.store.file_info).reduce(addByteSize, 0);
-    const resourcePaths = await bundleService.getResourcePaths(id);
+    const bundleBytesToSave = traverse(bundleInfo.store.file_info).reduce(
+      addByteSize,
+      0
+    );
+    const resourcePaths = getStoredResourcePaths(getState, id);
     resourcePaths.unshift('metadata.xml');
     const resourcePathsProgress = resourcePaths.reduce((acc, resourcePath) => {
       acc[resourcePath] = 0;
@@ -729,9 +801,11 @@ export function requestSaveBundleTo(id, selectedFolder) {
           id,
           resourcePath,
           (resourceTotalBytesSaved, resourceProgress) => {
-            const originalResourceBytesTransferred = resourcePathsProgress[resourcePath];
+            const originalResourceBytesTransferred =
+              resourcePathsProgress[resourcePath];
             resourcePathsProgress[resourcePath] = resourceTotalBytesSaved;
-            const bytesDiff = resourceTotalBytesSaved - originalResourceBytesTransferred;
+            const bytesDiff =
+              resourceTotalBytesSaved - originalResourceBytesTransferred;
             bundleBytesSaved += bytesDiff;
             if (resourceProgress && resourceProgress % 100 === 0) {
               const updatedArgs = {
@@ -777,7 +851,7 @@ export function requestSaveBundleTo(id, selectedFolder) {
     resourcePath,
     resourceTotalBytesSaved,
     bundleBytesSaved,
-    bundleBytesToSave,
+    bundleBytesToSave
   }) {
     return {
       type: bundleConstants.SAVETO_UPDATED,
@@ -814,7 +888,9 @@ export function selectBundleEntryRevision(bundle) {
 
 export function getEntryRevisions(bundleId) {
   return async (dispatch, getState) => {
-    const { bundles: { addedByBundleIds } } = getState();
+    const {
+      bundles: { addedByBundleIds }
+    } = getState();
     const bundle = addedByBundleIds[bundleId];
     const { dblId } = bundle;
     const entryRevisions = await dblDotLocalService.getEntryRevisions(dblId);

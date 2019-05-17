@@ -10,6 +10,7 @@ import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { utilities } from '../utils/utilities';
 import { openEditMetadata, saveMetadatFileToTempBundleFolder } from './bundleEditMetadata.actions';
 import { bundleActions } from './bundle.actions';
+import { getResourcesDetails } from '../helpers/bundle.helpers';
 
 export const bundleManageResourceActions = {
   openResourceManager,
@@ -25,7 +26,7 @@ export const bundleManageResourceActions = {
 export function openResourceManager(_bundleId, _mode) {
   return async (dispatch, getState) => {
     await bundleService.waitStopCreateMode(_bundleId);
-    dispatch(bundleActions.updateBundle(_bundleId, true));
+    dispatch(bundleActions.updateBundle(_bundleId));
     const { addedByBundleIds } = getState().bundles;
     const bundleId = _bundleId;
     const bundle = addedByBundleIds[bundleId];
@@ -66,7 +67,7 @@ export function getManifestResources(_bundleId) {
   return async dispatch => {
     try {
       dispatch(request(_bundleId));
-      const manifestResources = await bundleService.getManifestResourceDetails(_bundleId);
+      const manifestResources = getResourcesDetails(_bundleId);
       const rawBundle = await bundleService.fetchById(_bundleId);
       const storedFiles = bundleService.getFlatFileInfo(rawBundle);
       dispatch(success(_bundleId, manifestResources, storedFiles));

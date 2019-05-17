@@ -2,7 +2,6 @@ import log from 'electron-log';
 import traverse from 'traverse';
 import fs from 'fs-extra';
 import path from 'path';
-import rp from 'request-promise-native';
 import got from 'got';
 import FormData from 'form-data';
 import uuidv1 from 'uuid/v1';
@@ -11,6 +10,7 @@ import { authHeader } from '../helpers';
 import { servicesHelpers } from '../helpers/services';
 import dblDotLocalConfigConstants from '../constants/dblDotLocal.constants';
 import download from './download-with-fetch.flow';
+import { getRawBundleResourcesDetails } from '../helpers/bundle.helpers';
 
 const { app } = require('electron').remote;
 
@@ -25,12 +25,9 @@ export const bundleService = {
   apiBundleHasMetadata,
   convertApiBundleToNathanaelBundle,
   getInitialTaskAndStatus,
-  getManifestResourcePaths,
-  getManifestResourceDetails,
   deleteManifestResource,
   downloadResources,
   removeResources,
-  getResourcePaths,
   requestSaveResourceTo,
   saveMetadataToTempFolder,
   saveJobSpecToTempFolder,
@@ -73,13 +70,11 @@ export default bundleService;
 const BUNDLE_API = 'bundle';
 const BUNDLE_API_LIST = `${BUNDLE_API}/list`;
 const RESOURCE_API = 'resource';
-const RESOURCE_API_LIST = RESOURCE_API;
 const FORM_API = 'form';
 const FORM_BUNDLE_API = `${FORM_API}/bundle`;
 const FORM_BUNDLE_API_DELETE = `${FORM_API}/delete`;
 const MANIFEST_API = 'manifest';
 const DEBUG_API = 'debug';
-const MANIFEST_DETAILS = 'details';
 const PUBLICATION_API = 'publication';
 const SUBSYSTEM_API = 'subsystem';
 
@@ -207,11 +202,7 @@ function getResourceFileStoredCount(apiBundle) {
 
 async function convertApiBundleToNathanaelBundle(apiBundle, lazyLoads = {}) {
   const { mode, metadata, dbl, upload } = apiBundle;
-  const {
-    resourceCountManifest = null,
-    formsErrorStatus = {},
-    manifestResources = []
-  } = lazyLoads;
+  const { formsErrorStatus = {} } = lazyLoads;
   const { jobId: uploadJob } = upload || {};
   const { parent } = dbl;
   const bundleId = apiBundle.local_id;
@@ -226,15 +217,22 @@ async function convertApiBundleToNathanaelBundle(apiBundle, lazyLoads = {}) {
       status = 'COMPLETED'; // even if only some are stored
     }
   }
+  const sep = '/';
+  const manifestResources = getRawBundleResourcesDetails(apiBundle);
+  const resourceCountManifest = (Object.values(manifestResources) || []).length;
   return {
     id: bundleId,
-    name: metadata.name,
+    name: metadata.identification.name,
     revision: dbl.currentRevision,
     dblId: dbl.id,
     medium: dbl.medium,
-    countryIso: metadata.countries || '',
-    languageIso: metadata.language,
-    rightsHolders: metadata.rightsHolders || '',
+    countryIso: Object.keys(metadata.countries).join(sep) || '',
+    languageIso: metadata.language.iso,
+    rightsHolders:
+      metadata.agencies
+        .filter(a => a.type === 'rightsHolder')
+        .map(a => a.abbr)
+        .join(sep) || '',
     license: dbl.license || 'owned',
     mode,
     task,
@@ -300,24 +298,6 @@ function handlePostFormResponse(response) {
     return Promise.reject(response);
   }
   return response.text();
-}
-
-function getManifestResourcePaths(bundleId) {
-  const requestOptions = {
-    method: 'GET',
-    headers: authHeader()
-  };
-  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${MANIFEST_API}/${bundleId}`;
-  return fetch(url, requestOptions).then(handleResponse);
-}
-
-function getManifestResourceDetails(bundleId) {
-  const requestOptions = {
-    method: 'GET',
-    headers: authHeader()
-  };
-  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${MANIFEST_API}/${bundleId}/${MANIFEST_DETAILS}`;
-  return fetch(url, requestOptions).then(handleResponse);
 }
 
 function deleteManifestResource(bundleId, uri) {
@@ -415,18 +395,12 @@ function bundleAddTasks(bundleId, innerTasks) {
   return fetch(url, requestOptions).then(handlePostFormResponse);
 }
 
-function getResourcePaths(bundleId) {
-  const requestOptions = {
-    method: 'GET',
-    headers: authHeader()
-  };
-  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${RESOURCE_API_LIST}`;
-  return fetch(url, requestOptions).then(handleResponse);
-}
-
 async function saveMetadataToTempFolder(bundleId) {
-  const { tmpFolder, filePath: metadataFile, fileName: metadataXmlResource }
-    = getTempFolderForFile(bundleId, 'metadata.xml');
+  const {
+    tmpFolder,
+    filePath: metadataFile,
+    fileName: metadataXmlResource
+  } = getTempFolderForFile(bundleId, 'metadata.xml');
   await bundleService.requestSaveResourceTo(
     tmpFolder,
     bundleId,
@@ -441,13 +415,18 @@ function getTempFolderForFile(bundleId, fileName) {
   const tmpFolder = path.join(temp, bundleId);
   const filePath = path.join(tmpFolder, fileName);
   return {
-    temp, tmpFolder, filePath, fileName
+    temp,
+    tmpFolder,
+    filePath,
+    fileName
   };
 }
 
 async function saveJobSpecToTempFolder(bundleId) {
-  const { filePath: jobSpecPath }
-    = getTempFolderForFile(bundleId, 'job-spec.xml');
+  const { filePath: jobSpecPath } = getTempFolderForFile(
+    bundleId,
+    'job-spec.xml'
+  );
   const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${DEBUG_API}/${bundleId}/job-spec`;
   await download(url, jobSpecPath, () => {}, authHeader());
   return jobSpecPath;
@@ -499,7 +478,10 @@ function getFormFields(bundleId, formKey) {
     "response_valid": false
   }
  */
-async function waitUntilPostFormFields(postFormFieldArgs, doStopCreateMode = false) {
+async function waitUntilPostFormFields(
+  postFormFieldArgs,
+  doStopCreateMode = false
+) {
   const { bundleId } = postFormFieldArgs;
   await bundleService.waitStartCreateMode(bundleId);
   try {
