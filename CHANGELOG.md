@@ -1,3 +1,10 @@
+### Version 0.37.2
+
+#### Fix
+
+- dbl_dot_local_app (5/16/2019): metadata_as_json (boost api performance)
+- fix api calls to take advantage of api performance boost
+
 ### Version 0.37.1
 
 #### Fix
