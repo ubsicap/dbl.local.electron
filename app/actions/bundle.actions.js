@@ -267,9 +267,6 @@ export function createBundleFromDBL(dblId, revision, license) {
         500
       );
       dispatch(success(targetBundle));
-      dispatch(
-        bundleManageResourceActions.getManifestResources(targetBundle.id)
-      );
     } catch (error) {
       dispatch(failure(error));
     }
