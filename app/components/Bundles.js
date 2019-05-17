@@ -5,15 +5,14 @@ import DBLEntryRow from './DBLEntryRow';
 import { fetchAll, setupBundlesEventSource } from '../actions/bundle.actions';
 
 type Props = {
-  fetchAll: () => {},
-  setupBundlesEventSource: () => {},
+  fetchAllEntries: () => {},
+  setupEntryBundlesEventSource: () => {},
   isLoadingBundles: boolean,
   isSearchLoading: boolean,
   bundleItems: [],
   selectedDBLEntryId: ?string,
   authentication: {}
 };
-
 
 function mapStateToProps(state) {
   const { authentication, bundles, bundlesFilter } = state;
@@ -27,40 +26,56 @@ function mapStateToProps(state) {
 }
 
 const mapDispatchToProps = {
-  fetchAll,
-  setupBundlesEventSource
+  fetchAllEntries: fetchAll,
+  setupEntryBundlesEventSource: setupBundlesEventSource
 };
 
 class Bundles extends PureComponent<Props> {
   props: Props;
+
   componentDidMount() {
-    if (this.props.bundleItems.length === 0) {
-      this.props.setupBundlesEventSource();
-      this.props.fetchAll();
+    const {
+      bundleItems,
+      setupEntryBundlesEventSource,
+      fetchAllEntries
+    } = this.props;
+    if (bundleItems.length === 0) {
+      setupEntryBundlesEventSource();
+      fetchAllEntries();
     }
   }
 
   render() {
-    const { bundleItems, isSearchLoading, isLoadingBundles, selectedDBLEntryId } = this.props;
+    const {
+      bundleItems,
+      isSearchLoading,
+      isLoadingBundles,
+      selectedDBLEntryId
+    } = this.props;
     return (
       <div>
-        {(isLoadingBundles || isSearchLoading) &&
+        {(isLoadingBundles || isSearchLoading) && (
           <div
             className="row"
             style={{
- height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center'
-}}
+              height: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
           >
             <CircularProgress size={80} thickness={5} />
           </div>
-        }
-        {bundleItems && bundleItems.map((d) => (
-          <DBLEntryRow
-            key={d.id}
-            bundleId={d.id}
-            {...d}
-            isSelected={selectedDBLEntryId === d.dblId}
-          />))}
+        )}
+        {bundleItems &&
+          bundleItems.map(d => (
+            <DBLEntryRow
+              key={d.id}
+              bundleId={d.id}
+              {...d}
+              isSelected={selectedDBLEntryId === d.dblId}
+            />
+          ))}
       </div>
     );
   }
@@ -68,5 +83,5 @@ class Bundles extends PureComponent<Props> {
 
 export default connect(
   mapStateToProps,
-  mapDispatchToProps,
+  mapDispatchToProps
 )(Bundles);
