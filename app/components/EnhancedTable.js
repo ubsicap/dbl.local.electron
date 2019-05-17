@@ -297,7 +297,7 @@ class EnhancedTable extends Component<Props> {
       onRowsSelect: this.handleRowsSelect,
       onRowClick: this.handleRowClick,
       selectableRows: selectableData.length > 0,
-      isRowSelectable: (dataIndex) => !freezeCheckedColumnState && !sortedData[dataIndex].disabled,
+      isRowSelectable: (dataIndex) => !freezeCheckedColumnState && !(sortedData.length ? sortedData[dataIndex].disabled : true),
       customSort: (data) => data,
       ...customToolbarSelect,
       onColumnSortChange: this.handleRequestSort,
