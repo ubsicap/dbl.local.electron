@@ -2,6 +2,8 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Button from '@material-ui/core/Button';
+import Grid from '@material-ui/core/Grid';
+import Typography from '@material-ui/core/Typography';
 import DBLEntryRow from './DBLEntryRow';
 import { fetchAll, setupBundlesEventSource } from '../actions/bundle.actions';
 import { ux } from '../utils/ux';
@@ -63,6 +65,23 @@ const columnsConfigWithCustomBodyRenderings = columnsConfig.map(c => {
             <MediumIcon medium={value} iconProps={mediumIconProps} />
             {value}
           </Button>
+        )
+      };
+    }
+    case 'name': {
+      return {
+        ...c,
+        customBodyRender: (value, tableMeta) => (
+          <Grid container direction="column">
+            <Grid item>
+              <Typography variant="body1">{value}</Typography>
+            </Grid>
+            <Grid item>
+              <Typography variant="caption">
+                {tableMeta.rowData[tableMeta.columnIndex + 1]}
+              </Typography>
+            </Grid>
+          </Grid>
         )
       };
     }
