@@ -40,7 +40,7 @@ function createEntryRowData(bundle) {
   return {
     id,
     medium,
-    languageAndCountry,
+    'language-country': languageAndCountry,
     name,
     dblId,
     revision,
@@ -126,6 +126,10 @@ const mapDispatchToProps = {
   setupEntryBundlesEventSource: setupBundlesEventSource
 };
 
+const tableOptions = {
+  selectableRows: 'none'
+};
+
 class Bundles extends PureComponent<Props> {
   props: Props;
 
@@ -171,12 +175,13 @@ class Bundles extends PureComponent<Props> {
           data={entriesData}
           title="Entries"
           columnConfig={columnsConfigWithCustomBodyRenderings}
-          orderBy="languageAndCountry"
+          orderBy="language-country"
           secondarySorts={emptyArray}
           orderDirection="asc"
           onSelectedRowIds={this.handleSelectedRowIds}
           onChangeSort={() => {}}
           selectedIds={emptyArray}
+          tableOptions={tableOptions}
         />
         {bundleItems &&
           bundleItems.map(d => (

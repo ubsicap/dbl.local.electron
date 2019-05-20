@@ -67,6 +67,7 @@ type Props = {
   multiSelections?: boolean,
   customSorts?: {},
   freezeCheckedColumnState?: boolean,
+  tableOptions?: {},
   title?: string,
   editContainer?: {},
   onSelectedRowIds: () => {},
@@ -79,7 +80,8 @@ const defaultProps = {
   multiSelections: false,
   freezeCheckedColumnState: false,
   title: undefined,
-  editContainer: undefined
+  editContainer: undefined,
+  tableOptions: emptyObject
 };
 
 function getSortMethod(customSorts, orderBy) {
@@ -158,7 +160,7 @@ function getColumns(columnConfig, sortedData, orderBy, orderDirection) {
     name: c.name,
     label: c.label,
     options: {
-      filter: !['name', 'size'].includes(c.name),
+      filter: !['name', 'size', 'dblId'].includes(c.name),
       ...getSortDirection(c, orderBy, orderDirection),
       setCellProps: (row, dataIndex) =>
         getCellProps(c, row, dataIndex, sortedData),
@@ -327,9 +329,10 @@ class EnhancedTable extends Component<Props> {
       selectedDataIndexes,
       selectableData,
       freezeCheckedColumnState,
-      title
+      title,
+      tableOptions
     } = this.props;
-    const { rowsPerPage } = this.state;
+    const { rowsPerPage, page } = this.state;
     const customToolbarSelect = this.getCustomToolbarSelect();
     const options = {
       filterType: 'multiselect',
@@ -346,11 +349,12 @@ class EnhancedTable extends Component<Props> {
       ...customToolbarSelect,
       onColumnSortChange: this.handleRequestSort,
       onFilterChange: this.handleFilterChange,
-      page: this.state.page,
+      page,
       onChangePage: this.handleChangePage,
       rowsPerPage,
       rowsPerPageOptions: [10, 50, 100, 150, sortedData.length],
-      onChangeRowsPerPage: this.handleChangeRowsPerPage
+      onChangeRowsPerPage: this.handleChangeRowsPerPage,
+      ...tableOptions
     };
     return (
       <Paper className={classes.root}>
