@@ -8,6 +8,8 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
+import TableRow from '@material-ui/core/TableRow';
+import TableCell from '@material-ui/core/TableCell';
 import DBLEntryRow from './DBLEntryRow';
 import { fetchAll, setupBundlesEventSource } from '../actions/bundle.actions';
 import { ux } from '../utils/ux';
@@ -119,7 +121,18 @@ const mapDispatchToProps = {
 };
 
 const tableOptions = {
-  selectableRows: 'none'
+  selectableRows: 'none',
+  expandableRows: true,
+  renderExpandableRow: rowData => {
+    const colSpan = rowData.length + 1;
+    return (
+      <TableRow>
+        <TableCell colSpan={colSpan}>
+          Custom expandable row option. Data: {JSON.stringify(rowData)}
+        </TableCell>
+      </TableRow>
+    );
+  }
 };
 
 class Bundles extends PureComponent<Props> {
