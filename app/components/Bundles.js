@@ -19,6 +19,7 @@ type Props = {
   bundleItems: [],
   selectedDBLEntryId: ?string,
   authentication: {},
+  entriesData: [],
   columnsConfigWithCustomBodyRenderings: []
 };
 
@@ -62,30 +63,37 @@ function getColumnsConfigWithCustomBodyRenderings(bundleItems, columnsConfig) {
         const mediumIconProps = { style: { marginRight: '10px' } };
         return {
           ...c,
-          customBodyRender: value => (
-            <Button size="small" style={{ minWidth: '16px' }}>
-              <MediumIcon medium={value} iconProps={mediumIconProps} />
-              {value}
-            </Button>
-          )
+          options: {
+            customBodyRender: value => (
+              <Button size="small" style={{ minWidth: '16px' }}>
+                <MediumIcon medium={value} iconProps={mediumIconProps} />
+                {value}
+              </Button>
+            )
+          }
         };
+      }
+      case 'dblId': {
+        return { ...c, options: { display: 'excluded' } };
       }
       case 'name': {
         return {
           ...c,
-          customBodyRender: (value, tableMeta) => {
-            return (
-              <Grid container direction="column">
-                <Grid item>
-                  <Typography variant="body1">{value}</Typography>
+          options: {
+            customBodyRender: (value, tableMeta) => {
+              return (
+                <Grid container direction="column">
+                  <Grid item>
+                    <Typography variant="body1">{value}</Typography>
+                  </Grid>
+                  <Grid item>
+                    <Typography variant="caption">
+                      {bundleItems[tableMeta.rowIndex].dblId}
+                    </Typography>
+                  </Grid>
                 </Grid>
-                <Grid item>
-                  <Typography variant="caption">
-                    {bundleItems[tableMeta.rowIndex].dblId}
-                  </Typography>
-                </Grid>
-              </Grid>
-            );
+              );
+            }
           }
         };
       }
@@ -98,12 +106,14 @@ function getColumnsConfigWithCustomBodyRenderings(bundleItems, columnsConfig) {
 function mapStateToProps(state) {
   const { authentication, bundles, bundlesFilter } = state;
   const bundleItems = bundles.items;
+  const entriesData = bundleItems.map(createEntryRowData);
   return {
     isLoadingBundles: bundles.loading || false,
     isSearchLoading: bundlesFilter.isLoading || false,
     bundleItems,
     selectedDBLEntryId: bundles.selectedDBLEntryId,
     authentication,
+    entriesData,
     columnsConfigWithCustomBodyRenderings: getColumnsConfigWithCustomBodyRenderings(
       bundleItems,
       basicColumnsConfig
@@ -139,9 +149,9 @@ class Bundles extends PureComponent<Props> {
       isSearchLoading,
       isLoadingBundles,
       selectedDBLEntryId,
+      entriesData,
       columnsConfigWithCustomBodyRenderings
     } = this.props;
-    const entriesData = bundleItems.map(createEntryRowData);
     return (
       <div>
         {(isLoadingBundles || isSearchLoading) && (

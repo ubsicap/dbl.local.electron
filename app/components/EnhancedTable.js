@@ -162,7 +162,7 @@ function getColumns(columnConfig, sortedData, orderBy, orderDirection) {
       ...getSortDirection(c, orderBy, orderDirection),
       setCellProps: (row, dataIndex) =>
         getCellProps(c, row, dataIndex, sortedData),
-      customBodyRender: c.customBodyRender
+      ...(c.options || {})
     }
   }));
   return columns;
