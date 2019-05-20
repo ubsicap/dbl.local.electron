@@ -26,7 +26,7 @@ type Props = {
   selectedDBLEntryId: ?string,
   authentication: {},
   entriesData: [],
-  columnsConfigWithCustomBodyRenderings: []
+  allBundles: []
 };
 
 function createEntryRowData(bundle) {
@@ -95,115 +95,11 @@ function getEntryLaterRevisions(
   return laterRevisions;
 }
 
-function getColumnsConfigWithCustomBodyRenderings(
-  classes,
-  allBundles,
-  bundleItems,
-  columnsConfig
-) {
-  return columnsConfig.map(c => {
-    switch (c.name) {
-      case 'medium': {
-        const mediumIconProps = { style: { marginRight: '10px' } };
-        return {
-          ...c,
-          options: {
-            customBodyRender: value => (
-              <Button size="small" style={{ minWidth: '16px' }}>
-                <MediumIcon medium={value} iconProps={mediumIconProps} />
-                {value}
-              </Button>
-            )
-          }
-        };
-      }
-      case 'dblId': {
-        return { ...c, options: { display: 'excluded' } };
-      }
-      case 'name': {
-        return {
-          ...c,
-          options: {
-            customBodyRender: (value, tableMeta) => {
-              return (
-                <Grid container direction="column">
-                  <Grid item>
-                    <Typography variant="body1">{value}</Typography>
-                  </Grid>
-                  <Grid item>
-                    <Typography variant="caption">
-                      {bundleItems.length > 0 ?
-                        bundleItems[tableMeta.rowIndex].dblId : ''}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              );
-            }
-          }
-        };
-      }
-      case 'license': {
-        return {
-          ...c,
-          options: {
-            customBodyRender: (value, tableMeta) => {
-              const bundle = bundleItems[tableMeta.rowIndex];
-              const laterEntryRevisions = getEntryLaterRevisions(
-                allBundles,
-                bundle
-              );
-              const laterEntryRevisionsCount = laterEntryRevisions.length;
-              const laterRevisionsBadge = laterEntryRevisionsCount
-                ? `${laterEntryRevisionsCount}+`
-                : '';
-              const { dblId, status, revision, parent, mode } = bundle;
-              return (
-                <Tooltip title="Switch revision">
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    className={classNames(
-                      classes.button,
-                      ux.getDblRowBackgroundColor(
-                        false,
-                        classes,
-                        status,
-                        revision,
-                        parent,
-                        dblId,
-                        mode
-                      )
-                    )}
-                    disabled={dblId === undefined}
-                    onClick={() => {}}
-                  >
-                    {ux.conditionallyRenderBadge(
-                      {
-                        classes: { badge: classes.badgeTight },
-                        color: 'primary'
-                      },
-                      laterRevisionsBadge,
-                      { value }
-                    )}
-                  </Button>
-                </Tooltip>
-              );
-            }
-          }
-        };
-      }
-      default:
-        return c;
-    }
-  });
-}
-
-function mapStateToProps(state, props) {
+function mapStateToProps(state) {
   const { authentication, bundles, bundlesFilter } = state;
   const {
     bundles: { allBundles }
   } = state;
-  const { classes } = props;
   const bundleItems = bundles.items || emptyArray;
   const entriesData = bundleItems.map(createEntryRowData);
   return {
@@ -213,12 +109,7 @@ function mapStateToProps(state, props) {
     selectedDBLEntryId: bundles.selectedDBLEntryId,
     authentication,
     entriesData,
-    columnsConfigWithCustomBodyRenderings: getColumnsConfigWithCustomBodyRenderings(
-      classes,
-      allBundles,
-      bundleItems,
-      basicColumnsConfig
-    )
+    allBundles
   };
 }
 
@@ -248,15 +139,123 @@ class Bundles extends PureComponent<Props> {
 
   handleSelectedRowIds = () => {};
 
+  getColumnsConfigWithCustomBodyRenderings = () => {
+    const { classes } = this.props;
+    return basicColumnsConfig.map(c => {
+      switch (c.name) {
+        case 'medium': {
+          const mediumIconProps = { style: { marginRight: '10px' } };
+          return {
+            ...c,
+            options: {
+              customBodyRender: value => (
+                <Button size="small" style={{ minWidth: '16px' }}>
+                  <MediumIcon medium={value} iconProps={mediumIconProps} />
+                  {value}
+                </Button>
+              )
+            }
+          };
+        }
+        case 'dblId': {
+          return { ...c, options: { display: 'excluded' } };
+        }
+        case 'name': {
+          return {
+            ...c,
+            options: {
+              customBodyRender: (value, tableMeta) => {
+                const { bundleItems } = this.props;
+                if (bundleItems.length === 0) {
+                  return undefined;
+                }
+                return (
+                  <Grid container direction="column">
+                    <Grid item>
+                      <Typography variant="body1">{value}</Typography>
+                    </Grid>
+                    <Grid item>
+                      <Typography variant="caption">
+                        {bundleItems.length > 0
+                          ? bundleItems[tableMeta.rowIndex].dblId
+                          : ''}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                );
+              }
+            }
+          };
+        }
+        case 'revision': {
+          return {
+            ...c,
+            options: {
+              customBodyRender: (value, tableMeta) => {
+                const { bundleItems, allBundles } = this.props;
+                if (bundleItems.length === 0) {
+                  return undefined;
+                }
+                const bundle = bundleItems[tableMeta.rowIndex];
+                const laterEntryRevisions = getEntryLaterRevisions(
+                  allBundles,
+                  bundle
+                );
+                const laterEntryRevisionsCount = laterEntryRevisions.length;
+                const laterRevisionsBadge = laterEntryRevisionsCount
+                  ? `${laterEntryRevisionsCount}+`
+                  : '';
+                const { dblId, status, revision, parent, mode } = bundle;
+                return (
+                  <Tooltip title="Switch revision">
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      className={classNames(
+                        classes.button,
+                        ux.getDblRowBackgroundColor(
+                          false,
+                          classes,
+                          status,
+                          revision,
+                          parent,
+                          dblId,
+                          mode
+                        )
+                      )}
+                      disabled={dblId === undefined}
+                      onClick={() => {}}
+                    >
+                      {ux.conditionallyRenderBadge(
+                        {
+                          classes: { badge: classes.badgeTight },
+                          color: 'primary'
+                        },
+                        laterRevisionsBadge,
+                        <div>{value}</div>
+                      )}
+                    </Button>
+                  </Tooltip>
+                );
+              }
+            }
+          };
+        }
+        default:
+          return c;
+      }
+    });
+  };
+
   render() {
     const {
       bundleItems,
       isSearchLoading,
       isLoadingBundles,
       selectedDBLEntryId,
-      entriesData,
-      columnsConfigWithCustomBodyRenderings
+      entriesData
     } = this.props;
+    const columnsConfigWithCustomBodyRenderings = this.getColumnsConfigWithCustomBodyRenderings();
     return (
       <div>
         {(isLoadingBundles || isSearchLoading) && (
