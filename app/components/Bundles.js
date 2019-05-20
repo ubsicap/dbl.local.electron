@@ -1,5 +1,9 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
+import { withStyles } from '@material-ui/core/styles';
+import { compose } from 'recompose';
+import classNames from 'classnames';
+import { Tooltip } from '@material-ui/core';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
@@ -10,8 +14,10 @@ import { ux } from '../utils/ux';
 import { emptyArray } from '../utils/defaultValues';
 import EnhancedTable from './EnhancedTable';
 import MediumIcon from './MediumIcon';
+import { bundleService } from '../services/bundle.service';
 
 type Props = {
+  classes: {},
   fetchAllEntries: () => {},
   setupEntryBundlesEventSource: () => {},
   isLoadingBundles: boolean,
@@ -56,7 +62,45 @@ const basicColumnsConfig = ux.mapColumns(
   () => null
 );
 
-function getColumnsConfigWithCustomBodyRenderings(bundleItems, columnsConfig) {
+function filterForLaterRevisionsOrDrafts(bundleId, effectiveRevision) {
+  return b => {
+    if (b.id === bundleId) {
+      return false;
+    }
+    const testEffectiveRevision = bundleService.getRevisionOrParentRevision(
+      b.dblId,
+      b.revision,
+      b.parent
+    );
+    if (b.revision !== '0' && testEffectiveRevision <= effectiveRevision) {
+      return false;
+    }
+    return true;
+  };
+}
+
+function getEntryLaterRevisions(
+  allBundles,
+  { id: bundleId, dblId, revision, parent }
+) {
+  const effectiveRevision = bundleService.getRevisionOrParentRevision(
+    dblId,
+    revision,
+    parent
+  );
+  const allRevisions = allBundles.filter(b => b.dblId === dblId);
+  const laterRevisions = allRevisions.filter(
+    filterForLaterRevisionsOrDrafts(bundleId, effectiveRevision)
+  );
+  return laterRevisions;
+}
+
+function getColumnsConfigWithCustomBodyRenderings(
+  classes,
+  allBundles,
+  bundleItems,
+  columnsConfig
+) {
   return columnsConfig.map(c => {
     switch (c.name) {
       case 'medium': {
@@ -88,10 +132,61 @@ function getColumnsConfigWithCustomBodyRenderings(bundleItems, columnsConfig) {
                   </Grid>
                   <Grid item>
                     <Typography variant="caption">
-                      {bundleItems[tableMeta.rowIndex].dblId}
+                      {bundleItems.length > 0 ?
+                        bundleItems[tableMeta.rowIndex].dblId : ''}
                     </Typography>
                   </Grid>
                 </Grid>
+              );
+            }
+          }
+        };
+      }
+      case 'license': {
+        return {
+          ...c,
+          options: {
+            customBodyRender: (value, tableMeta) => {
+              const bundle = bundleItems[tableMeta.rowIndex];
+              const laterEntryRevisions = getEntryLaterRevisions(
+                allBundles,
+                bundle
+              );
+              const laterEntryRevisionsCount = laterEntryRevisions.length;
+              const laterRevisionsBadge = laterEntryRevisionsCount
+                ? `${laterEntryRevisionsCount}+`
+                : '';
+              const { dblId, status, revision, parent, mode } = bundle;
+              return (
+                <Tooltip title="Switch revision">
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    className={classNames(
+                      classes.button,
+                      ux.getDblRowBackgroundColor(
+                        false,
+                        classes,
+                        status,
+                        revision,
+                        parent,
+                        dblId,
+                        mode
+                      )
+                    )}
+                    disabled={dblId === undefined}
+                    onClick={() => {}}
+                  >
+                    {ux.conditionallyRenderBadge(
+                      {
+                        classes: { badge: classes.badgeTight },
+                        color: 'primary'
+                      },
+                      laterRevisionsBadge,
+                      { value }
+                    )}
+                  </Button>
+                </Tooltip>
               );
             }
           }
@@ -103,9 +198,13 @@ function getColumnsConfigWithCustomBodyRenderings(bundleItems, columnsConfig) {
   });
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state, props) {
   const { authentication, bundles, bundlesFilter } = state;
-  const bundleItems = bundles.items;
+  const {
+    bundles: { allBundles }
+  } = state;
+  const { classes } = props;
+  const bundleItems = bundles.items || emptyArray;
   const entriesData = bundleItems.map(createEntryRowData);
   return {
     isLoadingBundles: bundles.loading || false,
@@ -115,6 +214,8 @@ function mapStateToProps(state) {
     authentication,
     entriesData,
     columnsConfigWithCustomBodyRenderings: getColumnsConfigWithCustomBodyRenderings(
+      classes,
+      allBundles,
       bundleItems,
       basicColumnsConfig
     )
@@ -197,7 +298,12 @@ class Bundles extends PureComponent<Props> {
   }
 }
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
+const materialStyles = theme => ux.getDblRowStyles(theme);
+
+export default compose(
+  withStyles(materialStyles),
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )
 )(Bundles);
