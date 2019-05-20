@@ -18,7 +18,8 @@ type Props = {
   isSearchLoading: boolean,
   bundleItems: [],
   selectedDBLEntryId: ?string,
-  authentication: {}
+  authentication: {},
+  columnsConfigWithCustomBodyRenderings: []
 };
 
 function createEntryRowData(bundle) {
@@ -48,56 +49,65 @@ function createEntryRowData(bundle) {
   };
 }
 
-const columnsConfig = ux.mapColumns(
+const basicColumnsConfig = ux.mapColumns(
   createEntryRowData(),
   () => false,
   () => null
 );
 
-const columnsConfigWithCustomBodyRenderings = columnsConfig.map(c => {
-  switch (c.name) {
-    case 'medium': {
-      const mediumIconProps = { style: { marginRight: '10px' } };
-      return {
-        ...c,
-        customBodyRender: value => (
-          <Button size="small" style={{ minWidth: '16px' }}>
-            <MediumIcon medium={value} iconProps={mediumIconProps} />
-            {value}
-          </Button>
-        )
-      };
+function getColumnsConfigWithCustomBodyRenderings(bundleItems, columnsConfig) {
+  return columnsConfig.map(c => {
+    switch (c.name) {
+      case 'medium': {
+        const mediumIconProps = { style: { marginRight: '10px' } };
+        return {
+          ...c,
+          customBodyRender: value => (
+            <Button size="small" style={{ minWidth: '16px' }}>
+              <MediumIcon medium={value} iconProps={mediumIconProps} />
+              {value}
+            </Button>
+          )
+        };
+      }
+      case 'name': {
+        return {
+          ...c,
+          customBodyRender: (value, tableMeta) => {
+            return (
+              <Grid container direction="column">
+                <Grid item>
+                  <Typography variant="body1">{value}</Typography>
+                </Grid>
+                <Grid item>
+                  <Typography variant="caption">
+                    {bundleItems[tableMeta.rowIndex].dblId}
+                  </Typography>
+                </Grid>
+              </Grid>
+            );
+          }
+        };
+      }
+      default:
+        return c;
     }
-    case 'name': {
-      return {
-        ...c,
-        customBodyRender: (value, tableMeta) => (
-          <Grid container direction="column">
-            <Grid item>
-              <Typography variant="body1">{value}</Typography>
-            </Grid>
-            <Grid item>
-              <Typography variant="caption">
-                {tableMeta.rowData[tableMeta.columnIndex + 1]}
-              </Typography>
-            </Grid>
-          </Grid>
-        )
-      };
-    }
-    default:
-      return c;
-  }
-});
+  });
+}
 
 function mapStateToProps(state) {
   const { authentication, bundles, bundlesFilter } = state;
+  const bundleItems = bundles.items;
   return {
     isLoadingBundles: bundles.loading || false,
     isSearchLoading: bundlesFilter.isLoading || false,
-    bundleItems: bundles.items,
+    bundleItems,
     selectedDBLEntryId: bundles.selectedDBLEntryId,
-    authentication
+    authentication,
+    columnsConfigWithCustomBodyRenderings: getColumnsConfigWithCustomBodyRenderings(
+      bundleItems,
+      basicColumnsConfig
+    )
   };
 }
 
@@ -128,7 +138,8 @@ class Bundles extends PureComponent<Props> {
       bundleItems,
       isSearchLoading,
       isLoadingBundles,
-      selectedDBLEntryId
+      selectedDBLEntryId,
+      columnsConfigWithCustomBodyRenderings
     } = this.props;
     const entriesData = bundleItems.map(createEntryRowData);
     return (
