@@ -1,3 +1,9 @@
+### Version 0.37.4
+
+#### Fix
+
+- fix some react textHighlight related crashes due to undefined strings
+
 ### Version 0.37.3
 
 #### Fix
