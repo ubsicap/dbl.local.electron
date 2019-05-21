@@ -3,6 +3,7 @@
 #### Fix
 
 - fix some react textHighlight related crashes due to undefined strings
+- try fix upload state
 
 ### Version 0.37.3
 
