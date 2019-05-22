@@ -15,7 +15,6 @@ import { getResourcesDetails } from '../helpers/bundle.helpers';
 export const bundleManageResourceActions = {
   openResourceManager,
   closeResourceManager,
-  getManifestResources,
   addManifestResources,
   deleteManifestResources,
   checkPublicationsHealth,
@@ -24,15 +23,9 @@ export const bundleManageResourceActions = {
 };
 
 export function openResourceManager(_bundleId, _mode) {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     await bundleService.waitStopCreateMode(_bundleId);
     dispatch(bundleActions.updateBundle(_bundleId));
-    const { addedByBundleIds } = getState().bundles;
-    const bundleId = _bundleId;
-    const bundle = addedByBundleIds[bundleId];
-    if (bundle.parent && bundle.parent.dblId === bundle.dblId) {
-      dispatch(getManifestResources(bundle.parent.bundleId));
-    }
     dispatch(navigate(_bundleId, _mode));
   };
   function success(bundleId, mode) {
@@ -60,36 +53,6 @@ export function closeResourceManager(_bundleId) {
   function navigate(bundleId) {
     history.push(navigationConstants.NAVIGATION_BUNDLES);
     return success(bundleId);
-  }
-}
-
-export function getManifestResources(_bundleId) {
-  return async dispatch => {
-    try {
-      dispatch(request(_bundleId));
-      const manifestResources = getResourcesDetails(_bundleId);
-      const rawBundle = await bundleService.fetchById(_bundleId);
-      const storedFiles = bundleService.getFlatFileInfo(rawBundle);
-      dispatch(success(_bundleId, manifestResources, storedFiles));
-    } catch (error) {
-      dispatch(failure(_bundleId, error));
-    }
-  };
-  function request(bundleId) {
-    return {
-      type: bundleResourceManagerConstants.GET_MANIFEST_RESOURCES_REQUEST, bundleId
-    };
-  }
-  function success(bundleId, manifestResources, storedFiles) {
-    return {
-      type: bundleResourceManagerConstants.GET_MANIFEST_RESOURCES_RESPONSE,
-      bundleId,
-      manifestResources,
-      storedFiles
-    };
-  }
-  function failure(bundleId, error) {
-    return { type: bundleResourceManagerConstants.GET_MANIFEST_RESOURCES_FAILURE, error };
   }
 }
 

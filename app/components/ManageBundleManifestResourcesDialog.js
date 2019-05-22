@@ -20,7 +20,7 @@ import classNames from 'classnames';
 import path from 'path';
 import { findChunks } from 'highlight-words-core';
 import { closeResourceManager,
-  getManifestResources, addManifestResources, checkPublicationsHealth, deleteManifestResources,
+  addManifestResources, checkPublicationsHealth, deleteManifestResources,
   selectResources, selectRevisions, updateSortOrder,
   appendAddedFilePaths, editContainers,
 } from '../actions/bundleManageResources.actions';
@@ -74,7 +74,6 @@ type Props = {
   orderDirection?: string,
   orderBy?: string,
   closeResourceManager: () => {},
-  getManifestResources: () => {},
   getEntryRevisions: () => {},
   downloadResources: () => {},
   addManifestResources: () => {},
@@ -246,8 +245,6 @@ function createColumnConfig(mode) {
   return ux.mapColumns(columns, getIsNumeric, getLabel);
 }
 
-const getAllManifestResources = (state) =>
-  state.bundleManageResources.manifestResources || emptyObject;
 const getMode = (state, props) => props.match.params.mode;
 const getBundleId = (state, props) => props.match.params.bundleId;
 const getAllEntryRevisions = (state) => state.bundles.allEntryRevisions || emptyObject;
@@ -298,12 +295,11 @@ function getTableDataForAddedResources(
 }
 
 const getPreviousManifestResourcesDataSelector = createSelector(
-  [getAllManifestResources, getBundleId, getBundlesById, getAllEntryRevisions],
-  (manifestResources, bundleId, bundlesById, allEntryRevisions) =>
+  [getBundleId, getBundlesById, getAllEntryRevisions],
+  (bundleId, bundlesById, allEntryRevisions) =>
     getPreviousRevisionManifestResourcesData(
       bundleId,
       bundlesById,
-      manifestResources,
       allEntryRevisions
     )
 );
@@ -311,28 +307,25 @@ const getPreviousManifestResourcesDataSelector = createSelector(
 const getIsLoading = (state) => state.bundleManageResources.loading || false;
 
 const getManifestResourcesDataSelector = createSelector(
-  [getAllManifestResources, getMode, getBundleId, getBundlesById,
+  [getMode, getBundleId, getBundlesById,
     getPreviousManifestResourcesDataSelector,
     getAddedFilePaths, getFullToRelativePaths, getFileSizes,
     getMapperInputData, getMapperInputReport, getSelectedMappers, getEditedContainers,
     getIsLoading],
   (
-    manifestResources, mode, bundleId, bundlesById, prevManifestResourcesData,
+    mode, bundleId, bundlesById, prevManifestResourcesData,
     addedFilePaths, fullToRelativePaths, fileSizes, mapperInputData, mapperReport, selectedMappers,
     editedContainers,
     isLoading /* warning: disabling all checkboxes during isLoading can result in hiding checkbox column */
   ) => {
-    const bundleManifestResources = utilities.getOrDefault(
-      manifestResources,
-      bundleId,
-      emptyBundleManifestResources
-    );
+    const bundle = bundlesById[bundleId];
+    const bundleManifestResources = createBundleManifestResources(bundle);
     const { rawManifestResources, storedFiles } = bundleManifestResources;
     const { previousEntryRevision, bundlePreviousRevision, previousManifestResources } =
       prevManifestResourcesData;
     const bundleManifestResourcesData = Object.values(rawManifestResources)
       .map(r => createResourceData(
-        bundleId[bundlesById],
+        bundle,
         r, storedFiles[r.uri],
         previousManifestResources.rawManifestResources[r.uri],
         { previousEntryRevision, bundlePreviousRevision, previousManifestResources }
@@ -488,13 +481,14 @@ function getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions) {
 function getPreviousRevisionManifestResourcesData(
   bundleId,
   bundlesById,
-  manifestResources,
   allEntryRevisions
 ) {
   const { previousEntryRevision, bundlePreviousRevision } =
     getBundlePrevRevision(bundleId, bundlesById, allEntryRevisions);
-  const previousManifestResources = bundlePreviousRevision ?
-    manifestResources[bundlePreviousRevision.id] || emptyBundleManifestResources :
+  const previousManifestResources = bundlePreviousRevision ? {
+      rawManifestResources: bundlePreviousRevision.manifestResources,
+      storedFiles: bundlePreviousRevision.storedFiles
+    }:
     emptyBundleManifestResources;
   return { previousEntryRevision, bundlePreviousRevision, previousManifestResources };
 }
@@ -557,9 +551,19 @@ function getIsCompatibleVersion(entryRevision) {
   return entryRevision.version.startsWith('2.');
 }
 
+function createBundleManifestResources(bundle) {
+  if (!bundle || bundle === emptyObject) {
+    return emptyBundleManifestResources;
+  }
+  return {
+    rawManifestResources: bundle.manifestResources,
+    storedFiles: bundle.storedFiles
+  };
+}
+
 const getEntryRevisionsDataSelector = createSelector(
-  [getAllEntryRevisions, getAllManifestResources, getBundlesById, getBundleId],
-  (allEntryRevisions, manifestResources, bundlesById, bundleId) => {
+  [getAllEntryRevisions, getBundlesById, getBundleId],
+  (allEntryRevisions, bundlesById, bundleId) => {
     const bundle = bundlesById[bundleId];
     const { dblId } = bundle;
     const localEntryBundles = findLocalEntryBundles(bundlesById, dblId);
@@ -569,7 +573,7 @@ const getEntryRevisionsDataSelector = createSelector(
         const revision = `${entryRevision.revision}`;
         const localEntryBundle = localEntryBundles.find(b => b.revision === revision);
         const { id: localBundleId } = localEntryBundle || emptyObject;
-        const { [localBundleId]: bundleManifestResources = emptyArray } = manifestResources;
+        const bundleManifestResources = createBundleManifestResources(localEntryBundle);
         const disabled = bundleId === localBundleId || !getIsCompatibleVersion(entryRevision);
         return createRevisionData(
           entryRevision,
@@ -580,7 +584,7 @@ const getEntryRevisionsDataSelector = createSelector(
       });
     const draftData = Object.values(localEntryBundles).filter(localBundle => [0, '0'].includes(localBundle.revision)).map(localEntryBundle => {
       const { id: localBundleId } = localEntryBundle || emptyObject;
-      const { [localBundleId]: bundleManifestResources = emptyArray } = manifestResources;
+      const bundleManifestResources = createBundleManifestResources(localEntryBundle);
       const revision = ux.getFormattedRevision(localEntryBundle, '');
       const mockEntryRevision = {
         created_on: localEntryBundle.raw.store.created,
@@ -697,7 +701,6 @@ function mapStateToProps(state, props) {
 
 const mapDispatchToProps = {
   closeResourceManager,
-  getManifestResources,
   getEntryRevisions,
   downloadResources,
   addManifestResources,
@@ -769,19 +772,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   componentDidMount() {
     const { bundleId, mode } = this.props;
     this.props.getEntryRevisions(bundleId);
-    if (mode === 'revisions') {
-      const { bundlesById } = this.props;
-      const { [bundleId]: bundle } = bundlesById;
-      const { dblId } = bundle;
-      const localEntryBundles = findLocalEntryBundles(bundlesById, dblId);
-      localEntryBundles.forEach(localBundle => {
-        this.props.getManifestResources(localBundle.id);
-      });
-      return;
-    } else if (this.props.bundlePreviousRevision) {
-      this.props.getManifestResources(this.props.bundlePreviousRevision.id);
-    }
-    this.props.getManifestResources(bundleId);
     if (this.isModifyFilesMode()) {
       this.props.checkPublicationsHealth(bundleId);
     }
@@ -797,11 +787,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         return;
       }
     }
-    if (this.props.progress !== prevProps.progress &&
-      (this.props.progress === 100)) {
-      const { bundleId } = this.props;
-      this.props.getManifestResources(bundleId);
-    }
     if (this.props.mode !== 'revisions') {
       if (!prevProps.previousEntryRevision &&
         this.props.previousEntryRevision && !this.props.bundlePreviousRevision &&
@@ -812,9 +797,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           this.props.previousEntryRevision.revision,
           origBundle.license
         );
-      }
-      if (!prevProps.bundlePreviousRevision && this.props.bundlePreviousRevision) {
-        this.props.getManifestResources(this.props.bundlePreviousRevision.id);
       }
     }
   }

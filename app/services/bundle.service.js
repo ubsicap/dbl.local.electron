@@ -222,12 +222,12 @@ async function convertApiBundleToNathanaelBundle(apiBundle, lazyLoads = {}) {
   const resourceCountManifest = (Object.values(manifestResources) || []).length;
   return {
     id: bundleId,
-    name: metadata.identification.name,
+    name: metadata.identification.name || '',
     revision: dbl.currentRevision,
     dblId: dbl.id,
     medium: dbl.medium,
     countryIso: Object.keys(metadata.countries).join(sep) || '',
-    languageIso: metadata.language.iso,
+    languageIso: metadata.language.iso || '',
     rightsHolders:
       metadata.agencies
         .filter(a => a.type === 'rightsHolder')

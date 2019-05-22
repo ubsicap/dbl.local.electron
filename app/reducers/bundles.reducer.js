@@ -279,14 +279,24 @@ export function bundles(state = initialState, action) {
     }
     case bundleConstants.UPDATE_BUNDLE: {
       const { bundle, rawBundle } = action;
-      return updateTaskStatusProgress(bundle.id, null, null, null, (bState) => {
+      return updateTaskStatusProgress(bundle.id, null, null, null, bState => {
         const updatedBundle = { ...bState, ...bundle };
         if (rawBundle.mode === 'upload') {
-          return updateBundleItem(updatedBundle, 'UPLOAD', 'IN_PROGRESS', bState.progress);
+          return updateBundleItem(
+            updatedBundle,
+            'UPLOAD',
+            'IN_PROGRESS',
+            bState.progress,
+            () => ({ isUploading: true })
+          );
         }
-        return updateBundleItem(updatedBundle, bundle.task, bundle.status, bundle.progress, () => ({
-          isUploading: false
-        }));
+        return updateBundleItem(
+          updatedBundle,
+          bundle.task,
+          bundle.status,
+          bundle.progress,
+          () => ({ isUploading: false })
+        );
       });
     }
     case bundleConstants.TOGGLE_SELECT: {

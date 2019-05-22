@@ -28,35 +28,15 @@ export function bundleManageResources(state = initialState, action) {
     }
     case bundleConstants.UPDATE_BUNDLE: {
       const {
-        mode,
-        manifestResources: updatedManifestResources,
-        storedFiles: updatedStoredFiles
+        mode
       } = action.bundle;
-      const { manifestResources: origManifestResources = {}, storedFiles: origStoredFiles = {} } = state;
-      if (action.bundle.id !== state.bundleId && !(action.bundle.id in origManifestResources)) {
+      if (action.bundle.id !== state.bundleId) {
         return state;
       }
       const isStoreMode = mode === 'store';
-      const bundleId = action.bundle.id;
-      const origBundleManifestResources = origManifestResources[bundleId] || [];
-      const bundleManifestResources = (updatedManifestResources.length === origBundleManifestResources.length &&
-        Object.keys(updatedStoredFiles).length === Object.keys(origStoredFiles).length) ?
-        state.bundleManifestResources : { rawManifestResources: updatedManifestResources, storedFiles: updatedStoredFiles };
-      const manifestResources = { ...origManifestResources, [bundleId]: bundleManifestResources };
       return {
         ...state,
-        isStoreMode,
-        manifestResources
-      };
-    }
-    case bundleResourceManagerConstants.GET_MANIFEST_RESOURCES_RESPONSE: {
-      const { manifestResources: rawManifestResources, storedFiles, bundleId } = action;
-      const { manifestResources: manifestResourcesOrig = {} } = state;
-      const bundleManifestResources = { rawManifestResources, storedFiles };
-      const manifestResources = { ...manifestResourcesOrig, [bundleId]: bundleManifestResources };
-      return {
-        ...state,
-        manifestResources
+        isStoreMode
       };
     }
     case bundleResourceManagerConstants.UPDATE_MANIFEST_RESOURCES_REQUEST: {
