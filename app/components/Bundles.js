@@ -21,6 +21,7 @@ import {
 import Copyright from '@material-ui/icons/Copyright';
 import DBLEntryRow from './DBLEntryRow';
 import { fetchAll, setupBundlesEventSource } from '../actions/bundle.actions';
+import { openResourceManager } from '../actions/bundleManageResources.actions';
 import { ux } from '../utils/ux';
 import { emptyArray } from '../utils/defaultValues';
 import EnhancedTable from './EnhancedTable';
@@ -28,6 +29,7 @@ import MediumIcon from './MediumIcon';
 import { bundleService } from '../services/bundle.service';
 import { toggleEntryStar } from '../actions/bundleFilter.actions';
 import EntryRowStatusButton from './EntryRowStatusButton';
+import EntryRowExpandedRow from './EntryRowExpandedRow';
 import styles from './DBLEntryRow.css';
 
 type Props = {
@@ -42,7 +44,15 @@ type Props = {
   entriesData: [],
   allBundles: [],
   starredEntries: [],
-  toggleEntryStarBtn: () => {}
+  toggleEntryStarBtn: () => {},
+  openEntryResourceManager: () => {}
+};
+
+const mapDispatchToProps = {
+  fetchAllEntries: fetchAll,
+  setupEntryBundlesEventSource: setupBundlesEventSource,
+  toggleEntryStarBtn: toggleEntryStar,
+  openEntryResourceManager: openResourceManager
 };
 
 function createEntryRowData(bundle, starredEntries = Set()) {
@@ -138,27 +148,6 @@ function mapStateToProps(state) {
   };
 }
 
-const mapDispatchToProps = {
-  fetchAllEntries: fetchAll,
-  setupEntryBundlesEventSource: setupBundlesEventSource,
-  toggleEntryStarBtn: toggleEntryStar
-};
-
-const tableOptions = {
-  selectableRows: 'none',
-  expandableRows: true,
-  renderExpandableRow: rowData => {
-    const colSpan = rowData.length + 1;
-    return (
-      <TableRow>
-        <TableCell colSpan={colSpan}>
-          Custom expandable row option. Data: {JSON.stringify(rowData)}
-        </TableCell>
-      </TableRow>
-    );
-  }
-};
-
 class Bundles extends PureComponent<Props> {
   props: Props;
 
@@ -179,6 +168,13 @@ class Bundles extends PureComponent<Props> {
     const { toggleEntryStarBtn } = this.props;
     event.stopPropagation();
     toggleEntryStarBtn(dblId);
+  };
+
+  handleClickManageResources = (bundle, mode) => event => {
+    const { openEntryResourceManager } = this.props;
+    const { id: bundleId } = bundle;
+    openEntryResourceManager(bundleId, mode, true);
+    event.stopPropagation();
   };
 
   getColumnsConfigWithCustomBodyRenderings = () => {
@@ -303,7 +299,10 @@ class Bundles extends PureComponent<Props> {
                         )
                       )}
                       disabled={dblId === undefined}
-                      onClick={() => {}}
+                      onClick={this.handleClickManageResources(
+                        bundle,
+                        'revisions'
+                      )}
                     >
                       {ux.conditionallyRenderBadge(
                         {
@@ -363,12 +362,7 @@ class Bundles extends PureComponent<Props> {
                 const { bundleItems } = this.props;
                 const bundle = bundleItems[tableMeta.rowIndex];
                 return (
-                  <EntryRowStatusButton
-                    key={bundle.id}
-                    bundleId={bundle.id}
-                    {...bundle}
-                    isSelected={false}
-                  />
+                  <EntryRowStatusButton bundleId={bundle.id} {...bundle} />
                 );
               }
             }
@@ -401,6 +395,26 @@ class Bundles extends PureComponent<Props> {
         className={classNames(classes.leftIcon, classes.iconSmall)}
       />
     );
+  };
+
+  getTableOptions = () => {
+    return {
+      selectableRows: 'none',
+      expandableRows: true,
+      renderExpandableRow: (rowData, rowMeta) => {
+        const colSpan = rowData.length + 1;
+        const { dataIndex } = rowMeta;
+        const { bundleItems } = this.props;
+        const bundle = bundleItems[dataIndex];
+        return (
+          <TableRow>
+            <TableCell colSpan={colSpan}>
+              <EntryRowExpandedRow bundleId={bundle.id} {...bundle} />
+            </TableCell>
+          </TableRow>
+        );
+      }
+    };
   };
 
   render() {
@@ -437,7 +451,7 @@ class Bundles extends PureComponent<Props> {
           onSelectedRowIds={() => {}}
           onChangeSort={() => {}}
           selectedIds={emptyArray}
-          tableOptions={tableOptions}
+          tableOptions={this.getTableOptions()}
         />
         {bundleItems &&
           bundleItems.map(d => (

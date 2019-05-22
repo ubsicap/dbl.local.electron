@@ -5,12 +5,14 @@ import { withStyles } from '@material-ui/core/styles';
 import { Set } from 'immutable';
 import classNames from 'classnames';
 import { createSelector } from 'reselect';
-import Badge from '@material-ui/core/Badge';
+import LinearProgress from '@material-ui/core/LinearProgress';
+import { Menu, MenuItem, Toolbar } from '@material-ui/core';
+import AddCircle from '@material-ui/icons/AddCircle';
 import Button from '@material-ui/core/Button';
-import FileDownload from '@material-ui/icons/CloudDownload';
-import Folder from '@material-ui/icons/Folder';
-import InfoIcon from '@material-ui/icons/Info';
-import ControlledHighlighter from './ControlledHighlighter';
+import Save from '@material-ui/icons/Save';
+import CreateNewFolder from '@material-ui/icons/CreateNewFolder';
+import Description from '@material-ui/icons/Description';
+import CloudUpload from '@material-ui/icons/CloudUpload';
 import { toggleEntryStar } from '../actions/bundleFilter.actions';
 import {
   toggleSelectEntry,
@@ -27,8 +29,13 @@ import editMetadataService from '../services/editMetadata.service';
 import { openResourceManager } from '../actions/bundleManageResources.actions';
 import { bundleService } from '../services/bundle.service';
 import { ux } from '../utils/ux';
+import DeleteOrCleanButton from './DeleteOrCleanButton';
+import ConfirmButton from './ConfirmButton';
 import MediumIcon from './MediumIcon';
 import { emptyArray, emptyObject } from '../utils/defaultValues';
+
+const { dialog, app } = require('electron').remote;
+const { shell } = require('electron');
 
 type Props = {
   bundleId: string,
@@ -223,8 +230,38 @@ const makeMapStateToProps = () => {
   return mapStateToProps;
 };
 
-class EntryRowStatusButton extends PureComponent<Props> {
+class EntryRowExpandedRow extends PureComponent<Props> {
   props: Props;
+
+  state = {
+    anchorEl: null
+  };
+
+  componentDidMount() {
+    const {
+      status,
+      formsErrorStatus,
+      updateEntryBundle,
+      bundleId
+    } = this.props;
+    if (status === 'DRAFT' && Object.keys(formsErrorStatus).length === 0) {
+      updateEntryBundle(bundleId);
+    }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    const { task } = this.props;
+    if (task === 'SAVETO' && nextProps.task !== 'SAVETO') {
+      this.openInFolder();
+    }
+  }
+
+  onKeyPress = event => {
+    if (['Enter', ' '].includes(event.key)) {
+      this.onClickBundleRow();
+    }
+    console.log(event.key);
+  };
 
   onClickBundleRow = () => {
     const {
@@ -336,15 +373,99 @@ class EntryRowStatusButton extends PureComponent<Props> {
     matches: this.getMatches(textToHighlight)
   });
 
-  handleClickManageResources = mode => event => {
+  onClickManageResources = mode => event => {
     const { bundleId, openEntryResourceManager } = this.props;
     openEntryResourceManager(bundleId, mode, true);
+    event.stopPropagation();
+  };
+
+  onClickEditMetadata = event => {
+    const { bundleId, openEntryEditMetadata } = this.props;
+    openEntryEditMetadata(bundleId, undefined, true);
+    event.stopPropagation();
+  };
+
+  onClickDraftRevision = event => {
+    const { bundleId, createEntryDraftRevision } = this.props;
+    createEntryDraftRevision(bundleId);
+    event.stopPropagation();
+  };
+
+  onClickForkNewEntry = event => {
+    this.setState({ anchorEl: event.currentTarget });
+    event.stopPropagation();
+  };
+
+  handleCloseMediaTypeMenu = event => {
+    this.setState({ anchorEl: null });
+    event.stopPropagation();
+  };
+
+  handleClickMediaType = medium => event => {
+    const { bundleId, forkEntryIntoNewBundle } = this.props;
+    forkEntryIntoNewBundle(bundleId, medium);
+    this.handleCloseMediaTypeMenu(event);
     event.stopPropagation();
   };
 
   handleClickUploadInfo = () => {
     const { bundleId, openEntryJobSpecInBrowser } = this.props;
     openEntryJobSpecInBrowser(bundleId);
+  };
+
+  onClickUploadBundle = event => {
+    const { bundleId, uploadEntryBundle } = this.props;
+    uploadEntryBundle(bundleId);
+    event.stopPropagation();
+  };
+
+  startSaveBundleTo = event => {
+    const { bundlesSaveTo, bundleId, requestSaveEntryBundleTo } = this.props;
+    const { savedToHistory } = bundlesSaveTo;
+    stopPropagation(event);
+    const bundleSavedToInfo = getBundleExportInfo(bundleId, savedToHistory);
+    const defaultPath = bundleSavedToInfo
+      ? bundleSavedToInfo.folderName
+      : app.getPath('downloads');
+    dialog.showOpenDialog(
+      {
+        defaultPath,
+        properties: ['openDirectory']
+      },
+      folderName => {
+        if (!folderName) {
+          return; // canceled.
+        }
+        console.log(folderName.toString());
+        requestSaveEntryBundleTo(bundleId, folderName.toString());
+      }
+    );
+  };
+
+  openInFolder = () => {
+    const { bundlesSaveTo, bundleId } = this.props;
+    const { savedToHistory } = bundlesSaveTo;
+    const bundleSavedToInfo = getBundleExportInfo(bundleId, savedToHistory);
+    if (bundleSavedToInfo) {
+      const { folderName } = bundleSavedToInfo;
+      shell.openItem(folderName);
+    }
+  };
+
+  renderEditIcon = () => {
+    const { status, classes, formsErrors } = this.props;
+    const formsErrorCount = Object.keys(formsErrors).length;
+    return [
+      ux.conditionallyRenderBadge(
+        { className: classes.badge, color: 'error' },
+        formsErrorCount,
+        <Description
+          key="btnEditView"
+          className={classNames(classes.leftIcon, classes.iconSmall)}
+        />
+      ),
+      status === 'DRAFT' ? 'Edit' : 'View'
+    ];
   };
 
   pickBackgroundColor = isForRow => {
@@ -361,82 +482,136 @@ class EntryRowStatusButton extends PureComponent<Props> {
   };
 
   render() {
-    const { medium, status, displayAs, classes } = this.props;
-    const isUploading = this.getIsUploading();
-    const resourceManagerMode = status === 'DRAFT' ? 'addFiles' : 'download';
+    const { revision, status, progress, classes, newMediaTypes } = this.props;
+    const { anchorEl } = this.state;
     return (
-      <div>
-        {this.showStoredButton() && (
-          <Button
-            variant="text"
-            size="small"
-            className={classNames(classes.button, this.pickBackgroundColor())}
-            onClick={this.handleClickManageResources(resourceManagerMode)}
+      <React.Fragment>
+        {status === 'IN_PROGRESS' && (
+          <LinearProgress
+            style={{
+              marginLeft: '20px',
+              marginRight: '20px',
+              marginBottom: '5px',
+              paddingBottom: '10px',
+              height: '8px'
+            }}
+            variant="determinate"
+            value={progress}
+          />
+        )}
+        {
+          <Toolbar
+            style={{ minHeight: '36px' }}
+            className={this.pickBackgroundColor()}
           >
-            <Badge
-              badgeContent={
-                <MediumIcon
-                  medium={medium}
-                  iconProps={{
-                    className: classNames(classes.leftIcon, classes.iconSmaller)
-                  }}
+            {
+              <Button
+                disabled={this.shouldDisableDraftRevisionOrEdit()}
+                variant="text"
+                size="small"
+                className={classes.button}
+                onKeyPress={this.onClickEditMetadata}
+                onClick={this.onClickEditMetadata}
+              >
+                {this.renderEditIcon()}
+              </Button>
+            }
+            {this.shouldShowDraftRevision() && (
+              <Button
+                color="secondary"
+                disabled={this.shouldDisableDraftRevisionOrEdit()}
+                variant="outlined"
+                size="small"
+                className={classNames(classes.button, classes.draftRevision)}
+                onKeyPress={this.onClickDraftRevision}
+                onClick={this.onClickDraftRevision}
+              >
+                <CreateNewFolder
+                  key="btnDraft"
+                  className={classNames(classes.leftIcon, classes.iconSmall)}
                 />
-              }
+                {`Draft > Rev ${revision}`}
+              </Button>
+            )}
+            {this.shouldShowSaveAsNew() && (
+              <div>
+                <Button
+                  color="primary"
+                  variant="outlined"
+                  aria-owns={anchorEl ? 'new-media-type-menu' : null}
+                  aria-haspopup="true"
+                  aria-label="create new media type from this bundle"
+                  disabled={this.shouldDisableDraftRevisionOrEdit()}
+                  size="small"
+                  className={classNames(classes.button, classes.draftNew)}
+                  onKeyPress={this.onClickForkNewEntry}
+                  onClick={this.onClickForkNewEntry}
+                >
+                  <AddCircle
+                    key="btnForkNewEntry"
+                    className={classNames(classes.leftIcon, classes.iconSmall)}
+                  />
+                  Save As (New)
+                </Button>
+                <Menu
+                  id="new-media-type-menu"
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl)}
+                  onClose={this.handleCloseMediaTypeMenu}
+                >
+                  {newMediaTypes.map(mediumOption => (
+                    <MenuItem
+                      key={mediumOption}
+                      onClick={this.handleClickMediaType(mediumOption)}
+                    >
+                      {<MediumIcon medium={mediumOption} />}
+                      {mediumOption}
+                    </MenuItem>
+                  ))}
+                </Menu>
+              </div>
+            )}
+            <Button
+              variant="text"
+              size="small"
+              className={classes.button}
+              disabled={this.shouldDisableSaveTo()}
+              onKeyPress={this.startSaveBundleTo}
+              onClick={this.startSaveBundleTo}
             >
-              <Folder
+              <Save
                 className={classNames(classes.leftIcon, classes.iconSmall)}
               />
-            </Badge>
-            <ControlledHighlighter
-              {...this.getHighlighterSharedProps(displayAs.status)}
+              Export To
+            </Button>
+            <DeleteOrCleanButton
+              {...this.props}
+              shouldDisableCleanResources={this.shouldDisableCleanResources()}
             />
-          </Button>
-        )}
-        {isUploading && (
-          <Button
-            variant="text"
-            size="small"
-            className={classNames(classes.button, this.pickBackgroundColor())}
-            onClick={this.handleClickUploadInfo}
-          >
-            <InfoIcon
-              className={classNames(classes.leftIcon, classes.iconSmall)}
-            />
-            <ControlledHighlighter
-              {...this.getHighlighterSharedProps(displayAs.status)}
-            />
-          </Button>
-        )}
-        {this.showStatusAsText() && (
-          <div style={{ paddingRight: '20px', paddingTop: '6px' }}>
-            {
-              <ControlledHighlighter
-                {...this.getHighlighterSharedProps(displayAs.status)}
-              />
-            }
-          </div>
-        )}
-        {this.showDownloadButton() && (
-          <Button
-            variant="outlined"
-            size="small"
-            className={classes.button}
-            onClick={this.handleClickManageResources('download')}
-          >
-            <FileDownload
-              className={classNames(classes.leftIcon, classes.iconSmall)}
-            />
-            <ControlledHighlighter
-              {...this.getHighlighterSharedProps(displayAs.status)}
-            />
-          </Button>
-        )}
-      </div>
+            {this.shouldShowUpload() && (
+              <ConfirmButton
+                classes={classes}
+                variant="text"
+                size="small"
+                className={classes.button}
+                disabled={this.shouldDisableUpload()}
+                onKeyPress={this.onClickUploadBundle}
+                onClick={this.onClickUploadBundle}
+              >
+                <CloudUpload
+                  className={classNames(classes.leftIcon, classes.iconSmall)}
+                />
+                Upload
+              </ConfirmButton>
+            )}
+          </Toolbar>
+        }
+      </React.Fragment>
     );
   }
 }
 
-EntryRowStatusButton.defaultProps = {
+EntryRowExpandedRow.defaultProps = {
   progress: null,
   resourceCountStored: 0,
   resourceCountManifest: 0,
@@ -452,4 +627,13 @@ export default compose(
     makeMapStateToProps,
     mapDispatchToProps
   )
-)(EntryRowStatusButton);
+)(EntryRowExpandedRow);
+
+function getBundleExportInfo(bundleId, savedToHistory) {
+  return savedToHistory ? savedToHistory[bundleId] : null;
+}
+
+function stopPropagation(event) {
+  event.stopPropagation();
+  return null;
+}
