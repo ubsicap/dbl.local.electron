@@ -162,10 +162,10 @@ class Bundles extends PureComponent<Props> {
             ...c,
             options: {
               customBodyRender: value => (
-                <Button size="small" style={{ minWidth: '16px' }}>
+                <div>
                   <MediumIcon medium={value} iconProps={mediumIconProps} />
                   {value}
-                </Button>
+                </div>
               )
             }
           };
