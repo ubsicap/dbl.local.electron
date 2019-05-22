@@ -10,6 +10,11 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
+import {
+  VerifiedUserTwoTone,
+  VerifiedUserOutlined,
+  VerifiedUser
+} from '@material-ui/icons';
 import DBLEntryRow from './DBLEntryRow';
 import { fetchAll, setupBundlesEventSource } from '../actions/bundle.actions';
 import { ux } from '../utils/ux';
@@ -265,10 +270,48 @@ class Bundles extends PureComponent<Props> {
             }
           };
         }
+        case 'license': {
+          return {
+            ...c,
+            options: {
+              customBodyRender: value => {
+                return (
+                  <div>
+                    {this.renderLicenseIcon(value)}
+                    {value}
+                  </div>
+                );
+              }
+            }
+          };
+        }
         default:
           return c;
       }
     });
+  };
+
+  renderLicenseIcon = license => {
+    const { classes } = this.props;
+    if (license === 'owned') {
+      return (
+        <VerifiedUser
+          className={classNames(classes.leftIcon, classes.iconSmall)}
+        />
+      );
+    }
+    if (license === 'open-access') {
+      return (
+        <VerifiedUserTwoTone
+          className={classNames(classes.leftIcon, classes.iconSmall)}
+        />
+      );
+    }
+    return (
+      <VerifiedUserOutlined
+        className={classNames(classes.leftIcon, classes.iconSmall)}
+      />
+    );
   };
 
   render() {
