@@ -114,12 +114,13 @@ class MenuAppBar extends React.PureComponent {
   };
 
   componentDidMount() {
-    if (this.props.workspaceFullPath && this.props.userEmail) {
+    const { showSearch } = this.props;
+    if (showSearch && this.props.workspaceFullPath && this.props.userEmail) {
       const savedSearchInput = workspaceUserSettingsStoreServices.loadBundlesSearchInput(
         this.props.workspaceFullPath,
         this.props.userEmail
       );
-      if (savedSearchInput && savedSearchInput.length > 0) {
+      if (showSearch && savedSearchInput && savedSearchInput.length > 0) {
         this.props.updateSearchInput(savedSearchInput);
       }
     }
