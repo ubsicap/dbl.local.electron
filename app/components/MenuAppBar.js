@@ -10,8 +10,6 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import Badge from '@material-ui/core/Badge';
 import Typography from '@material-ui/core/Typography';
-import IconButton from '@material-ui/core/IconButton';
-import MenuIcon from '@material-ui/icons/Menu';
 import AssignmentIcon from '@material-ui/icons/Assignment';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -31,8 +29,7 @@ function mapStateToProps(state, props) {
   const { bundlesFilter, authentication, clipboard: clipboardState } = state;
   const { selectedItemsToPaste: clipboard = {} } = clipboardState;
   const { isLoading: isLoadingSearch } = bundlesFilter;
-  const { isSearchActive } = bundlesFilter;
-  const { searchInputRaw } = bundlesFilter;
+  const { isSearchActive, searchInputRaw } = bundlesFilter;
   const {
     loggedIn,
     whoami,
