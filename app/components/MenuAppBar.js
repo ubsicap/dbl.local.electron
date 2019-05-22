@@ -115,6 +115,7 @@ class MenuAppBar extends React.PureComponent {
 
   componentDidMount() {
     const { showSearch } = this.props;
+    // can't control mui-datatable yet see my comments in https://github.com/gregnb/mui-datatables/pull/603#issuecomment-494979367
     if (showSearch && this.props.workspaceFullPath && this.props.userEmail) {
       const savedSearchInput = workspaceUserSettingsStoreServices.loadBundlesSearchInput(
         this.props.workspaceFullPath,
