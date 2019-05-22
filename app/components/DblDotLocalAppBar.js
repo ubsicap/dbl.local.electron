@@ -124,8 +124,10 @@ class DblDotLocalAppBar extends React.PureComponent {
   };
 
   handleClickShowStarred = () => {
-    const { toggleFilterStarredEntries } = this.props;
-    toggleFilterStarredEntries();
+    // TODO: restore initialState not yet implemented in mui-datatables
+    // see https://github.com/gregnb/mui-datatables/issues/264
+    // const { toggleFilterStarredEntries } = this.props;
+    // toggleFilterStarredEntries();
   };
 
   render() {
@@ -137,9 +139,9 @@ class DblDotLocalAppBar extends React.PureComponent {
       downloadQueue,
       uploadQueue,
       allBundles,
-      starredEntries,
-      showStarredEntries
+      starredEntries
     } = this.props;
+    const showStarredEntries = false;
     const { anchorElBundlesMenu } = this.state;
     return (
       <AppBar position="sticky" className={classes.appBar}>
