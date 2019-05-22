@@ -27,6 +27,7 @@ import EnhancedTable from './EnhancedTable';
 import MediumIcon from './MediumIcon';
 import { bundleService } from '../services/bundle.service';
 import { toggleEntryStar } from '../actions/bundleFilter.actions';
+import EntryRowStatusButton from './EntryRowStatusButton';
 import styles from './DBLEntryRow.css';
 
 type Props = {
@@ -349,6 +350,25 @@ class Bundles extends PureComponent<Props> {
                     />
                     {value}
                   </div>
+                );
+              }
+            }
+          };
+        }
+        case 'status': {
+          return {
+            ...c,
+            options: {
+              customBodyRender: (value, tableMeta) => {
+                const { bundleItems } = this.props;
+                const bundle = bundleItems[tableMeta.rowIndex];
+                return (
+                  <EntryRowStatusButton
+                    key={bundle.id}
+                    bundleId={bundle.id}
+                    {...bundle}
+                    isSelected={false}
+                  />
                 );
               }
             }
