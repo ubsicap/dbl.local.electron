@@ -4,6 +4,7 @@ import { withStyles } from '@material-ui/core/styles';
 import { compose } from 'recompose';
 import classNames from 'classnames';
 import { Tooltip } from '@material-ui/core';
+import { Set } from 'immutable';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
@@ -13,7 +14,9 @@ import TableCell from '@material-ui/core/TableCell';
 import {
   VerifiedUserTwoTone,
   VerifiedUserOutlined,
-  VerifiedUser
+  VerifiedUser,
+  StarBorder,
+  Star
 } from '@material-ui/icons';
 import Copyright from '@material-ui/icons/Copyright';
 import DBLEntryRow from './DBLEntryRow';
@@ -23,6 +26,7 @@ import { emptyArray } from '../utils/defaultValues';
 import EnhancedTable from './EnhancedTable';
 import MediumIcon from './MediumIcon';
 import { bundleService } from '../services/bundle.service';
+import { toggleEntryStar } from '../actions/bundleFilter.actions';
 import styles from './DBLEntryRow.css';
 
 type Props = {
@@ -35,10 +39,12 @@ type Props = {
   selectedDBLEntryId: ?string,
   authentication: {},
   entriesData: [],
-  allBundles: []
+  allBundles: [],
+  starredEntries: [],
+  toggleEntryStarBtn: () => {}
 };
 
-function createEntryRowData(bundle) {
+function createEntryRowData(bundle, starredEntries = Set()) {
   const {
     id,
     medium,
@@ -52,8 +58,10 @@ function createEntryRowData(bundle) {
       status
     }
   } = bundle || { displayAs: {} };
+  const starred = starredEntries.has(dblId) ? 'starred' : 'unstarred';
   return {
     id,
+    starred,
     medium,
     'language-country': languageAndCountry,
     name,
@@ -104,13 +112,19 @@ function getEntryLaterRevisions(
   return laterRevisions;
 }
 
+const getStarredEntries = state =>
+  state.bundlesFilter.starredEntries || emptyArray;
+
 function mapStateToProps(state) {
   const { authentication, bundles, bundlesFilter } = state;
   const {
     bundles: { allBundles }
   } = state;
   const bundleItems = bundles.items || emptyArray;
-  const entriesData = bundleItems.map(createEntryRowData);
+  const starredEntries = getStarredEntries(state);
+  const entriesData = bundleItems.map(item =>
+    createEntryRowData(item, starredEntries)
+  );
   return {
     isLoadingBundles: bundles.loading || false,
     isSearchLoading: bundlesFilter.isLoading || false,
@@ -118,13 +132,15 @@ function mapStateToProps(state) {
     selectedDBLEntryId: bundles.selectedDBLEntryId,
     authentication,
     entriesData,
-    allBundles
+    allBundles,
+    starredEntries
   };
 }
 
 const mapDispatchToProps = {
   fetchAllEntries: fetchAll,
-  setupEntryBundlesEventSource: setupBundlesEventSource
+  setupEntryBundlesEventSource: setupBundlesEventSource,
+  toggleEntryStarBtn: toggleEntryStar
 };
 
 const tableOptions = {
@@ -157,12 +173,44 @@ class Bundles extends PureComponent<Props> {
     }
   }
 
-  handleSelectedRowIds = () => {};
+  handleClickStar = bundle => event => {
+    const { dblId } = bundle;
+    const { toggleEntryStarBtn } = this.props;
+    event.stopPropagation();
+    toggleEntryStarBtn(dblId);
+  };
 
   getColumnsConfigWithCustomBodyRenderings = () => {
     const { classes } = this.props;
     return basicColumnsConfig.map(c => {
       switch (c.name) {
+        case 'starred': {
+          return {
+            ...c,
+            options: {
+              customBodyRender: (value, tableMeta) => {
+                const { bundleItems } = this.props;
+                return (
+                  <Tooltip title="Star entry">
+                    <Button
+                      size="small"
+                      style={{ minWidth: '16px' }}
+                      onClick={this.handleClickStar(
+                        bundleItems[tableMeta.rowIndex]
+                      )}
+                    >
+                      {value === 'starred' ? (
+                        <Star className={classNames(classes.iconSmall)} />
+                      ) : (
+                        <StarBorder className={classNames(classes.iconSmall)} />
+                      )}
+                    </Button>
+                  </Tooltip>
+                );
+              }
+            }
+          };
+        }
         case 'medium': {
           const mediumIconProps = { style: { marginRight: '10px' } };
           return {
@@ -366,7 +414,7 @@ class Bundles extends PureComponent<Props> {
           orderBy="language-country"
           secondarySorts={emptyArray}
           orderDirection="asc"
-          onSelectedRowIds={this.handleSelectedRowIds}
+          onSelectedRowIds={() => {}}
           onChangeSort={() => {}}
           selectedIds={emptyArray}
           tableOptions={tableOptions}
