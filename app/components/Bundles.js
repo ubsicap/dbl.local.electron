@@ -15,6 +15,7 @@ import {
   VerifiedUserOutlined,
   VerifiedUser
 } from '@material-ui/icons';
+import Copyright from '@material-ui/icons/Copyright';
 import DBLEntryRow from './DBLEntryRow';
 import { fetchAll, setupBundlesEventSource } from '../actions/bundle.actions';
 import { ux } from '../utils/ux';
@@ -278,6 +279,26 @@ class Bundles extends PureComponent<Props> {
                 return (
                   <div>
                     {this.renderLicenseIcon(value)}
+                    {value}
+                  </div>
+                );
+              }
+            }
+          };
+        }
+        case 'rightsHolders': {
+          return {
+            ...c,
+            options: {
+              customBodyRender: value => {
+                return (
+                  <div>
+                    <Copyright
+                      className={classNames(
+                        classes.leftIcon,
+                        classes.iconSmall
+                      )}
+                    />
                     {value}
                   </div>
                 );
