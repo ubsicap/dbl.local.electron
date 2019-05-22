@@ -17,6 +17,7 @@ import { emptyArray } from '../utils/defaultValues';
 import EnhancedTable from './EnhancedTable';
 import MediumIcon from './MediumIcon';
 import { bundleService } from '../services/bundle.service';
+import styles from './DBLEntryRow.css';
 
 type Props = {
   classes: {},
@@ -166,6 +167,16 @@ class Bundles extends PureComponent<Props> {
                   <MediumIcon medium={value} iconProps={mediumIconProps} />
                   {value}
                 </div>
+              )
+            }
+          };
+        }
+        case 'language-country': {
+          return {
+            ...c,
+            options: {
+              customBodyRender: value => (
+                <span className={styles.languageAndCountryLabel}>{value}</span>
               )
             }
           };
