@@ -19,7 +19,6 @@ import {
   Star
 } from '@material-ui/icons';
 import Copyright from '@material-ui/icons/Copyright';
-import DBLEntryRow from './DBLEntryRow';
 import { fetchAll, setupBundlesEventSource } from '../actions/bundle.actions';
 import { openResourceManager } from '../actions/bundleManageResources.actions';
 import { ux } from '../utils/ux';
@@ -418,13 +417,7 @@ class Bundles extends PureComponent<Props> {
   };
 
   render() {
-    const {
-      bundleItems,
-      isSearchLoading,
-      isLoadingBundles,
-      selectedDBLEntryId,
-      entriesData
-    } = this.props;
+    const { isSearchLoading, isLoadingBundles, entriesData } = this.props;
     const columnsConfigWithCustomBodyRenderings = this.getColumnsConfigWithCustomBodyRenderings();
     return (
       <div>
@@ -453,15 +446,6 @@ class Bundles extends PureComponent<Props> {
           selectedIds={emptyArray}
           tableOptions={this.getTableOptions()}
         />
-        {bundleItems &&
-          bundleItems.map(d => (
-            <DBLEntryRow
-              key={d.id}
-              bundleId={d.id}
-              {...d}
-              isSelected={selectedDBLEntryId === d.dblId}
-            />
-          ))}
       </div>
     );
   }
