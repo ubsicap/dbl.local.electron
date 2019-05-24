@@ -145,7 +145,6 @@ class Bundles extends PureComponent<Props> {
     return {
       selectableRows: 'none',
       expandableRows: true,
-      rowsPerPage: 0,
       sort: false,
       renderExpandableRow: (rowData, rowMeta) => {
         const colSpan = rowData.length + 1;
