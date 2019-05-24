@@ -335,7 +335,7 @@ class EnhancedTable extends Component<Props> {
       selectableRows: selectableData.length > 0,
       isRowSelectable: dataIndex =>
         !freezeCheckedColumnState &&
-        !(dataIndex <= sortedData.length
+        !(dataIndex < sortedData.length
           ? sortedData[dataIndex].disabled
           : true),
       customSort: data => data,
