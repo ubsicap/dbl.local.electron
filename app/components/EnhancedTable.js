@@ -97,7 +97,7 @@ const getSecondarySorts = (state, props) => props.secondarySorts;
 const getCustomSorts = (state, props) =>
   props.customSorts || defaultProps.customSorts;
 const getOrderBy = (state, props) =>
-  props.orderBy || this.props.columnConfig[0].name;
+  props.orderBy || props.columnConfig[0].name;
 const getOrderDirection = (state, props) =>
   props.orderDirection || defaultProps.orderDirection;
 
