@@ -6,7 +6,6 @@ import { Set } from 'immutable';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 import { fetchAll, setupBundlesEventSource } from '../actions/bundle.actions';
-import { openResourceManager } from '../actions/bundleManageResources.actions';
 import { ux } from '../utils/ux';
 import { emptyArray, emptyFunction } from '../utils/defaultValues';
 import EnhancedTable from './EnhancedTable';
@@ -14,23 +13,16 @@ import EntryRowExpandedRow from './EntryRowExpandedRow';
 import EntryRowCustomBodyRenderings from './EntryRowCustomBodyRenderings';
 
 type Props = {
-  classes: {},
   fetchAllEntries: () => {},
   setupEntryBundlesEventSource: () => {},
-  isLoadingBundles: boolean,
-  isSearchLoading: boolean,
   bundleItems: [],
-  selectedDBLEntryId: ?string,
-  authentication: {},
   entriesData: [],
-  starredEntries: [],
-  openEntryResourceManager: () => {}
+  starredEntries: []
 };
 
 const mapDispatchToProps = {
   fetchAllEntries: fetchAll,
-  setupEntryBundlesEventSource: setupBundlesEventSource,
-  openEntryResourceManager: openResourceManager
+  setupEntryBundlesEventSource: setupBundlesEventSource
 };
 
 function createEntryRowData(bundle, starredEntries = Set()) {
@@ -72,7 +64,7 @@ const getStarredEntries = state =>
   state.bundlesFilter.starredEntries || emptyArray;
 
 function mapStateToProps(state) {
-  const { authentication, bundles, bundlesFilter } = state;
+  const { bundles } = state;
   const bundleItems = bundles.items || emptyArray;
   const starredEntries = getStarredEntries(state);
   const entriesData = bundleItems.map(item =>
@@ -80,11 +72,7 @@ function mapStateToProps(state) {
   );
   console.log('mapStateToProps');
   return {
-    isLoadingBundles: bundles.loading || false,
-    isSearchLoading: bundlesFilter.isLoading || false,
     bundleItems,
-    selectedDBLEntryId: bundles.selectedDBLEntryId,
-    authentication,
     entriesData,
     starredEntries
   };
