@@ -317,17 +317,20 @@ class EntryRowCustomBodyRenderings extends PureComponent<Props> {
           status,
           mode,
           displayAs,
-          formsErrorStatus
+          parent,
+          revision
         } = this.props;
         return (
           <EntryRowStatusButton
             bundleId={bundleId}
+            dblId={dblId}
+            revision={revision}
             medium={medium}
             task={task}
             mode={mode}
             status={status}
             displayAs={displayAs}
-            formsErrorStatus={formsErrorStatus}
+            parent={parent}
           />
         );
       }
