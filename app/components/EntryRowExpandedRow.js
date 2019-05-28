@@ -220,6 +220,8 @@ const makeMapStateToProps = () => {
       shouldShowRow: shouldShowRow(state, props),
       bundleMatches: getMatches(state, props),
       isStarred: getIsEntryStarred(state, props),
+      resourceCountStored: props.storedResourcePaths.length,
+      resourceCountManifest: props.manifestResourcePaths.length,
       bundlesSaveTo,
       newMediaTypes,
       isDownloading: getIsDownloading(state, props),
