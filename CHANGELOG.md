@@ -1,3 +1,10 @@
+### Version 0.37.5
+
+#### Fix
+
+- fix clean all resource percentage. (separate resources stored from files stored).
+- dbl_dot_local_app (5/28/2019) - tweak schema to better handle sign language video
+
 ### Version 0.37.4
 
 #### Fix

@@ -10,7 +10,6 @@ import { authHeader } from '../helpers';
 import { servicesHelpers } from '../helpers/services';
 import dblDotLocalConfigConstants from '../constants/dblDotLocal.constants';
 import download from './download-with-fetch.flow';
-import { getRawBundleResourcesDetails } from '../helpers/bundle.helpers';
 
 const { app } = require('electron').remote;
 
@@ -143,7 +142,7 @@ async function fetchAll() {
     requestOptions
   );
   const apiBundles = await handleResponse(response);
-  const bundles = await convertBundleApiListToBundles(apiBundles);
+  const bundles = convertBundleApiListToBundles(apiBundles);
   return { bundles, apiBundles };
 }
 
@@ -152,11 +151,9 @@ function apiBundleHasMetadata(apiBundle) {
 }
 
 function convertBundleApiListToBundles(apiBundles) {
-  const bundles = Promise.all(
-    Object.values(apiBundles)
-      .filter(apiBundleHasMetadata)
-      .map(apiBundle => convertApiBundleToNathanaelBundle(apiBundle))
-  );
+  const bundles = Object.values(apiBundles)
+    .filter(apiBundleHasMetadata)
+    .map(apiBundle => convertApiBundleToNathanaelBundle(apiBundle));
   return bundles;
 }
 
@@ -195,12 +192,19 @@ function getHasStoredResources(apiBundle) {
 function getResourceFileStoredCount(apiBundle) {
   const storedFiles = getFlatFileInfo(apiBundle);
   const flatFilePaths = Object.keys(storedFiles || {});
-  const resourceCountStored =
-    flatFilePaths.length > 1 ? flatFilePaths.length - 1 : 0;
-  return { resourceCountStored, storedFiles };
+  const storedResourcePaths = flatFilePaths.filter(
+    storedFilePath => storedFilePath !== 'metadata.xml'
+  );
+  return { storedResourcePaths, storedFiles };
 }
 
-async function convertApiBundleToNathanaelBundle(apiBundle, lazyLoads = {}) {
+// TODO: make a separate helper for raw/api bundles
+function getRawBundleResourcesDetails(rawBundle) {
+  const { metadata } = rawBundle;
+  return metadata.manifest;
+}
+
+function convertApiBundleToNathanaelBundle(apiBundle, lazyLoads = {}) {
   const { mode, metadata, dbl, upload } = apiBundle;
   const { formsErrorStatus = {} } = lazyLoads;
   const { jobId: uploadJob } = upload || {};
@@ -209,17 +213,17 @@ async function convertApiBundleToNathanaelBundle(apiBundle, lazyLoads = {}) {
   const initTaskStatus = getInitialTaskAndStatus(apiBundle);
   const { task } = initTaskStatus;
   let { status } = initTaskStatus;
-  const { resourceCountStored, storedFiles } = getResourceFileStoredCount(
+  const { storedResourcePaths, storedFiles } = getResourceFileStoredCount(
     apiBundle
   );
-  if (resourceCountStored) {
+  if (storedResourcePaths.length) {
     if (task === 'DOWNLOAD' && mode === 'store') {
       status = 'COMPLETED'; // even if only some are stored
     }
   }
   const sep = '/';
   const manifestResources = getRawBundleResourcesDetails(apiBundle);
-  const resourceCountManifest = (Object.values(manifestResources) || []).length;
+  const manifestResourcePaths = Object.keys(manifestResources) || [];
   return {
     id: bundleId,
     name: metadata.identification.name || '',
@@ -240,8 +244,8 @@ async function convertApiBundleToNathanaelBundle(apiBundle, lazyLoads = {}) {
     uploadJob,
     manifestResources,
     storedFiles,
-    resourceCountStored,
-    resourceCountManifest,
+    storedResourcePaths,
+    manifestResourcePaths,
     parent,
     formsErrorStatus,
     raw: apiBundle

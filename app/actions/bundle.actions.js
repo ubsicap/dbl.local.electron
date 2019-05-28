@@ -8,12 +8,11 @@ import { bundleService } from '../services/bundle.service';
 import { updateSearchResultsForBundleId } from './bundleFilter.actions';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 // eslint-disable-next-line import/no-cycle
-import { bundleManageResourceActions } from './bundleManageResources.actions';
 import { workspaceHelpers } from '../helpers/workspaces.helpers';
 import { browserWindowService } from '../services/browserWindow.service';
 import {
   getAddedBundle,
-  getResourcePaths,
+  getManifestResourcePaths,
   getStoredResourcePaths
 } from '../helpers/bundle.helpers';
 
@@ -126,10 +125,9 @@ function updateOrAddBundle(rawBundle) {
     const { status } = bundleService.getInitialTaskAndStatus(rawBundle);
     const formsErrorStatus =
       status === 'DRAFT' ? await getAllFormsErrorStatus(bundleId) : {};
-    const bundle = await bundleService.convertApiBundleToNathanaelBundle(
-      rawBundle,
-      { formsErrorStatus }
-    );
+    const bundle = bundleService.convertApiBundleToNathanaelBundle(rawBundle, {
+      formsErrorStatus
+    });
     if (addedBundle) {
       // console.log(`Updated bundle ${bundleId} from ${context}`);
       dispatch({ type: bundleConstants.UPDATE_BUNDLE, bundle, rawBundle });
@@ -593,7 +591,7 @@ export function removeExcessBundles() {
         return false;
       }
       const addedBundle = addedByBundleIds[addedId];
-      if (addedBundle.resourceCountStored > 0) {
+      if (addedBundle.storedResourcePaths.length > 0) {
         return false;
       }
       // don't delete if revision is greater than the one on display
@@ -695,7 +693,7 @@ export function openJobSpecInBrowser(bundleId) {
 export function downloadResources(_id, _uris = []) {
   return async (dispatch, getState) => {
     try {
-      const manifestResourcePaths = getResourcePaths(getState, _id);
+      const manifestResourcePaths = getManifestResourcePaths(getState, _id);
       dispatch(request(_id, manifestResourcePaths, _uris));
       dispatch(updateSearchResultsForBundleId(_id));
       await bundleService.downloadResources(_id, _uris);
@@ -783,15 +781,18 @@ export function requestSaveBundleTo(id, selectedFolder) {
       0
     );
     const resourcePaths = getStoredResourcePaths(getState, id);
-    resourcePaths.unshift('metadata.xml');
-    const resourcePathsProgress = resourcePaths.reduce((acc, resourcePath) => {
-      acc[resourcePath] = 0;
-      return acc;
-    }, {});
+    const filePathsToExport = [...resourcePaths, 'metadata.xml'];
+    const resourcePathsProgress = filePathsToExport.reduce(
+      (acc, resourcePath) => {
+        acc[resourcePath] = 0;
+        return acc;
+      },
+      {}
+    );
     let bundleBytesSaved = 0;
-    dispatch(request(id, selectedFolder, bundleBytesToSave, resourcePaths));
+    dispatch(request(id, selectedFolder, bundleBytesToSave, filePathsToExport));
     dispatch(updateSearchResultsForBundleId(id));
-    resourcePaths.forEach(async resourcePath => {
+    filePathsToExport.forEach(async resourcePath => {
       try {
         const downloadItem = await bundleService.requestSaveResourceTo(
           selectedFolder,

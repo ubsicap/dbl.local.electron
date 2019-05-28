@@ -62,8 +62,8 @@ type Props = {
   medium: string,
   displayAs: {},
   mode: string,
-  resourceCountStored?: number,
-  resourceCountManifest?: ?number,
+  storedResourcePaths?: [],
+  manifestResourcePaths?: [],
   bundleMatches: {},
   bundlesSaveTo: {},
   progress?: ?number,
@@ -315,8 +315,8 @@ class DBLEntryRow extends PureComponent<Props> {
   };
 
   hasNoStoredResources = () => {
-    const { resourceCountStored = 0 } = this.props;
-    return resourceCountStored === 0;
+    const { storedResourcePaths } = this.props;
+    return storedResourcePaths.length === 0;
   };
 
   shouldDisableCleanResources = () =>
@@ -363,11 +363,11 @@ class DBLEntryRow extends PureComponent<Props> {
   };
 
   shouldDisableUpload = () => {
-    const { formsErrors, resourceCountStored } = this.props;
+    const { formsErrors, storedResourcePaths } = this.props;
     return (
       this.shouldDisableDraftRevisionOrEdit() ||
       Object.keys(formsErrors).length > 0 ||
-      (this.isNewDraftEntry() && resourceCountStored === 0)
+      (this.isNewDraftEntry() && storedResourcePaths.length === 0)
     );
   };
 
@@ -882,8 +882,8 @@ class DBLEntryRow extends PureComponent<Props> {
 
 DBLEntryRow.defaultProps = {
   progress: null,
-  resourceCountStored: 0,
-  resourceCountManifest: 0,
+  storedResourcePaths: [],
+  manifestResourcePaths: [],
   isUploading: null,
   isDownloading: null
 };
