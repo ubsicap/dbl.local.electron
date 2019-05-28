@@ -410,8 +410,15 @@ function formatLanguageAndCountry(bundle) {
 
 function formatStatus(bundle) {
   const formattedProgress = formatProgress(bundle);
-  const stored = (bundle.resourceCountStored === bundle.resourceCountManifest) ?
-    bundle.resourceCountManifest : `${bundle.resourceCountStored}/${bundle.resourceCountManifest || '...'}`;
+  const { storedResourcePaths, manifestResourcePaths } = bundle;
+  const [resourceCountStored, resourceCountManifest] = [
+    storedResourcePaths.length,
+    manifestResourcePaths.length
+  ];
+  const stored =
+    resourceCountStored === resourceCountManifest
+      ? resourceCountStored
+      : `${resourceCountStored}/${resourceCountManifest || '...'}`;
   let newStatusDisplayAs;
   if (bundle.task === 'UPLOAD' && bundle.status === 'IN_PROGRESS') {
     newStatusDisplayAs = `Uploading ${formattedProgress}`;
@@ -424,7 +431,7 @@ function formatStatus(bundle) {
   } else if (bundle.task === 'SAVETO' && bundle.status === 'IN_PROGRESS') {
     newStatusDisplayAs = `Saving to Folder ${formattedProgress}`;
   } else if (['UPLOAD', 'DOWNLOAD'].includes(bundle.task) && bundle.status === 'COMPLETED') {
-    if (bundle.resourceCountStored) {
+    if (resourceCountStored) {
       newStatusDisplayAs = `Stored (${stored})`;
     } else {
       newStatusDisplayAs = 'Stored';
@@ -432,7 +439,7 @@ function formatStatus(bundle) {
   } else if (['SAVETO'].includes(bundle.task) && bundle.status === 'COMPLETED') {
     newStatusDisplayAs = 'Open in Folder';
   } else if (bundle.status === 'DRAFT') {
-    if (bundle.resourceCountStored) {
+    if (resourceCountStored) {
       newStatusDisplayAs = `DRAFT (${stored})`;
     } else {
       newStatusDisplayAs = 'DRAFT';

@@ -1,23 +1,18 @@
 export const bundleHelpers = {
-  getResourcePaths,
-  getResourcesDetails,
-  getAddedBundle,
-  getRawBundleResourcesDetails
+  getStoredResourcePaths,
+  getManifestResourcePaths,
+  getAddedBundle
 };
 export default bundleHelpers;
 
 export function getStoredResourcePaths(getState, id) {
   const bundle = getAddedBundle(getState, id);
-  return Object.keys(bundle.storedFiles);
+  return [...bundle.storedResourcePaths]; // clone to avoid corruption
 }
 
-export function getResourcePaths(getState, id) {
-  return Object.keys(getResourcesDetails(getState, id)) || [];
-}
-
-export function getResourcesDetails(getState, id) {
+export function getManifestResourcePaths(getState, id) {
   const bundle = getAddedBundle(getState, id);
-  return getRawBundleResourcesDetails(bundle.raw);
+  return [...bundle.manifestResourcePaths]; // clone to avoid corruption
 }
 
 export function getAddedBundle(getState, bundleId) {
@@ -25,10 +20,4 @@ export function getAddedBundle(getState, bundleId) {
   const { addedByBundleIds = {} } = bundles;
   const addedBundles = addedByBundleIds[bundleId];
   return addedBundles;
-}
-
-// TODO: make a separate helper for raw bundles than for getState?
-export function getRawBundleResourcesDetails(rawBundle) {
-  const { metadata } = rawBundle;
-  return metadata.manifest;
 }

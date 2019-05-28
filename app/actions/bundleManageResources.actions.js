@@ -10,7 +10,6 @@ import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { utilities } from '../utils/utilities';
 import { openEditMetadata, saveMetadatFileToTempBundleFolder } from './bundleEditMetadata.actions';
 import { bundleActions } from './bundle.actions';
-import { getResourcesDetails } from '../helpers/bundle.helpers';
 
 export const bundleManageResourceActions = {
   openResourceManager,
