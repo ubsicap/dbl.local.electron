@@ -138,7 +138,7 @@ class EntryRowStatusButton extends PureComponent<Props> {
           <Button
             variant="outlined"
             size="small"
-            className={classes.button}
+            className={classNames(classes.button, this.pickBackgroundColor())}
             onClick={this.handleClickManageResources('download')}
           >
             <FileDownload
