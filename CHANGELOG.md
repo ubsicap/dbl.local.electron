@@ -1,3 +1,9 @@
+### Version 0.37.5
+
+#### Fix
+
+- fix clean all resource percentage. (separate resources stored from files stored).
+
 ### Version 0.37.4
 
 #### Fix
