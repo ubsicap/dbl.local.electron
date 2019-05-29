@@ -12,7 +12,10 @@ import Bundles from '../components/Bundles';
 import MenuAppBar from '../components/MenuAppBar';
 import DblDotLocalAppBar from '../components/DblDotLocalAppBar';
 import { createNewBundle } from '../actions/bundle.actions';
-import { setEntriesFilters, setStarredEntries } from '../actions/bundleFilter.actions';
+import {
+  setEntriesFilters,
+  setStarredEntries
+} from '../actions/bundleFilter.actions';
 import { workspaceUserSettingsStoreServices } from '../services/workspaces.service';
 import { workspaceHelpers } from '../helpers/workspaces.helpers';
 import MediumIcon from '../components/MediumIcon';
@@ -22,7 +25,7 @@ type Props = {
   newMediaTypes: [],
   entriesFilters: {},
   starredEntries: [],
-  createNewBundle: () => {},
+  createNewEntry: () => {},
   setStarredEntries: () => {},
   setEntriesFilters: () => {}
 };
@@ -30,11 +33,18 @@ type Props = {
 function mapStateToProps(state) {
   const { bundles } = state;
   const { newMediaTypes = [] } = bundles;
-  const { workspaceFullPath, email } = workspaceHelpers.getCurrentWorkspaceFullPath(state);
-  const entriesFilters =
-    workspaceUserSettingsStoreServices.loadEntriesFilters(workspaceFullPath, email);
-  const starredEntries =
-    workspaceUserSettingsStoreServices.loadStarredEntries(workspaceFullPath, email);
+  const {
+    workspaceFullPath,
+    email
+  } = workspaceHelpers.getCurrentWorkspaceFullPath(state);
+  const entriesFilters = workspaceUserSettingsStoreServices.loadEntriesFilters(
+    workspaceFullPath,
+    email
+  );
+  const starredEntries = workspaceUserSettingsStoreServices.loadStarredEntries(
+    workspaceFullPath,
+    email
+  );
   return {
     newMediaTypes,
     entriesFilters,
@@ -47,24 +57,31 @@ const materialStyles = () => ({
     position: 'fixed',
     bottom: '100px',
     right: '20px'
-  },
+  }
 });
 
 const mapDispatchToProps = {
-  createNewBundle,
+  createNewEntry: createNewBundle,
   setStarredEntries,
   setEntriesFilters
 };
 
 class BundlesPage extends PureComponent<Props> {
   props: Props;
+
   state = {
     anchorEl: null
-  }
+  };
 
   componentDidMount() {
-    this.props.setEntriesFilters(this.props.entriesFilters);
-    this.props.setStarredEntries(Set(this.props.starredEntries));
+    const {
+      setEntriesFilters,
+      setStarredEntries,
+      entriesFilters,
+      starredEntries
+    } = this.props;
+    setEntriesFilters(entriesFilters);
+    setStarredEntries(Set(starredEntries));
   }
 
   handleClick = event => {
@@ -75,9 +92,10 @@ class BundlesPage extends PureComponent<Props> {
     this.setState({ anchorEl: null });
   };
 
-  handleCreateNew = (medium) => () => {
+  handleCreateNew = medium => () => {
     this.handleCloseMenu();
-    this.props.createNewBundle(medium);
+    const { createNewEntry } = this.props;
+    createNewEntry(medium);
   };
 
   render() {
@@ -108,7 +126,7 @@ class BundlesPage extends PureComponent<Props> {
         >
           {newMediaTypes.map(medium => (
             <MenuItem key={medium} onClick={this.handleCreateNew(medium)}>
-              { <MediumIcon medium={medium} /> } { medium }
+              {<MediumIcon medium={medium} />} {medium}
             </MenuItem>
           ))}
         </Menu>
@@ -123,5 +141,5 @@ export default compose(
   connect(
     mapStateToProps,
     mapDispatchToProps
-  ),
+  )
 )(BundlesPage);
