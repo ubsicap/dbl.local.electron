@@ -11,17 +11,26 @@ const initialSearchResults = {
   matches: {}
 };
 
-export function bundlesFilter(state =
-  {
+export function bundlesFilter(
+  state = {
     isSearchActive: false,
-    starredEntries: Set(),
-  }, action) {
+    starredEntries: Set()
+  },
+  action
+) {
   switch (action.type) {
     case bundleFilterConstants.UPDATE_SEARCH_INPUT: {
-      const hasKeywordsChanged = !areArraysEqual(state.searchKeywords, action.searchKeywords);
-      const searchKeywords = hasKeywordsChanged ? action.searchKeywords : state.searchKeywords;
+      const hasKeywordsChanged = !areArraysEqual(
+        state.searchKeywords,
+        action.searchKeywords
+      );
+      const searchKeywords = hasKeywordsChanged
+        ? action.searchKeywords
+        : state.searchKeywords;
       const isLoading = action.willRecomputeAllSearchResults;
-      const searchResults = isLoading ? initialSearchResults : state.searchResults;
+      const searchResults = isLoading
+        ? initialSearchResults
+        : state.searchResults;
       const { bundles } = isLoading ? action : state;
       return {
         ...state,
@@ -33,13 +42,15 @@ export function bundlesFilter(state =
         bundles,
         searchResults
       };
-    } case bundleFilterConstants.UPDATE_SEARCH_RESULTS: {
+    }
+    case bundleFilterConstants.UPDATE_SEARCH_RESULTS: {
       return {
         ...state,
         isLoading: false,
         searchResults: { ...action.searchResults }
       };
-    } case bundleFilterConstants.ADD_SEARCH_MATCH: {
+    }
+    case bundleFilterConstants.ADD_SEARCH_MATCH: {
       const oldBundlesMatching = state.searchResults.bundlesMatching;
       const oldMatches = state.searchResults.matches;
       const key = action.bundle.id;
@@ -52,10 +63,14 @@ export function bundlesFilter(state =
           matches: { ...oldMatches, ...newMatches }
         }
       };
-    } case bundleFilterConstants.REMOVE_SEARCH_MATCH: {
+    }
+    case bundleFilterConstants.REMOVE_SEARCH_MATCH: {
       const oldBundlesMatching = state.searchResults.bundlesMatching;
       const keyToRemove = action.bundle.id;
-      const { [keyToRemove]: bundleRemoved, ...reducedBundlesMatching } = oldBundlesMatching;
+      const {
+        [keyToRemove]: bundleRemoved,
+        ...reducedBundlesMatching
+      } = oldBundlesMatching;
       if (bundleRemoved === undefined) {
         return state;
       }
@@ -66,7 +81,8 @@ export function bundlesFilter(state =
           bundlesMatching: reducedBundlesMatching
         }
       };
-    } case bundleFilterConstants.CLEAR_SEARCH_RESULTS: {
+    }
+    case bundleFilterConstants.CLEAR_SEARCH_RESULTS: {
       return {
         ...state,
         isSearchActive: false,
@@ -75,36 +91,44 @@ export function bundlesFilter(state =
         searchKeywords: [],
         searchResults: {}
       };
-    } case bundleFilterConstants.SET_STARRED_ENTRIES: {
+    }
+    case bundleFilterConstants.SET_STARRED_ENTRIES: {
       const { starredEntries } = action;
       return {
         ...state,
         starredEntries
       };
-    } case bundleFilterConstants.SET_ENTRIES_FILTERS: {
+    }
+    case bundleFilterConstants.SET_ENTRIES_FILTERS: {
       const { entriesFilters } = action;
       return {
         ...state,
         ...entriesFilters
       };
-    } case bundleConstants.DELETE_SUCCESS: {
+    }
+    case bundleConstants.DELETE_SUCCESS: {
       const { deletedBundle, appStateSnapshot } = action;
       const { allBundles } = appStateSnapshot.bundles;
       const dblIdsInBundles = allBundles.map(item => item.dblId);
       const dblIdsObsolete = state.starredEntries.subtract(dblIdsInBundles);
-      const hasMoreThanOneMatchingDblId =
-        allBundles.some(b => b.dblId === deletedBundle.dblId && b.id !== deletedBundle.id);
+      const hasMoreThanOneMatchingDblId = allBundles.some(
+        b => b.dblId === deletedBundle.dblId && b.id !== deletedBundle.id
+      );
       if (hasMoreThanOneMatchingDblId && dblIdsObsolete.length === 0) {
         return state;
       }
-      const starredEntriesCleaned = state.starredEntries.subtract(dblIdsObsolete);
-      const starredEntries = hasMoreThanOneMatchingDblId ?
-        starredEntriesCleaned : starredEntriesCleaned.delete(deletedBundle.dblId);
+      const starredEntriesCleaned = state.starredEntries.subtract(
+        dblIdsObsolete
+      );
+      const starredEntries = hasMoreThanOneMatchingDblId
+        ? starredEntriesCleaned
+        : starredEntriesCleaned.delete(deletedBundle.dblId);
       return {
         ...state,
         starredEntries
       };
-    } default: {
+    }
+    default: {
       return state;
     }
   }
