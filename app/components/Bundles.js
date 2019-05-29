@@ -137,6 +137,14 @@ class Bundles extends PureComponent<Props> {
     });
   };
 
+  handleTableChange = (action: string, tableState: object) => {
+    if (action === 'search' && tableState.searchText === null) {
+      // search was closed. so save empty search.
+      const { saveEntriesSearchInput } = this.props;
+      saveEntriesSearchInput('');
+    }
+  };
+
   getTableOptions = () => {
     const { searchText, saveEntriesSearchInput } = this.props;
     return {
@@ -145,6 +153,7 @@ class Bundles extends PureComponent<Props> {
       sort: false,
       searchText,
       onSearchChange: saveEntriesSearchInput,
+      onTableChange: this.handleTableChange,
       renderExpandableRow: (rowData, rowMeta) => {
         const colSpan = rowData.length + 1;
         const { dataIndex } = rowMeta;
