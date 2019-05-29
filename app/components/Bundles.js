@@ -11,18 +11,22 @@ import { emptyArray, emptyFunction } from '../utils/defaultValues';
 import EnhancedTable from './EnhancedTable';
 import EntryRowExpandedRow from './EntryRowExpandedRow';
 import EntryRowCustomBodyRenderings from './EntryRowCustomBodyRenderings';
+import { saveSearchInput } from '../actions/bundleFilter.actions';
 
 type Props = {
   fetchAllEntries: () => {},
   setupEntryBundlesEventSource: () => {},
+  saveEntriesSearchInput: () => {},
   bundleItems: [],
   entriesData: [],
-  starredEntries: []
+  starredEntries: [],
+  searchText: string
 };
 
 const mapDispatchToProps = {
   fetchAllEntries: fetchAll,
-  setupEntryBundlesEventSource: setupBundlesEventSource
+  setupEntryBundlesEventSource: setupBundlesEventSource,
+  saveEntriesSearchInput: saveSearchInput
 };
 
 function createEntryRowData(bundle, starredEntries = Set()) {
@@ -63,6 +67,8 @@ const basicColumnsConfig = ux.mapColumns(
 const getStarredEntries = state =>
   state.bundlesFilter.starredEntries || emptyArray;
 
+const getSearchInput = state => state.bundlesFilter.searchInputRaw;
+
 function mapStateToProps(state) {
   const { bundles } = state;
   const bundleItems = bundles.items || emptyArray;
@@ -70,11 +76,13 @@ function mapStateToProps(state) {
   const entriesData = bundleItems.map(item =>
     createEntryRowData(item, starredEntries)
   );
+  const searchText = getSearchInput(state);
   console.log('mapStateToProps');
   return {
     bundleItems,
     entriesData,
-    starredEntries
+    starredEntries,
+    searchText
   };
 }
 
@@ -130,10 +138,13 @@ class Bundles extends PureComponent<Props> {
   };
 
   getTableOptions = () => {
+    const { searchText, saveEntriesSearchInput } = this.props;
     return {
       selectableRows: 'none',
       expandableRows: true,
       sort: false,
+      searchText,
+      onSearchChange: saveEntriesSearchInput,
       renderExpandableRow: (rowData, rowMeta) => {
         const colSpan = rowData.length + 1;
         const { dataIndex } = rowMeta;
@@ -151,9 +162,12 @@ class Bundles extends PureComponent<Props> {
   };
 
   render() {
-    const { entriesData } = this.props;
+    const { entriesData, searchText } = this.props;
     const columnsConfigWithCustomBodyRenderings = this.getColumnsConfigWithCustomBodyRenderings();
     console.log('Rendering Bundles');
+    if (searchText === undefined) {
+      return null; // wait until we've loaded search/filter settings from disk
+    }
     return (
       <div>
         <EnhancedTable
