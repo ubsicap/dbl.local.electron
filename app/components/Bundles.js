@@ -138,6 +138,7 @@ class Bundles extends PureComponent<Props> {
   };
 
   handleTableChange = (action: string, tableState: object) => {
+    console.log(action, tableState);
     if (action === 'search' && tableState.searchText === null) {
       // search was closed. so save empty search.
       const { saveEntriesSearchInput } = this.props;
