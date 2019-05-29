@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import { Set } from 'immutable';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import { compose } from 'recompose';
@@ -13,42 +12,26 @@ import MenuAppBar from '../components/MenuAppBar';
 import DblDotLocalAppBar from '../components/DblDotLocalAppBar';
 import { createNewBundle } from '../actions/bundle.actions';
 import {
-  setEntriesFilters,
-  setStarredEntries
+  loadEntriesFilters,
+  loadStarredEntries,
+  loadSearchInput
 } from '../actions/bundleFilter.actions';
-import { workspaceUserSettingsStoreServices } from '../services/workspaces.service';
-import { workspaceHelpers } from '../helpers/workspaces.helpers';
 import MediumIcon from '../components/MediumIcon';
 
 type Props = {
   classes: {},
   newMediaTypes: [],
-  entriesFilters: {},
-  starredEntries: [],
   createNewEntry: () => {},
-  setStarredEntries: () => {},
-  setEntriesFilters: () => {}
+  loadStarredEntriesFromDisk: () => {},
+  loadEntriesFiltersFromDisk: () => {},
+  loadSearchInputFromDisk: () => {}
 };
 
 function mapStateToProps(state) {
   const { bundles } = state;
   const { newMediaTypes = [] } = bundles;
-  const {
-    workspaceFullPath,
-    email
-  } = workspaceHelpers.getCurrentWorkspaceFullPath(state);
-  const entriesFilters = workspaceUserSettingsStoreServices.loadEntriesFilters(
-    workspaceFullPath,
-    email
-  );
-  const starredEntries = workspaceUserSettingsStoreServices.loadStarredEntries(
-    workspaceFullPath,
-    email
-  );
   return {
-    newMediaTypes,
-    entriesFilters,
-    starredEntries
+    newMediaTypes
   };
 }
 
@@ -62,8 +45,9 @@ const materialStyles = () => ({
 
 const mapDispatchToProps = {
   createNewEntry: createNewBundle,
-  setStarredEntries,
-  setEntriesFilters
+  loadStarredEntriesFromDisk: loadStarredEntries,
+  loadEntriesFiltersFromDisk: loadEntriesFilters,
+  loadSearchInputFromDisk: loadSearchInput
 };
 
 class BundlesPage extends PureComponent<Props> {
@@ -75,13 +59,13 @@ class BundlesPage extends PureComponent<Props> {
 
   componentDidMount() {
     const {
-      setEntriesFilters,
-      setStarredEntries,
-      entriesFilters,
-      starredEntries
+      loadEntriesFiltersFromDisk,
+      loadStarredEntriesFromDisk,
+      loadSearchInputFromDisk
     } = this.props;
-    setEntriesFilters(entriesFilters);
-    setStarredEntries(Set(starredEntries));
+    loadSearchInputFromDisk();
+    loadEntriesFiltersFromDisk();
+    loadStarredEntriesFromDisk();
   }
 
   handleClick = event => {

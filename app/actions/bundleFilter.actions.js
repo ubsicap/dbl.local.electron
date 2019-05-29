@@ -1,6 +1,7 @@
 import split from 'split-string';
 import { findChunks } from 'highlight-words-core';
 import waitUntil from 'node-wait-until';
+import { Set } from 'immutable';
 import { bundleFilterConstants } from '../constants/bundleFilter.constants';
 import { workspaceUserSettingsStoreServices } from '../services/workspaces.service';
 import { workspaceHelpers } from '../helpers/workspaces.helpers';
@@ -12,7 +13,10 @@ export const bundleFilterActions = {
   toggleEntryStar,
   setStarredEntries,
   toggleShowStarredEntries,
-  setEntriesFilters
+  setEntriesFilters,
+  loadSearchInput,
+  loadStarredEntries,
+  loadEntriesFilters
 };
 
 export default bundleFilterActions;
@@ -257,4 +261,85 @@ export function setEntriesFilters(entriesFilters) {
     type: bundleFilterConstants.SET_ENTRIES_FILTERS,
     entriesFilters
   };
+}
+
+export function loadStarredEntries() {
+  return (dispatch, getState) => {
+    const currentState = getState();
+    const {
+      workspaceFullPath,
+      email
+    } = workspaceHelpers.getCurrentWorkspaceFullPath(currentState);
+    const starredEntries = workspaceUserSettingsStoreServices.loadStarredEntries(
+      workspaceFullPath,
+      email
+    );
+    dispatch(setStarredEntries(Set(starredEntries)));
+  };
+}
+
+export function loadEntriesFilters() {
+  return (dispatch, getState) => {
+    const currentState = getState();
+    const {
+      workspaceFullPath,
+      email
+    } = workspaceHelpers.getCurrentWorkspaceFullPath(currentState);
+    const entriesFilters = workspaceUserSettingsStoreServices.loadEntriesFilters(
+      workspaceFullPath,
+      email
+    );
+    setEntriesFilters(entriesFilters);
+  };
+}
+
+export function loadSearchInput() {
+  return (dispatch, getState) => {
+    const currentState = getState();
+    const {
+      workspaceFullPath,
+      email
+    } = workspaceHelpers.getCurrentWorkspaceFullPath(currentState);
+    const savedSearchInput = workspaceUserSettingsStoreServices.loadBundlesSearchInput(
+      workspaceFullPath,
+      email
+    );
+    const { bundles } = currentState;
+    dispatch(updateSearchInputBasic(savedSearchInput, bundles));
+  };
+}
+
+function updateSearchInputBasic(searchInput, bundles) {
+  return {
+    type: bundleFilterConstants.UPDATE_SEARCH_INPUT,
+    searchInput,
+    searchInputRaw: searchInput,
+    searchKeywords: [searchInput],
+    willRecomputeAllSearchResults: false,
+    bundles
+  };
+}
+
+export function saveSearchInput(searchInput) {
+  const thunk = (dispatch, getState) => {
+    const currentState = getState();
+    const {
+      workspaceFullPath,
+      email
+    } = workspaceHelpers.getCurrentWorkspaceFullPath(getState());
+    workspaceUserSettingsStoreServices.saveBundlesSearchInput(
+      workspaceFullPath,
+      email,
+      searchInput
+    );
+    const { bundles } = currentState;
+    dispatch(updateSearchInputBasic(searchInput, bundles));
+  };
+  thunk.meta = {
+    debounce: {
+      time: 2500,
+      key: 'BUNDLE_FILTER_SEARCH_DEBOUNCED'
+    }
+  };
+  return thunk;
 }
