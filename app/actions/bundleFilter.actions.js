@@ -116,6 +116,12 @@ export function updateSearchResultsForBundleId(bundleId) {
 }
 
 function updateSearchResultsForBundle(searchableBundle) {
+  return {
+    type: 'OBSOLETE_NOOP',
+    function: 'updateSearchResultsForBundle',
+    searchableBundle
+  };
+  /*
   return (dispatch, getState) => {
     const { bundlesFilter } = getState();
     const { isSearchActive, searchKeywords } = bundlesFilter;
@@ -150,6 +156,7 @@ function updateSearchResultsForBundle(searchableBundle) {
       bundle
     };
   }
+  */
 }
 /*
 findChunks({
