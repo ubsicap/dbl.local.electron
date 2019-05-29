@@ -12,7 +12,7 @@ export const bundleFilterActions = {
   toggleEntryStar,
   setStarredEntries,
   toggleShowStarredEntries,
-  setEntriesFilters,
+  setEntriesFilters
 };
 
 export default bundleFilterActions;
@@ -33,12 +33,19 @@ export function updateSearchInput(searchInput) {
     const trimmedSearchInput = searchInput.trim();
     const searchKeywords = split(trimmedSearchInput, { separator: ' ' });
     await waitUntil(async () => !getAreBundlesLoading(getState));
-    const { workspaceFullPath, email } = workspaceHelpers
-      .getCurrentWorkspaceFullPath(getState());
-    workspaceUserSettingsStoreServices.saveBundlesSearchInput(workspaceFullPath, email, searchInput);
+    const {
+      workspaceFullPath,
+      email
+    } = workspaceHelpers.getCurrentWorkspaceFullPath(getState());
+    workspaceUserSettingsStoreServices.saveBundlesSearchInput(
+      workspaceFullPath,
+      email,
+      searchInput
+    );
     const { bundles, bundlesFilter } = getState();
     if (trimmedSearchInput.length > 0) {
-      const willRecomputeAllSearchResults = trimmedSearchInput !== bundlesFilter.searchInput;
+      const willRecomputeAllSearchResults =
+        trimmedSearchInput !== bundlesFilter.searchInput;
       dispatch({
         type: bundleFilterConstants.UPDATE_SEARCH_INPUT,
         searchInput: trimmedSearchInput,
@@ -61,25 +68,29 @@ export function updateSearchInput(searchInput) {
 
     function updateSearchResults(searchResults) {
       return {
-        type: bundleFilterConstants.UPDATE_SEARCH_RESULTS, searchResults
+        type: bundleFilterConstants.UPDATE_SEARCH_RESULTS,
+        searchResults
       };
     }
   };
 }
 
 function getAllSearchResults(searchableBundles, searchKeywords) {
-  const searchResults = Object.values(searchableBundles).reduce((acc, searchableBundle) => {
-    const bundleSearchResults = getBundleSearchResults(
-      searchableBundle,
-      searchKeywords,
-      acc.chunks
-    );
-    const { chunks, matches } = bundleSearchResults;
-    if (Object.keys(matches).length > 0) {
-      return combineSearchResults(acc, searchableBundle, chunks, matches);
-    }
-    return acc;
-  }, { bundlesMatching: {}, chunks: {}, matches: {} });
+  const searchResults = Object.values(searchableBundles).reduce(
+    (acc, searchableBundle) => {
+      const bundleSearchResults = getBundleSearchResults(
+        searchableBundle,
+        searchKeywords,
+        acc.chunks
+      );
+      const { chunks, matches } = bundleSearchResults;
+      if (Object.keys(matches).length > 0) {
+        return combineSearchResults(acc, searchableBundle, chunks, matches);
+      }
+      return acc;
+    },
+    { bundlesMatching: {}, chunks: {}, matches: {} }
+  );
   return searchResults;
 }
 
@@ -107,7 +118,11 @@ function updateSearchResultsForBundle(searchableBundle) {
     if (!isSearchActive) {
       return;
     }
-    const bundleSearchResults = getBundleSearchResults(searchableBundle, searchKeywords, {});
+    const bundleSearchResults = getBundleSearchResults(
+      searchableBundle,
+      searchKeywords,
+      {}
+    );
     const { chunks, matches } = bundleSearchResults;
     if (Object.keys(matches).length > 0) {
       dispatch(addSearchMatch(searchableBundle, chunks, matches));
@@ -118,13 +133,17 @@ function updateSearchResultsForBundle(searchableBundle) {
 
   function addSearchMatch(bundle, chunks, matches) {
     return {
-      type: bundleFilterConstants.ADD_SEARCH_MATCH, bundle, chunks, matches
+      type: bundleFilterConstants.ADD_SEARCH_MATCH,
+      bundle,
+      chunks,
+      matches
     };
   }
 
   function removeSearchMatch(bundle) {
     return {
-      type: bundleFilterConstants.REMOVE_SEARCH_MATCH, bundle
+      type: bundleFilterConstants.REMOVE_SEARCH_MATCH,
+      bundle
     };
   }
 }
@@ -136,28 +155,37 @@ findChunks({
   searchWords,
   textToHighlight})
 */
-function getBundleSearchResults(searchableBundle, searchKeywords, chunksAcrossBundles) {
-  const bundleSearchResults = Object.values(searchableBundle.displayAs).reduce((acc, searchable) => {
-    let chunksForSearchable = chunksAcrossBundles[searchable];
-    if (!chunksForSearchable) {
-      const findChunkOptions = {
-        autoEscape: true,
-        searchWords: searchKeywords,
-        textToHighlight: searchable
+function getBundleSearchResults(
+  searchableBundle,
+  searchKeywords,
+  chunksAcrossBundles
+) {
+  const bundleSearchResults = Object.values(searchableBundle.displayAs).reduce(
+    (acc, searchable) => {
+      let chunksForSearchable = chunksAcrossBundles[searchable];
+      if (!chunksForSearchable) {
+        const findChunkOptions = {
+          autoEscape: true,
+          searchWords: searchKeywords,
+          textToHighlight: searchable
+        };
+        chunksForSearchable = findChunks(findChunkOptions);
+      }
+      const chunksInBundle = { [searchable]: chunksForSearchable };
+      const hasMatches = chunksForSearchable.length > 0;
+      const matches = hasMatches
+        ? { ...acc.matches, ...chunksInBundle }
+        : acc.matches;
+      return {
+        chunks: { ...acc.chunks, ...chunksInBundle },
+        matches
       };
-      chunksForSearchable = findChunks(findChunkOptions);
+    },
+    {
+      chunks: {},
+      matches: {}
     }
-    const chunksInBundle = { [searchable]: chunksForSearchable };
-    const hasMatches = chunksForSearchable.length > 0;
-    const matches = hasMatches ? { ...acc.matches, ...chunksInBundle } : acc.matches;
-    return {
-      chunks: { ...acc.chunks, ...chunksInBundle },
-      matches
-    };
-  }, {
-    chunks: {},
-    matches: {}
-  });
+  );
   return bundleSearchResults;
 }
 
@@ -183,10 +211,16 @@ export function clearSearch() {
 export function toggleEntryStar(dblId) {
   return (dispatch, getState) => {
     const { bundlesFilter } = getState();
-    const { starredEntries } =
-      workspaceHelpers.getToggledStarredEntries(bundlesFilter, dblId);
+    const { starredEntries } = workspaceHelpers.getToggledStarredEntries(
+      bundlesFilter,
+      dblId
+    );
     const { showStarredEntries = false } = bundlesFilter;
-    workspaceHelpers.persistStarredEntries(getState(), starredEntries, showStarredEntries);
+    workspaceHelpers.persistStarredEntries(
+      getState(),
+      starredEntries,
+      showStarredEntries
+    );
     dispatch(setStarredEntries(starredEntries));
   };
 }
@@ -204,11 +238,14 @@ export function toggleShowStarredEntries() {
     const entriesFilters = {
       showStarredEntries
     };
-    const { workspaceFullPath, email } =
-    workspaceHelpers.getCurrentWorkspaceFullPath(getState());
+    const {
+      workspaceFullPath,
+      email
+    } = workspaceHelpers.getCurrentWorkspaceFullPath(getState());
     /* enabled filters can be 'include' or 'exclude' or 'disabled' */
     workspaceUserSettingsStoreServices.saveEntriesFilters(
-      workspaceFullPath, email,
+      workspaceFullPath,
+      email,
       entriesFilters
     );
     dispatch(setEntriesFilters(entriesFilters));
