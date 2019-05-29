@@ -43,7 +43,7 @@ function mapStateToProps(state) {
     entries,
     allBundles,
     entriesMatching,
-    isSearchActive,
+    isSearchActive: false /* ignore for now */,
     downloadQueue,
     uploadQueue,
     starredEntries,
