@@ -12,7 +12,6 @@ export const workspaceUserSettingsStoreServices = {
 };
 export default workspaceUserSettingsStoreServices;
 
-
 function getWorkspaceUserSettings(workspaceFullPath) {
   const store = new Store({
     cwd: workspaceFullPath,
@@ -33,17 +32,21 @@ function saveUserLogin(workspaceFullPath, email) {
 
 function loadLastUserLoginSettings(workspaceFullPath) {
   const userSettings = getWorkspaceUserSettings(workspaceFullPath);
-  const lastLogin = Object.values(userSettings.store)
-    .reduce((acc, userData) =>
-      (!acc || userData.lastLogin > acc.lastLogin ? userData : acc), undefined);
+  const lastLogin = Object.values(userSettings.store).reduce(
+    (acc, userData) =>
+      !acc || userData.lastLogin > acc.lastLogin ? userData : acc,
+    undefined
+  );
   return lastLogin;
 }
-
 
 /* todo: change /bundles/search to /entries/search? when we move to entry model */
 function saveBundlesSearchInput(workspaceFullPath, email, searchInputRaw) {
   const userSettings = getWorkspaceUserSettings(workspaceFullPath);
-  userSettings.set(`${encodeEmailAddress(email)}/bundles/search`, searchInputRaw);
+  userSettings.set(
+    `${encodeEmailAddress(email)}/bundles/search`,
+    searchInputRaw
+  );
 }
 
 function loadBundlesSearchInput(workspaceFullPath, email) {
