@@ -103,7 +103,7 @@ export function bundlesFilter(
       const { entriesFilters } = action;
       return {
         ...state,
-        ...entriesFilters
+        entriesFilters
       };
     }
     case bundleConstants.DELETE_SUCCESS: {

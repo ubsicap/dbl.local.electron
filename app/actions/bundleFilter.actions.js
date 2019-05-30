@@ -13,6 +13,7 @@ export const bundleFilterActions = {
   toggleEntryStar,
   setStarredEntries,
   toggleShowStarredEntries,
+  saveFilters,
   setEntriesFilters,
   loadSearchInput,
   loadStarredEntries,
@@ -243,6 +244,7 @@ export function setStarredEntries(starredEntries) {
   };
 }
 
+// TODO: Obsoleted
 export function toggleShowStarredEntries() {
   return (dispatch, getState) => {
     const showStarredEntries = !getState().bundlesFilter.showStarredEntries;
@@ -261,6 +263,34 @@ export function toggleShowStarredEntries() {
     );
     dispatch(setEntriesFilters(entriesFilters));
   };
+}
+
+export function saveFilters(columns) {
+  const entriesFilters = { columns };
+  const thunk = (dispatch, getState) => {
+    const {
+      workspaceFullPath,
+      email
+    } = workspaceHelpers.getCurrentWorkspaceFullPath(getState());
+    workspaceUserSettingsStoreServices.saveEntriesFilters(
+      workspaceFullPath,
+      email,
+      entriesFilters
+    );
+    dispatch({
+      type: bundleFilterConstants.SAVE_ENTRIES_FILTERS_TO_DISK,
+      entriesFilters
+    });
+    // For some reason, changing entriesFilters here results in putting MuiDatatables in a weird state.
+    // dispatch(setEntriesFilters(entriesFilters));
+  };
+  thunk.meta = {
+    debounce: {
+      time: 2500,
+      key: 'BUNDLE_FILTER_SAVE_FILTERS_DEBOUNCED'
+    }
+  };
+  return thunk;
 }
 
 export function setEntriesFilters(entriesFilters) {
@@ -296,7 +326,7 @@ export function loadEntriesFilters() {
       workspaceFullPath,
       email
     );
-    setEntriesFilters(entriesFilters);
+    dispatch(setEntriesFilters(entriesFilters));
   };
 }
 
@@ -333,19 +363,23 @@ export function saveSearchInput(searchInput) {
     const {
       workspaceFullPath,
       email
-    } = workspaceHelpers.getCurrentWorkspaceFullPath(getState());
+    } = workspaceHelpers.getCurrentWorkspaceFullPath(currentState);
     workspaceUserSettingsStoreServices.saveBundlesSearchInput(
       workspaceFullPath,
       email,
       searchInput
     );
-    const { bundles } = currentState;
-    dispatch(updateSearchInputBasic(searchInput, bundles));
+    dispatch({
+      type: bundleFilterConstants.SAVE_ENTRIES_SEARCH_INPUT_TO_DISK,
+      searchInput
+    });
+    // const { bundles } = currentState;
+    // dispatch(updateSearchInputBasic(searchInput, bundles));
   };
   thunk.meta = {
     debounce: {
       time: 2500,
-      key: 'BUNDLE_FILTER_SEARCH_DEBOUNCED'
+      key: 'BUNDLE_FILTER_SAVE_SEARCH_INPUT_DEBOUNCED'
     }
   };
   return thunk;

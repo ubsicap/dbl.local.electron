@@ -7,26 +7,29 @@ import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 import { fetchAll, setupBundlesEventSource } from '../actions/bundle.actions';
 import { ux } from '../utils/ux';
-import { emptyArray, emptyFunction } from '../utils/defaultValues';
+import { emptyArray, emptyFunction, emptyObject } from '../utils/defaultValues';
 import EnhancedTable from './EnhancedTable';
 import EntryRowExpandedRow from './EntryRowExpandedRow';
 import EntryRowCustomBodyRenderings from './EntryRowCustomBodyRenderings';
-import { saveSearchInput } from '../actions/bundleFilter.actions';
+import { saveSearchInput, saveFilters } from '../actions/bundleFilter.actions';
 
 type Props = {
   fetchAllEntries: () => {},
   setupEntryBundlesEventSource: () => {},
   saveEntriesSearchInput: () => {},
+  saveEntriesFiltersToDisk: () => {},
   bundleItems: [],
   entriesData: [],
   starredEntries: [],
-  searchText: string
+  searchText: string,
+  entriesFilters: {}
 };
 
 const mapDispatchToProps = {
   fetchAllEntries: fetchAll,
   setupEntryBundlesEventSource: setupBundlesEventSource,
-  saveEntriesSearchInput: saveSearchInput
+  saveEntriesSearchInput: saveSearchInput,
+  saveEntriesFiltersToDisk: saveFilters
 };
 
 function createEntryRowData(bundle, starredEntries = Set()) {
@@ -69,6 +72,8 @@ const getStarredEntries = state =>
 
 const getSearchInput = state => state.bundlesFilter.searchInputRaw;
 
+const getEntriesFilters = state => state.bundlesFilter.entriesFilters;
+
 function mapStateToProps(state) {
   const { bundles } = state;
   const bundleItems = bundles.items || emptyArray;
@@ -77,12 +82,14 @@ function mapStateToProps(state) {
     createEntryRowData(item, starredEntries)
   );
   const searchText = getSearchInput(state);
+  const entriesFilters = getEntriesFilters(state);
   console.log('mapStateToProps');
   return {
     bundleItems,
     entriesData,
     starredEntries,
-    searchText
+    searchText,
+    entriesFilters
   };
 }
 
@@ -103,7 +110,10 @@ class Bundles extends PureComponent<Props> {
 
   getColumnsConfigWithCustomBodyRenderings = () => {
     console.log('getColumnsConfigWithCustomBodyRenderings');
+    const { entriesFilters } = this.props;
+    const { columns: columnFilters = {} } = entriesFilters || emptyObject;
     return basicColumnsConfig.map(c => {
+      const filterList = columnFilters[c.name] || [];
       switch (c.name) {
         case 'dblId': {
           return { ...c, options: { display: 'excluded' } };
@@ -119,6 +129,7 @@ class Bundles extends PureComponent<Props> {
           return {
             ...c,
             options: {
+              filterList,
               customBodyRender: (value, tableMeta) => {
                 return (
                   <EntryRowCustomBodyRenderings
@@ -146,6 +157,18 @@ class Bundles extends PureComponent<Props> {
     }
   };
 
+  handleFilterChange = (changedColumn: string, filterList: array) => {
+    const columnFilters = basicColumnsConfig.reduce((acc, column, idx) => {
+      const filterValues = filterList[idx];
+      if (filterValues.length > 0) {
+        acc[column.name] = filterList[idx];
+      }
+      return acc;
+    }, {});
+    const { saveEntriesFiltersToDisk } = this.props;
+    saveEntriesFiltersToDisk(columnFilters);
+  };
+
   getTableOptions = () => {
     const { searchText, saveEntriesSearchInput } = this.props;
     return {
@@ -155,6 +178,7 @@ class Bundles extends PureComponent<Props> {
       searchText,
       onSearchChange: saveEntriesSearchInput,
       onTableChange: this.handleTableChange,
+      onFilterChange: this.handleFilterChange,
       renderExpandableRow: (rowData, rowMeta) => {
         const colSpan = rowData.length + 1;
         const { dataIndex } = rowMeta;
@@ -172,10 +196,10 @@ class Bundles extends PureComponent<Props> {
   };
 
   render() {
-    const { entriesData, searchText } = this.props;
+    const { entriesData, searchText, entriesFilters } = this.props;
     const columnsConfigWithCustomBodyRenderings = this.getColumnsConfigWithCustomBodyRenderings();
     console.log('Rendering Bundles');
-    if (searchText === undefined) {
+    if (searchText === undefined || entriesFilters === undefined) {
       return null; // wait until we've loaded search/filter settings from disk
     }
     return (
