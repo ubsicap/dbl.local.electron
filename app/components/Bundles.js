@@ -83,7 +83,7 @@ function mapStateToProps(state) {
   );
   const searchText = getSearchInput(state);
   const entriesFilters = getEntriesFilters(state);
-  console.log('mapStateToProps');
+  console.log('Bundles mapStateToProps');
   return {
     bundleItems,
     entriesData,

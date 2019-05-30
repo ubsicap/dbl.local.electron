@@ -282,7 +282,7 @@ export function saveFilters(columns) {
       entriesFilters
     });
     // For some reason, changing entriesFilters here results in putting MuiDatatables in a weird state.
-    // dispatch(setEntriesFilters(entriesFilters));
+    dispatch(setEntriesFilters(entriesFilters));
   };
   thunk.meta = {
     debounce: {
