@@ -96,6 +96,8 @@ function mapStateToProps(state) {
 class Bundles extends PureComponent<Props> {
   props: Props;
 
+  state = {};
+
   componentDidMount() {
     const {
       bundleItems,
@@ -112,8 +114,15 @@ class Bundles extends PureComponent<Props> {
     console.log('getColumnsConfigWithCustomBodyRenderings');
     const { entriesFilters } = this.props;
     const { columns: columnFilters = {} } = entriesFilters || emptyObject;
-    return basicColumnsConfig.map(c => {
-      const filterList = columnFilters[c.name] || [];
+    return basicColumnsConfig.map((c, idx) => {
+      const { filterList } = this.state;
+      const columnFilterList =
+        filterList && filterList !== emptyArray
+          ? filterList[idx]
+          : columnFilters[c.name] || [];
+      if (c.name === 'starred') {
+        console.log(columnFilterList);
+      }
       switch (c.name) {
         case 'dblId': {
           return { ...c, options: { display: 'excluded' } };
@@ -129,7 +138,7 @@ class Bundles extends PureComponent<Props> {
           return {
             ...c,
             options: {
-              filterList,
+              filterList: columnFilterList,
               customBodyRender: (value, tableMeta) => {
                 return (
                   <EntryRowCustomBodyRenderings
@@ -149,7 +158,7 @@ class Bundles extends PureComponent<Props> {
   };
 
   handleTableChange = (action: string, tableState: object) => {
-    console.log(action, tableState);
+    console.log(action, JSON.parse(JSON.stringify(tableState)));
     if (action === 'search' && tableState.searchText === null) {
       // search was closed. so save empty search.
       const { saveEntriesSearchInput } = this.props;
@@ -158,15 +167,22 @@ class Bundles extends PureComponent<Props> {
   };
 
   handleFilterChange = (changedColumn: string, filterList: array) => {
-    const columnFilters = basicColumnsConfig.reduce((acc, column, idx) => {
-      const filterValues = filterList[idx];
-      if (filterValues.length > 0) {
-        acc[column.name] = filterList[idx];
-      }
-      return acc;
-    }, {});
-    const { saveEntriesFiltersToDisk } = this.props;
-    saveEntriesFiltersToDisk(columnFilters);
+    const snapshotFilterList = JSON.parse(JSON.stringify(filterList));
+    this.setState({ filterList: snapshotFilterList }, () => {
+      console.log(`changedColumn: ${changedColumn}, filterList[0][0]: ${snapshotFilterList[0][0]}`);
+      console.log(changedColumn, snapshotFilterList);
+      const { filterList: stateFilterList } = this.state;
+      console.log(`this.state.filterList: ${stateFilterList}`);
+      const columnFilters = basicColumnsConfig.reduce((acc, column, idx) => {
+        const filterValues = snapshotFilterList[idx];
+        if (filterValues.length > 0) {
+          acc[column.name] = snapshotFilterList[idx];
+        }
+        return acc;
+      }, {});
+      const { saveEntriesFiltersToDisk } = this.props;
+      saveEntriesFiltersToDisk(columnFilters);
+    });
   };
 
   getTableOptions = () => {
@@ -179,6 +195,7 @@ class Bundles extends PureComponent<Props> {
       onSearchChange: saveEntriesSearchInput,
       onTableChange: this.handleTableChange,
       onFilterChange: this.handleFilterChange,
+      onTableInit: console.log,
       renderExpandableRow: (rowData, rowMeta) => {
         const colSpan = rowData.length + 1;
         const { dataIndex } = rowMeta;

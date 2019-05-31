@@ -28,6 +28,8 @@ const getMuiTheme = () =>
     }
   });
 
+const muiTheme = getMuiTheme();
+
 const styles = theme => ({
   root: {
     width: '100%',
@@ -183,6 +185,7 @@ function getCellProps(columnData, row, dataIndex, sortedData) {
 }
 
 function mapStateToProps(state, props) {
+  console.log('EnhancedTable mapStateToProps');
   const sortedData = getSortedDataSelector(state, props);
   const columns = getColumnsSelector(state, props);
   const selectableData = getSelectableDataSelector(state, props);
@@ -313,6 +316,7 @@ class EnhancedTable extends Component<Props> {
   };
 
   render() {
+    console.log('MUIDataTable render component');
     const {
       classes,
       sortedData,
@@ -323,6 +327,8 @@ class EnhancedTable extends Component<Props> {
       title,
       tableOptions
     } = this.props;
+    console.log(`columns[0].options.filterList: ${columns[0].options.filterList}`);
+    console.log(columns);
     const { rowsPerPage, page } = this.state;
     const customToolbarSelect = this.getCustomToolbarSelect();
     const options = {
@@ -351,7 +357,7 @@ class EnhancedTable extends Component<Props> {
     };
     return (
       <Paper className={classes.root}>
-        <MuiThemeProvider theme={getMuiTheme()}>
+        <MuiThemeProvider theme={muiTheme}>
           <MUIDataTable
             title={title}
             data={sortedData}
