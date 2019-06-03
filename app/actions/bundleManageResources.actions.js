@@ -31,8 +31,11 @@ function getUxCanons() {
     const { bundleManageResourcesUx } = gottenState;
     const { uxCanons = emptyObject } = bundleManageResourcesUx;
     if (uxCanons === emptyObject) {
-      await bundleService.getUxCanons();
-      dispatch({ type: bundleResourceManagerConstants.GOT_CANONS, uxCanons });
+      const results = await dblDotLocalService.getUxCanons();
+      dispatch({
+        type: bundleResourceManagerConstants.GOT_CANONS,
+        uxCanons: results
+      });
     }
   };
 }

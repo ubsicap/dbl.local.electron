@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import sort from 'fast-sort';
 import upath from 'upath';
 import recursiveReadDir from 'recursive-readdir';
+import traverse from 'traverse';
 import { List, Set } from 'immutable';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { connect } from 'react-redux';
@@ -193,7 +194,7 @@ function createResourceData(
   } = {
     previousManifestResources: emptyBundleManifestResources
   },
-  publicationsData = emptyObject
+  publicationData = emptyObject
 ) {
   const {
     uri = '',
@@ -223,6 +224,7 @@ function createResourceData(
     { previousEntryRevision, bundlePreviousRevision, previousManifestResources }
   );
   const disabled = (isDraft && isModifiedFromPrev) || isPrevResource;
+  const { pub, role, canonComponent: canon } = publicationData || emptyObject;
   return {
     id,
     uri,
@@ -230,10 +232,11 @@ function createResourceData(
     status,
     container,
     name,
-    pubs: '',
-    canons: '',
     mimeType,
     size,
+    role,
+    pub,
+    canon,
     checksum,
     disabled
   };
@@ -349,7 +352,8 @@ const getMapperInputReport = state =>
   getMapperInputData(state).report || emptyObject;
 const getSelectedMappers = state =>
   state.bundleManageResources.selectedMappers || emptyObject;
-const getUxCanons = state => state.bundleManageResourcesUx.uxCanons;
+const getUxCanons = state =>
+  state.bundleManageResourcesUx.uxCanons || emptyObject;
 const getEditedContainers = state =>
   state.bundleManageResources.editedContainers || emptyObject;
 
@@ -422,30 +426,35 @@ const getActiveBundleSelector = createSelector(
   (bundleId, bundlesById) => bundlesById[bundleId]
 );
 
-const getPublicationsData = createSelector(
+// indexed by src -> [{ src, role, pub, canonComponent }]
+function getSrcRoleData(acc, node) {
+  if (/* !uxCanonsComponents || */ !node.src) {
+    return acc;
+  }
+  const { src, role } = node;
+  const { path: keys, parents } = this;
+  const pub = keys[0];
+  // const myPubNode = parents[parents.length - 2].node;
+  // const book = role.split(' ')[0];
+  // const pubCanonSpecComponents = myPubNode.canonSpec.components;
+  const canonComponent =
+    ''; /* pubCanonSpecComponents.find(value =>
+    uxCanonsComponents[value].books.contains(book)
+  ); */
+  const sourceData = acc[node.src] || [];
+  if (sourceData.length === 0) {
+    acc[node.src] = sourceData;
+  }
+  sourceData.push({ src, role, pub, canonComponent });
+  return acc;
+}
+
+const getPublicationsDataSelector = createSelector(
   [getActiveBundleSelector, getUxCanons],
   (bundle, uxCanons) => {
     const { publications = emptyObject } = bundle.raw.metadata;
-    const { components } = uxCanons;
-    const publicationData = Object.entries(publications).reduce(
-      (acc, ([pubId, pubData]) => {
-        const {
-          structure = emptyArray,
-          canonSpec: { components }
-        } = pubData;
-        structure.reduce((accStructure, item) => {
-          if (!item.src) return accStructure;
-          // lookup role in uxCanons;
-          accStructure[item.src] = item.role;
-          return accStructure;
-          },
-          {}
-        );
-        return acc;
-      },
-      {})
-    );
-    return {};
+    const publicationData = traverse(publications).reduce(getSrcRoleData, {});
+    return publicationData;
   }
 );
 
@@ -462,7 +471,7 @@ const getManifestResourcesDataSelector = createSelector(
     getSelectedMappers,
     getEditedContainers,
     getIsLoading,
-    getUxCanons
+    getPublicationsDataSelector
   ],
   (
     mode,
@@ -477,7 +486,7 @@ const getManifestResourcesDataSelector = createSelector(
     editedContainers,
     // eslint-disable-next-line no-unused-vars
     isLoading /* warning: disabling all checkboxes during isLoading can result in hiding checkbox column */,
-    uxCanons
+    publicationsData
   ) => {
     const bundleManifestResources = createBundleManifestResources(bundle);
     const { rawManifestResources, storedFiles } = bundleManifestResources;
@@ -486,8 +495,10 @@ const getManifestResourcesDataSelector = createSelector(
       bundlePreviousRevision,
       previousManifestResources
     } = prevManifestResourcesData;
-    const bundleManifestResourcesData = Object.values(rawManifestResources).map(
-      r =>
+    // first get resource data for all resources without publication data
+    const bundleManifestResourcesData = Object.values(rawManifestResources)
+      .filter(r => !publicationsData[r.uri])
+      .map(r =>
         createResourceData(
           bundle,
           r,
@@ -497,9 +508,29 @@ const getManifestResourcesDataSelector = createSelector(
             previousEntryRevision,
             bundlePreviousRevision,
             previousManifestResources
-          },
-          uxCanons
+          }
         )
+      );
+    // next get resource data that's found in publications
+    const publicationsResourcesData = Object.values(publicationsData).reduce(
+      (acc, pubData) => {
+        const r = rawManifestResources[pubData.src];
+        const pubResourceData = createResourceData(
+          bundle,
+          r,
+          storedFiles[r.uri],
+          previousManifestResources.rawManifestResources[r.uri],
+          {
+            previousEntryRevision,
+            bundlePreviousRevision,
+            previousManifestResources
+          },
+          pubData
+        );
+        acc.push(pubResourceData);
+        return acc;
+      },
+      []
     );
     const bundleManifestResourceUris = getRawManifestResourceUris(
       bundleManifestResources
@@ -514,14 +545,7 @@ const getManifestResourcesDataSelector = createSelector(
           Object.keys(rawManifestResources).length
       )
       .map(pr =>
-        createResourceData(
-          null,
-          pr,
-          parentStoredFiles[pr.uri],
-          pr,
-          emptyObject,
-          uxCanons
-        )
+        createResourceData(null, pr, parentStoredFiles[pr.uri], pr, emptyObject)
       );
     const selectedIdsInputConverters =
       selectedMappers.input || Object.keys(mapperReport);
@@ -536,6 +560,7 @@ const getManifestResourcesDataSelector = createSelector(
     );
     return [
       ...bundleManifestResourcesData,
+      ...publicationsResourcesData,
       ...addedResources,
       ...deletedParentBundleResources
     ];
