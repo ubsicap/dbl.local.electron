@@ -8,7 +8,10 @@ import { history } from '../store/configureStore';
 import { bundleService } from '../services/bundle.service';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { utilities } from '../utils/utilities';
-import { openEditMetadata, saveMetadatFileToTempBundleFolder } from './bundleEditMetadata.actions';
+import {
+  openEditMetadata,
+  saveMetadatFileToTempBundleFolder
+} from './bundleEditMetadata.actions';
 import { bundleActions } from './bundle.actions';
 
 export const bundleManageResourceActions = {
@@ -28,14 +31,17 @@ export function openResourceManager(_bundleId, _mode) {
     dispatch(navigate(_bundleId, _mode));
   };
   function success(bundleId, mode) {
-    return { type: bundleResourceManagerConstants.OPEN_RESOURCE_MANAGER, bundleId, mode };
+    return {
+      type: bundleResourceManagerConstants.OPEN_RESOURCE_MANAGER,
+      bundleId,
+      mode
+    };
   }
   function navigate(bundleId, mode) {
-    const manageResourcesUrl =
-      utilities.buildRouteUrl(
-        navigationConstants.NAVIGATION_BUNDLE_MANAGE_RESOURCES,
-        { bundleId, mode }
-      );
+    const manageResourcesUrl = utilities.buildRouteUrl(
+      navigationConstants.NAVIGATION_BUNDLE_MANAGE_RESOURCES,
+      { bundleId, mode }
+    );
     history.push(manageResourcesUrl);
     return success(bundleId, mode);
   }
@@ -47,7 +53,10 @@ export function closeResourceManager(_bundleId) {
     dispatch(navigate(_bundleId));
   };
   function success(bundleId) {
-    return { type: bundleResourceManagerConstants.CLOSE_RESOURCE_MANAGER, bundleId };
+    return {
+      type: bundleResourceManagerConstants.CLOSE_RESOURCE_MANAGER,
+      bundleId
+    };
   }
   function navigate(bundleId) {
     history.push(navigationConstants.NAVIGATION_BUNDLES);
@@ -59,35 +68,51 @@ const msgToAddOrRemoveResources = 'To add or remove resources in the manifest';
 
 export function checkPublicationsHealth(_bundleId) {
   return async (dispatch, getState) => {
-    const { bundles: { addedByBundleIds } } = getState();
+    const {
+      bundles: { addedByBundleIds }
+    } = getState();
     const bundleId = _bundleId;
     const { medium } = addedByBundleIds[bundleId];
-    const applicableWizards = await bundleService.getApplicableWizards(_bundleId, medium);
+    const applicableWizards = await bundleService.getApplicableWizards(
+      _bundleId,
+      medium
+    );
     if (applicableWizards.length === 0) {
       return dispatch({
-        type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_SUCCESS,
+        type:
+          bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_SUCCESS,
         medium,
         message: `There are no publication wizards available for this ${medium} bundle.`
       });
     }
     const sections = await bundleService.getFormBundleTree(_bundleId);
-    const publicationInstances = bundleService.getPublicationsInstances(sections);
+    const publicationInstances = bundleService.getPublicationsInstances(
+      sections
+    );
     const publicationInstanceIds = Object.keys(publicationInstances);
     if (publicationInstanceIds.length === 0) {
       return dispatch({
-        type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR,
+        type:
+          bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_ERROR,
         error: 'NO_PUBLICATION_INSTANCE',
         publications: [],
         errorMessage: `${msgToAddOrRemoveResources}, first add a publication to Publications`,
-        goFix: () => dispatch(openEditMetadata(
-          _bundleId,
-          { formKey: '/publications/publication' },
-          false
-        ))
+        goFix: () =>
+          dispatch(
+            openEditMetadata(
+              _bundleId,
+              { formKey: '/publications/publication' },
+              false
+            )
+          )
       });
     }
-    const pubsMissingCanonSpecs = publicationInstanceIds.filter(pubId =>
-      !(publicationInstances[pubId].contains.find(section => section.id === 'canonSpec').present));
+    const pubsMissingCanonSpecs = publicationInstanceIds.filter(
+      pubId =>
+        !publicationInstances[pubId].contains.find(
+          section => section.id === 'canonSpec'
+        ).present
+    );
     if (pubsMissingCanonSpecs.length > 0) {
       return dispatch(updateMissingCanonSpecs(dispatch, pubsMissingCanonSpecs));
     }
@@ -98,28 +123,44 @@ export function checkPublicationsHealth(_bundleId) {
       // now check that at least components are added.
       const pubFormKey = `/publications/publication/${pubId}/canonSpec`;
       const pubForm = await bundleService.getFormFields(_bundleId, pubFormKey);
-      const [componentField] = pubForm.fields.filter(f => f.name === 'component');
+      const [componentField] = pubForm.fields.filter(
+        f => f.name === 'component'
+      );
       const [firstDefault] = componentField.default || [];
       if (!firstDefault) {
         pubsMissingCanonComponentsIds.push(pubId);
       }
     }
     if (pubsMissingCanonComponentsIds.length > 0) {
-      return dispatch(updateMissingCanonSpecs(dispatch, pubsMissingCanonComponentsIds));
+      return dispatch(
+        updateMissingCanonSpecs(dispatch, pubsMissingCanonComponentsIds)
+      );
     }
-    const bestPubWizards = await bundleService.getBestWizards(_bundleId, publicationInstanceIds);
-    const message = 'The following publication structure wizards will be applied. After modifying the manifest, please click the Review button above to make sure you have the expected publication(s)';
-    const { wizardsResults } = bestPubWizards.reduce((acc, bestPubWizard) => {
-      const { wizard: wizardName } = bestPubWizard;
-      const { description, documentation } = applicableWizards.find(w => w.name === wizardName);
-      const { wizardsResults: prevWizardsResults = {} } = acc;
-      return {
-        wizardsResults:
-          { ...prevWizardsResults, [wizardName]: { ...bestPubWizard, description, documentation } }
-      };
-    }, { wizardsResults: {} });
+    const bestPubWizards = await bundleService.getBestWizards(
+      _bundleId,
+      publicationInstanceIds
+    );
+    const message =
+      'The following publication structure wizards will be applied. After modifying the manifest, please click the Review button above to make sure you have the expected publication(s)';
+    const { wizardsResults } = bestPubWizards.reduce(
+      (acc, bestPubWizard) => {
+        const { wizard: wizardName } = bestPubWizard;
+        const { description, documentation } = applicableWizards.find(
+          w => w.name === wizardName
+        );
+        const { wizardsResults: prevWizardsResults = {} } = acc;
+        return {
+          wizardsResults: {
+            ...prevWizardsResults,
+            [wizardName]: { ...bestPubWizard, description, documentation }
+          }
+        };
+      },
+      { wizardsResults: {} }
+    );
     dispatch({
-      type: bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_SUCCESS,
+      type:
+        bundleResourceManagerConstants.GET_BUNDLE_PUBLICATIONS_HEALTH_SUCCESS,
       medium,
       publications: publicationInstanceIds,
       applicableWizards,
@@ -136,11 +177,14 @@ export function checkPublicationsHealth(_bundleId) {
       error: 'MISSING_CANON_SPECS',
       publications: pubsMissingCanonSpecs,
       errorMessage: `${msgToAddOrRemoveResources}, first add Canon Specification (ESPECIALLY Canon Components) to the following publications: ${pubsMissingCanonSpecs}`,
-      goFix: () => dispatch(openEditMetadata(
-        _bundleId,
-        { formKey: `/publications/publication/${p1}/canonSpec` },
-        false
-      ))
+      goFix: () =>
+        dispatch(
+          openEditMetadata(
+            _bundleId,
+            { formKey: `/publications/publication/${p1}/canonSpec` },
+            false
+          )
+        )
     };
   }
 }
@@ -152,7 +196,11 @@ async function updatePublications(getState, bundleId) {
   await bundleService.updatePublications(bundleId, publications);
 }
 
-export function addManifestResources(_bundleId, _fileToContainerPaths, inputMappers) {
+export function addManifestResources(
+  _bundleId,
+  _fileToContainerPaths,
+  inputMappers
+) {
   return async (dispatch, getState) => {
     dispatch(request(_bundleId, _fileToContainerPaths));
     log.info(`addManifestResources: ${JSON.stringify(_fileToContainerPaths)}`);
@@ -161,7 +209,9 @@ export function addManifestResources(_bundleId, _fileToContainerPaths, inputMapp
     /* eslint-disable no-restricted-syntax */
     /* eslint-disable no-await-in-loop */
     const gottenStateForPublications = getState(); // in case user cancel during add
-    for (const [filePath, containerPath] of Object.entries(_fileToContainerPaths)) {
+    for (const [filePath, containerPath] of Object.entries(
+      _fileToContainerPaths
+    )) {
       try {
         const { bundleManageResources } = getState();
         if (!bundleManageResources.loading) {
@@ -172,19 +222,30 @@ export function addManifestResources(_bundleId, _fileToContainerPaths, inputMapp
           dispatch(success(_bundleId, filePath, containerPath));
         } else {
           const applicableInputMappers = Object.entries(inputMappers)
-            .filter(([, mapperUris]) => mapperUris
-              .includes(containerPath)).map(([mapperKey]) => mapperKey);
+            .filter(([, mapperUris]) => mapperUris.includes(containerPath))
+            .map(([mapperKey]) => mapperKey);
           for (const mapper of applicableInputMappers) {
-            await bundleService.postResource(_bundleId, filePath, containerPath, mapper);
+            await bundleService.postResource(
+              _bundleId,
+              filePath,
+              containerPath,
+              mapper
+            );
             dispatch(success(_bundleId, filePath, containerPath, mapper));
           }
         }
         const {
-          bundleManageResources:
-          { addedFilePaths: origAddedFilePaths, fullToRelativePaths }
+          bundleManageResources: {
+            addedFilePaths: origAddedFilePaths,
+            fullToRelativePaths
+          }
         } = getState();
-        const remainingAddedFilePaths = utilities.subtract(origAddedFilePaths, [filePath]);
-        dispatch(updateAddedFilePaths(remainingAddedFilePaths, fullToRelativePaths));
+        const remainingAddedFilePaths = utilities.subtract(origAddedFilePaths, [
+          filePath
+        ]);
+        dispatch(
+          updateAddedFilePaths(remainingAddedFilePaths, fullToRelativePaths)
+        );
       } catch (error) {
         dispatch(failure(_bundleId, error));
       }
@@ -194,10 +255,19 @@ export function addManifestResources(_bundleId, _fileToContainerPaths, inputMapp
     dispatch(done(_bundleId));
     dispatch(saveMetadatFileToTempBundleFolder(_bundleId));
     const {
-      bundleManageResources:
-      { addedFilePaths: remainingAddedFilePaths, fullToRelativePaths }
+      bundleManageResources: {
+        addedFilePaths: remainingAddedFilePaths,
+        fullToRelativePaths
+      }
     } = getState();
-    dispatch(appendAddedFilePaths(_bundleId, remainingAddedFilePaths, fullToRelativePaths, true));
+    dispatch(
+      appendAddedFilePaths(
+        _bundleId,
+        remainingAddedFilePaths,
+        fullToRelativePaths,
+        true
+      )
+    );
     /*
     await Promise.all(Object.entries(_fileToContainerPaths)
       .map(async ([filePath, containerPath]) => {
@@ -265,7 +335,9 @@ export function deleteManifestResources(_bundleId, _uris) {
   };
   function request(bundleId, uris) {
     return {
-      type: bundleResourceManagerConstants.DELETE_MANIFEST_RESOURCES_REQUEST, bundleId, uris
+      type: bundleResourceManagerConstants.DELETE_MANIFEST_RESOURCES_REQUEST,
+      bundleId,
+      uris
     };
   }
   function success(bundleId, uris) {
@@ -276,7 +348,11 @@ export function deleteManifestResources(_bundleId, _uris) {
     };
   }
   function failure(bundleId, error, uri) {
-    return { type: bundleResourceManagerConstants.DELETE_MANIFEST_RESOURCES_FAILURE, error, uri };
+    return {
+      type: bundleResourceManagerConstants.DELETE_MANIFEST_RESOURCES_FAILURE,
+      error,
+      uri
+    };
   }
 }
 
@@ -288,8 +364,11 @@ async function getOverwritesPerMapper(direction, report, bundleId) {
   /* eslint-disable no-restricted-syntax */
   /* eslint-disable no-await-in-loop */
   for (const [mapperKey, mapperUris] of Object.entries(report)) {
-    const mapperOverwrites =
-      await bundleService.getMapperInputOverwrites(bundleId, { [mapperKey]: mapperUris }, []);
+    const mapperOverwrites = await bundleService.getMapperInputOverwrites(
+      bundleId,
+      { [mapperKey]: mapperUris },
+      []
+    );
     overwrites[mapperKey] = mapperOverwrites;
   }
   return overwrites;
@@ -300,7 +379,11 @@ export function getMapperReport(_direction, _uris, _bundleId) {
     dispatch(request(_direction, _uris));
     const options = await dblDotLocalService.getMappers(_direction);
     const report = await dblDotLocalService.getMapperReport(_direction, _uris);
-    const overwrites = await getOverwritesPerMapper(_direction, report, _bundleId);
+    const overwrites = await getOverwritesPerMapper(
+      _direction,
+      report,
+      _bundleId
+    );
     dispatch(success(_direction, _uris, report, options, overwrites));
   };
   function request(direction, uris) {
@@ -356,24 +439,35 @@ export function appendAddedFilePaths(
       addedFilePaths: origAddedFilePaths = [],
       fullToRelativePaths: fullToRelativePathsOrig
     } = state.bundleManageResources;
-    const { selectedResourceIds: origSelectedIds } = state.bundleManageResourcesUx;
-    const addedFilePaths = utilities.union(origAddedFilePaths, newAddedFilePaths);
-    const selectedIds = setSelectedToNewAdded ?
+    const {
+      selectedResourceIds: origSelectedIds
+    } = state.bundleManageResourcesUx;
+    const addedFilePaths = utilities.union(
+      origAddedFilePaths,
       newAddedFilePaths
+    );
+    const selectedIds = setSelectedToNewAdded
+      ? newAddedFilePaths
       : utilities.union(origSelectedIds, addedFilePaths);
-    dispatch(updateAddedFilePaths(addedFilePaths, fullToRelativePaths || fullToRelativePathsOrig));
+    dispatch(
+      updateAddedFilePaths(
+        addedFilePaths,
+        fullToRelativePaths || fullToRelativePathsOrig
+      )
+    );
     dispatch(selectResources(selectedIds));
-    dispatch(updateInputMapperReports(bundleId, selectedIds, fullToRelativePaths));
+    dispatch(
+      updateInputMapperReports(bundleId, selectedIds, fullToRelativePaths)
+    );
     dispatch(getFileSizes(newAddedFilePaths));
   };
 }
 
 function updateInputMapperReports(bundleId, filePaths, fullToRelativePaths) {
-  const mapperReportUris = filePaths
-    .map(filePath => utilities.getFilePathResourceData(
-      filePath,
-      fullToRelativePaths
-    ).uri);
+  const mapperReportUris = filePaths.map(
+    filePath =>
+      utilities.getFilePathResourceData(filePath, fullToRelativePaths).uri
+  );
   return getMapperReport('input', mapperReportUris, bundleId);
 }
 
@@ -402,7 +496,7 @@ export function updateSortOrder(orderDirection, orderBy) {
 function getFileSizes(newlyAddedFilePaths) {
   return async (dispatch, getState) => {
     const { fileSizes: fileSizesOrig = {} } = getState().bundleManageResources;
-    const fileSizesPromises = newlyAddedFilePaths.map(async (filePath) => {
+    const fileSizesPromises = newlyAddedFilePaths.map(async filePath => {
       const stats = await fs.stat(filePath);
       const { size: sizeRaw } = stats;
       const size = utilities.formatBytesByKbs(sizeRaw);
@@ -410,8 +504,10 @@ function getFileSizes(newlyAddedFilePaths) {
       // const checksum = size < 268435456 ? await md5File(filePath) : '(too expensive)';
     });
     const fileSizesList = await Promise.all(fileSizesPromises);
-    const fileSizes =
-      fileSizesList.reduce((acc, data) => { acc[data.filePath] = data.size; return acc; }, fileSizesOrig);
+    const fileSizes = fileSizesList.reduce((acc, data) => {
+      acc[data.filePath] = data.size;
+      return acc;
+    }, fileSizesOrig);
     dispatch({
       type: bundleResourceManagerConstants.UPDATE_FILE_STATS_SIZES,
       fileSizes
@@ -428,17 +524,27 @@ export function editContainers(newContainer) {
       editedContainers: editedContainersOrig = {}
     } = state.bundleManageResources;
     const { selectedResourceIds = [] } = state.bundleManageResourcesUx;
-    const toAddResourceIds = Set(addedFilePaths).intersect(selectedResourceIds).toArray();
+    const toAddResourceIds = Set(addedFilePaths)
+      .intersect(selectedResourceIds)
+      .toArray();
     const newlyEditedContainers = toAddResourceIds.reduce((acc, filePath) => {
       const finalContainer = utilities.formatContainer(newContainer);
-      const { relativeFolder } = utilities.getFilePathResourceData(filePath, fullToRelativePaths);
-      const updatedContainer = (relativeFolder ?
-        utilities.formatContainer(upath.joinSafe(finalContainer, relativeFolder)) :
-        finalContainer);
+      const { relativeFolder } = utilities.getFilePathResourceData(
+        filePath,
+        fullToRelativePaths
+      );
+      const updatedContainer = relativeFolder
+        ? utilities.formatContainer(
+            upath.joinSafe(finalContainer, relativeFolder)
+          )
+        : finalContainer;
       acc[filePath] = updatedContainer;
       return acc;
     }, {});
-    const editedContainers = { ...editedContainersOrig, ...newlyEditedContainers };
+    const editedContainers = {
+      ...editedContainersOrig,
+      ...newlyEditedContainers
+    };
     dispatch({
       type: bundleResourceManagerConstants.EDIT_RESOURCE_CONTAINERS,
       editedContainers
