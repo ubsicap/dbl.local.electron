@@ -6,7 +6,12 @@ import xml2js from 'xml2js';
 import log from 'electron-log';
 import dblDotLocalConstants from '../constants/dblDotLocal.constants';
 import { authHeader } from '../helpers';
-import { servicesHelpers, getApp, getResourcePath, parseAsJson } from '../helpers/services';
+import {
+  servicesHelpers,
+  getApp,
+  getResourcePath,
+  parseAsJson
+} from '../helpers/services';
 
 export const dblDotLocalService = {
   health,
@@ -45,7 +50,10 @@ function health(method = 'GET') {
     method,
     headers: { 'Content-Type': 'application/json' }
   };
-  return fetch(`${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/health`, requestOptions);
+  return fetch(
+    `${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/health`,
+    requestOptions
+  );
 }
 
 async function htmlBaseUrl() {
@@ -54,7 +62,10 @@ async function htmlBaseUrl() {
     headers: { 'Content-Type': 'application/json' }
   };
   try {
-    const response = await fetch(`${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/${UX_API}/html-base-url`, requestOptions);
+    const response = await fetch(
+      `${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/${UX_API}/html-base-url`,
+      requestOptions
+    );
     return handlResponseAsReadable(response);
   } catch (error) {
     return handlResponseAsReadable(error);
@@ -67,7 +78,10 @@ async function newBundleMedia() {
     headers: { 'Content-Type': 'application/json' }
   };
   try {
-    const response = await fetch(`${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/${UX_API}/new-bundle-media`, requestOptions);
+    const response = await fetch(
+      `${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/${UX_API}/new-bundle-media`,
+      requestOptions
+    );
     return handlResponseAsReadable(response).json();
   } catch (error) {
     return handlResponseAsReadable(error);
@@ -77,14 +91,13 @@ async function newBundleMedia() {
 async function getMappers(direction) {
   const requestOptions = {
     method: 'GET',
-    headers: { ...authHeader(), 'Content-Type': 'application/json' },
+    headers: { ...authHeader(), 'Content-Type': 'application/json' }
   };
   try {
-    const response =
-      await fetch(
-        `${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/${UX_API}/mapper/${direction}`,
-        requestOptions
-      );
+    const response = await fetch(
+      `${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/${UX_API}/mapper/${direction}`,
+      requestOptions
+    );
     return handlResponseAsReadable(response).json();
   } catch (error) {
     return handlResponseAsReadable(error);
@@ -94,15 +107,17 @@ async function getMappers(direction) {
 async function getMapperReport(direction, uris) {
   const requestOptions = {
     method: 'POST',
-    headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: {
+      ...authHeader(),
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
     body: `uris=${encodeURIComponent(JSON.stringify(uris))}`
   };
   try {
-    const response =
-      await fetch(
-        `${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/${UX_API}/mapper/${direction}/report`,
-        requestOptions
-      );
+    const response = await fetch(
+      `${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/${UX_API}/mapper/${direction}/report`,
+      requestOptions
+    );
     return handlResponseAsReadable(response).json();
   } catch (error) {
     return handlResponseAsReadable(error);
@@ -115,7 +130,10 @@ async function getEntryRevisions(dblId) {
     headers: { ...authHeader(), 'Content-Type': 'application/json' }
   };
   try {
-    const response = await fetch(`${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/dbl/entry-revisions/${dblId}`, requestOptions);
+    const response = await fetch(
+      `${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/dbl/entry-revisions/${dblId}`,
+      requestOptions
+    );
     return handlResponseAsReadable(response).json();
   } catch (error) {
     return handlResponseAsReadable(error);
@@ -125,7 +143,10 @@ async function getEntryRevisions(dblId) {
 async function sessionAddTasks(innerTasks) {
   const requestOptions = {
     method: 'POST',
-    headers: { ...authHeader(), 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: {
+      ...authHeader(),
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
     body: `xml=<tasks> ${encodeURIComponent(innerTasks)} </tasks>`
   };
   const url = `${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/${SESSION_API}/add-tasks`;
@@ -138,11 +159,15 @@ async function sessionAddTasks(innerTasks) {
 }
 
 function createNewBundle(medium) {
-  return sessionAddTasks(`<createNewBundle><medium>${medium}</medium></createNewBundle>`);
+  return sessionAddTasks(
+    `<createNewBundle><medium>${medium}</medium></createNewBundle>`
+  );
 }
 
 function downloadMetadata(dblId, revision, license) {
-  return sessionAddTasks(`<downloadMetadata> <entry>${dblId}</entry> <revision>${revision}</revision> <license>${license}</license> </downloadMetadata>`);
+  return sessionAddTasks(
+    `<downloadMetadata> <entry>${dblId}</entry> <revision>${revision}</revision> <license>${license}</license> </downloadMetadata>`
+  );
 }
 
 function handlResponseAsReadable(response) {
@@ -190,12 +215,12 @@ function startDblDotLocalSubProcess(configXmlFile) {
     stdio: ['ignore', 'ignore', 'pipe'],
     detached: false
   });
-  subProcess.stderr.on('data', (data) => {
+  subProcess.stderr.on('data', data => {
     // log.error(data);
     console.log(`dbl_dot_local_app: ${data}`);
   });
   ['error', 'close', 'exit'].forEach(event => {
-    subProcess.on(event, (code) => {
+    subProcess.on(event, code => {
       const msg = `dbl_dot_local_app (${event}): ${code}`;
       if (code === null) {
         console.log(msg);
@@ -218,7 +243,8 @@ const { remote = {} } = electron;
 function getElectronShared() {
   if (remote.app) {
     return remote;
-  } else if (electron.app) {
+  }
+  if (electron.app) {
     return electron;
   }
 }
@@ -234,7 +260,9 @@ function getDialog() {
 }
 
 function getDblDotLocalExecPath() {
-  const execName = `dbl_dot_local_app${(process.platform === 'win32' ? '.exe' : '')}`;
+  const execName = `dbl_dot_local_app${
+    process.platform === 'win32' ? '.exe' : ''
+  }`;
   return path.join(getDblDotLocalExecCwd(), execName);
 }
 
@@ -249,18 +277,15 @@ function importConfigXml(destination) {
   const browserWindow = getCurrentWindow();
   const defaultPath = getConfigXmlDefaultFolder();
   const dialog = getDialog();
-  const filePaths = dialog.showOpenDialog(
-    browserWindow,
-    {
-      title: 'Select template config.xml',
-      defaultPath,
-      filters: [
-        { name: 'XML files', extensions: ['xml'] },
-        { name: 'All Files', extensions: ['*'] }
-      ],
-      properties: ['openFile']
-    }
-  );
+  const filePaths = dialog.showOpenDialog(browserWindow, {
+    title: 'Select template config.xml',
+    defaultPath,
+    filters: [
+      { name: 'XML files', extensions: ['xml'] },
+      { name: 'All Files', extensions: ['*'] }
+    ],
+    properties: ['openFile']
+  });
   if (!filePaths) {
     return;
   }
@@ -273,18 +298,15 @@ function exportConfigXml(sourceFilePath) {
   const browserWindow = getCurrentWindow();
   const defaultPath = getConfigXmlDefaultFolder();
   const dialog = getDialog();
-  const destinationFileName = dialog.showSaveDialog(
-    browserWindow,
-    {
-      title: 'Select folder to save config.xml',
-      buttonLabel: 'Save',
-      defaultPath,
-      filters: [
-        { name: 'XML files', extensions: ['xml'] },
-        { name: 'All Files', extensions: ['*'] }
-      ]
-    }
-  );
+  const destinationFileName = dialog.showSaveDialog(browserWindow, {
+    title: 'Select folder to save config.xml',
+    buttonLabel: 'Save',
+    defaultPath,
+    filters: [
+      { name: 'XML files', extensions: ['xml'] },
+      { name: 'All Files', extensions: ['*'] }
+    ]
+  });
   if (!destinationFileName) {
     return;
   }
@@ -341,7 +363,10 @@ function convertConfigXmlToJson(workspace) {
 function readFileOrTemplate(configXmlPath) {
   if (!fs.existsSync(configXmlPath)) {
     // import config.xml.template
-    const templateConfigXml = path.join(dblDotLocalService.getDblDotLocalExecCwd(), 'config.xml.template');
+    const templateConfigXml = path.join(
+      dblDotLocalService.getDblDotLocalExecCwd(),
+      'config.xml.template'
+    );
     if (!fs.existsSync(templateConfigXml)) {
       console.log(`Missing ${templateConfigXml}`);
       return null;
@@ -352,9 +377,15 @@ function readFileOrTemplate(configXmlPath) {
 }
 
 async function updateConfigXmlWithNewPaths(workspace) {
-  const configXmlSettings = await dblDotLocalService.convertConfigXmlToJson(workspace);
-  const { configXmlSettings: newConfigXmlSettings } =
-    dblDotLocalService.updateAndWriteConfigXmlSettings({ workspace, configXmlSettings });
+  const configXmlSettings = await dblDotLocalService.convertConfigXmlToJson(
+    workspace
+  );
+  const {
+    configXmlSettings: newConfigXmlSettings
+  } = dblDotLocalService.updateAndWriteConfigXmlSettings({
+    workspace,
+    configXmlSettings
+  });
   return { ...newConfigXmlSettings };
 }
 
@@ -362,9 +393,18 @@ function updateAndWriteConfigXmlSettings({ configXmlSettings, workspace }) {
   // set paths
   const newConfigXmlSettings = JSON.parse(JSON.stringify(configXmlSettings));
   const { fullPath } = workspace;
-  newConfigXmlSettings.settings.storer[0].bundleRootDir[0] = path.join(fullPath, 'bundles');
-  newConfigXmlSettings.settings.storer[0].sessionBundleRootDir[0] = path.join(fullPath, 'sessions');
-  newConfigXmlSettings.settings.system[0].logDir[0] = path.join(fullPath, 'log');
+  newConfigXmlSettings.settings.storer[0].bundleRootDir[0] = path.join(
+    fullPath,
+    'bundles'
+  );
+  newConfigXmlSettings.settings.storer[0].sessionBundleRootDir[0] = path.join(
+    fullPath,
+    'sessions'
+  );
+  newConfigXmlSettings.settings.system[0].logDir[0] = path.join(
+    fullPath,
+    'log'
+  );
   const builder = new xml2js.Builder({ headless: true });
   const xml = builder.buildObject(newConfigXmlSettings);
   const configXmlPath = dblDotLocalService.getConfigXmlFullPath(workspace);
@@ -374,22 +414,26 @@ function updateAndWriteConfigXmlSettings({ configXmlSettings, workspace }) {
 }
 
 function startEventSource(authToken, getState) {
-  const eventSource = new EventSource(`${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/events/${authToken}`);
+  const eventSource = new EventSource(
+    `${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/events/${authToken}`
+  );
   console.log(`SSE connected: ${authToken}`);
-  eventSource.onmessage = (event) => {
+  eventSource.onmessage = event => {
     console.log(event);
   };
   eventSource.onopen = () => {
     console.log('Connection to event source opened.');
   };
-  eventSource.onerror = (error) => {
+  eventSource.onerror = error => {
     const { isTrusted, ...rest } = error;
     if (Object.keys(rest).length > 0) {
       log.error('EventSource error:');
       log.error(error);
     }
     const evtSource = error.currentTarget;
-    const { dblDotLocalConfig: { dblDotLocalExecProcess } } = getState();
+    const {
+      dblDotLocalConfig: { dblDotLocalExecProcess }
+    } = getState();
     if (!dblDotLocalExecProcess && !getIsClosedEventSource(evtSource)) {
       evtSource.close();
       console.log('session EventSource closed');
