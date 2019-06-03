@@ -37,6 +37,7 @@ export const dblDotLocalService = {
   getEntryRevisions,
   getMapperReport,
   getMappers,
+  getUxCanons,
   getIsClosedEventSource,
   getApp
 };
@@ -116,6 +117,22 @@ async function getMapperReport(direction, uris) {
   try {
     const response = await fetch(
       `${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/${UX_API}/mapper/${direction}/report`,
+      requestOptions
+    );
+    return handlResponseAsReadable(response).json();
+  } catch (error) {
+    return handlResponseAsReadable(error);
+  }
+}
+
+async function getUxCanons() {
+  const requestOptions = {
+    method: 'GET',
+    headers: { ...authHeader(), 'Content-Type': 'application/json' }
+  };
+  try {
+    const response = await fetch(
+      `${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/${UX_API}/canons`,
       requestOptions
     );
     return handlResponseAsReadable(response).json();

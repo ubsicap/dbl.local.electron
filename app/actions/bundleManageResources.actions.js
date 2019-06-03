@@ -13,6 +13,7 @@ import {
   saveMetadatFileToTempBundleFolder
 } from './bundleEditMetadata.actions';
 import { bundleActions } from './bundle.actions';
+import { emptyObject } from '../utils/defaultValues';
 
 export const bundleManageResourceActions = {
   openResourceManager,
@@ -24,9 +25,22 @@ export const bundleManageResourceActions = {
   updateSortOrder
 };
 
+function getUxCanons() {
+  return async (dispatch, getState) => {
+    const gottenState = getState();
+    const { bundleManageResourcesUx } = gottenState;
+    const { uxCanons = emptyObject } = bundleManageResourcesUx;
+    if (uxCanons === emptyObject) {
+      await bundleService.getUxCanons();
+      dispatch({ type: bundleResourceManagerConstants.GOT_CANONS, uxCanons });
+    }
+  };
+}
+
 export function openResourceManager(_bundleId, _mode) {
   return async dispatch => {
     await bundleService.waitStopCreateMode(_bundleId);
+    dispatch(getUxCanons());
     dispatch(bundleActions.updateBundle(_bundleId));
     dispatch(navigate(_bundleId, _mode));
   };

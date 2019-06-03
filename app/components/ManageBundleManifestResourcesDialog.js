@@ -192,7 +192,8 @@ function createResourceData(
     previousManifestResources
   } = {
     previousManifestResources: emptyBundleManifestResources
-  }
+  },
+  publicationsData = emptyObject
 ) {
   const {
     uri = '',
@@ -229,6 +230,8 @@ function createResourceData(
     status,
     container,
     name,
+    pubs: '',
+    canons: '',
     mimeType,
     size,
     checksum,
@@ -346,6 +349,7 @@ const getMapperInputReport = state =>
   getMapperInputData(state).report || emptyObject;
 const getSelectedMappers = state =>
   state.bundleManageResources.selectedMappers || emptyObject;
+const getUxCanons = state => state.bundleManageResourcesUx.uxCanons;
 const getEditedContainers = state =>
   state.bundleManageResources.editedContainers || emptyObject;
 
@@ -413,11 +417,42 @@ const getPreviousManifestResourcesDataSelector = createSelector(
 
 const getIsLoading = state => state.bundleManageResources.loading || false;
 
+const getActiveBundleSelector = createSelector(
+  [getBundleId, getBundlesById],
+  (bundleId, bundlesById) => bundlesById[bundleId]
+);
+
+const getPublicationsData = createSelector(
+  [getActiveBundleSelector, getUxCanons],
+  (bundle, uxCanons) => {
+    const { publications = emptyObject } = bundle.raw.metadata;
+    const { components } = uxCanons;
+    const publicationData = Object.entries(publications).reduce(
+      (acc, ([pubId, pubData]) => {
+        const {
+          structure = emptyArray,
+          canonSpec: { components }
+        } = pubData;
+        structure.reduce((accStructure, item) => {
+          if (!item.src) return accStructure;
+          // lookup role in uxCanons;
+          accStructure[item.src] = item.role;
+          return accStructure;
+          },
+          {}
+        );
+        return acc;
+      },
+      {})
+    );
+    return {};
+  }
+);
+
 const getManifestResourcesDataSelector = createSelector(
   [
     getMode,
-    getBundleId,
-    getBundlesById,
+    getActiveBundleSelector,
     getPreviousManifestResourcesDataSelector,
     getAddedFilePaths,
     getFullToRelativePaths,
@@ -426,12 +461,12 @@ const getManifestResourcesDataSelector = createSelector(
     getMapperInputReport,
     getSelectedMappers,
     getEditedContainers,
-    getIsLoading
+    getIsLoading,
+    getUxCanons
   ],
   (
     mode,
-    bundleId,
-    bundlesById,
+    bundle,
     prevManifestResourcesData,
     addedFilePaths,
     fullToRelativePaths,
@@ -441,9 +476,9 @@ const getManifestResourcesDataSelector = createSelector(
     selectedMappers,
     editedContainers,
     // eslint-disable-next-line no-unused-vars
-    isLoading /* warning: disabling all checkboxes during isLoading can result in hiding checkbox column */
+    isLoading /* warning: disabling all checkboxes during isLoading can result in hiding checkbox column */,
+    uxCanons
   ) => {
-    const bundle = bundlesById[bundleId];
     const bundleManifestResources = createBundleManifestResources(bundle);
     const { rawManifestResources, storedFiles } = bundleManifestResources;
     const {
@@ -462,7 +497,8 @@ const getManifestResourcesDataSelector = createSelector(
             previousEntryRevision,
             bundlePreviousRevision,
             previousManifestResources
-          }
+          },
+          uxCanons
         )
     );
     const bundleManifestResourceUris = getRawManifestResourceUris(
@@ -477,7 +513,16 @@ const getManifestResourcesDataSelector = createSelector(
           !bundleManifestResourceUris.has(pr.uri) &&
           Object.keys(rawManifestResources).length
       )
-      .map(pr => createResourceData(null, pr, parentStoredFiles[pr.uri], pr));
+      .map(pr =>
+        createResourceData(
+          null,
+          pr,
+          parentStoredFiles[pr.uri],
+          pr,
+          emptyObject,
+          uxCanons
+        )
+      );
     const selectedIdsInputConverters =
       selectedMappers.input || Object.keys(mapperReport);
     const addedResources = getTableDataForAddedResources(
