@@ -428,19 +428,22 @@ const getActiveBundleSelector = createSelector(
 
 // indexed by src -> [{ src, role, pub, canonComponent }]
 function getSrcRoleData(acc, node) {
-  if (/* !uxCanonsComponents || */ !node.src) {
+  if (!node.src) {
+    return acc;
+  }
+  const { path: keys, parents } = this;
+  const { uxCanonsComponents } = parents[0].node;
+  if (!uxCanonsComponents || uxCanonsComponents === emptyObject) {
     return acc;
   }
   const { src, role } = node;
-  const { path: keys, parents } = this;
-  const pub = keys[0];
-  // const myPubNode = parents[parents.length - 2].node;
-  // const book = role.split(' ')[0];
-  // const pubCanonSpecComponents = myPubNode.canonSpec.components;
-  const canonComponent =
-    ''; /* pubCanonSpecComponents.find(value =>
-    uxCanonsComponents[value].books.contains(book)
-  ); */
+  const pub = keys[1];
+  const myPubNode = parents[2].node;
+  const book = role.split(' ')[0];
+  const pubCanonSpecComponents = myPubNode.canonSpec.components;
+  const canonComponent = pubCanonSpecComponents.find(value =>
+    uxCanonsComponents[value].books.includes(book)
+  );
   const sourceData = acc[node.src] || [];
   if (sourceData.length === 0) {
     acc[node.src] = sourceData;
@@ -453,7 +456,10 @@ const getPublicationsDataSelector = createSelector(
   [getActiveBundleSelector, getUxCanons],
   (bundle, uxCanons) => {
     const { publications = emptyObject } = bundle.raw.metadata;
-    const publicationData = traverse(publications).reduce(getSrcRoleData, {});
+    const publicationData = traverse({
+      uxCanonsComponents: uxCanons.components || emptyObject,
+      publications
+    }).reduce(getSrcRoleData, {});
     return publicationData;
   }
 );
@@ -512,8 +518,12 @@ const getManifestResourcesDataSelector = createSelector(
         )
       );
     // next get resource data that's found in publications
-    const publicationsResourcesData = Object.values(publicationsData).reduce(
-      (acc, pubData) => {
+    const publicationsResourcesData = traverse(publicationsData).reduce(
+      (acc, node) => {
+        if (!node.src) {
+          return acc;
+        }
+        const pubData = node;
         const r = rawManifestResources[pubData.src];
         const pubResourceData = createResourceData(
           bundle,
@@ -529,9 +539,7 @@ const getManifestResourcesDataSelector = createSelector(
         );
         acc.push(pubResourceData);
         return acc;
-      },
-      []
-    );
+      }, []);
     const bundleManifestResourceUris = getRawManifestResourceUris(
       bundleManifestResources
     );
