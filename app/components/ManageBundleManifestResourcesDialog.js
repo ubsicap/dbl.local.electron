@@ -434,11 +434,16 @@ function getSrcRoleData(acc, node) {
   if (!uxCanonsComponents || uxCanonsComponents === emptyObject) {
     return acc;
   }
-  const { src, role } = node;
   const myPubNode = parents[2].node;
-  const book = role.split(' ')[0];
-  const pubCanonSpecComponents = myPubNode.canonSpec.components;
-  const { canonComponent, bookNum } = pubCanonSpecComponents.reduce(
+  const { canonSpec: pubCanonSpec = emptyObject } = myPubNode;
+  const { components: pubCanonSpecComponents = emptyArray } = pubCanonSpec;
+  const { src, role } = node;
+  const [book, chapter] = role.split(' ');
+  const chapterNum = chapter ? chapter.padStart(3, ' ') : '';
+  const {
+    canonComponent = 'unspecifiedCanonComponent',
+    bookNum = 'BB'
+  } = pubCanonSpecComponents.reduce(
     (accCanonAndBookNum, canonComponentValue) => {
       const bookIndex = uxCanonsComponents[canonComponentValue].books.indexOf(
         book
@@ -452,7 +457,7 @@ function getSrcRoleData(acc, node) {
     {}
   );
   const pub = keys[1];
-  const pubPath = `${pub}/${canonComponent}/${bookNum}:${role}`;
+  const pubPath = `${pub}/${canonComponent}/${bookNum}:${book} ${chapterNum}`;
   const sourceData = acc[node.src] || [];
   if (sourceData.length === 0) {
     acc[node.src] = sourceData;
@@ -534,6 +539,9 @@ const getManifestResourcesDataSelector = createSelector(
         }
         const pubData = node;
         const r = rawManifestResources[pubData.src];
+        if (!r) {
+          return acc;
+        }
         const pubResourceData = createResourceData(
           bundle,
           r,
