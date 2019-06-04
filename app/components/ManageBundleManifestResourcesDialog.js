@@ -224,7 +224,7 @@ function createResourceData(
     { previousEntryRevision, bundlePreviousRevision, previousManifestResources }
   );
   const disabled = (isDraft && isModifiedFromPrev) || isPrevResource;
-  const { pub, role, canonComponent: canon } = publicationData || emptyObject;
+  const { pubPath } = publicationData || emptyObject;
   return {
     id,
     uri,
@@ -234,9 +234,7 @@ function createResourceData(
     name,
     mimeType,
     size,
-    role,
-    pub,
-    canon,
+    pubPath,
     checksum,
     disabled
   };
@@ -437,18 +435,29 @@ function getSrcRoleData(acc, node) {
     return acc;
   }
   const { src, role } = node;
-  const pub = keys[1];
   const myPubNode = parents[2].node;
   const book = role.split(' ')[0];
   const pubCanonSpecComponents = myPubNode.canonSpec.components;
-  const canonComponent = pubCanonSpecComponents.find(value =>
-    uxCanonsComponents[value].books.includes(book)
+  const { canonComponent, bookNum } = pubCanonSpecComponents.reduce(
+    (accCanonAndBookNum, canonComponentValue) => {
+      const bookIndex = uxCanonsComponents[canonComponentValue].books.indexOf(
+        book
+      );
+      if (bookIndex === -1 || acc.bookNum) {
+        return acc;
+      }
+      const bookNumPadded = String(bookIndex + 1).padStart(2, '0');
+      return { canonComponent: canonComponentValue, bookNum: bookNumPadded };
+    },
+    {}
   );
+  const pub = keys[1];
+  const pubPath = `${pub}/${canonComponent}/${bookNum}:${role}`;
   const sourceData = acc[node.src] || [];
   if (sourceData.length === 0) {
     acc[node.src] = sourceData;
   }
-  sourceData.push({ src, role, pub, canonComponent });
+  sourceData.push({ src, role, pub, pubPath, canonComponent });
   return acc;
 }
 
@@ -539,7 +548,9 @@ const getManifestResourcesDataSelector = createSelector(
         );
         acc.push(pubResourceData);
         return acc;
-      }, []);
+      },
+      []
+    );
     const bundleManifestResourceUris = getRawManifestResourceUris(
       bundleManifestResources
     );
