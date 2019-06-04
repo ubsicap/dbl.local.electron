@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Set } from 'immutable';
 import MUIDataTable from 'mui-datatables';
 import {
   withStyles,
@@ -132,11 +133,15 @@ const getSelectedDataIndexesSelector = createSelector(
 );
 
 function getSelectedDataIndexes(data, selectedIds) {
-  const dataIdToIndex = data.reduce((acc, row, index) => {
-    acc[row.id] = index;
+  const selectedIdsSet = Set(selectedIds);
+  const selectedDataIndexes = data.reduce((acc, row, index) => {
+    if (!selectedIdsSet.has(row.id)) {
+      return acc;
+    }
+    acc.push(index);
     return acc;
-  }, {});
-  return selectedIds.map(rowId => dataIdToIndex[rowId]);
+  }, []);
+  return selectedDataIndexes;
 }
 
 const getSelectableDataSelector = createSelector(
