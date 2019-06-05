@@ -1,3 +1,9 @@
+### Version 0.38.0 (Resource publication columns)
+
+#### Feature
+
+- added pubPath, role, and pub columns to Resources table
+
 ### Version 0.37.5
 
 #### Fix

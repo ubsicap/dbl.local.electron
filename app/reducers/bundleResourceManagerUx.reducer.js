@@ -23,6 +23,9 @@ export function bundleManageResourcesUx(state = initialState, action) {
     case bundleEditMetadataConstants.CLOSE_EDIT_METADATA: {
       return initialState;
     }
+    case bundleResourceManagerConstants.GOT_CANONS: {
+      return updateStateFromActionProps();
+    }
     case bundleResourceManagerConstants.RESOURCES_SELECTED: {
       return updateStateFromActionProps({ autoSelectAllResources: false });
     }
