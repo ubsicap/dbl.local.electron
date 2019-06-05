@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Set } from 'immutable';
 import MUIDataTable from 'mui-datatables';
 import {
   withStyles,
@@ -136,11 +137,15 @@ const getSelectedDataIndexesSelector = createSelector(
 );
 
 function getSelectedDataIndexes(data, selectedIds) {
-  const dataIdToIndex = data.reduce((acc, row, index) => {
-    acc[row.id] = index;
+  const selectedIdsSet = Set(selectedIds);
+  const selectedDataIndexes = data.reduce((acc, row, index) => {
+    if (!selectedIdsSet.has(row.id)) {
+      return acc;
+    }
+    acc.push(index);
     return acc;
-  }, {});
-  return selectedIds.map(rowId => dataIdToIndex[rowId]);
+  }, []);
+  return selectedDataIndexes;
 }
 
 const getSelectableDataSelector = createSelector(
@@ -162,11 +167,10 @@ function getColumns(columnConfig, sortedData, orderBy, orderDirection) {
     name: c.name,
     label: c.label,
     options: {
-      filter: !['name', 'size', 'dblId'].includes(c.name),
+      filter: !['name', 'size', 'dblId', 'pubPath', 'role'].includes(c.name),
       ...getSortDirection(c, orderBy, orderDirection),
       setCellProps: (row, dataIndex) =>
-        getCellProps(c, row, dataIndex, sortedData),
-      ...(c.options || {})
+        getCellProps(c, row, dataIndex, sortedData)
     }
   }));
   return columns;
@@ -231,9 +235,26 @@ class EnhancedTable extends Component<Props> {
     if (freezeCheckedColumnState) {
       return;
     }
-    const allSelectedIds = allRowsSelected.map(
-      rowMeta => sortedData[rowMeta.dataIndex].id
+    const currentDataIndexesSelected = currentRowsSelected.map(
+      r => r.dataIndex
     );
+    // there seems to be a bug in using rowsSelected in context of an filter active
+    // (see https://github.com/gregnb/mui-datatables/issues/514)
+    // for now remove duplicate dataIndexes (assuming the user is disabling a checkbox)
+    const matchingDataIndexes = allRowsSelected
+      .map(rowMeta => rowMeta.dataIndex)
+      .filter(dataIndex => currentDataIndexesSelected.includes(dataIndex));
+    const allSelectedIds = allRowsSelected
+      .filter(
+        rowMeta =>
+          filterOutDuplicateDataIndexes(matchingDataIndexes)(rowMeta) &&
+          (currentDataIndexesSelected.includes(rowMeta.dataIndex) ||
+            !currentDataIndexesSelected.some(
+              dataIndex =>
+                sortedData[dataIndex].id === sortedData[rowMeta.dataIndex].id
+            ))
+      )
+      .map(rowMeta => sortedData[rowMeta.dataIndex].id);
     if (!this.props.multiSelections && allSelectedIds.length > 0) {
       return this.reportSelectedRowIds([allSelectedIds[0]]);
     }
@@ -332,7 +353,7 @@ class EnhancedTable extends Component<Props> {
     const { rowsPerPage, page } = this.state;
     const customToolbarSelect = this.getCustomToolbarSelect();
     const options = {
-      filterType: 'multiselect',
+      filterType: 'multiselect', // can cause crash if any cells are undefined https://github.com/gregnb/mui-datatables/issues/299
       fixedHeader: true,
       responsive: 'scroll',
       rowsSelected: selectedDataIndexes,

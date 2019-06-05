@@ -9792,10 +9792,10 @@ ms@^2.1.1:
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.1.tgz#30a5864eb3ebb0a66f2ebe6d727af06a09d86e0a"
   integrity sha512-tgp+dl5cGk28utYktBsrFqA7HKgrhgPsg6Z/EfhWI4gl1Hwq8B/GmY/0oXZ6nF8hDVesS/FpnYaD/kOWhYQvyg==
 
-mui-datatables@^2.3.0:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/mui-datatables/-/mui-datatables-2.3.0.tgz#06ce227bb3282146496914a09cc1a77bf0b37ee6"
-  integrity sha512-D6mkdEEEnmFM+wFs508MorgeykCl0S45zUllMaPufHa68v1wRO7DMatulL/nHBqqWWLImE7VHYZcVsGkoaU47w==
+mui-datatables@~2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/mui-datatables/-/mui-datatables-2.0.0.tgz#1b00a115934b0e8e7e24d531733a33befda69519"
+  integrity sha512-NYX7mSSLuhd5KFtaVYu8HS4JI/en93pU5W+MVdqpKf0COfaMze1kJf3nAmN0aSXwnes+pJ+rpAw2w85MSEQSrg==
   dependencies:
     classnames "^2.2.5"
     lodash.clonedeep "^4.5.0"
