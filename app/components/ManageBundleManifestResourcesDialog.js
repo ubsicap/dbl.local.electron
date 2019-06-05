@@ -439,7 +439,6 @@ function getSrcRoleData(acc, node) {
   const { components: pubCanonSpecComponents = emptyArray } = pubCanonSpec;
   const { src, role } = node;
   const [book, chapter] = role.split(' ');
-  const chapterNum = chapter ? chapter.padStart(3, ' ') : '';
   const {
     canonComponent = 'unspecifiedCanonComponent',
     bookNum = 'BB'
@@ -457,7 +456,8 @@ function getSrcRoleData(acc, node) {
     {}
   );
   const pub = keys[1];
-  const pubPath = `${pub}/${canonComponent}/${bookNum}:${book} ${chapterNum}`;
+  const chapterNum = chapter ? chapter.padStart(3, '\xa0') : '';
+  const pubPath = `${pub}/${canonComponent}/${bookNum}:${book}${chapterNum}`;
   const sourceData = acc[node.src] || [];
   if (sourceData.length === 0) {
     acc[node.src] = sourceData;
