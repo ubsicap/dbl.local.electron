@@ -96,8 +96,6 @@ function mapStateToProps(state) {
 class Bundles extends PureComponent<Props> {
   props: Props;
 
-  state = {};
-
   componentDidMount() {
     const {
       bundleItems,
@@ -114,15 +112,8 @@ class Bundles extends PureComponent<Props> {
     console.log('getColumnsConfigWithCustomBodyRenderings');
     const { entriesFilters } = this.props;
     const { columns: columnFilters = {} } = entriesFilters || emptyObject;
-    return basicColumnsConfig.map((c, idx) => {
-      const { filterList } = this.state;
-      const columnFilterList =
-        filterList && filterList !== emptyArray
-          ? filterList[idx]
-          : columnFilters[c.name] || [];
-      if (c.name === 'starred') {
-        console.log(columnFilterList);
-      }
+    return basicColumnsConfig.map(c => {
+      const filterList = columnFilters[c.name] || [];
       switch (c.name) {
         case 'dblId': {
           return { ...c, options: { display: 'excluded' } };
@@ -138,7 +129,7 @@ class Bundles extends PureComponent<Props> {
           return {
             ...c,
             options: {
-              filterList: columnFilterList,
+              filterList,
               customBodyRender: (value, tableMeta) => {
                 return (
                   <EntryRowCustomBodyRenderings
@@ -168,21 +159,21 @@ class Bundles extends PureComponent<Props> {
 
   handleFilterChange = (changedColumn: string, filterList: array) => {
     const snapshotFilterList = JSON.parse(JSON.stringify(filterList));
-    this.setState({ filterList: snapshotFilterList }, () => {
-      console.log(`changedColumn: ${changedColumn}, filterList[0][0]: ${snapshotFilterList[0][0]}`);
-      console.log(changedColumn, snapshotFilterList);
-      const { filterList: stateFilterList } = this.state;
-      console.log(`this.state.filterList: ${stateFilterList}`);
-      const columnFilters = basicColumnsConfig.reduce((acc, column, idx) => {
-        const filterValues = snapshotFilterList[idx];
-        if (filterValues.length > 0) {
-          acc[column.name] = snapshotFilterList[idx];
-        }
-        return acc;
-      }, {});
-      const { saveEntriesFiltersToDisk } = this.props;
-      saveEntriesFiltersToDisk(columnFilters);
-    });
+    console.log(
+      `changedColumn: ${changedColumn}, filterList[0][0]: ${
+        snapshotFilterList[0][0]
+      }`
+    );
+    console.log(changedColumn, snapshotFilterList);
+    const columnFilters = basicColumnsConfig.reduce((acc, column, idx) => {
+      const filterValues = snapshotFilterList[idx];
+      if (filterValues.length > 0) {
+        acc[column.name] = snapshotFilterList[idx];
+      }
+      return acc;
+    }, {});
+    const { saveEntriesFiltersToDisk } = this.props;
+    saveEntriesFiltersToDisk(columnFilters);
   };
 
   getTableOptions = () => {

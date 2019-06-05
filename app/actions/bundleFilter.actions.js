@@ -281,8 +281,10 @@ export function saveFilters(columns) {
       type: bundleFilterConstants.SAVE_ENTRIES_FILTERS_TO_DISK,
       entriesFilters
     });
-    // For some reason, changing entriesFilters here results in putting MuiDatatables in a weird state.
-    // dispatch(setEntriesFilters(entriesFilters));
+    // For some reason, changing entriesFilters here results in putting MuiDatatables in a weird state
+    // in mui-datatables versions later than 2.0.0
+    // https://github.com/gregnb/mui-datatables/issues/657
+    dispatch(setEntriesFilters(entriesFilters));
   };
   thunk.meta = {
     debounce: {
