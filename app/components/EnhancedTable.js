@@ -240,7 +240,15 @@ class EnhancedTable extends Component<Props> {
       .map(rowMeta => rowMeta.dataIndex)
       .filter(dataIndex => currentDataIndexesSelected.includes(dataIndex));
     const allSelectedIds = allRowsSelected
-      .filter(filterOutDuplicateDataIndexes(matchingDataIndexes))
+      .filter(
+        rowMeta =>
+          filterOutDuplicateDataIndexes(matchingDataIndexes)(rowMeta) &&
+          (currentDataIndexesSelected.includes(rowMeta.dataIndex) ||
+            !currentDataIndexesSelected.some(
+              dataIndex =>
+                sortedData[dataIndex].id === sortedData[rowMeta.dataIndex].id
+            ))
+      )
       .map(rowMeta => sortedData[rowMeta.dataIndex].id);
     if (!this.props.multiSelections && allSelectedIds.length > 0) {
       return this.reportSelectedRowIds([allSelectedIds[0]]);
