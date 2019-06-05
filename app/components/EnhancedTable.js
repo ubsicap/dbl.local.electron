@@ -163,7 +163,7 @@ function getColumns(columnConfig, sortedData, orderBy, orderDirection) {
     name: c.name,
     label: c.label,
     options: {
-      filter: !['name', 'size'].includes(c.name),
+      filter: !['name', 'size', 'pubPath', 'role'].includes(c.name),
       ...getSortDirection(c, orderBy, orderDirection),
       setCellProps: (row, dataIndex) =>
         getCellProps(c, row, dataIndex, sortedData)
@@ -344,7 +344,7 @@ class EnhancedTable extends Component<Props> {
     const { rowsPerPage } = this.state;
     const customToolbarSelect = this.getCustomToolbarSelect();
     const options = {
-      filterType: 'multiselect',
+      filterType: 'multiselect', // can cause crash if any cells are undefined https://github.com/gregnb/mui-datatables/issues/299
       fixedHeader: true,
       responsive: 'scroll',
       rowsSelected: selectedDataIndexes,

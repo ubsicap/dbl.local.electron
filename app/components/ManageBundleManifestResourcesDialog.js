@@ -224,7 +224,7 @@ function createResourceData(
     { previousEntryRevision, bundlePreviousRevision, previousManifestResources }
   );
   const disabled = (isDraft && isModifiedFromPrev) || isPrevResource;
-  const { pubPath } = publicationData || emptyObject;
+  const { pubPath = '', pub = '', role = '' } = publicationData || emptyObject;
   return {
     id,
     uri,
@@ -235,6 +235,8 @@ function createResourceData(
     mimeType,
     size,
     pubPath,
+    role,
+    pub,
     checksum,
     disabled
   };
