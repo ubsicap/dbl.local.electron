@@ -170,7 +170,8 @@ function getColumns(columnConfig, sortedData, orderBy, orderDirection) {
       filter: !['name', 'size', 'dblId', 'pubPath', 'role'].includes(c.name),
       ...getSortDirection(c, orderBy, orderDirection),
       setCellProps: (row, dataIndex) =>
-        getCellProps(c, row, dataIndex, sortedData)
+        getCellProps(c, row, dataIndex, sortedData),
+      ...(c.options || {})
     }
   }));
   return columns;
