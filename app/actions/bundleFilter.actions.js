@@ -266,7 +266,17 @@ export function toggleShowStarredEntries() {
 }
 
 export function saveFilters(columns) {
-  const entriesFilters = { columns };
+  return dispatch => {
+    const entriesFilters = { columns };
+    // For some reason, changing entriesFilters here results in putting MuiDatatables in a weird state
+    // in mui-datatables versions later than 2.0.0
+    // https://github.com/gregnb/mui-datatables/issues/657
+    dispatch(setEntriesFilters(entriesFilters));
+    dispatch(saveFiltersToDisk(entriesFilters));
+  }
+}
+
+function saveFiltersToDisk(entriesFilters) {
   const thunk = (dispatch, getState) => {
     const {
       workspaceFullPath,
@@ -281,10 +291,6 @@ export function saveFilters(columns) {
       type: bundleFilterConstants.SAVE_ENTRIES_FILTERS_TO_DISK,
       entriesFilters
     });
-    // For some reason, changing entriesFilters here results in putting MuiDatatables in a weird state
-    // in mui-datatables versions later than 2.0.0
-    // https://github.com/gregnb/mui-datatables/issues/657
-    dispatch(setEntriesFilters(entriesFilters));
   };
   thunk.meta = {
     debounce: {
