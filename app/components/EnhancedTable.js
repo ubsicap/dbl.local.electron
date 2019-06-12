@@ -350,8 +350,6 @@ class EnhancedTable extends Component<Props> {
       title,
       tableOptions
     } = this.props;
-    console.log(`columns[0].options.filterList: ${columns[0].options.filterList}`);
-    console.log(columns);
     const { rowsPerPage, page } = this.state;
     const customToolbarSelect = this.getCustomToolbarSelect();
     const options = {

@@ -109,7 +109,7 @@ class Bundles extends PureComponent<Props> {
   }
 
   getColumnsConfigWithCustomBodyRenderings = () => {
-    console.log('getColumnsConfigWithCustomBodyRenderings');
+    // console.log('getColumnsConfigWithCustomBodyRenderings');
     const { entriesFilters } = this.props;
     const { columns: columnFilters = {} } = entriesFilters || emptyObject;
     return basicColumnsConfig.map(c => {
@@ -149,7 +149,6 @@ class Bundles extends PureComponent<Props> {
   };
 
   handleTableChange = (action: string, tableState: object) => {
-    console.log(action, JSON.parse(JSON.stringify(tableState)));
     if (action === 'search' && tableState.searchText === null) {
       // search was closed. so save empty search.
       const { saveEntriesSearchInput } = this.props;
@@ -158,13 +157,6 @@ class Bundles extends PureComponent<Props> {
   };
 
   handleFilterChange = (changedColumn: string, filterList: array) => {
-    const snapshotFilterList = JSON.parse(JSON.stringify(filterList));
-    console.log(
-      `changedColumn: ${changedColumn}, filterList[0][0]: ${
-        snapshotFilterList[0][0]
-      }`
-    );
-    console.log(changedColumn, snapshotFilterList);
     const columnFilters = basicColumnsConfig.reduce((acc, column, idx) => {
       const filterValues = snapshotFilterList[idx];
       if (filterValues.length > 0) {
