@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import { withStyles } from '@material-ui/core/styles';
 import { compose } from 'recompose';
 import { Set } from 'immutable';
@@ -22,7 +23,8 @@ type Props = {
   entriesData: [],
   starredEntries: [],
   searchText: string,
-  entriesFilters: {}
+  entriesFilters: {},
+  isLoadingBundles: boolean
 };
 
 const mapDispatchToProps = {
@@ -85,6 +87,7 @@ function mapStateToProps(state) {
   const entriesFilters = getEntriesFilters(state);
   console.log('Bundles mapStateToProps');
   return {
+    isLoadingBundles: bundles.loading,
     bundleItems,
     entriesData,
     starredEntries,
@@ -196,7 +199,7 @@ class Bundles extends PureComponent<Props> {
   };
 
   render() {
-    const { entriesData, searchText, entriesFilters } = this.props;
+    const { entriesData, searchText, entriesFilters, isLoadingBundles } = this.props;
     const columnsConfigWithCustomBodyRenderings = this.getColumnsConfigWithCustomBodyRenderings();
     console.log('Rendering Bundles');
     if (searchText === undefined || entriesFilters === undefined) {
@@ -204,6 +207,19 @@ class Bundles extends PureComponent<Props> {
     }
     return (
       <div>
+        {(isLoadingBundles && (
+          <div
+            className="row"
+            style={{
+              height: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
+            <CircularProgress size={80} thickness={5} />
+          </div>)
+        )}
         <EnhancedTable
           data={entriesData}
           title="Entries"
