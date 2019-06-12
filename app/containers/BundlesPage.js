@@ -63,9 +63,9 @@ class BundlesPage extends PureComponent<Props> {
       loadStarredEntriesFromDisk,
       loadSearchInputFromDisk
     } = this.props;
+    loadStarredEntriesFromDisk();
     loadSearchInputFromDisk();
     loadEntriesFiltersFromDisk();
-    loadStarredEntriesFromDisk();
   }
 
   handleClick = event => {
