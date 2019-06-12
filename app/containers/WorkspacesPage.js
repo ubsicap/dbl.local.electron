@@ -24,6 +24,7 @@ import {
 } from '../actions/dblDotLocalConfig.actions';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { clearClipboard } from '../actions/clipboard.actions';
+import { resetSearchAndFilters } from '../actions/bundleFilter.actions';
 import { logout } from '../actions/user.actions';
 import MenuAppBar from '../components/MenuAppBar';
 import WorkspaceEditDialog from '../components/WorkspaceEditDialog';
@@ -39,7 +40,8 @@ type Props = {
   getDblDotLocalExecStatus: () => {},
   gotoWorkspaceLoginPage: () => {},
   logout: () => {},
-  clearClipboard: () => {}
+  clearClipboard: () => {},
+  resetEntriesSearchAndFilters: () => {}
 };
 
 function mapStateToProps(state) {
@@ -58,7 +60,8 @@ const mapDispatchToProps = {
   getDblDotLocalExecStatus,
   gotoWorkspaceLoginPage,
   logout,
-  clearClipboard
+  clearClipboard,
+  resetEntriesSearchAndFilters: resetSearchAndFilters
 };
 
 const styles = theme => ({
@@ -142,6 +145,7 @@ class WorkspacesPage extends PureComponent<Props> {
     this.props.logout();
     this.props.getDblDotLocalExecStatus();
     this.props.clearClipboard();
+    this.props.resetEntriesSearchAndFilters();
     this.updateAllWorkspaceCards();
   }
 

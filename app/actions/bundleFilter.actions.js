@@ -17,12 +17,17 @@ export const bundleFilterActions = {
   setEntriesFilters,
   loadSearchInput,
   loadStarredEntries,
-  loadEntriesFilters
+  loadEntriesFilters,
+  resetSearchAndFilters
 };
 
 export default bundleFilterActions;
 
 const canceledState = { isCanceled: true };
+
+export function resetSearchAndFilters() {
+  return { type: bundleFilterConstants.RESET_INITIAL_STATE };
+}
 
 function getAreBundlesLoading(getState) {
   const { bundles } = getState();

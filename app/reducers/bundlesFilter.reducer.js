@@ -11,14 +11,16 @@ const initialSearchResults = {
   matches: {}
 };
 
-export function bundlesFilter(
-  state = {
-    isSearchActive: false,
-    starredEntries: Set()
-  },
-  action
-) {
+const initialState = {
+  isSearchActive: false,
+  starredEntries: Set()
+};
+
+export function bundlesFilter(state = initialState, action) {
   switch (action.type) {
+    case bundleFilterConstants.RESET_INITIAL_STATE: {
+      return initialState;
+    }
     case bundleFilterConstants.UPDATE_SEARCH_INPUT: {
       const hasKeywordsChanged = !areArraysEqual(
         state.searchKeywords,
