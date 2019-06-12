@@ -161,6 +161,7 @@ class Bundles extends PureComponent<Props> {
 
   handleFilterChange = (changedColumn: string, filterList: array) => {
     const columnFilters = basicColumnsConfig.reduce((acc, column, idx) => {
+      const snapshotFilterList = JSON.parse(JSON.stringify(filterList));
       const filterValues = snapshotFilterList[idx];
       if (filterValues.length > 0) {
         acc[column.name] = snapshotFilterList[idx];
@@ -199,7 +200,12 @@ class Bundles extends PureComponent<Props> {
   };
 
   render() {
-    const { entriesData, searchText, entriesFilters, isLoadingBundles } = this.props;
+    const {
+      entriesData,
+      searchText,
+      entriesFilters,
+      isLoadingBundles
+    } = this.props;
     const columnsConfigWithCustomBodyRenderings = this.getColumnsConfigWithCustomBodyRenderings();
     console.log('Rendering Bundles');
     if (searchText === undefined || entriesFilters === undefined) {
@@ -207,7 +213,7 @@ class Bundles extends PureComponent<Props> {
     }
     return (
       <div>
-        {(isLoadingBundles && (
+        {isLoadingBundles && (
           <div
             className="row"
             style={{
@@ -218,7 +224,7 @@ class Bundles extends PureComponent<Props> {
             }}
           >
             <CircularProgress size={80} thickness={5} />
-          </div>)
+          </div>
         )}
         <EnhancedTable
           data={entriesData}
