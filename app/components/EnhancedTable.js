@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Set } from 'immutable';
-import MUIDataTable from 'mui-datatables';
+// import MUIDataTable from 'mui-datatables';
 import {
   withStyles,
   createMuiTheme,
@@ -15,6 +15,7 @@ import Typography from '@material-ui/core/Typography';
 import { emptyObject } from '../utils/defaultValues';
 import IntegrationAutosuggest from './IntegrationAutosuggest';
 import { ux } from '../utils/ux';
+import MUIDataTable from '../debug/MUIDataTable';
 
 const getMuiTheme = () =>
   createMuiTheme({
