@@ -8,6 +8,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import EnhancedTable from './EnhancedTable';
 import { ux } from '../utils/ux';
 import { selectMappers } from '../actions/bundleManageResources.actions';
+import { emptyObject } from '../utils/defaultValues';
 
 type Props = {
   classes: {},
@@ -149,7 +150,7 @@ function mapStateToProps(state, props) {
   const { bundleManageResources } = state;
   const { mapperReports = {} } = bundleManageResources;
   const { [props.direction]: mapperData = {} } = mapperReports;
-  const { report, options, overwrites } = mapperData;
+  const { report, options, overwrites = emptyObject } = mapperData;
   const tableData = Object.entries(report).map(([mapperKey, mapperReport]) =>
     createMapperRowData(
       mapperKey,
