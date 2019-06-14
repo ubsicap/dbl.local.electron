@@ -111,8 +111,15 @@ class MapperTable extends Component<Props> {
   };
 
   render() {
-    const { columnConfig, tableData, selectedIds, classes } = this.props;
+    const {
+      classes,
+      columnConfig,
+      tableData,
+      selectedIds,
+      direction
+    } = this.props;
     const { orderBy, orderDirection } = this.state;
+    const titlePrepend = direction === 'input' ? 'Import' : 'Export /';
     return (
       <React.Fragment>
         <Toolbar
@@ -121,7 +128,7 @@ class MapperTable extends Component<Props> {
           })}
         >
           <EnhancedTable
-            title="Converters"
+            title={`${titlePrepend} Converters`}
             data={tableData}
             columnConfig={columnConfig}
             secondarySorts={secondarySorts}

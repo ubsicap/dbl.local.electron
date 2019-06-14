@@ -77,6 +77,7 @@ type Props = {
   publicationsHealthSuccessMessage: ?string,
   wizardsResults: ?{},
   mapperInputData: ?{},
+  mapperOutputData: ?{},
   selectedIdsInputConverters: ?{},
   goFixPublications: ?() => {},
   selectedItemsToPaste: ?{},
@@ -350,6 +351,8 @@ const getMapperInputData = state =>
   getMapperReports(state).input || emptyObject;
 const getMapperInputReport = state =>
   getMapperInputData(state).report || emptyObject;
+const getMapperOutputData = state =>
+  getMapperReports(state).output || emptyObject;
 const getSelectedMappers = state =>
   state.bundleManageResources.selectedMappers || emptyObject;
 const getUxCanons = state =>
@@ -949,7 +952,6 @@ function mapStateToProps(state, props) {
     loading = false,
     isStoreMode = false,
     fetchingMetadata = false,
-    mapperReports = emptyObject,
     selectedMappers = emptyObject
   } = bundleManageResources;
   const {
@@ -977,10 +979,11 @@ function mapStateToProps(state, props) {
     mode !== 'revisions'
       ? getPreviousManifestResourcesDataSelector(state, props)
       : { previousManifestResources: emptyBundleManifestResources };
-  const { input: mapperInputData } = mapperReports;
-  const { report: mapperReport = emptyObject } = mapperInputData || emptyObject;
+  const mapperOutputData = getMapperOutputData(state);
+  const mapperInputData = getMapperInputData(state);
+  const mapperInputReport = getMapperInputReport(state);
   const selectedIdsInputConverters =
-    selectedMappers.input || Object.keys(mapperReport);
+    selectedMappers.input || Object.keys(mapperInputReport);
   const entryRevisions =
     mode === 'revisions'
       ? getEntryRevisionsDataSelector(state, props)
@@ -1005,6 +1008,7 @@ function mapStateToProps(state, props) {
     mode,
     showMetadataFile,
     mapperInputData,
+    mapperOutputData,
     selectedIdsInputConverters,
     selectedRowIds,
     autoSelectAllResources,
@@ -1266,7 +1270,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     if (mode === 'revisions') {
       selectBundleRevisions(selectedIds);
     } else {
-      selectBundleResources(selectedIds);
+      selectBundleResources(selectedIds, true);
     }
   };
 
@@ -1738,6 +1742,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           {...addModeProps}
         />
         {this.renderInputMapperReportTable()}
+        {this.renderOutputMapperReportTable()}
       </React.Fragment>
     );
   };
@@ -1758,6 +1763,20 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return (
       <MapperTable direction="input" selectedIds={selectedIdsInputConverters} />
     );
+  };
+
+  renderOutputMapperReportTable = () => {
+    const { storedResources } = this.getSelectedResourcesByStatus();
+    if (storedResources.length === 0) {
+      return null;
+    }
+    const { mapperOutputData = {} } = this.props;
+    const { report = {} } = mapperOutputData;
+    const mapperKeys = Object.keys(report);
+    if (mapperKeys.length === 0) {
+      return null;
+    }
+    return <MapperTable direction="output" selectedIds={emptyArray} />;
   };
 
   renderTable = () => {

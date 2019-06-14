@@ -430,10 +430,28 @@ export function selectMappers(direction, mapperIds) {
   };
 }
 
-export function selectResources(selectedResourceIds) {
-  return {
-    type: bundleResourceManagerConstants.RESOURCES_SELECTED,
-    selectedResourceIds
+export function selectResources(
+  selectedResourceIds,
+  shouldUpdateOutputMapperReports = false
+) {
+  return (dispatch, getState) => {
+    if (shouldUpdateOutputMapperReports) {
+      const {
+        bundleId,
+        addedFilePaths = []
+      } = getState().bundleManageResources;
+      const addedFilePathsSet = Set(addedFilePaths);
+      dispatch(
+        updateOutputMapperReports(
+          bundleId,
+          selectedResourceIds.filter(id => !addedFilePathsSet.has(id))
+        )
+      );
+    }
+    dispatch({
+      type: bundleResourceManagerConstants.RESOURCES_SELECTED,
+      selectedResourceIds
+    });
   };
 }
 
@@ -486,6 +504,10 @@ function updateInputMapperReports(bundleId, filePaths, fullToRelativePaths) {
       utilities.getFilePathResourceData(filePath, fullToRelativePaths).uri
   );
   return getMapperReport('input', mapperReportUris, bundleId);
+}
+
+export function updateOutputMapperReports(bundleId, mapperReportUris) {
+  return getMapperReport('output', mapperReportUris, bundleId);
 }
 
 export function updateAddedFilePaths(addedFilePaths, fullToRelativePaths) {
