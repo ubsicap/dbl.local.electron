@@ -79,6 +79,7 @@ type Props = {
   mapperInputData: ?{},
   mapperOutputData: ?{},
   selectedIdsInputConverters: ?{},
+  selectedIdsOutputConverters: ?{},
   goFixPublications: ?() => {},
   selectedItemsToPaste: ?{},
   selectedRowIds: [],
@@ -353,6 +354,8 @@ const getMapperInputReport = state =>
   getMapperInputData(state).report || emptyObject;
 const getMapperOutputData = state =>
   getMapperReports(state).output || emptyObject;
+const getMapperOutputReport = state =>
+  getMapperOutputData(state).report || emptyObject;
 const getSelectedMappers = state =>
   state.bundleManageResources.selectedMappers || emptyObject;
 const getUxCanons = state =>
@@ -980,10 +983,13 @@ function mapStateToProps(state, props) {
       ? getPreviousManifestResourcesDataSelector(state, props)
       : { previousManifestResources: emptyBundleManifestResources };
   const mapperOutputData = getMapperOutputData(state);
+  const mapperOutputReport = getMapperOutputReport(state);
   const mapperInputData = getMapperInputData(state);
   const mapperInputReport = getMapperInputReport(state);
   const selectedIdsInputConverters =
     selectedMappers.input || Object.keys(mapperInputReport);
+  const selectedIdsOutputConverters =
+    selectedMappers.output || Object.keys(mapperOutputReport);
   const entryRevisions =
     mode === 'revisions'
       ? getEntryRevisionsDataSelector(state, props)
@@ -1010,6 +1016,7 @@ function mapStateToProps(state, props) {
     mapperInputData,
     mapperOutputData,
     selectedIdsInputConverters,
+    selectedIdsOutputConverters,
     selectedRowIds,
     autoSelectAllResources,
     previousEntryRevision,
@@ -1770,13 +1777,21 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     if (storedResources.length === 0) {
       return null;
     }
-    const { mapperOutputData = {} } = this.props;
+    const {
+      mapperOutputData = {},
+      selectedIdsOutputConverters = emptyArray
+    } = this.props;
     const { report = {} } = mapperOutputData;
     const mapperKeys = Object.keys(report);
     if (mapperKeys.length === 0) {
       return null;
     }
-    return <MapperTable direction="output" selectedIds={emptyArray} />;
+    return (
+      <MapperTable
+        direction="output"
+        selectedIds={selectedIdsOutputConverters}
+      />
+    );
   };
 
   renderTable = () => {
