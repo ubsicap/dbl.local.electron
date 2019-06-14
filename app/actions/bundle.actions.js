@@ -773,14 +773,17 @@ function removeBundleSuccess(id) {
   };
 }
 
-export function requestSaveBundleTo(id, selectedFolder) {
+export function requestSaveBundleTo(id, selectedFolder, selectedResources) {
   return async (dispatch, getState) => {
     const bundleInfo = await bundleService.fetchById(id);
     const bundleBytesToSave = traverse(bundleInfo.store.file_info).reduce(
       addByteSize,
       0
     );
-    const resourcePaths = getStoredResourcePaths(getState, id);
+    const resourcePaths = getStoredResourcePaths(getState, id).filter(
+      resourcePath =>
+        !selectedResources || selectedResources.includes(resourcePath)
+    );
     const filePathsToExport = [...resourcePaths, 'metadata.xml'];
     const resourcePathsProgress = filePathsToExport.reduce(
       (acc, resourcePath) => {

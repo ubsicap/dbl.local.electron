@@ -37,7 +37,8 @@ import {
   removeResources,
   getEntryRevisions,
   createBundleFromDBL,
-  selectBundleEntryRevision
+  selectBundleEntryRevision,
+  requestSaveBundleTo
 } from '../actions/bundle.actions';
 import EnhancedTable from './EnhancedTable';
 import EnhancedTableToolbar from './EnhancedTableToolbar';
@@ -52,7 +53,7 @@ import EntryDrawer from './EntryDrawer';
 import EntryDialogBody from './EntryDialogBody';
 import { emptyArray, emptyObject } from '../utils/defaultValues';
 
-const { dialog } = require('electron').remote;
+const { dialog, app } = require('electron').remote;
 
 const NEED_CONTAINER = '/?';
 
@@ -103,7 +104,8 @@ type Props = {
   selectBundleRevisions: () => {},
   appendResourceDialogAddedFilePaths: () => {},
   editResourceDialogContainers: () => {},
-  updateResourceDialogSortOrder: () => {}
+  updateResourceDialogSortOrder: () => {},
+  requestSaveResourcesTo: () => {}
 };
 
 const defaultProps = {
@@ -354,8 +356,6 @@ const getMapperInputReport = state =>
   getMapperInputData(state).report || emptyObject;
 const getMapperOutputData = state =>
   getMapperReports(state).output || emptyObject;
-const getMapperOutputReport = state =>
-  getMapperOutputData(state).report || emptyObject;
 const getSelectedMappers = state =>
   state.bundleManageResources.selectedMappers || emptyObject;
 const getUxCanons = state =>
@@ -983,13 +983,11 @@ function mapStateToProps(state, props) {
       ? getPreviousManifestResourcesDataSelector(state, props)
       : { previousManifestResources: emptyBundleManifestResources };
   const mapperOutputData = getMapperOutputData(state);
-  const mapperOutputReport = getMapperOutputReport(state);
   const mapperInputData = getMapperInputData(state);
   const mapperInputReport = getMapperInputReport(state);
   const selectedIdsInputConverters =
     selectedMappers.input || Object.keys(mapperInputReport);
-  const selectedIdsOutputConverters =
-    selectedMappers.output || Object.keys(mapperOutputReport);
+  const selectedIdsOutputConverters = selectedMappers.output || emptyArray;
   const entryRevisions =
     mode === 'revisions'
       ? getEntryRevisionsDataSelector(state, props)
@@ -1054,7 +1052,8 @@ const mapDispatchToProps = {
   selectBundleRevisions: selectRevisions,
   appendResourceDialogAddedFilePaths: appendAddedFilePaths,
   editResourceDialogContainers: editContainers,
-  updateResourceDialogSortOrder: updateSortOrder
+  updateResourceDialogSortOrder: updateSortOrder,
+  requestSaveResourcesTo: requestSaveBundleTo
 };
 
 const materialStyles = theme => ({
@@ -1162,6 +1161,25 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   handleCleanResources = (bundleId, storedResources) => () => {
     const { removeBundleResources } = this.props;
     removeBundleResources(bundleId, storedResources.map(r => r.uri));
+  };
+
+  handleExportResources = (bundleId, storedResources) => () => {
+    const { requestSaveResourcesTo } = this.props;
+    const defaultPath = app.getPath('downloads'); // bundleSavedToInfo
+    //  ? bundleSavedToInfo.folderName
+    //  : app.getPath('downloads');
+    const [selectedFolder] = dialog.showOpenDialog({
+      defaultPath,
+      properties: ['openDirectory']
+    });
+    if (!selectedFolder) {
+      return;
+    }
+    requestSaveResourcesTo(
+      bundleId,
+      selectedFolder,
+      storedResources.map(r => r.uri)
+    );
   };
 
   handleDownloadRevision = () => {
@@ -1510,7 +1528,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   };
 
   getOkButtonDataDownloadOrCleanResources = () => {
-    const { classes, bundleId } = this.props;
+    const { classes, bundleId, selectedIdsOutputConverters } = this.props;
     const resourceSelectionStatus = this.getSelectedResourcesByStatus();
     const {
       storedResources,
@@ -1528,13 +1546,20 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         bundleId,
         manifestResources
       );
-    }
-    if (storedResources === inEffect) {
-      OkButtonLabel = `Clean (${storedResources.length})`;
-      OkButtonClickHandler = this.handleCleanResources(
-        bundleId,
-        storedResources
-      );
+    } else if (storedResources === inEffect) {
+      if (selectedIdsOutputConverters.length > 0) {
+        OkButtonLabel = `Export / Convert (${storedResources.length})`;
+        OkButtonClickHandler = this.handleExportResources(
+          bundleId,
+          storedResources
+        );
+      } else {
+        OkButtonLabel = `Clean (${storedResources.length})`;
+        OkButtonClickHandler = this.handleCleanResources(
+          bundleId,
+          storedResources
+        );
+      }
     }
     const OkButtonIcon = this.getDownloadOkButtonIcon(resourceSelectionStatus);
     const OkButtonProps = {
@@ -1773,8 +1798,11 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   };
 
   renderOutputMapperReportTable = () => {
-    const { storedResources } = this.getSelectedResourcesByStatus();
-    if (storedResources.length === 0) {
+    const {
+      storedResources,
+      toAddResources
+    } = this.getSelectedResourcesByStatus();
+    if (storedResources.length === 0 || toAddResources.length > 0) {
       return null;
     }
     const {
