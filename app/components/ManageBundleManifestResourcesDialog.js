@@ -1097,6 +1097,16 @@ function mapSuggestions(suggestions) {
   return suggestions.map(suggestion => ({ label: suggestion }));
 }
 
+function getSelectedMapperMap(mappers, selectedMapperKeys) {
+  const selectedMappers = Object.keys(mappers)
+    .filter(mapperKey => selectedMapperKeys.includes(mapperKey))
+    .reduce(
+      (acc, mapperKey) => ({ ...acc, [mapperKey]: mappers[mapperKey] }),
+      {}
+    );
+  return selectedMappers;
+}
+
 class ManageBundleManifestResourcesDialog extends Component<Props> {
   props: Props;
 
@@ -1175,10 +1185,19 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     if (!selectedFolder) {
       return;
     }
+
+    const { mapperOutputData = {} } = this.props;
+    const { report: outputMappers = {} } = mapperOutputData;
+    const { selectedIdsOutputConverters: selectedMapperKeys = [] } = this.props;
+    const selectedMappers = getSelectedMapperMap(
+      outputMappers,
+      selectedMapperKeys
+    );
     requestSaveResourcesTo(
       bundleId,
       selectedFolder,
-      storedResources.map(r => r.uri)
+      storedResources.map(r => r.uri),
+      selectedMappers
     );
   };
 
@@ -1260,12 +1279,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { mapperInputData = {} } = this.props;
     const { report: inputMappers = {} } = mapperInputData;
     const { selectedIdsInputConverters: selectedMapperKeys = [] } = this.props;
-    const selectedMappers = Object.keys(inputMappers)
-      .filter(mapperKey => selectedMapperKeys.includes(mapperKey))
-      .reduce(
-        (acc, mapperKey) => ({ ...acc, [mapperKey]: inputMappers[mapperKey] }),
-        {}
-      );
+    const selectedMappers = getSelectedMapperMap(
+      inputMappers,
+      selectedMapperKeys
+    );
     const filesToContainers = sort(toAddResources)
       .asc('uri')
       .reduce(

@@ -9,6 +9,7 @@ import { updateSearchResultsForBundleId } from './bundleFilter.actions';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 // eslint-disable-next-line import/no-cycle
 import { workspaceHelpers } from '../helpers/workspaces.helpers';
+import { bundleHelpers } from '../helpers/bundle.helpers';
 import { browserWindowService } from '../services/browserWindow.service';
 import {
   getAddedBundle,
@@ -773,7 +774,12 @@ function removeBundleSuccess(id) {
   };
 }
 
-export function requestSaveBundleTo(id, selectedFolder, selectedResources) {
+export function requestSaveBundleTo(
+  id,
+  selectedFolder,
+  selectedResources,
+  selectedMappers
+) {
   return async (dispatch, getState) => {
     const bundleInfo = await bundleService.fetchById(id);
     const bundleBytesToSave = traverse(bundleInfo.store.file_info).reduce(
@@ -795,7 +801,11 @@ export function requestSaveBundleTo(id, selectedFolder, selectedResources) {
     let bundleBytesSaved = 0;
     dispatch(request(id, selectedFolder, bundleBytesToSave, filePathsToExport));
     dispatch(updateSearchResultsForBundleId(id));
-    filePathsToExport.forEach(async resourcePath => {
+    const resourceUris = bundleHelpers.getResourceUris(
+      filePathsToExport,
+      selectedMappers
+    );
+    resourceUris.forEach(async resourcePath => {
       try {
         const downloadItem = await bundleService.requestSaveResourceTo(
           selectedFolder,

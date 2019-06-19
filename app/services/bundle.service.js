@@ -8,6 +8,7 @@ import uuidv1 from 'uuid/v1';
 import waitUntil from 'node-wait-until';
 import { authHeader } from '../helpers';
 import { servicesHelpers } from '../helpers/services';
+import { bundleHelpers } from '../helpers/bundle.helpers';
 import dblDotLocalConfigConstants from '../constants/dblDotLocal.constants';
 import download from './download-with-fetch.flow';
 
@@ -444,11 +445,13 @@ function requestSaveResourceTo(
   selectedFolder,
   bundleId,
   resourcePath,
-  progressCallback
+  progressCallback,
+  mapper
 ) {
   const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${RESOURCE_API}/${resourcePath}`;
+  const fullUri = bundleHelpers.buildFullUriWithOptionalMapper(url, mapper);
   const targetPath = path.join(selectedFolder, resourcePath);
-  return download(url, targetPath, progressCallback, authHeader());
+  return download(fullUri, targetPath, progressCallback, authHeader());
 }
 
 function getFormBundleTree(bundleId) {
@@ -621,7 +624,7 @@ function stopCreateContent(bundleId, mode = 'success') {
 
 function postResource(bundleId, filePath, bundlePath, mapper) {
   const uri = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/resource/${bundlePath}`;
-  const fullUri = mapper ? `${uri}?mapper=${mapper}` : uri;
+  const fullUri = buildFullUriWithOptionalMapper(uri, mapper);
   log.info(`postResource uri: ${fullUri}`);
   const filename = path.basename(filePath);
   const data = new FormData();
