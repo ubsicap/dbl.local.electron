@@ -9,9 +9,9 @@ import { updateSearchResultsForBundleId } from './bundleFilter.actions';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 // eslint-disable-next-line import/no-cycle
 import { workspaceHelpers } from '../helpers/workspaces.helpers';
-import { bundleHelpers } from '../helpers/bundle.helpers';
 import { browserWindowService } from '../services/browserWindow.service';
 import {
+  bundleHelpers,
   getAddedBundle,
   getManifestResourcePaths,
   getStoredResourcePaths

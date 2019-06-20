@@ -13,6 +13,7 @@ import {
   saveMetadatFileToTempBundleFolder
 } from './bundleEditMetadata.actions';
 import { bundleActions } from './bundle.actions';
+import { bundleHelpers } from '../helpers/bundle.helpers';
 import { emptyObject } from '../utils/defaultValues';
 
 export const bundleManageResourceActions = {
@@ -238,9 +239,10 @@ export function addManifestResources(
           await bundleService.postResource(_bundleId, filePath, containerPath);
           dispatch(success(_bundleId, filePath, containerPath));
         } else {
-          const applicableInputMappers = Object.entries(inputMappers)
-            .filter(([, mapperUris]) => mapperUris.includes(containerPath))
-            .map(([mapperKey]) => mapperKey);
+          const applicableInputMappers = bundleHelpers.getApplicableMappersForResourcePath(
+            inputMappers,
+            containerPath
+          );
           for (const mapper of applicableInputMappers) {
             await bundleService.postResource(
               _bundleId,
