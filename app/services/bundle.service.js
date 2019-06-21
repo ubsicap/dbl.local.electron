@@ -448,7 +448,7 @@ function requestSaveResourceTo(
   progressCallback,
   mapper
 ) {
-  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${RESOURCE_API}/${resourcePath}`;
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${RESOURCE_API}-stream/${resourcePath}`;
   const fullUri = bundleHelpers.buildFullUriWithOptionalMapper(url, mapper);
   const targetPath = path.join(selectedFolder, resourcePath);
   return download(fullUri, targetPath, progressCallback, authHeader());
