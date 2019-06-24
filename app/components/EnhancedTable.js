@@ -236,29 +236,9 @@ class EnhancedTable extends Component<Props> {
     if (freezeCheckedColumnState) {
       return;
     }
-    const currentDataIndexesSelected = currentRowsSelected.map(
-      r => r.dataIndex
+    const allSelectedIds = allRowsSelected.map(
+      rowMeta => sortedData[rowMeta.dataIndex].id
     );
-    // there seems to be a bug in using rowsSelected in context of an filter active
-    // (see https://github.com/gregnb/mui-datatables/issues/514)
-    // for now remove duplicate dataIndexes (assuming the user is disabling a checkbox)
-    const matchingDataIndexes = allRowsSelected
-      .map(rowMeta => rowMeta.dataIndex)
-      .filter(dataIndex => currentDataIndexesSelected.includes(dataIndex));
-    const allSelectedIds = allRowsSelected
-      .filter(
-        rowMeta =>
-          filterOutDuplicateDataIndexes(matchingDataIndexes)(rowMeta) &&
-          (currentDataIndexesSelected.includes(rowMeta.dataIndex) ||
-            !currentDataIndexesSelected.some(
-              dataIndex =>
-                sortedData[dataIndex].id === sortedData[rowMeta.dataIndex].id
-            ))
-      )
-      .map(rowMeta => sortedData[rowMeta.dataIndex].id);
-    if (!this.props.multiSelections && allSelectedIds.length > 0) {
-      return this.reportSelectedRowIds([allSelectedIds[0]]);
-    }
     return this.reportSelectedRowIds(allSelectedIds);
   };
 
@@ -347,7 +327,8 @@ class EnhancedTable extends Component<Props> {
       selectableData,
       freezeCheckedColumnState,
       title,
-      tableOptions
+      tableOptions,
+      multiSelections
     } = this.props;
     console.log(
       `columns[0].options.filterList: ${columns[0].options.filterList}`
@@ -355,6 +336,7 @@ class EnhancedTable extends Component<Props> {
     console.log(columns);
     const { rowsPerPage, page } = this.state;
     const customToolbarSelect = this.getCustomToolbarSelect();
+    const selectableRowsOption = multiSelections ? 'multiple' : 'single';
     const options = {
       filterType: 'multiselect', // can cause crash if any cells are undefined https://github.com/gregnb/mui-datatables/issues/299
       fixedHeader: true,
@@ -362,7 +344,7 @@ class EnhancedTable extends Component<Props> {
       rowsSelected: selectedDataIndexes,
       onRowsSelect: this.handleRowsSelect,
       onRowClick: this.handleRowClick,
-      selectableRows: selectableData.length > 0 ? 'multiple' : 'none',
+      selectableRows: selectableData.length > 0 ? selectableRowsOption : 'none',
       isRowSelectable: dataIndex =>
         !freezeCheckedColumnState &&
         !(dataIndex < sortedData.length
