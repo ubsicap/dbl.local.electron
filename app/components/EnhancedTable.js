@@ -299,7 +299,7 @@ class EnhancedTable extends Component<Props> {
     }
     const { classes, editContainer, freezeCheckedColumnState } = this.props;
     return {
-      customToolbarSelect: (selectedRows, displayData, setSelectedRows) => (
+      customToolbarSelect: (/* selectedRows, displayData, setSelectedRows */) => (
         <React.Fragment>
           {editContainer && !freezeCheckedColumnState ? (
             <div
@@ -349,7 +349,9 @@ class EnhancedTable extends Component<Props> {
       title,
       tableOptions
     } = this.props;
-    console.log(`columns[0].options.filterList: ${columns[0].options.filterList}`);
+    console.log(
+      `columns[0].options.filterList: ${columns[0].options.filterList}`
+    );
     console.log(columns);
     const { rowsPerPage, page } = this.state;
     const customToolbarSelect = this.getCustomToolbarSelect();
@@ -360,7 +362,7 @@ class EnhancedTable extends Component<Props> {
       rowsSelected: selectedDataIndexes,
       onRowsSelect: this.handleRowsSelect,
       onRowClick: this.handleRowClick,
-      selectableRows: selectableData.length > 0,
+      selectableRows: selectableData.length > 0 ? 'multiple' : 'none',
       isRowSelectable: dataIndex =>
         !freezeCheckedColumnState &&
         !(dataIndex < sortedData.length
