@@ -271,7 +271,7 @@ export function saveFilters(columns) {
     // For some reason, changing entriesFilters here results in putting MuiDatatables in a weird state
     // in mui-datatables versions later than 2.0.0
     // https://github.com/gregnb/mui-datatables/issues/657
-    // dispatch(setEntriesFilters(entriesFilters));
+    dispatch(setEntriesFilters(entriesFilters));
     dispatch(saveFiltersToDisk(entriesFilters));
   };
 }
