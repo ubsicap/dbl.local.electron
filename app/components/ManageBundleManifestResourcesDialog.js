@@ -1187,7 +1187,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
 
     const { mapperOutputData = {} } = this.props;
-    const { report: outputMappers = {} } = mapperOutputData;
+    const { report: outputMappers = {}, overwrites } = mapperOutputData;
     const { selectedIdsOutputConverters: selectedMapperKeys = [] } = this.props;
     const selectedMappers = getSelectedMapperMap(
       outputMappers,
@@ -1197,7 +1197,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       bundleId,
       selectedFolder,
       storedResources.map(r => r.uri),
-      selectedMappers
+      selectedMappers,
+      overwrites
     );
   };
 

@@ -410,6 +410,7 @@ async function saveMetadataToTempFolder(bundleId) {
     tmpFolder,
     bundleId,
     metadataXmlResource,
+    metadataXmlResource,
     () => {}
   );
   return metadataFile;
@@ -445,13 +446,12 @@ function requestSaveResourceTo(
   selectedFolder,
   bundleId,
   resourcePath,
-  progressCallback,
-  mapper
+  relativeDestinationPath,
+  progressCallback
 ) {
   const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${RESOURCE_API}-stream/${resourcePath}`;
-  const fullUri = bundleHelpers.buildFullUriWithOptionalMapper(url, mapper);
-  const targetPath = path.join(selectedFolder, resourcePath);
-  return download(fullUri, targetPath, progressCallback, authHeader());
+  const targetPath = path.join(selectedFolder, relativeDestinationPath);
+  return download(url, targetPath, progressCallback, authHeader());
 }
 
 function getFormBundleTree(bundleId) {
@@ -624,7 +624,7 @@ function stopCreateContent(bundleId, mode = 'success') {
 
 function postResource(bundleId, filePath, bundlePath, mapper) {
   const uri = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/resource/${bundlePath}`;
-  const fullUri = buildFullUriWithOptionalMapper(uri, mapper);
+  const fullUri = bundleHelpers.buildFullUriWithOptionalMapper(uri, mapper);
   log.info(`postResource uri: ${fullUri}`);
   const filename = path.basename(filePath);
   const data = new FormData();

@@ -778,7 +778,8 @@ export function requestSaveBundleTo(
   id,
   selectedFolder,
   selectedResources,
-  selectedMappers
+  selectedMappers,
+  overwrites
 ) {
   return async (dispatch, getState) => {
     const bundleInfo = await bundleService.fetchById(id);
@@ -805,12 +806,29 @@ export function requestSaveBundleTo(
       filePathsToExport,
       selectedMappers
     );
+    const altRelativePathMappings = Object.entries(overwrites).reduce(
+      (acc, [mapper, overwriteTuples]) => {
+        acc[mapper] = overwriteTuples.reduce((accNewObj, overwriteTuple) => {
+          return {
+            ...accNewObj,
+            ...{ [overwriteTuple[0]]: overwriteTuple[1] }
+          };
+        }, {});
+        return acc;
+      },
+      {}
+    );
     resourceUris.forEach(async resourcePath => {
+      const [resourceUri, selectedMapper] = resourcePath.split('?mapper=');
+      const destinationPath = selectedMapper
+        ? altRelativePathMappings[selectedMapper][resourceUri]
+        : resourceUri;
       try {
         const downloadItem = await bundleService.requestSaveResourceTo(
           selectedFolder,
           id,
           resourcePath,
+          destinationPath,
           (resourceTotalBytesSaved, resourceProgress) => {
             const originalResourceBytesTransferred =
               resourcePathsProgress[resourcePath];
