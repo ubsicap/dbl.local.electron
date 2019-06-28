@@ -62,7 +62,7 @@ export const bundleService = {
   getSubsystemDownloadQueue,
   getSubsystemUploadQueue,
   getRevisionOrParentRevision,
-  getMapperInputOverwrites,
+  getMapperOverwrites,
   getTempFolderForFile
 };
 export default bundleService;
@@ -777,7 +777,7 @@ async function updatePublications(bundleId, publicationIds) {
 }
 
 /* /bundle/<local_id>/mapper/input/overwrites (POST) */
-async function getMapperInputOverwrites(bundleId, mappers, uris) {
+async function getMapperOverwrites(bundleId, direction, mappers, uris) {
   const requestOptions = {
     method: 'POST',
     headers: {
@@ -790,7 +790,7 @@ async function getMapperInputOverwrites(bundleId, mappers, uris) {
   };
   try {
     const response = await fetch(
-      `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/mapper/input/overwrites`,
+      `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/mapper/${direction}/overwrites`,
       requestOptions
     );
     return servicesHelpers.handleResponseAsReadable(response).json();

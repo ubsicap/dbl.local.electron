@@ -376,15 +376,13 @@ export function deleteManifestResources(_bundleId, _uris) {
 }
 
 async function getOverwritesPerMapper(direction, report, bundleId) {
-  if (direction !== 'input') {
-    return undefined;
-  }
   const overwrites = {};
   /* eslint-disable no-restricted-syntax */
   /* eslint-disable no-await-in-loop */
   for (const [mapperKey, mapperUris] of Object.entries(report)) {
-    const mapperOverwrites = await bundleService.getMapperInputOverwrites(
+    const mapperOverwrites = await bundleService.getMapperOverwrites(
       bundleId,
+      direction,
       { [mapperKey]: mapperUris },
       []
     );
