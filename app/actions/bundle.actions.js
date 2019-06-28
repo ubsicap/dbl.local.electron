@@ -800,7 +800,16 @@ export function requestSaveBundleTo(
       {}
     );
     let bundleBytesSaved = 0;
-    dispatch(request(id, selectedFolder, bundleBytesToSave, filePathsToExport));
+    dispatch(
+      request(
+        id,
+        selectedFolder,
+        bundleBytesToSave,
+        filePathsToExport,
+        selectedMappers,
+        overwrites
+      )
+    );
     dispatch(updateSearchResultsForBundleId(id));
     const resourceUris = bundleHelpers.getResourceUris(
       filePathsToExport,
@@ -864,13 +873,22 @@ export function requestSaveBundleTo(
     return accBytes + fileInfoNode.size;
   }
 
-  function request(_id, _folderName, bundleBytesToSave, resourcePaths) {
+  function request(
+    _id,
+    _folderName,
+    bundleBytesToSave,
+    resourcePaths,
+    _selectedMappers,
+    _overwrites
+  ) {
     return {
       type: bundleConstants.SAVETO_REQUEST,
       id: _id,
       folderName: _folderName,
       bundleBytesToSave,
-      resourcePaths
+      resourcePaths,
+      selectedMappers: _selectedMappers,
+      overwrites: _overwrites
     };
   }
 

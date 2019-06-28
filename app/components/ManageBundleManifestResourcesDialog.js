@@ -61,6 +61,7 @@ type Props = {
   classes: {},
   theme: {},
   loading: boolean,
+  isExporting: Boolean,
   progress: number,
   bundleId: ?string,
   bundlesById: ?{},
@@ -426,6 +427,7 @@ const getPreviousManifestResourcesDataSelector = createSelector(
 );
 
 const getIsLoading = state => state.bundleManageResources.loading || false;
+const getIsExporting = state => state.bundleSaveTo.isExporting || false;
 
 const getActiveBundleSelector = createSelector(
   [getBundleId, getBundlesById],
@@ -1003,8 +1005,10 @@ function mapStateToProps(state, props) {
     props
   );
   const { orderDirection, orderBy } = getSortOrderOrDefault(mode, sortOrder);
+  const isExporting = getIsExporting(state);
   return {
-    loading: loading || fetchingMetadata || !isStoreMode,
+    loading: loading || fetchingMetadata || !isStoreMode || isExporting,
+    isExporting,
     progress,
     bundleId,
     bundlesById,
@@ -1141,7 +1145,15 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         return;
       }
     }
-    const { mode, previousEntryRevision, bundlePreviousRevision } = this.props;
+    const {
+      mode,
+      previousEntryRevision,
+      bundlePreviousRevision,
+      isExporting
+    } = this.props;
+    if (prevProps.isExporting && !isExporting) {
+      // TODO: launch folder via refactored DBLEntryRow openInFolder to action
+    }
     if (mode !== 'revisions') {
       if (
         !prevProps.previousEntryRevision &&

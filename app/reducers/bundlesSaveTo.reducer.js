@@ -12,6 +12,7 @@ export function bundlesSaveTo(state = {}, action) {
       );
       return {
         ...state,
+        isExporting: true,
         savedToHistory: {
           ...state.savedToHistory,
           ...{
@@ -31,6 +32,7 @@ export function bundlesSaveTo(state = {}, action) {
         bundleToUpdate.resourcePathsBytesSaved;
       const resourcePathBytesTransferedOriginal =
         originalResourcePathsBytesTransfered[action.resourcePath];
+      const isExporting = action.bundleBytesSaved !== action.bundleBytesToSave;
       const resourceBytesDiff =
         action.resourceTotalBytesSaved - resourcePathBytesTransferedOriginal;
       const bundleBytesSaved =
@@ -46,6 +48,7 @@ export function bundlesSaveTo(state = {}, action) {
       };
       return {
         ...state,
+        isExporting,
         savedToHistory: {
           ...state.savedToHistory,
           [action.id]: updatedBundle
