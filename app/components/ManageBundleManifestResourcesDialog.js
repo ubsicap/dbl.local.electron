@@ -53,7 +53,7 @@ import EntryDrawer from './EntryDrawer';
 import EntryDialogBody from './EntryDialogBody';
 import { emptyArray, emptyObject } from '../utils/defaultValues';
 
-const { dialog, app } = require('electron').remote;
+const { dialog } = require('electron').remote;
 
 const NEED_CONTAINER = '/?';
 
@@ -1187,17 +1187,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
 
   handleExportResources = (bundleId, storedResources) => () => {
     const { requestSaveResourcesTo } = this.props;
-    const defaultPath = app.getPath('downloads'); // bundleSavedToInfo
-    //  ? bundleSavedToInfo.folderName
-    //  : app.getPath('downloads');
-    const [selectedFolder] = dialog.showOpenDialog({
-      defaultPath,
-      properties: ['openDirectory']
-    });
-    if (!selectedFolder) {
-      return;
-    }
-
     const { mapperOutputData = {} } = this.props;
     const { report: outputMappers = {}, overwrites } = mapperOutputData;
     const { selectedIdsOutputConverters: selectedMapperKeys = [] } = this.props;
@@ -1207,7 +1196,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     );
     requestSaveResourcesTo(
       bundleId,
-      selectedFolder,
+      undefined,
       storedResources.map(r => r.uri),
       selectedMappers,
       overwrites

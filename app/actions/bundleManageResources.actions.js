@@ -18,6 +18,9 @@ import { updateSearchResultsForBundleId } from './bundleFilter.actions';
 import { bundleHelpers } from '../helpers/bundle.helpers';
 import { emptyObject } from '../utils/defaultValues';
 
+const { dialog, app } = require('electron').remote;
+const { shell } = require('electron');
+
 export const bundleManageResourceActions = {
   openResourceManager,
   closeResourceManager,
@@ -332,14 +335,41 @@ export function addManifestResources(
   }
 }
 
+function getBundleExportInfo(bundleId, savedToHistory) {
+  return savedToHistory ? savedToHistory[bundleId] : null;
+}
+
+function promptForFolderToSaveTo(bundlesSaveTo, bundleId) {
+  const { savedToHistory } = bundlesSaveTo;
+  const bundleSavedToInfo = getBundleExportInfo(bundleId, savedToHistory);
+  const defaultPath = bundleSavedToInfo
+    ? bundleSavedToInfo.folderName
+    : app.getPath('downloads');
+  const [selectedFolder] = dialog.showOpenDialog({
+    defaultPath,
+    properties: ['openDirectory']
+  });
+  if (selectedFolder) {
+    console.log(selectedFolder.toString());
+  }
+  return selectedFolder;
+}
+
+function openInFolder(bundleId, folderName) {
+  shell.openItem(folderName);
+  return { type: 'BUNDLES_SAVETO_OPEN_FOLDER', bundleId, folderName };
+}
+
 export function requestSaveBundleTo(
   id,
-  selectedFolder,
+  folder,
   selectedResources,
-  selectedMappers,
-  overwrites
+  selectedMappers = emptyObject,
+  overwrites = emptyObject
 ) {
   return async (dispatch, getState) => {
+    const selectedFolder =
+      folder || promptForFolderToSaveTo(getState().bundlesSaveTo, id);
     const bundleInfo = await bundleService.fetchById(id);
     const bundleBytesToSave = traverse(bundleInfo.store.file_info).reduce(
       addByteSize,
@@ -387,7 +417,7 @@ export function requestSaveBundleTo(
       },
       {}
     );
-    const updatedSelectedResources = new Set(selectedResources); // not immutableJs
+    const updatedSelectedResources = new Set(selectedResources || []); // not immutableJs
     resourceUris.forEach(async resourcePath => {
       const [resourceUri, selectedMapper] = resourcePath.split('?mapper=');
       const destinationPath = selectedMapper
@@ -416,8 +446,10 @@ export function requestSaveBundleTo(
                 bundleBytesToSave
               };
               dispatch(updated(updatedArgs));
-              updatedSelectedResources.delete(resourceUri);
-              dispatch(selectResources(Array.from(updatedSelectedResources)));
+              if (selectedResources) {
+                updatedSelectedResources.delete(resourceUri);
+                dispatch(selectResources(Array.from(updatedSelectedResources)));
+              }
               dispatch(updateSearchResultsForBundleId(id));
             }
           }
@@ -427,6 +459,7 @@ export function requestSaveBundleTo(
         dispatch(failure(id, error));
       }
     });
+    dispatch(openInFolder(id, selectedFolder));
   };
 
   function addByteSize(accBytes, fileInfoNode) {
