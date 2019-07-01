@@ -1,4 +1,3 @@
-import traverse from 'traverse';
 import log from 'electron-log';
 import fs from 'fs-extra';
 import upath from 'upath';
@@ -424,6 +423,8 @@ export function requestSaveBundleTo(
       {}
     );
     const updatedSelectedResources = new Set(selectedResources || []); // not immutableJs
+    const filesTransferred = [];
+    const filesToTransfer = resourceUris;
     resourceUris.forEach(async resourcePath => {
       const [resourceUri, selectedMapper] = resourcePath.split('?mapper=');
       const destinationPath = selectedMapper
@@ -443,13 +444,16 @@ export function requestSaveBundleTo(
               resourceTotalBytesSaved - originalResourceBytesTransferred;
             bundleBytesSaved += bytesDiff;
             if (resourceProgress && resourceProgress % 100 === 0) {
+              filesTransferred.push(resourcePath);
               const updatedArgs = {
                 _id: id,
                 apiBundle: bundleInfo,
                 resourcePath,
                 resourceTotalBytesSaved,
                 bundleBytesSaved,
-                bundleBytesToSave
+                bundleBytesToSave,
+                filesToTransfer,
+                filesTransferred
               };
               dispatch(updated(updatedArgs));
               if (selectedResources) {
@@ -457,6 +461,9 @@ export function requestSaveBundleTo(
                 dispatch(selectResources(Array.from(updatedSelectedResources)));
               }
               dispatch(updateSearchResultsForBundleId(id));
+              if (filesToTransfer.length === filesTransferred.length) {
+                dispatch(openInFolder(id, selectedFolder));
+              }
             }
           }
         );
@@ -465,7 +472,6 @@ export function requestSaveBundleTo(
         dispatch(failure(id, error));
       }
     });
-    dispatch(openInFolder(id, selectedFolder));
   };
 
   function addByteSize(accBytes, [, fileInfoNode]) {
@@ -497,7 +503,9 @@ export function requestSaveBundleTo(
     resourcePath,
     resourceTotalBytesSaved,
     bundleBytesSaved,
-    bundleBytesToSave
+    bundleBytesToSave,
+    filesToTransfer,
+    filesTransferred
   }) {
     return {
       type: bundleResourceManagerConstants.SAVETO_UPDATED,
@@ -506,7 +514,9 @@ export function requestSaveBundleTo(
       resourcePath,
       resourceTotalBytesSaved,
       bundleBytesSaved,
-      bundleBytesToSave
+      bundleBytesToSave,
+      filesToTransfer,
+      filesTransferred
     };
   }
   function failure(_id, error) {

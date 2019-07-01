@@ -317,8 +317,8 @@ export function bundles(state = initialState, action) {
     }
     case bundleResourceManagerConstants.SAVETO_UPDATED: {
       const progress = utilities.calculatePercentage(
-        action.bundleBytesSaved,
-        action.bundleBytesToSave
+        action.filesTransferred.length,
+        action.filesToTransfer.length
       );
       const status = progress === 100 ? 'COMPLETED' : 'IN_PROGRESS';
       const { apiBundle } = action;
