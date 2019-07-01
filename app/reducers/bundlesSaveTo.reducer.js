@@ -1,8 +1,8 @@
-import { bundleConstants } from '../constants/bundle.constants';
+import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 
 export function bundlesSaveTo(state = {}, action) {
   switch (action.type) {
-    case bundleConstants.SAVETO_REQUEST: {
+    case bundleResourceManagerConstants.SAVETOREQUEST: {
       const resourcePathsBytesSaved = action.resourcePaths.reduce(
         (acc, resourcePath) => {
           acc[resourcePath] = 0;
@@ -26,7 +26,7 @@ export function bundlesSaveTo(state = {}, action) {
         }
       };
     }
-    case bundleConstants.SAVETO_UPDATED: {
+    case bundleResourceManagerConstants.SAVETOUPDATED: {
       const bundleToUpdate = state.savedToHistory[action.id];
       const originalResourcePathsBytesTransfered =
         bundleToUpdate.resourcePathsBytesSaved;
@@ -55,7 +55,7 @@ export function bundlesSaveTo(state = {}, action) {
         }
       };
     }
-    case bundleConstants.SAVETO_FAILURE:
+    case bundleResourceManagerConstants.SAVETOFAILURE:
       return {
         error: action.error
       };

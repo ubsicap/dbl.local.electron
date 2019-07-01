@@ -11,7 +11,6 @@ import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { workspaceHelpers } from '../helpers/workspaces.helpers';
 import { browserWindowService } from '../services/browserWindow.service';
 import {
-  bundleHelpers,
   getAddedBundle,
   getManifestResourcePaths,
   getStoredResourcePaths
@@ -27,7 +26,6 @@ export const bundleActions = {
   removeBundle,
   setupBundlesEventSource,
   downloadResources,
-  requestSaveBundleTo,
   removeResources,
   toggleSelectEntry,
   uploadBundle,
@@ -772,147 +770,6 @@ function removeBundleSuccess(id) {
       deletedBundle
     });
   };
-}
-
-export function requestSaveBundleTo(
-  id,
-  selectedFolder,
-  selectedResources,
-  selectedMappers,
-  overwrites
-) {
-  return async (dispatch, getState) => {
-    const bundleInfo = await bundleService.fetchById(id);
-    const bundleBytesToSave = traverse(bundleInfo.store.file_info).reduce(
-      addByteSize,
-      0
-    );
-    const resourcePaths = getStoredResourcePaths(getState, id).filter(
-      resourcePath =>
-        !selectedResources || selectedResources.includes(resourcePath)
-    );
-    const filePathsToExport = [...resourcePaths, 'metadata.xml'];
-    const resourcePathsProgress = filePathsToExport.reduce(
-      (acc, resourcePath) => {
-        acc[resourcePath] = 0;
-        return acc;
-      },
-      {}
-    );
-    let bundleBytesSaved = 0;
-    dispatch(
-      request(
-        id,
-        selectedFolder,
-        bundleBytesToSave,
-        filePathsToExport,
-        selectedMappers,
-        overwrites
-      )
-    );
-    dispatch(updateSearchResultsForBundleId(id));
-    const resourceUris = bundleHelpers.getResourceUris(
-      filePathsToExport,
-      selectedMappers
-    );
-    const altRelativePathMappings = Object.entries(overwrites).reduce(
-      (acc, [mapper, overwriteTuples]) => {
-        acc[mapper] = overwriteTuples.reduce((accNewObj, overwriteTuple) => {
-          return {
-            ...accNewObj,
-            ...{ [overwriteTuple[0]]: overwriteTuple[1] }
-          };
-        }, {});
-        return acc;
-      },
-      {}
-    );
-    resourceUris.forEach(async resourcePath => {
-      const [resourceUri, selectedMapper] = resourcePath.split('?mapper=');
-      const destinationPath = selectedMapper
-        ? altRelativePathMappings[selectedMapper][resourceUri]
-        : resourceUri;
-      try {
-        const downloadItem = await bundleService.requestSaveResourceTo(
-          selectedFolder,
-          id,
-          resourcePath,
-          destinationPath,
-          (resourceTotalBytesSaved, resourceProgress) => {
-            const originalResourceBytesTransferred =
-              resourcePathsProgress[resourcePath];
-            resourcePathsProgress[resourcePath] = resourceTotalBytesSaved;
-            const bytesDiff =
-              resourceTotalBytesSaved - originalResourceBytesTransferred;
-            bundleBytesSaved += bytesDiff;
-            if (resourceProgress && resourceProgress % 100 === 0) {
-              const updatedArgs = {
-                _id: id,
-                apiBundle: bundleInfo,
-                resourcePath,
-                resourceTotalBytesSaved,
-                bundleBytesSaved,
-                bundleBytesToSave
-              };
-              dispatch(updated(updatedArgs));
-              dispatch(updateSearchResultsForBundleId(id));
-            }
-          }
-        );
-        return downloadItem;
-      } catch (error) {
-        dispatch(failure(id, error));
-      }
-    });
-  };
-
-  function addByteSize(accBytes, fileInfoNode) {
-    if (fileInfoNode.is_dir || this.isRoot || fileInfoNode.size === undefined) {
-      return accBytes;
-    }
-    return accBytes + fileInfoNode.size;
-  }
-
-  function request(
-    _id,
-    _folderName,
-    bundleBytesToSave,
-    resourcePaths,
-    _selectedMappers,
-    _overwrites
-  ) {
-    return {
-      type: bundleConstants.SAVETO_REQUEST,
-      id: _id,
-      folderName: _folderName,
-      bundleBytesToSave,
-      resourcePaths,
-      selectedMappers: _selectedMappers,
-      overwrites: _overwrites
-    };
-  }
-
-  function updated({
-    _id,
-    apiBundle,
-    resourcePath,
-    resourceTotalBytesSaved,
-    bundleBytesSaved,
-    bundleBytesToSave
-  }) {
-    return {
-      type: bundleConstants.SAVETO_UPDATED,
-      id: _id,
-      apiBundle,
-      resourcePath,
-      resourceTotalBytesSaved,
-      bundleBytesSaved,
-      bundleBytesToSave
-    };
-  }
-  function failure(_id, error) {
-    return { type: bundleConstants.SAVETO_FAILURE, id: _id, error };
-  }
 }
 
 export function toggleSelectEntry(selectedBundle) {

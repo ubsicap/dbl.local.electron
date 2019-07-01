@@ -1,6 +1,7 @@
 import sort from 'fast-sort';
 import { List, Set } from 'immutable';
 import { bundleConstants } from '../constants/bundle.constants';
+import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 import { bundleService } from '../services/bundle.service';
 import { utilities } from '../utils/utilities';
 import { ux } from '../utils/ux';
@@ -229,10 +230,10 @@ export function bundles(state = initialState, action) {
         displayAs: { ...bDecorated.displayAs, status: `Uploading (${message})` }
       }));
     }
-    case bundleConstants.SAVETO_REQUEST: {
+    case bundleResourceManagerConstants.SAVETOREQUEST: {
       return updateTaskStatusProgress(action.id, 'SAVETO', 'IN_PROGRESS', 0);
     }
-    case bundleConstants.SAVETO_UPDATED: {
+    case bundleResourceManagerConstants.SAVETO_UPDATED: {
       const progress = utilities.calculatePercentage(action.bundleBytesSaved, action.bundleBytesToSave);
       const status = progress === 100 ? 'COMPLETED' : 'IN_PROGRESS';
       const { apiBundle } = action;
