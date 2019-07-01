@@ -29,7 +29,8 @@ import {
   selectRevisions,
   updateSortOrder,
   appendAddedFilePaths,
-  editContainers
+  editContainers,
+  requestSaveBundleTo
 } from '../actions/bundleManageResources.actions';
 import { pasteItems, clearClipboard } from '../actions/clipboard.actions';
 import {
@@ -37,8 +38,7 @@ import {
   removeResources,
   getEntryRevisions,
   createBundleFromDBL,
-  selectBundleEntryRevision,
-  requestSaveBundleTo
+  selectBundleEntryRevision
 } from '../actions/bundle.actions';
 import EnhancedTable from './EnhancedTable';
 import EnhancedTableToolbar from './EnhancedTableToolbar';
@@ -61,7 +61,7 @@ type Props = {
   classes: {},
   theme: {},
   loading: boolean,
-  isExporting: Boolean,
+  isExporting: boolean,
   progress: number,
   bundleId: ?string,
   bundlesById: ?{},
@@ -427,7 +427,7 @@ const getPreviousManifestResourcesDataSelector = createSelector(
 );
 
 const getIsLoading = state => state.bundleManageResources.loading || false;
-const getIsExporting = state => state.bundleSaveTo.isExporting || false;
+const getIsExporting = state => state.bundlesSaveTo.isExporting || false;
 
 const getActiveBundleSelector = createSelector(
   [getBundleId, getBundlesById],
