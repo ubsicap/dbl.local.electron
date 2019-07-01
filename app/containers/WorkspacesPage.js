@@ -401,6 +401,14 @@ class WorkspacesPage extends PureComponent<Props> {
                           </Typography>
                           <Typography variant="body1" align="center" paragraph>
                             {card.configXmlSettings.settings.dbl[0]
+                              .downloadAsPublisher &&
+                            card.configXmlSettings.settings.dbl[0]
+                              .downloadAsPublisher[0] === 'true'
+                              ? 'download as publisher is ENABLED'
+                              : ''}
+                          </Typography>
+                          <Typography variant="body1" align="center" paragraph>
+                            {card.configXmlSettings.settings.dbl[0]
                               .downloadOpenAccessEntries[0] === 'true'
                               ? 'download open-access entries is ENABLED'
                               : 'download open-access entries is DISABLED'}
