@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
@@ -63,6 +64,19 @@ const MenuProps = {
   }
 };
 
+function parseOrganizationTypeValues(settings_dbl_organizationType) {
+  return (settings_dbl_organizationType || '').split(' ').filter(v => v.length);
+}
+
+function getOrgTypeLabel(option) {
+  if (option === 'lch') {
+    return 'Publisher (LCH)';
+  }
+  if (option === 'ipc') {
+    return 'Content Uploader (IPC)';
+  }
+}
+
 /* eslint-disable camelcase */
 
 function importSettingsToState(settings) {
@@ -76,6 +90,7 @@ function importSettingsToState(settings) {
     secretKey,
     organizationType,
     downloadOpenAccessEntries = [false],
+    downloadAsPublisher = [undefined],
     host
   } = dbl[0];
   const settings_dbl_host = host[0];
@@ -84,6 +99,12 @@ function importSettingsToState(settings) {
   const settings_dbl_organizationType = organizationType[0];
   const settings_dbl_downloadOpenAccessEntries =
     downloadOpenAccessEntries[0] === 'true';
+  const orgTypes = parseOrganizationTypeValues(settings_dbl_organizationType);
+  const downloadAsPublisherValue = downloadAsPublisher[0] === 'true';
+  const settings_dbl_downloadAsPublisher =
+    downloadAsPublisherValue === undefined
+      ? !orgTypes.includes('ipc')
+      : downloadAsPublisherValue;
   const { metadataTemplateDir: metadataTemplateDirOrNot = [null] } = storer[0];
   const [metadataTemplateDir] = metadataTemplateDirOrNot;
   const settings_storer_metadataTemplateDirOrNot = metadataTemplateDir
@@ -95,6 +116,7 @@ function importSettingsToState(settings) {
     settings_dbl_accessToken,
     settings_dbl_secretKey,
     settings_dbl_organizationType,
+    settings_dbl_downloadAsPublisher,
     settings_dbl_downloadOpenAccessEntries,
     ...settings_storer_metadataTemplateDirOrNot
   };
@@ -115,6 +137,7 @@ function exportStateToSettings(state, origSettings) {
     settings_dbl_accessToken,
     settings_dbl_secretKey,
     settings_dbl_organizationType,
+    settings_dbl_downloadAsPublisher,
     settings_dbl_downloadOpenAccessEntries,
     settings_storer_metadataTemplateDir: metadataTemplateDir
   } = state;
@@ -125,10 +148,16 @@ function exportStateToSettings(state, origSettings) {
     name: workspaceName,
     fullPath: newFullPath
   };
-  const downloadOpenAccessEntries = origSettings.configXmlSettings.settings
-    .dbl[0].downloadOpenAccessEntries
-    ? { downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries] }
-    : {};
+  const downloadAsPublisherOrNot =
+    origSettings.configXmlSettings.settings.dbl[0].downloadAsPublisher ||
+    settings_dbl_downloadAsPublisher
+      ? { downloadAsPublisher: [settings_dbl_downloadAsPublisher] }
+      : {};
+  const downloadOpenAccessEntriesOrNot =
+    origSettings.configXmlSettings.settings.dbl[0].downloadOpenAccessEntries ||
+    settings_dbl_downloadOpenAccessEntries
+      ? { downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries] }
+      : {};
   const settings_storer_metadataTemplateDirOrNot = metadataTemplateDir
     ? { metadataTemplateDir }
     : {};
@@ -143,7 +172,8 @@ function exportStateToSettings(state, origSettings) {
           accessToken: [settings_dbl_accessToken],
           secretKey: [settings_dbl_secretKey],
           organizationType: [settings_dbl_organizationType],
-          ...downloadOpenAccessEntries
+          ...downloadAsPublisherOrNot,
+          ...downloadOpenAccessEntriesOrNot
           /* downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries] */
         }
       ],
@@ -185,7 +215,7 @@ class WorkspaceEditDialog extends React.Component<Props> {
 
   getOrganizationTypeValues = () => {
     const { state } = this;
-    return state.settings_dbl_organizationType || '';
+    return parseOrganizationTypeValues(state.settings_dbl_organizationType);
   };
 
   handleChangeOrganizationType = name => event => {
@@ -270,13 +300,11 @@ class WorkspaceEditDialog extends React.Component<Props> {
     this.updateInputValue('settings_storer_metadataTemplateDir', '');
 
   render() {
-    const organizationTypeValues = this.getOrganizationTypeValues()
-      .split(' ')
-      .filter(v => v.length);
+    const organizationTypeValues = this.getOrganizationTypeValues();
     const organizationTypeOptions = ['lch', 'ipc'].map(option => (
       <MenuItem key={option} value={option}>
         <Checkbox checked={organizationTypeValues.indexOf(option) > -1} />
-        <ListItemText primary={option} />
+        <ListItemText primary={getOrgTypeLabel(option)} />
       </MenuItem>
     ));
     const {
@@ -286,6 +314,8 @@ class WorkspaceEditDialog extends React.Component<Props> {
       handleClickCancel,
       handleClickOk
     } = this.props;
+    const orgTypeValues = this.getOrganizationTypeValues();
+    const hasIpcOrgType = orgTypeValues.includes('ipc');
     return (
       <div>
         <Dialog
@@ -360,7 +390,9 @@ class WorkspaceEditDialog extends React.Component<Props> {
                   'settings_dbl_organizationType'
                 )}
                 input={<Input id="select-multiple-checkbox" />}
-                renderValue={selected => selected.join(', ')}
+                renderValue={selections =>
+                  selections.map(getOrgTypeLabel).join(', ')
+                }
                 MenuProps={MenuProps}
               >
                 {organizationTypeOptions}
@@ -369,6 +401,21 @@ class WorkspaceEditDialog extends React.Component<Props> {
                 {this.getErrorText('settings_dbl_organizationType')}
               </FormHelperText>
             </FormControl>
+            {hasIpcOrgType && (
+              <FormControlLabel
+                control={
+                  <Switch
+                    name="settings_dbl_downloadAsPublisher"
+                    checked={this.getInputValue(
+                      'settings_dbl_downloadAsPublisher'
+                    )}
+                    onChange={this.handleInputChange}
+                    color="primary"
+                  />
+                }
+                label="Download As Publisher"
+              />
+            )}
             <FormControlLabel
               control={
                 <Switch
