@@ -360,6 +360,10 @@ function openInFolder(bundleId, folderName) {
   return { type: 'BUNDLES_SAVETO_OPEN_FOLDER', bundleId, folderName };
 }
 
+function filterOnSelectResourcesOrAll(selectedResources, resourcePath) {
+  return !selectedResources || selectedResources.includes(resourcePath);
+}
+
 export function requestSaveBundleTo(
   id,
   folder,
@@ -371,17 +375,19 @@ export function requestSaveBundleTo(
     const selectedFolder =
       folder || promptForFolderToSaveTo(getState().bundlesSaveTo, id);
     const bundleInfo = await bundleService.fetchById(id);
-    const bundleBytesToSave = traverse(bundleInfo.store.file_info).reduce(
-      addByteSize,
-      0
-    );
     const resourcePaths = bundleHelpers
       .getStoredResourcePaths(getState, id)
-      .filter(
-        resourcePath =>
-          !selectedResources || selectedResources.includes(resourcePath)
-      );
+      .filter(resourcePath => {
+        return filterOnSelectResourcesOrAll(selectedResources, resourcePath);
+      });
     const filePathsToExport = [...resourcePaths, 'metadata.xml'];
+    const bundleBytesToSave = Object.entries(
+      bundleService.getFlatFileInfo(bundleInfo)
+    )
+      .filter(([resourcePath]) => {
+        return filterOnSelectResourcesOrAll(filePathsToExport, resourcePath);
+      })
+      .reduce(addByteSize, 0);
     const resourcePathsProgress = filePathsToExport.reduce(
       (acc, resourcePath) => {
         acc[resourcePath] = 0;
@@ -431,8 +437,8 @@ export function requestSaveBundleTo(
           destinationPath,
           (resourceTotalBytesSaved, resourceProgress) => {
             const originalResourceBytesTransferred =
-              resourcePathsProgress[resourcePath];
-            resourcePathsProgress[resourcePath] = resourceTotalBytesSaved;
+              resourcePathsProgress[resourceUri];
+            resourcePathsProgress[resourceUri] = resourceTotalBytesSaved;
             const bytesDiff =
               resourceTotalBytesSaved - originalResourceBytesTransferred;
             bundleBytesSaved += bytesDiff;
@@ -462,10 +468,7 @@ export function requestSaveBundleTo(
     dispatch(openInFolder(id, selectedFolder));
   };
 
-  function addByteSize(accBytes, fileInfoNode) {
-    if (fileInfoNode.is_dir || this.isRoot || fileInfoNode.size === undefined) {
-      return accBytes;
-    }
+  function addByteSize(accBytes, [, fileInfoNode]) {
     return accBytes + fileInfoNode.size;
   }
 
