@@ -2,7 +2,7 @@ import traverse from 'traverse';
 import log from 'electron-log';
 import fs from 'fs-extra';
 import upath from 'upath';
-import { Set } from 'immutable';
+import immutableJs from 'immutable';
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
@@ -387,6 +387,7 @@ export function requestSaveBundleTo(
       },
       {}
     );
+    const updatedSelectedResources = new Set(selectedResources); // not immutableJs
     resourceUris.forEach(async resourcePath => {
       const [resourceUri, selectedMapper] = resourcePath.split('?mapper=');
       const destinationPath = selectedMapper
@@ -415,6 +416,8 @@ export function requestSaveBundleTo(
                 bundleBytesToSave
               };
               dispatch(updated(updatedArgs));
+              updatedSelectedResources.delete(resourceUri);
+              dispatch(selectResources(Array.from(updatedSelectedResources)));
               dispatch(updateSearchResultsForBundleId(id));
             }
           }
@@ -589,7 +592,7 @@ export function selectResources(
         bundleId,
         addedFilePaths = []
       } = getState().bundleManageResources;
-      const addedFilePathsSet = Set(addedFilePaths);
+      const addedFilePathsSet = immutableJs.Set(addedFilePaths);
       dispatch(
         updateOutputMapperReports(
           bundleId,
@@ -712,7 +715,8 @@ export function editContainers(newContainer) {
       editedContainers: editedContainersOrig = {}
     } = state.bundleManageResources;
     const { selectedResourceIds = [] } = state.bundleManageResourcesUx;
-    const toAddResourceIds = Set(addedFilePaths)
+    const toAddResourceIds = immutableJs
+      .Set(addedFilePaths)
       .intersect(selectedResourceIds)
       .toArray();
     const newlyEditedContainers = toAddResourceIds.reduce((acc, filePath) => {
