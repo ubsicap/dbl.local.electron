@@ -30,7 +30,6 @@ import ControlledHighlighter from './ControlledHighlighter';
 import { toggleEntryStar } from '../actions/bundleFilter.actions';
 import {
   toggleSelectEntry,
-  requestSaveBundleTo,
   forkIntoNewBundle,
   downloadResources,
   uploadBundle,
@@ -40,16 +39,16 @@ import {
 } from '../actions/bundle.actions';
 import { openEditMetadata } from '../actions/bundleEditMetadata.actions';
 import editMetadataService from '../services/editMetadata.service';
-import { openResourceManager } from '../actions/bundleManageResources.actions';
+import {
+  openResourceManager,
+  requestSaveBundleTo
+} from '../actions/bundleManageResources.actions';
 import { bundleService } from '../services/bundle.service';
 import { ux } from '../utils/ux';
 import DeleteOrCleanButton from './DeleteOrCleanButton';
 import ConfirmButton from './ConfirmButton';
 import MediumIcon from './MediumIcon';
 import { emptyArray, emptyObject } from '../utils/defaultValues';
-
-const { dialog, app } = require('electron').remote;
-const { shell } = require('electron');
 
 type Props = {
   bundleId: string,
@@ -264,13 +263,6 @@ class DBLEntryRow extends PureComponent<Props> {
     }
   }
 
-  componentWillReceiveProps(nextProps) {
-    const { task } = this.props;
-    if (task === 'SAVETO' && nextProps.task !== 'SAVETO') {
-      this.openInFolder();
-    }
-  }
-
   onKeyPress = event => {
     if (['Enter', ' '].includes(event.key)) {
       this.onClickBundleRow();
@@ -435,36 +427,9 @@ class DBLEntryRow extends PureComponent<Props> {
   };
 
   startSaveBundleTo = event => {
-    const { bundlesSaveTo, bundleId, requestSaveEntryBundleTo } = this.props;
-    const { savedToHistory } = bundlesSaveTo;
+    const { bundleId, requestSaveEntryBundleTo } = this.props;
     stopPropagation(event);
-    const bundleSavedToInfo = getBundleExportInfo(bundleId, savedToHistory);
-    const defaultPath = bundleSavedToInfo
-      ? bundleSavedToInfo.folderName
-      : app.getPath('downloads');
-    dialog.showOpenDialog(
-      {
-        defaultPath,
-        properties: ['openDirectory']
-      },
-      folderName => {
-        if (!folderName) {
-          return; // canceled.
-        }
-        console.log(folderName.toString());
-        requestSaveEntryBundleTo(bundleId, folderName.toString());
-      }
-    );
-  };
-
-  openInFolder = () => {
-    const { bundlesSaveTo, bundleId } = this.props;
-    const { savedToHistory } = bundlesSaveTo;
-    const bundleSavedToInfo = getBundleExportInfo(bundleId, savedToHistory);
-    if (bundleSavedToInfo) {
-      const { folderName } = bundleSavedToInfo;
-      shell.openItem(folderName);
-    }
+    requestSaveEntryBundleTo(bundleId);
   };
 
   renderStatus = () => {
@@ -897,10 +862,6 @@ export default compose(
     mapDispatchToProps
   )
 )(DBLEntryRow);
-
-function getBundleExportInfo(bundleId, savedToHistory) {
-  return savedToHistory ? savedToHistory[bundleId] : null;
-}
 
 function stopPropagation(event) {
   event.stopPropagation();

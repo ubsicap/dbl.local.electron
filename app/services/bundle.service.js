@@ -8,6 +8,7 @@ import uuidv1 from 'uuid/v1';
 import waitUntil from 'node-wait-until';
 import { authHeader } from '../helpers';
 import { servicesHelpers } from '../helpers/services';
+import { bundleHelpers } from '../helpers/bundle.helpers';
 import dblDotLocalConfigConstants from '../constants/dblDotLocal.constants';
 import download from './download-with-fetch.flow';
 
@@ -61,7 +62,7 @@ export const bundleService = {
   getSubsystemDownloadQueue,
   getSubsystemUploadQueue,
   getRevisionOrParentRevision,
-  getMapperInputOverwrites,
+  getMapperOverwrites,
   getTempFolderForFile
 };
 export default bundleService;
@@ -409,6 +410,7 @@ async function saveMetadataToTempFolder(bundleId) {
     tmpFolder,
     bundleId,
     metadataXmlResource,
+    metadataXmlResource,
     () => {}
   );
   return metadataFile;
@@ -444,10 +446,11 @@ function requestSaveResourceTo(
   selectedFolder,
   bundleId,
   resourcePath,
+  relativeDestinationPath,
   progressCallback
 ) {
-  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${RESOURCE_API}/${resourcePath}`;
-  const targetPath = path.join(selectedFolder, resourcePath);
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${RESOURCE_API}-stream/${resourcePath}`;
+  const targetPath = path.join(selectedFolder, relativeDestinationPath);
   return download(url, targetPath, progressCallback, authHeader());
 }
 
@@ -621,7 +624,7 @@ function stopCreateContent(bundleId, mode = 'success') {
 
 function postResource(bundleId, filePath, bundlePath, mapper) {
   const uri = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/resource/${bundlePath}`;
-  const fullUri = mapper ? `${uri}?mapper=${mapper}` : uri;
+  const fullUri = bundleHelpers.buildFullUriWithOptionalMapper(uri, mapper);
   log.info(`postResource uri: ${fullUri}`);
   const filename = path.basename(filePath);
   const data = new FormData();
@@ -774,7 +777,7 @@ async function updatePublications(bundleId, publicationIds) {
 }
 
 /* /bundle/<local_id>/mapper/input/overwrites (POST) */
-async function getMapperInputOverwrites(bundleId, mappers, uris) {
+async function getMapperOverwrites(bundleId, direction, mappers, uris) {
   const requestOptions = {
     method: 'POST',
     headers: {
@@ -787,7 +790,7 @@ async function getMapperInputOverwrites(bundleId, mappers, uris) {
   };
   try {
     const response = await fetch(
-      `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/mapper/input/overwrites`,
+      `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/mapper/${direction}/overwrites`,
       requestOptions
     );
     return servicesHelpers.handleResponseAsReadable(response).json();

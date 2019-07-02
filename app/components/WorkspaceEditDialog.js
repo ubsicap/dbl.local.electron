@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
@@ -38,15 +39,18 @@ type Props = {
   getInitialFormErrors: () => {}
 };
 
-const hostOptions = ['api.thedigitalbiblelibrary.org', 'api-demo.thedigitalbiblelibrary.org'];
+const hostOptions = [
+  'api.thedigitalbiblelibrary.org',
+  'api-demo.thedigitalbiblelibrary.org'
+];
 
 const styles = theme => ({
   formControl: {
-    display: 'flex',
+    display: 'flex'
   },
   icon: {
-    marginRight: theme.spacing.unit * 2,
-  },
+    marginRight: theme.spacing.unit * 2
+  }
 });
 
 const ITEM_HEIGHT = 48;
@@ -54,37 +58,65 @@ const ITEM_PADDING_TOP = 8;
 const MenuProps = {
   PaperProps: {
     style: {
-      maxHeight: (ITEM_HEIGHT * 4.5) + ITEM_PADDING_TOP,
-      width: 250,
-    },
-  },
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250
+    }
+  }
 };
+
+function parseOrganizationTypeValues(settings_dbl_organizationType) {
+  return (settings_dbl_organizationType || '').split(' ').filter(v => v.length);
+}
+
+function getOrgTypeLabel(option) {
+  if (option === 'lch') {
+    return 'Publisher (LCH)';
+  }
+  if (option === 'ipc') {
+    return 'Content Uploader (IPC)';
+  }
+}
 
 /* eslint-disable camelcase */
 
 function importSettingsToState(settings) {
   const { configXmlSettings, workspace } = settings;
   const workspaceName = workspace.name;
-  const { settings: { dbl, storer } } = configXmlSettings;
   const {
-    accessToken, secretKey, organizationType, downloadOpenAccessEntries = [false],
+    settings: { dbl, storer }
+  } = configXmlSettings;
+  const {
+    accessToken,
+    secretKey,
+    organizationType,
+    downloadOpenAccessEntries = [false],
+    downloadAsPublisher = [undefined],
     host
   } = dbl[0];
   const settings_dbl_host = host[0];
   const settings_dbl_accessToken = accessToken[0];
   const settings_dbl_secretKey = secretKey[0];
   const settings_dbl_organizationType = organizationType[0];
-  const settings_dbl_downloadOpenAccessEntries = downloadOpenAccessEntries[0] === 'true';
+  const settings_dbl_downloadOpenAccessEntries =
+    downloadOpenAccessEntries[0] === 'true';
+  const orgTypes = parseOrganizationTypeValues(settings_dbl_organizationType);
+  const downloadAsPublisherValue = downloadAsPublisher[0] === 'true';
+  const settings_dbl_downloadAsPublisher =
+    downloadAsPublisherValue === undefined
+      ? !orgTypes.includes('ipc')
+      : downloadAsPublisherValue;
   const { metadataTemplateDir: metadataTemplateDirOrNot = [null] } = storer[0];
   const [metadataTemplateDir] = metadataTemplateDirOrNot;
-  const settings_storer_metadataTemplateDirOrNot = metadataTemplateDir ?
-    { settings_storer_metadataTemplateDir: metadataTemplateDir } : {};
+  const settings_storer_metadataTemplateDirOrNot = metadataTemplateDir
+    ? { settings_storer_metadataTemplateDir: metadataTemplateDir }
+    : {};
   const imported = {
     workspaceName,
     settings_dbl_host,
     settings_dbl_accessToken,
     settings_dbl_secretKey,
     settings_dbl_organizationType,
+    settings_dbl_downloadAsPublisher,
     settings_dbl_downloadOpenAccessEntries,
     ...settings_storer_metadataTemplateDirOrNot
   };
@@ -105,34 +137,52 @@ function exportStateToSettings(state, origSettings) {
     settings_dbl_accessToken,
     settings_dbl_secretKey,
     settings_dbl_organizationType,
+    settings_dbl_downloadAsPublisher,
     settings_dbl_downloadOpenAccessEntries,
-    settings_storer_metadataTemplateDir: metadataTemplateDir,
+    settings_storer_metadataTemplateDir: metadataTemplateDir
   } = state;
   const workspacesDir = dblDotLocalService.getWorkspacesDir();
   const newFullPath = path.join(workspacesDir, workspaceName);
-  const workspace = { ...origSettings.workspace, name: workspaceName, fullPath: newFullPath };
-  const downloadOpenAccessEntries =
-    origSettings.configXmlSettings.settings.dbl[0].downloadOpenAccessEntries ?
-      { downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries] } : {};
-  const settings_storer_metadataTemplateDirOrNot = metadataTemplateDir ?
-    { metadataTemplateDir } : {};
+  const workspace = {
+    ...origSettings.workspace,
+    name: workspaceName,
+    fullPath: newFullPath
+  };
+  const downloadAsPublisherOrNot =
+    origSettings.configXmlSettings.settings.dbl[0].downloadAsPublisher ||
+    settings_dbl_downloadAsPublisher
+      ? { downloadAsPublisher: [settings_dbl_downloadAsPublisher] }
+      : {};
+  const downloadOpenAccessEntriesOrNot =
+    origSettings.configXmlSettings.settings.dbl[0].downloadOpenAccessEntries ||
+    settings_dbl_downloadOpenAccessEntries
+      ? { downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries] }
+      : {};
+  const settings_storer_metadataTemplateDirOrNot = metadataTemplateDir
+    ? { metadataTemplateDir }
+    : {};
   const configXmlSettings = {
     settings: {
       ...origSettings.configXmlSettings.settings,
-      dbl: [{
-        ...origSettings.configXmlSettings.settings.dbl[0],
-        host: [settings_dbl_host],
-        html: [selectHtmlSetting(settings_dbl_host)],
-        accessToken: [settings_dbl_accessToken],
-        secretKey: [settings_dbl_secretKey],
-        organizationType: [settings_dbl_organizationType],
-        ...downloadOpenAccessEntries
-        /* downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries] */
-      }],
-      storer: [{
-        ...origSettings.configXmlSettings.settings.storer[0],
-        ...settings_storer_metadataTemplateDirOrNot,
-      }],
+      dbl: [
+        {
+          ...origSettings.configXmlSettings.settings.dbl[0],
+          host: [settings_dbl_host],
+          html: [selectHtmlSetting(settings_dbl_host)],
+          accessToken: [settings_dbl_accessToken],
+          secretKey: [settings_dbl_secretKey],
+          organizationType: [settings_dbl_organizationType],
+          ...downloadAsPublisherOrNot,
+          ...downloadOpenAccessEntriesOrNot
+          /* downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries] */
+        }
+      ],
+      storer: [
+        {
+          ...origSettings.configXmlSettings.settings.storer[0],
+          ...settings_storer_metadataTemplateDirOrNot
+        }
+      ]
     }
   };
   return { workspace, configXmlSettings };
@@ -140,6 +190,7 @@ function exportStateToSettings(state, origSettings) {
 
 class WorkspaceEditDialog extends React.Component<Props> {
   props: Props;
+
   constructor(props) {
     super(props);
     this.state = importSettingsToState(props.settings);
@@ -148,25 +199,34 @@ class WorkspaceEditDialog extends React.Component<Props> {
   componentDidMount() {
     const { getInitialFormErrors } = this.props;
     if (getInitialFormErrors) {
-      const errors =
-        Object.keys(this.state).map(name => this.getErrorText(name)).filter(v => v.length);
+      const errors = Object.keys(this.state)
+        .map(name => this.getErrorText(name))
+        .filter(v => v.length);
       getInitialFormErrors(errors);
     }
   }
 
   renderHostMenuItems = () =>
-    hostOptions.map((option) => (<MenuItem key={option} value={option}>{option}</MenuItem>));
+    hostOptions.map(option => (
+      <MenuItem key={option} value={option}>
+        {option}
+      </MenuItem>
+    ));
 
-  getOrganizationTypeValues = () => this.state.settings_dbl_organizationType || '';
+  getOrganizationTypeValues = () => {
+    const { state } = this;
+    return parseOrganizationTypeValues(state.settings_dbl_organizationType);
+  };
 
   handleChangeOrganizationType = name => event => {
     const selectedValues = event.target.value;
     const newValue = selectedValues.join(' ');
     this.setState({ [name]: newValue });
-  }
+  };
 
-  getErrorText = (name) => {
-    const value = this.state[name];
+  getErrorText = name => {
+    const { state } = this;
+    const value = state[name];
     switch (name) {
       case 'workspaceName': {
         return filenamify(value) !== value ? 'Invalid folder name' : '';
@@ -189,67 +249,83 @@ class WorkspaceEditDialog extends React.Component<Props> {
         if (value.length === 0) {
           return '';
         }
-        return fs.existsSync(value) ? '' : `Metadata template dir ${value} no longer exists. Please pick another directory`;
+        return fs.existsSync(value)
+          ? ''
+          : `Metadata template dir ${value} no longer exists. Please pick another directory`;
       }
       default: {
         return '';
       }
     }
-  }
+  };
 
-  hasError = (name) => Boolean(this.getErrorText(name));
+  hasError = name => Boolean(this.getErrorText(name));
 
-  hasAnyErrors = () => Object.keys(this.state).some(name => this.hasError(name));
+  hasAnyErrors = () =>
+    Object.keys(this.state).some(name => this.hasError(name));
 
-  handleInputChange = (event) => {
+  handleInputChange = event => {
     const { target } = event;
     const value = target.type === 'checkbox' ? target.checked : target.value;
     const { name } = target;
     this.updateInputValue(name, value);
-  }
+  };
 
   updateInputValue = (name, value) => this.setState({ [name]: value });
 
-  getInputValue = (name) => this.state[name] || '';
+  getInputValue = name => {
+    const { state } = this;
+    return state[name] || '';
+  };
 
   handlePickStorerMetadataTemplateDir = () => {
-    const defaultPath = this.getInputValue('settings_storer_metadataTemplateDir');
-    const [newFolder] = dialog.showOpenDialog({
-      defaultPath,
-      properties: ['openDirectory']
-    }) || [];
+    const defaultPath = this.getInputValue(
+      'settings_storer_metadataTemplateDir'
+    );
+    const [newFolder] =
+      dialog.showOpenDialog({
+        defaultPath,
+        properties: ['openDirectory']
+      }) || [];
     if (!newFolder) {
       return;
     }
     this.updateInputValue('settings_storer_metadataTemplateDir', newFolder);
-  }
+  };
 
   shouldShowResetMetadataTemplateDir = () =>
     this.getInputValue('settings_storer_metadataTemplateDir').length > 0;
 
-  handleResetStorerMetadataTemplateDir = () => this.updateInputValue('settings_storer_metadataTemplateDir', '');
+  handleResetStorerMetadataTemplateDir = () =>
+    this.updateInputValue('settings_storer_metadataTemplateDir', '');
 
   render() {
-    const organizationTypeValues = this.getOrganizationTypeValues().split(' ').filter(v => v.length);
+    const organizationTypeValues = this.getOrganizationTypeValues();
     const organizationTypeOptions = ['lch', 'ipc'].map(option => (
       <MenuItem key={option} value={option}>
         <Checkbox checked={organizationTypeValues.indexOf(option) > -1} />
-        <ListItemText primary={option} />
+        <ListItemText primary={getOrgTypeLabel(option)} />
       </MenuItem>
     ));
-    const { classes } = this.props;
+    const {
+      classes,
+      open,
+      settings,
+      handleClickCancel,
+      handleClickOk
+    } = this.props;
+    const orgTypeValues = this.getOrganizationTypeValues();
+    const hasIpcOrgType = orgTypeValues.includes('ipc');
     return (
       <div>
         <Dialog
-          open={Boolean(this.props.open)}
-          onClose={this.props.handleClickCancel}
+          open={Boolean(open)}
+          onClose={handleClickCancel}
           aria-labelledby="form-dialog-title"
         >
           <DialogTitle id="form-dialog-title">Workspace Settings</DialogTitle>
           <DialogContent>
-            <DialogContentText>
-              {this.props.settings.workspace.name}
-            </DialogContentText>
+            <DialogContentText>{settings.workspace.name}</DialogContentText>
             <FormControl>
               <InputLabel htmlFor="host">Host</InputLabel>
               <Select
@@ -304,24 +380,49 @@ class WorkspaceEditDialog extends React.Component<Props> {
               margin="dense"
               error={this.hasError('settings_dbl_organizationType')}
             >
-              <InputLabel htmlFor="select-multiple-checkbox">Organization Type(s) *</InputLabel>
+              <InputLabel htmlFor="select-multiple-checkbox">
+                Organization Type(s) *
+              </InputLabel>
               <Select
                 multiple
                 value={organizationTypeValues}
-                onChange={this.handleChangeOrganizationType('settings_dbl_organizationType')}
+                onChange={this.handleChangeOrganizationType(
+                  'settings_dbl_organizationType'
+                )}
                 input={<Input id="select-multiple-checkbox" />}
-                renderValue={selected => selected.join(', ')}
+                renderValue={selections =>
+                  selections.map(getOrgTypeLabel).join(', ')
+                }
                 MenuProps={MenuProps}
               >
                 {organizationTypeOptions}
               </Select>
-              <FormHelperText>{this.getErrorText('settings_dbl_organizationType')}</FormHelperText>
+              <FormHelperText>
+                {this.getErrorText('settings_dbl_organizationType')}
+              </FormHelperText>
             </FormControl>
+            {hasIpcOrgType && (
+              <FormControlLabel
+                control={
+                  <Switch
+                    name="settings_dbl_downloadAsPublisher"
+                    checked={this.getInputValue(
+                      'settings_dbl_downloadAsPublisher'
+                    )}
+                    onChange={this.handleInputChange}
+                    color="primary"
+                  />
+                }
+                label="Download As Publisher"
+              />
+            )}
             <FormControlLabel
               control={
                 <Switch
                   name="settings_dbl_downloadOpenAccessEntries"
-                  checked={this.getInputValue('settings_dbl_downloadOpenAccessEntries')}
+                  checked={this.getInputValue(
+                    'settings_dbl_downloadOpenAccessEntries'
+                  )}
                   onChange={this.handleInputChange}
                   color="primary"
                 />
@@ -331,30 +432,52 @@ class WorkspaceEditDialog extends React.Component<Props> {
             <Grid container>
               <Grid item>
                 <Tooltip title="Metadata Templates for each medium (e.g. audio.xml)">
-                  <Button id="metadataTemplateDir" size="small" color="primary" onClick={this.handlePickStorerMetadataTemplateDir}>
+                  <Button
+                    id="metadataTemplateDir"
+                    size="small"
+                    color="primary"
+                    onClick={this.handlePickStorerMetadataTemplateDir}
+                  >
                     <Folder className={classes.icon} />
                     Metadata template directory
                   </Button>
                 </Tooltip>
-                {this.shouldShowResetMetadataTemplateDir() &&
+                {this.shouldShowResetMetadataTemplateDir() && (
                   <Tooltip title="Clear Metadata template directory">
-                    <Button size="small" color="primary" onClick={this.handleResetStorerMetadataTemplateDir}>
+                    <Button
+                      size="small"
+                      color="primary"
+                      onClick={this.handleResetStorerMetadataTemplateDir}
+                    >
                       <CloseIcon />
                     </Button>
-                  </Tooltip>}
+                  </Tooltip>
+                )}
               </Grid>
               <Grid item>
-                <Typography variant="caption" align="left" color="textSecondary" paragraph>
+                <Typography
+                  variant="caption"
+                  align="left"
+                  color="textSecondary"
+                  paragraph
+                >
                   {this.getInputValue('settings_storer_metadataTemplateDir')}
                 </Typography>
               </Grid>
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={this.props.handleClickCancel} color="primary">
+            <Button onClick={handleClickCancel} color="primary">
               Cancel
             </Button>
-            <Button disabled={this.hasAnyErrors()} onClick={this.props.handleClickOk(this.props.settings, exportStateToSettings(this.state, this.props.settings))} color="primary">
+            <Button
+              disabled={this.hasAnyErrors()}
+              onClick={handleClickOk(
+                settings,
+                exportStateToSettings(this.state, settings)
+              )}
+              color="primary"
+            >
               Save
             </Button>
           </DialogActions>

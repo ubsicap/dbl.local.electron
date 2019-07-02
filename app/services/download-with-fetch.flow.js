@@ -23,15 +23,22 @@ export default async function download(
   targetFile: string,
   progressCallback: ?ByteProgressCallback,
   headers: ?{},
-  length: ?number,
+  length: ?number
 ): Promise<void> {
   const request = new Request(sourceUrl, {
-    headers: new Headers({ 'Content-Type': 'application/octet-stream', ...(headers || {}) })
+    headers: new Headers({
+      'Content-Type': 'application/octet-stream',
+      ...(headers || {})
+    })
   });
 
   const response = await fetch(request);
   if (!response.ok) {
-    throw Error(`Unable to download, server returned ${response.status} ${response.statusText}`);
+    throw Error(
+      `Unable to download, server returned ${response.status} ${
+        response.statusText
+      }`
+    );
   }
 
   const { body } = response;
@@ -39,7 +46,8 @@ export default async function download(
     throw Error('No response body');
   }
 
-  const finalLength = length || parseInt(response.headers.get('Content-Length') || '0', 10);
+  const finalLength =
+    length || parseInt(response.headers.get('Content-Length') || '0', 10);
   const reader = body.getReader();
   const directory = path.dirname(targetFile);
   await fs.ensureDir(directory);
@@ -67,6 +75,7 @@ async function streamWithProgress(
   let bytesDone = 0;
 
   while (true) {
+    // eslint-disable-next-line no-await-in-loop
     const result = await reader.read();
     if (result.done) {
       if (progressCallback != null) {
@@ -82,7 +91,8 @@ async function streamWithProgress(
       writer.write(Buffer.from(chunk));
       if (progressCallback != null) {
         bytesDone += chunk.byteLength;
-        const percent: ?number = length === 0 ? null : Math.floor(bytesDone / length * 100);
+        const percent: ?number =
+          length === 0 ? null : Math.floor((bytesDone / length) * 100);
         progressCallback(bytesDone, percent);
       }
     }
