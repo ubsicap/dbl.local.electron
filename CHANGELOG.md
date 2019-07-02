@@ -1,3 +1,14 @@
+### Version 0.39.0 (Resource publication columns)
+
+#### Feature
+
+- Added Export / Converters table & button for Resource dialog (e.g. timing files)
+- Workspace Settings > added switch "Download as Publisher" for Content Contributor (IPC)
+- dbl_dot_local_app (6/26/2019)
+  - overwrites for output mappers
+  - assorted offline report and JSON versification generation code
+  - support for "download as publisher, upload as archivist" for Compass Braille
+
 ### Version 0.38.0 (Resource publication columns)
 
 #### Feature
