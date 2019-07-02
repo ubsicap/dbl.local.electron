@@ -1,4 +1,4 @@
-### Version 0.39.0 (Resource publication columns)
+### Version 0.39.0 (Export / Converters & Download as Publisher)
 
 #### Feature
 
