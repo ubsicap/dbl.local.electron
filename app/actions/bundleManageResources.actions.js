@@ -88,13 +88,17 @@ export function closeResourceManager(_bundleId) {
 
 const msgToAddOrRemoveResources = 'To add or remove resources in the manifest';
 
+function getBundleMedium(state, bundleId) {
+  const {
+    bundles: { addedByBundleIds }
+  } = state;
+  const { medium } = addedByBundleIds[bundleId];
+  return medium;
+}
+
 export function checkPublicationsHealth(_bundleId) {
   return async (dispatch, getState) => {
-    const {
-      bundles: { addedByBundleIds }
-    } = getState();
-    const bundleId = _bundleId;
-    const { medium } = addedByBundleIds[bundleId];
+    const medium = getBundleMedium(getState(), _bundleId);
     const applicableWizards = await bundleService.getApplicableWizards(
       _bundleId,
       medium
@@ -427,14 +431,19 @@ export function requestSaveBundleTo(
     const filesToTransfer = resourceUris;
     resourceUris.forEach(async resourcePath => {
       const [resourceUri, selectedMapper] = resourcePath.split('?mapper=');
-      const destinationPath = selectedMapper
-        ? altRelativePathMappings[selectedMapper][resourceUri]
-        : resourceUri;
+      const downloadUri =
+        selectedMapper && selectedMapper !== 'as_is'
+          ? resourcePath
+          : resourceUri;
+      const destinationPath =
+        selectedMapper && selectedMapper !== 'as_is'
+          ? altRelativePathMappings[selectedMapper][resourceUri]
+          : resourceUri;
       try {
         const downloadItem = await bundleService.requestSaveResourceTo(
           selectedFolder,
           id,
-          resourcePath,
+          downloadUri,
           destinationPath,
           (resourceTotalBytesSaved, resourceProgress) => {
             const originalResourceBytesTransferred =
@@ -590,7 +599,7 @@ async function getOverwritesPerMapper(direction, report, bundleId) {
 }
 
 export function getMapperReport(_direction, _uris, _bundleId) {
-  return async dispatch => {
+  return async (dispatch, getState) => {
     dispatch(request(_direction, _uris));
     const options = await dblDotLocalService.getMappers(_direction);
     const report = await dblDotLocalService.getMapperReport(_direction, _uris);
@@ -599,6 +608,17 @@ export function getMapperReport(_direction, _uris, _bundleId) {
       report,
       _bundleId
     );
+    if (_direction === 'output') {
+      report.as_is = [..._uris];
+      const medium = getBundleMedium(getState(), _bundleId);
+      options.as_is = {
+        name: 'as_is',
+        medium,
+        description: '** Exports resources AS IS',
+        documentation: 'Exports selected resources as is'
+      };
+      overwrites.as_is = [];
+    }
     dispatch(success(_direction, _uris, report, options, overwrites));
   };
   function request(direction, uris) {
