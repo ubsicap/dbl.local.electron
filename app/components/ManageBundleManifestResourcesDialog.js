@@ -1567,7 +1567,18 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       );
     } else if (storedResources === inEffect) {
       if (selectedIdsOutputConverters.length > 0) {
-        OkButtonLabel = `Export / Convert (${storedResources.length})`;
+        const { mapperOutputData = {} } = this.props;
+        const { report: outputMappers = {} } = mapperOutputData;
+        const {
+          selectedIdsOutputConverters: selectedMapperKeys = []
+        } = this.props;
+        const numToConvert = selectedMapperKeys
+          .filter(key => key !== 'as_is')
+          .reduce((acc, selectedMapperKey) => {
+            return acc + outputMappers[selectedMapperKey].length;
+          }, 0);
+        const numToExport = storedResources.length - numToConvert;
+        OkButtonLabel = `Export (${numToExport}) / Convert (${numToConvert})`;
         OkButtonClickHandler = this.handleExportResources(
           bundleId,
           storedResources
