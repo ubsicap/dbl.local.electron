@@ -24,8 +24,8 @@ const mapDispatchToProps = {
   selectConverters: selectMappers
 };
 
-function createColumnConfig() {
-  const { id, disabled, ...columns } = createMapperRowData();
+function createColumnConfig(direction) {
+  const { id, disabled, ...columns } = createMapperRowData(direction);
   return ux.mapColumns(
     columns,
     c => ['matches', 'overwrites'].includes(c),
@@ -34,20 +34,22 @@ function createColumnConfig() {
 }
 
 function createMapperRowData(
-  id,
+  direction,
+  id = undefined,
   mapperReport = [],
   optionsData = {},
   mapperOverwrites = []
 ) {
   const matches = mapperReport.length;
-  const overwrites = mapperOverwrites.length;
+  const overwritesOrNot =
+    direction === 'output' ? {} : { overwrites: mapperOverwrites.length };
   const { description, medium, documentation } = optionsData;
   return {
     id,
     disabled: false,
     medium,
     matches,
-    overwrites,
+    ...overwritesOrNot,
     description,
     documentation
   };
@@ -153,6 +155,7 @@ function mapStateToProps(state, props) {
   const { report, options, overwrites = emptyObject } = mapperData;
   const tableData = Object.entries(report).map(([mapperKey, mapperReport]) =>
     createMapperRowData(
+      props.direction,
       mapperKey,
       mapperReport,
       options[mapperKey],
@@ -160,7 +163,7 @@ function mapStateToProps(state, props) {
     )
   );
   return {
-    columnConfig: createColumnConfig(),
+    columnConfig: createColumnConfig(props.direction),
     tableData,
     mapperData
   };

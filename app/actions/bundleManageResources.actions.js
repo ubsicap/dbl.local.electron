@@ -89,11 +89,16 @@ export function closeResourceManager(_bundleId) {
 const msgToAddOrRemoveResources = 'To add or remove resources in the manifest';
 
 function getBundleMedium(state, bundleId) {
+  const { medium } = getBundle(state, bundleId);
+  return medium;
+}
+
+function getBundle(state, bundleId) {
   const {
     bundles: { addedByBundleIds }
   } = state;
-  const { medium } = addedByBundleIds[bundleId];
-  return medium;
+  const bundle = addedByBundleIds[bundleId];
+  return bundle;
 }
 
 export function checkPublicationsHealth(_bundleId) {
@@ -600,7 +605,15 @@ async function getOverwritesPerMapper(direction, report, bundleId) {
 
 export function getMapperReport(_direction, _uris, _bundleId) {
   return async (dispatch, getState) => {
-    dispatch(request(_direction, _uris));
+    const gottenState = getState();
+    const bundle = getBundle(gottenState, _bundleId);
+    const { storedResourcePaths } = bundle;
+    const storedResourcePathsSet = immutableJs.Set(storedResourcePaths);
+    const filteredUris =
+      _direction === 'output'
+        ? _uris.filter(uri => storedResourcePathsSet.has(uri))
+        : _uris;
+    dispatch(request(_direction, filteredUris));
     const options = await dblDotLocalService.getMappers(_direction);
     const report = await dblDotLocalService.getMapperReport(_direction, _uris);
     const overwrites = await getOverwritesPerMapper(
@@ -609,17 +622,16 @@ export function getMapperReport(_direction, _uris, _bundleId) {
       _bundleId
     );
     if (_direction === 'output') {
-      report.as_is = [..._uris];
-      const medium = getBundleMedium(getState(), _bundleId);
+      report.as_is = [...filteredUris];
       options.as_is = {
         name: 'as_is',
-        medium,
-        description: '** Exports resources AS IS',
-        documentation: 'Exports selected resources as is'
+        medium: bundle.medium,
+        description: '** Exports stored resources AS IS',
+        documentation: 'Exports selected stored resources as is'
       };
-      overwrites.as_is = [];
+      overwrites.as_is = [...filteredUris];
     }
-    dispatch(success(_direction, _uris, report, options, overwrites));
+    dispatch(success(_direction, filteredUris, report, options, overwrites));
   };
   function request(direction, uris) {
     return {
@@ -652,6 +664,7 @@ export function selectResources(
   selectedResourceIds,
   shouldUpdateOutputMapperReports = false
 ) {
+  const distinctSelectedResourceIds = [...new Set(selectedResourceIds)];
   return (dispatch, getState) => {
     if (shouldUpdateOutputMapperReports) {
       const {
@@ -662,13 +675,13 @@ export function selectResources(
       dispatch(
         updateOutputMapperReports(
           bundleId,
-          selectedResourceIds.filter(id => !addedFilePathsSet.has(id))
+          distinctSelectedResourceIds.filter(id => !addedFilePathsSet.has(id))
         )
       );
     }
     dispatch({
       type: bundleResourceManagerConstants.RESOURCES_SELECTED,
-      selectedResourceIds
+      selectedResourceIds: distinctSelectedResourceIds
     });
   };
 }
