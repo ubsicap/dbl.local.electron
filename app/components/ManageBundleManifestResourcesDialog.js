@@ -1577,7 +1577,12 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           .reduce((acc, selectedMapperKey) => {
             return acc + outputMappers[selectedMapperKey].length;
           }, 0);
-        const numToExport = storedResources.length - numToConvert;
+        const distinctStoredResources = Set(
+          storedResources.map(sr => sr.id)
+        ).toArray();
+        const numToExport = selectedMapperKeys.includes('as_is')
+          ? distinctStoredResources.length
+          : distinctStoredResources.length - numToConvert;
         OkButtonLabel = `Export (${numToExport}) / Convert (${numToConvert})`;
         OkButtonClickHandler = this.handleExportResources(
           bundleId,
