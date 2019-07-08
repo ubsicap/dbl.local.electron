@@ -1475,16 +1475,26 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     let OkButtonLabel = '';
     let OkButtonClickHandler;
     if ([storedResources, discardableResources].includes(inEffect)) {
-      const discardMsg = discardableResources.length
-        ? ` / Discard (${discardableResources.length})`
-        : '';
-      OkButtonLabel = `Clean (${inEffectCount -
-        discardableResources.length})${discardMsg}`;
-      OkButtonClickHandler = this.handleCleanAndDiscardFiles(
-        bundleId,
-        storedResources,
-        discardableResources
-      );
+      const { selectedIdsOutputConverters } = this.props;
+      if (selectedIdsOutputConverters.length > 0) {
+        const {
+          OkButtonLabel: label,
+          OkButtonClickHandler: clickHandler
+        } = this.getExportConvertOkButton(storedResources);
+        OkButtonLabel = label;
+        OkButtonClickHandler = clickHandler;
+      } else {
+        const discardMsg = discardableResources.length
+          ? ` / Discard (${discardableResources.length})`
+          : '';
+        OkButtonLabel = `Clean (${inEffectCount -
+          discardableResources.length})${discardMsg}`;
+        OkButtonClickHandler = this.handleCleanAndDiscardFiles(
+          bundleId,
+          storedResources,
+          discardableResources
+        );
+      }
     } else if (manifestResources === inEffect) {
       OkButtonLabel = `Delete from Manifest (${inEffectCount})`;
       OkButtonClickHandler = this.handleDeleteFromManifest(
@@ -1546,6 +1556,29 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return <Delete className={classNames(classes.leftIcon)} />;
   };
 
+  getExportConvertOkButton = storedResources => {
+    const { bundleId, mapperOutputData = {} } = this.props;
+    const { report: outputMappers = {} } = mapperOutputData;
+    const { selectedIdsOutputConverters: selectedMapperKeys = [] } = this.props;
+    const numToConvert = selectedMapperKeys
+      .filter(key => key !== 'as_is')
+      .reduce((acc, selectedMapperKey) => {
+        return acc + outputMappers[selectedMapperKey].length;
+      }, 0);
+    const distinctStoredResources = Set(
+      storedResources.map(sr => sr.id)
+    ).toArray();
+    const numToExport = selectedMapperKeys.includes('as_is')
+      ? distinctStoredResources.length
+      : distinctStoredResources.length - numToConvert;
+    const OkButtonLabel = `Export (${numToExport}) / Convert (${numToConvert})`;
+    const OkButtonClickHandler = this.handleExportResources(
+      bundleId,
+      storedResources
+    );
+    return { OkButtonLabel, OkButtonClickHandler };
+  };
+
   getOkButtonDataDownloadOrCleanResources = () => {
     const { classes, bundleId, selectedIdsOutputConverters } = this.props;
     const resourceSelectionStatus = this.getSelectedResourcesByStatus();
@@ -1567,27 +1600,12 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       );
     } else if (storedResources === inEffect) {
       if (selectedIdsOutputConverters.length > 0) {
-        const { mapperOutputData = {} } = this.props;
-        const { report: outputMappers = {} } = mapperOutputData;
         const {
-          selectedIdsOutputConverters: selectedMapperKeys = []
-        } = this.props;
-        const numToConvert = selectedMapperKeys
-          .filter(key => key !== 'as_is')
-          .reduce((acc, selectedMapperKey) => {
-            return acc + outputMappers[selectedMapperKey].length;
-          }, 0);
-        const distinctStoredResources = Set(
-          storedResources.map(sr => sr.id)
-        ).toArray();
-        const numToExport = selectedMapperKeys.includes('as_is')
-          ? distinctStoredResources.length
-          : distinctStoredResources.length - numToConvert;
-        OkButtonLabel = `Export (${numToExport}) / Convert (${numToConvert})`;
-        OkButtonClickHandler = this.handleExportResources(
-          bundleId,
-          storedResources
-        );
+          OkButtonLabel: label,
+          OkButtonClickHandler: clickHandler
+        } = this.getExportConvertOkButton(storedResources);
+        OkButtonLabel = label;
+        OkButtonClickHandler = clickHandler;
       } else {
         OkButtonLabel = `Clean (${storedResources.length})`;
         OkButtonClickHandler = this.handleCleanResources(
