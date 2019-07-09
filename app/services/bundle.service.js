@@ -449,7 +449,11 @@ function requestSaveResourceTo(
   relativeDestinationPath,
   progressCallback
 ) {
-  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${RESOURCE_API}-stream/${resourcePath}`;
+  const resourceApi =
+    relativeDestinationPath === 'metadata.xml'
+      ? RESOURCE_API
+      : `${RESOURCE_API}-stream`;
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${resourceApi}/${resourcePath}`;
   const targetPath = path.join(selectedFolder, relativeDestinationPath);
   return download(url, targetPath, progressCallback, authHeader());
 }
