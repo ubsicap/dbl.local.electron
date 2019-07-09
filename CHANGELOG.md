@@ -1,3 +1,13 @@
+### Version 0.39.1 (Export / Converters)
+
+#### Fix
+
+- Added "Export selected resources As Is" option to export option table
+- Better counting for Export / Converters button in Resource dialog
+- Only include stored resources in export count
+- Remove overwrites column for exports
+- Try fix metadata.xml export to include latest changes (adding resources to the manifest)
+
 ### Version 0.39.0 (Export / Converters & Download as Publisher)
 
 #### Feature
