@@ -3,6 +3,7 @@
 #### Fix
 
 - Fix spinning circle on Export / Convert button
+- Remember last exported folder for entry (session only)
 
 ### Version 0.39.1 (Export / Converters)
 
