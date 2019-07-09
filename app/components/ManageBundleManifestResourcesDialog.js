@@ -1563,7 +1563,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const numToConvert = selectedMapperKeys
       .filter(key => key !== 'as_is')
       .reduce((acc, selectedMapperKey) => {
-        return acc + outputMappers[selectedMapperKey].length;
+        const outputMapper = outputMappers[selectedMapperKey] || [];
+        return acc + outputMapper.length;
       }, 0);
     const distinctStoredResources = Set(
       storedResources.map(sr => sr.id)
