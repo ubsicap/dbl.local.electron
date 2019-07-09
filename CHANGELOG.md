@@ -1,3 +1,9 @@
+### Version 0.39.2 (Export / Converters)
+
+#### Fix
+
+- Fix spinning circle on button exports
+
 ### Version 0.39.1 (Export / Converters)
 
 #### Fix
