@@ -88,13 +88,22 @@ export function closeResourceManager(_bundleId) {
 
 const msgToAddOrRemoveResources = 'To add or remove resources in the manifest';
 
+function getBundleMedium(state, bundleId) {
+  const { medium } = getBundle(state, bundleId);
+  return medium;
+}
+
+function getBundle(state, bundleId) {
+  const {
+    bundles: { addedByBundleIds }
+  } = state;
+  const bundle = addedByBundleIds[bundleId];
+  return bundle;
+}
+
 export function checkPublicationsHealth(_bundleId) {
   return async (dispatch, getState) => {
-    const {
-      bundles: { addedByBundleIds }
-    } = getState();
-    const bundleId = _bundleId;
-    const { medium } = addedByBundleIds[bundleId];
+    const medium = getBundleMedium(getState(), _bundleId);
     const applicableWizards = await bundleService.getApplicableWizards(
       _bundleId,
       medium
@@ -427,14 +436,19 @@ export function requestSaveBundleTo(
     const filesToTransfer = resourceUris;
     resourceUris.forEach(async resourcePath => {
       const [resourceUri, selectedMapper] = resourcePath.split('?mapper=');
-      const destinationPath = selectedMapper
-        ? altRelativePathMappings[selectedMapper][resourceUri]
-        : resourceUri;
+      const downloadUri =
+        selectedMapper && selectedMapper !== 'as_is'
+          ? resourcePath
+          : resourceUri;
+      const destinationPath =
+        selectedMapper && selectedMapper !== 'as_is'
+          ? altRelativePathMappings[selectedMapper][resourceUri]
+          : resourceUri;
       try {
         const downloadItem = await bundleService.requestSaveResourceTo(
           selectedFolder,
           id,
-          resourcePath,
+          downloadUri,
           destinationPath,
           (resourceTotalBytesSaved, resourceProgress) => {
             const originalResourceBytesTransferred =
@@ -590,8 +604,16 @@ async function getOverwritesPerMapper(direction, report, bundleId) {
 }
 
 export function getMapperReport(_direction, _uris, _bundleId) {
-  return async dispatch => {
-    dispatch(request(_direction, _uris));
+  return async (dispatch, getState) => {
+    const gottenState = getState();
+    const bundle = getBundle(gottenState, _bundleId);
+    const { storedResourcePaths } = bundle;
+    const storedResourcePathsSet = immutableJs.Set(storedResourcePaths);
+    const filteredUris =
+      _direction === 'output'
+        ? _uris.filter(uri => storedResourcePathsSet.has(uri))
+        : _uris;
+    dispatch(request(_direction, filteredUris));
     const options = await dblDotLocalService.getMappers(_direction);
     const report = await dblDotLocalService.getMapperReport(_direction, _uris);
     const overwrites = await getOverwritesPerMapper(
@@ -599,7 +621,17 @@ export function getMapperReport(_direction, _uris, _bundleId) {
       report,
       _bundleId
     );
-    dispatch(success(_direction, _uris, report, options, overwrites));
+    if (_direction === 'output') {
+      report.as_is = [...filteredUris];
+      options.as_is = {
+        name: 'as_is',
+        medium: bundle.medium,
+        description: '** Exports stored resources AS IS',
+        documentation: 'Exports selected stored resources as is'
+      };
+      overwrites.as_is = [...filteredUris];
+    }
+    dispatch(success(_direction, filteredUris, report, options, overwrites));
   };
   function request(direction, uris) {
     return {
@@ -632,6 +664,7 @@ export function selectResources(
   selectedResourceIds,
   shouldUpdateOutputMapperReports = false
 ) {
+  const distinctSelectedResourceIds = [...new Set(selectedResourceIds)];
   return (dispatch, getState) => {
     if (shouldUpdateOutputMapperReports) {
       const {
@@ -642,13 +675,13 @@ export function selectResources(
       dispatch(
         updateOutputMapperReports(
           bundleId,
-          selectedResourceIds.filter(id => !addedFilePathsSet.has(id))
+          distinctSelectedResourceIds.filter(id => !addedFilePathsSet.has(id))
         )
       );
     }
     dispatch({
       type: bundleResourceManagerConstants.RESOURCES_SELECTED,
-      selectedResourceIds
+      selectedResourceIds: distinctSelectedResourceIds
     });
   };
 }
