@@ -2,7 +2,7 @@
 
 #### Fix
 
-- Fix spinning circle on button exports
+- Fix spinning circle on Export / Convert button
 
 ### Version 0.39.1 (Export / Converters)
 
