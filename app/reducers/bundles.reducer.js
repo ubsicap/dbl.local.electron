@@ -312,7 +312,7 @@ export function bundles(state = initialState, action) {
         })
       );
     }
-    case bundleResourceManagerConstants.SAVETOREQUEST: {
+    case bundleResourceManagerConstants.SAVETO_REQUEST: {
       return updateTaskStatusProgress(action.id, 'SAVETO', 'IN_PROGRESS', 0);
     }
     case bundleResourceManagerConstants.SAVETO_UPDATED: {

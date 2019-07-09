@@ -1530,8 +1530,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         toAddResources
       );
       OkButtonLabel = addMessageBuilder.join('');
-    } else if (loading) {
-      OkButtonLabel = 'Adding...';
+    }
+    if (loading) {
       OkButtonClickHandler = () => {};
     }
     const OkButtonIcon = this.getOkButtonIcon(resourceSelectionStatus, loading);
@@ -1615,6 +1615,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         );
       }
     }
+    const { loading } = this.props;
+    if (loading) {
+      OkButtonClickHandler = () => {};
+    }
     const OkButtonIcon = this.getDownloadOkButtonIcon(resourceSelectionStatus);
     const OkButtonProps = {
       classes,
@@ -1622,7 +1626,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       color: isManifestResourcesInEffect ? 'inherit' : 'secondary',
       variant: isManifestResourcesInEffect ? 'text' : 'contained',
       onClick: OkButtonClickHandler,
-      disabled: this.shouldDisableDownload()
+      disabled: this.shouldDisableDownload() || loading
     };
     return { OkButtonLabel, OkButtonIcon, OkButtonProps };
   };
