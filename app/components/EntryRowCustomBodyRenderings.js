@@ -204,7 +204,7 @@ class EntryRowCustomBodyRenderings extends PureComponent<Props> {
 
   render() {
     const { classes, columnName, cellValue, dblId, bundleId } = this.props;
-    console.log(`Rendering ${bundleId}: ${columnName} = ${cellValue}`);
+    // console.log(`Rendering ${bundleId}: ${columnName} = ${cellValue}`);
     switch (columnName) {
       case 'starred': {
         return (
