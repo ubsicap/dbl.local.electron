@@ -29,6 +29,8 @@ const getMuiTheme = () =>
     }
   });
 
+const muiTheme = getMuiTheme();
+
 const styles = theme => ({
   root: {
     width: '100%',
@@ -68,6 +70,7 @@ type Props = {
   multiSelections?: boolean,
   customSorts?: {},
   freezeCheckedColumnState?: boolean,
+  tableOptions?: {},
   title?: string,
   editContainer?: {},
   onSelectedRowIds: () => {},
@@ -80,7 +83,8 @@ const defaultProps = {
   multiSelections: false,
   freezeCheckedColumnState: false,
   title: undefined,
-  editContainer: undefined
+  editContainer: undefined,
+  tableOptions: emptyObject
 };
 
 function getSortMethod(customSorts, orderBy) {
@@ -96,7 +100,7 @@ const getSecondarySorts = (state, props) => props.secondarySorts;
 const getCustomSorts = (state, props) =>
   props.customSorts || defaultProps.customSorts;
 const getOrderBy = (state, props) =>
-  props.orderBy || this.props.columnConfig[0].name;
+  props.orderBy || props.columnConfig[0].name;
 const getOrderDirection = (state, props) =>
   props.orderDirection || defaultProps.orderDirection;
 
@@ -163,10 +167,11 @@ function getColumns(columnConfig, sortedData, orderBy, orderDirection) {
     name: c.name,
     label: c.label,
     options: {
-      filter: !['name', 'size', 'pubPath', 'role'].includes(c.name),
+      filter: !['name', 'size', 'dblId', 'pubPath', 'role'].includes(c.name),
       ...getSortDirection(c, orderBy, orderDirection),
       setCellProps: (row, dataIndex) =>
-        getCellProps(c, row, dataIndex, sortedData)
+        getCellProps(c, row, dataIndex, sortedData),
+      ...(c.options || {})
     }
   }));
   return columns;
@@ -185,6 +190,7 @@ function getCellProps(columnData, row, dataIndex, sortedData) {
 }
 
 function mapStateToProps(state, props) {
+  // console.log('EnhancedTable mapStateToProps');
   const sortedData = getSortedDataSelector(state, props);
   const columns = getColumnsSelector(state, props);
   const selectableData = getSelectableDataSelector(state, props);
@@ -230,29 +236,9 @@ class EnhancedTable extends Component<Props> {
     if (freezeCheckedColumnState) {
       return;
     }
-    const currentDataIndexesSelected = currentRowsSelected.map(
-      r => r.dataIndex
+    const allSelectedIds = allRowsSelected.map(
+      rowMeta => sortedData[rowMeta.dataIndex].id
     );
-    // there seems to be a bug in using rowsSelected in context of an filter active
-    // (see https://github.com/gregnb/mui-datatables/issues/514)
-    // for now remove duplicate dataIndexes (assuming the user is disabling a checkbox)
-    const matchingDataIndexes = allRowsSelected
-      .map(rowMeta => rowMeta.dataIndex)
-      .filter(dataIndex => currentDataIndexesSelected.includes(dataIndex));
-    const allSelectedIds = allRowsSelected
-      .filter(
-        rowMeta =>
-          filterOutDuplicateDataIndexes(matchingDataIndexes)(rowMeta) &&
-          (currentDataIndexesSelected.includes(rowMeta.dataIndex) ||
-            !currentDataIndexesSelected.some(
-              dataIndex =>
-                sortedData[dataIndex].id === sortedData[rowMeta.dataIndex].id
-            ))
-      )
-      .map(rowMeta => sortedData[rowMeta.dataIndex].id);
-    if (!this.props.multiSelections && allSelectedIds.length > 0) {
-      return this.reportSelectedRowIds([allSelectedIds[0]]);
-    }
     return this.reportSelectedRowIds(allSelectedIds);
   };
 
@@ -293,7 +279,7 @@ class EnhancedTable extends Component<Props> {
     }
     const { classes, editContainer, freezeCheckedColumnState } = this.props;
     return {
-      customToolbarSelect: (selectedRows, displayData, setSelectedRows) => (
+      customToolbarSelect: (/* selectedRows, displayData, setSelectedRows */) => (
         <React.Fragment>
           {editContainer && !freezeCheckedColumnState ? (
             <div
@@ -332,6 +318,7 @@ class EnhancedTable extends Component<Props> {
   };
 
   render() {
+    // console.log('MUIDataTable render component');
     const {
       classes,
       sortedData,
@@ -339,10 +326,17 @@ class EnhancedTable extends Component<Props> {
       selectedDataIndexes,
       selectableData,
       freezeCheckedColumnState,
-      title
+      title,
+      tableOptions,
+      multiSelections
     } = this.props;
-    const { rowsPerPage } = this.state;
+    /* console.log(
+      `columns[0].options.filterList: ${columns[0].options.filterList}`
+    );
+    console.log(columns); */
+    const { rowsPerPage, page } = this.state;
     const customToolbarSelect = this.getCustomToolbarSelect();
+    const selectableRowsOption = multiSelections ? 'multiple' : 'single';
     const options = {
       filterType: 'multiselect', // can cause crash if any cells are undefined https://github.com/gregnb/mui-datatables/issues/299
       fixedHeader: true,
@@ -350,22 +344,26 @@ class EnhancedTable extends Component<Props> {
       rowsSelected: selectedDataIndexes,
       onRowsSelect: this.handleRowsSelect,
       onRowClick: this.handleRowClick,
-      selectableRows: selectableData.length > 0,
+      selectableRows: selectableData.length > 0 ? selectableRowsOption : 'none',
       isRowSelectable: dataIndex =>
-        !freezeCheckedColumnState && !sortedData[dataIndex].disabled,
+        !freezeCheckedColumnState &&
+        !(dataIndex < sortedData.length
+          ? sortedData[dataIndex].disabled
+          : true),
       customSort: data => data,
       ...customToolbarSelect,
       onColumnSortChange: this.handleRequestSort,
       onFilterChange: this.handleFilterChange,
-      page: this.state.page,
+      page,
       onChangePage: this.handleChangePage,
       rowsPerPage,
       rowsPerPageOptions: [10, 50, 100, 150, sortedData.length],
-      onChangeRowsPerPage: this.handleChangeRowsPerPage
+      onChangeRowsPerPage: this.handleChangeRowsPerPage,
+      ...tableOptions
     };
     return (
       <Paper className={classes.root}>
-        <MuiThemeProvider theme={getMuiTheme()}>
+        <MuiThemeProvider theme={muiTheme}>
           <MUIDataTable
             title={title}
             data={sortedData}
@@ -387,14 +385,3 @@ export default compose(
     null
   )
 )(EnhancedTable);
-
-function filterOutDuplicateDataIndexes(matchingDataIndexes) {
-  return rowMeta => {
-    const matchedDataIndexes = matchingDataIndexes.filter(
-      dataIndex => dataIndex === rowMeta.dataIndex
-    );
-    return matchedDataIndexes.length === 1
-      ? true
-      : !matchedDataIndexes.includes(rowMeta.dataIndex);
-  };
-}
