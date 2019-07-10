@@ -385,14 +385,3 @@ export default compose(
     null
   )
 )(EnhancedTable);
-
-function filterOutDuplicateDataIndexes(matchingDataIndexes) {
-  return rowMeta => {
-    const matchedDataIndexes = matchingDataIndexes.filter(
-      dataIndex => dataIndex === rowMeta.dataIndex
-    );
-    return matchedDataIndexes.length === 1
-      ? true
-      : !matchedDataIndexes.includes(rowMeta.dataIndex);
-  };
-}
