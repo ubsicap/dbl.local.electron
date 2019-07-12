@@ -1,3 +1,9 @@
+### Version 0.40.0 (Export / Converters)
+
+#### Feature
+
+- Include ffmpeg (vob) and sox (wav) for audio converters
+
 ### Version 0.39.2 (Export / Converters)
 
 #### Fix
