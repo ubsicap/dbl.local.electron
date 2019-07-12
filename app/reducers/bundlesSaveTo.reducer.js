@@ -1,47 +1,59 @@
-import { bundleConstants } from '../constants/bundle.constants';
+import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 
 export function bundlesSaveTo(state = {}, action) {
   switch (action.type) {
-    case bundleConstants.SAVETO_REQUEST: {
-      const resourcePathsBytesSaved = action.resourcePaths
-        .reduce((acc, resourcePath) => {
-          acc[resourcePath] = 0;
-          return acc;
-        }, {});
+    case bundleResourceManagerConstants.SAVETO_REQUEST: {
+      const {
+        filesToTransfer,
+        filesTransferred,
+        bundleBytesToSave,
+        bundleBytesSaved
+      } = action;
       return {
         ...state,
+        isExporting: true,
         savedToHistory: {
           ...state.savedToHistory,
           ...{
             [action.id]: {
               folderName: action.folderName,
-              bundleBytesToSave: action.bundleBytesToSave,
-              bundleBytesSaved: 0,
-              resourcePathsBytesSaved
+              bundleBytesToSave,
+              bundleBytesSaved,
+              filesToTransfer,
+              filesTransferred
             }
           }
         }
       };
-    } case bundleConstants.SAVETO_UPDATED: {
-      const bundleToUpdate = state.savedToHistory[action.id];
-      const originalResourcePathsBytesTransfered = bundleToUpdate.resourcePathsBytesSaved;
-      const resourcePathBytesTransferedOriginal = originalResourcePathsBytesTransfered[action.resourcePath];
-      const resourceBytesDiff = action.resourceTotalBytesSaved - resourcePathBytesTransferedOriginal;
-      const bundleBytesSaved = bundleToUpdate.bundleBytesSaved + resourceBytesDiff;
-      const resourcePathsBytesSaved = {
-        ...originalResourcePathsBytesTransfered,
-        [action.resourcePath]: action.resourceTotalBytesSaved
-      };
-      const updatedBundle = { ...bundleToUpdate, bundleBytesSaved, resourcePathsBytesSaved };
+    }
+    case bundleResourceManagerConstants.SAVETO_UPDATED: {
+      const historyToUpdate = state.savedToHistory[action.id];
+      const {
+        filesToTransfer,
+        filesTransferred,
+        bundleBytesToSave,
+        bundleBytesSaved
+      } = action;
+      const isExporting =
+        action.filesTransferred.length !== action.filesToTransfer.length;
       return {
         ...state,
+        isExporting,
         savedToHistory: {
           ...state.savedToHistory,
-          [action.id]: updatedBundle
+          ...{
+            [action.id]: {
+              ...historyToUpdate,
+              bundleBytesToSave,
+              bundleBytesSaved,
+              filesToTransfer,
+              filesTransferred
+            }
+          }
         }
       };
     }
-    case bundleConstants.SAVETO_FAILURE:
+    case bundleResourceManagerConstants.SAVETO_FAILURE:
       return {
         error: action.error
       };

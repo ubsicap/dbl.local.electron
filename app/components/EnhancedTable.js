@@ -190,7 +190,7 @@ function getCellProps(columnData, row, dataIndex, sortedData) {
 }
 
 function mapStateToProps(state, props) {
-  console.log('EnhancedTable mapStateToProps');
+  // console.log('EnhancedTable mapStateToProps');
   const sortedData = getSortedDataSelector(state, props);
   const columns = getColumnsSelector(state, props);
   const selectableData = getSelectableDataSelector(state, props);
@@ -318,7 +318,7 @@ class EnhancedTable extends Component<Props> {
   };
 
   render() {
-    console.log('MUIDataTable render component');
+    // console.log('MUIDataTable render component');
     const {
       classes,
       sortedData,
@@ -330,10 +330,10 @@ class EnhancedTable extends Component<Props> {
       tableOptions,
       multiSelections
     } = this.props;
-    console.log(
+    /* console.log(
       `columns[0].options.filterList: ${columns[0].options.filterList}`
     );
-    console.log(columns);
+    console.log(columns); */
     const { rowsPerPage, page } = this.state;
     const customToolbarSelect = this.getCustomToolbarSelect();
     const selectableRowsOption = multiSelections ? 'multiple' : 'single';

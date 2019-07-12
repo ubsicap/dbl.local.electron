@@ -1,7 +1,7 @@
 import log from 'electron-log';
 import fs from 'fs-extra';
 import upath from 'upath';
-import { Set } from 'immutable';
+import immutableJs from 'immutable';
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
 import { navigationConstants } from '../constants/navigation.constants';
 import { history } from '../store/configureStore';
@@ -13,7 +13,12 @@ import {
   saveMetadatFileToTempBundleFolder
 } from './bundleEditMetadata.actions';
 import { bundleActions } from './bundle.actions';
+import { updateSearchResultsForBundleId } from './bundleFilter.actions';
+import { bundleHelpers } from '../helpers/bundle.helpers';
 import { emptyObject } from '../utils/defaultValues';
+
+const { dialog, app } = require('electron').remote;
+const { shell } = require('electron');
 
 export const bundleManageResourceActions = {
   openResourceManager,
@@ -83,13 +88,22 @@ export function closeResourceManager(_bundleId) {
 
 const msgToAddOrRemoveResources = 'To add or remove resources in the manifest';
 
+function getBundleMedium(state, bundleId) {
+  const { medium } = getBundle(state, bundleId);
+  return medium;
+}
+
+function getBundle(state, bundleId) {
+  const {
+    bundles: { addedByBundleIds }
+  } = state;
+  const bundle = addedByBundleIds[bundleId];
+  return bundle;
+}
+
 export function checkPublicationsHealth(_bundleId) {
   return async (dispatch, getState) => {
-    const {
-      bundles: { addedByBundleIds }
-    } = getState();
-    const bundleId = _bundleId;
-    const { medium } = addedByBundleIds[bundleId];
+    const medium = getBundleMedium(getState(), _bundleId);
     const applicableWizards = await bundleService.getApplicableWizards(
       _bundleId,
       medium
@@ -238,9 +252,10 @@ export function addManifestResources(
           await bundleService.postResource(_bundleId, filePath, containerPath);
           dispatch(success(_bundleId, filePath, containerPath));
         } else {
-          const applicableInputMappers = Object.entries(inputMappers)
-            .filter(([, mapperUris]) => mapperUris.includes(containerPath))
-            .map(([mapperKey]) => mapperKey);
+          const applicableInputMappers = bundleHelpers.getApplicableMappersForResourcePath(
+            inputMappers,
+            containerPath
+          );
           for (const mapper of applicableInputMappers) {
             await bundleService.postResource(
               _bundleId,
@@ -328,6 +343,205 @@ export function addManifestResources(
   }
 }
 
+function getBundleExportInfo(bundleId, savedToHistory) {
+  return savedToHistory ? savedToHistory[bundleId] : null;
+}
+
+function promptForFolderToSaveTo(bundlesSaveTo, bundleId) {
+  const { savedToHistory } = bundlesSaveTo;
+  const bundleSavedToInfo = getBundleExportInfo(bundleId, savedToHistory);
+  const defaultPath = bundleSavedToInfo
+    ? bundleSavedToInfo.folderName
+    : app.getPath('downloads');
+  const [selectedFolder] = dialog.showOpenDialog({
+    defaultPath,
+    properties: ['openDirectory']
+  });
+  if (selectedFolder) {
+    console.log(selectedFolder.toString());
+  }
+  return selectedFolder;
+}
+
+function openInFolder(bundleId, folderName) {
+  shell.openItem(folderName);
+  return { type: 'BUNDLES_SAVETO_OPEN_FOLDER', bundleId, folderName };
+}
+
+function filterOnSelectResourcesOrAll(selectedResources, resourcePath) {
+  return !selectedResources || selectedResources.includes(resourcePath);
+}
+
+export function requestSaveBundleTo(
+  id,
+  folder,
+  selectedResources,
+  selectedMappers = emptyObject,
+  overwrites = emptyObject
+) {
+  return async (dispatch, getState) => {
+    const selectedFolder =
+      folder || promptForFolderToSaveTo(getState().bundlesSaveTo, id);
+    const bundleInfo = await bundleService.fetchById(id);
+    const resourcePaths = bundleHelpers
+      .getStoredResourcePaths(getState, id)
+      .filter(resourcePath => {
+        return filterOnSelectResourcesOrAll(selectedResources, resourcePath);
+      });
+    const filePathsToExport = [...resourcePaths, 'metadata.xml'];
+    const bundleBytesToSave = Object.entries(
+      bundleService.getFlatFileInfo(bundleInfo)
+    )
+      .filter(([resourcePath]) => {
+        return filterOnSelectResourcesOrAll(filePathsToExport, resourcePath);
+      })
+      .reduce(addByteSize, 0);
+    const resourcePathsProgress = filePathsToExport.reduce(
+      (acc, resourcePath) => {
+        acc[resourcePath] = 0;
+        return acc;
+      },
+      {}
+    );
+    let bundleBytesSaved = 0;
+    dispatch(
+      request(
+        id,
+        selectedFolder,
+        bundleBytesToSave,
+        filePathsToExport,
+        selectedMappers,
+        overwrites
+      )
+    );
+    dispatch(updateSearchResultsForBundleId(id));
+    const resourceUris = bundleHelpers.getResourceUris(
+      filePathsToExport,
+      selectedMappers
+    );
+    const altRelativePathMappings = Object.entries(overwrites).reduce(
+      (acc, [mapper, overwriteTuples]) => {
+        acc[mapper] = overwriteTuples.reduce((accNewObj, overwriteTuple) => {
+          return {
+            ...accNewObj,
+            ...{ [overwriteTuple[0]]: overwriteTuple[1] }
+          };
+        }, {});
+        return acc;
+      },
+      {}
+    );
+    const updatedSelectedResources = new Set(selectedResources || []); // not immutableJs
+    const filesTransferred = [];
+    const filesToTransfer = resourceUris;
+    resourceUris.forEach(async resourcePath => {
+      const [resourceUri, selectedMapper] = resourcePath.split('?mapper=');
+      const downloadUri =
+        selectedMapper && selectedMapper !== 'as_is'
+          ? resourcePath
+          : resourceUri;
+      const destinationPath =
+        selectedMapper && selectedMapper !== 'as_is'
+          ? altRelativePathMappings[selectedMapper][resourceUri]
+          : resourceUri;
+      try {
+        const downloadItem = await bundleService.requestSaveResourceTo(
+          selectedFolder,
+          id,
+          downloadUri,
+          destinationPath,
+          (resourceTotalBytesSaved, resourceProgress) => {
+            const originalResourceBytesTransferred =
+              resourcePathsProgress[resourceUri];
+            resourcePathsProgress[resourceUri] = resourceTotalBytesSaved;
+            const bytesDiff =
+              resourceTotalBytesSaved - originalResourceBytesTransferred;
+            bundleBytesSaved += bytesDiff;
+            if (resourceProgress && resourceProgress % 100 === 0) {
+              filesTransferred.push(resourcePath);
+              const updatedArgs = {
+                _id: id,
+                apiBundle: bundleInfo,
+                resourcePath,
+                resourceTotalBytesSaved,
+                bundleBytesSaved,
+                bundleBytesToSave,
+                filesToTransfer,
+                filesTransferred
+              };
+              dispatch(updated(updatedArgs));
+              if (selectedResources) {
+                updatedSelectedResources.delete(resourceUri);
+                dispatch(selectResources(Array.from(updatedSelectedResources)));
+              }
+              dispatch(updateSearchResultsForBundleId(id));
+              if (filesToTransfer.length === filesTransferred.length) {
+                dispatch(openInFolder(id, selectedFolder));
+              }
+            }
+          }
+        );
+        return downloadItem;
+      } catch (error) {
+        dispatch(failure(id, error));
+      }
+    });
+  };
+
+  function addByteSize(accBytes, [, fileInfoNode]) {
+    return accBytes + fileInfoNode.size;
+  }
+
+  function request(
+    _id,
+    _folderName,
+    bundleBytesToSave,
+    resourcePaths,
+    _selectedMappers,
+    _overwrites
+  ) {
+    return {
+      type: bundleResourceManagerConstants.SAVETO_REQUEST,
+      id: _id,
+      folderName: _folderName,
+      bundleBytesToSave,
+      resourcePaths,
+      selectedMappers: _selectedMappers,
+      overwrites: _overwrites
+    };
+  }
+
+  function updated({
+    _id,
+    apiBundle,
+    resourcePath,
+    resourceTotalBytesSaved,
+    bundleBytesSaved,
+    bundleBytesToSave,
+    filesToTransfer,
+    filesTransferred
+  }) {
+    return {
+      type: bundleResourceManagerConstants.SAVETO_UPDATED,
+      id: _id,
+      apiBundle,
+      resourcePath,
+      resourceTotalBytesSaved,
+      bundleBytesSaved,
+      bundleBytesToSave,
+      filesToTransfer,
+      filesTransferred
+    };
+  }
+  function failure(_id, error) {
+    return {
+      type: bundleResourceManagerConstants.SAVETO_FAILURE,
+      id: _id,
+      error
+    };
+  }
+}
+
 export function deleteManifestResources(_bundleId, _uris) {
   return async (dispatch, getState) => {
     try {
@@ -374,15 +588,13 @@ export function deleteManifestResources(_bundleId, _uris) {
 }
 
 async function getOverwritesPerMapper(direction, report, bundleId) {
-  if (direction !== 'input') {
-    return undefined;
-  }
   const overwrites = {};
   /* eslint-disable no-restricted-syntax */
   /* eslint-disable no-await-in-loop */
   for (const [mapperKey, mapperUris] of Object.entries(report)) {
-    const mapperOverwrites = await bundleService.getMapperInputOverwrites(
+    const mapperOverwrites = await bundleService.getMapperOverwrites(
       bundleId,
+      direction,
       { [mapperKey]: mapperUris },
       []
     );
@@ -392,8 +604,16 @@ async function getOverwritesPerMapper(direction, report, bundleId) {
 }
 
 export function getMapperReport(_direction, _uris, _bundleId) {
-  return async dispatch => {
-    dispatch(request(_direction, _uris));
+  return async (dispatch, getState) => {
+    const gottenState = getState();
+    const bundle = getBundle(gottenState, _bundleId);
+    const { storedResourcePaths } = bundle;
+    const storedResourcePathsSet = immutableJs.Set(storedResourcePaths);
+    const filteredUris =
+      _direction === 'output'
+        ? _uris.filter(uri => storedResourcePathsSet.has(uri))
+        : _uris;
+    dispatch(request(_direction, filteredUris));
     const options = await dblDotLocalService.getMappers(_direction);
     const report = await dblDotLocalService.getMapperReport(_direction, _uris);
     const overwrites = await getOverwritesPerMapper(
@@ -401,7 +621,17 @@ export function getMapperReport(_direction, _uris, _bundleId) {
       report,
       _bundleId
     );
-    dispatch(success(_direction, _uris, report, options, overwrites));
+    if (_direction === 'output') {
+      report.as_is = [...filteredUris];
+      options.as_is = {
+        name: 'as_is',
+        medium: bundle.medium,
+        description: '** Exports stored resources AS IS',
+        documentation: 'Exports selected stored resources as is'
+      };
+      overwrites.as_is = [...filteredUris];
+    }
+    dispatch(success(_direction, filteredUris, report, options, overwrites));
   };
   function request(direction, uris) {
     return {
@@ -430,10 +660,29 @@ export function selectMappers(direction, mapperIds) {
   };
 }
 
-export function selectResources(selectedResourceIds) {
-  return {
-    type: bundleResourceManagerConstants.RESOURCES_SELECTED,
-    selectedResourceIds
+export function selectResources(
+  selectedResourceIds,
+  shouldUpdateOutputMapperReports = false
+) {
+  const distinctSelectedResourceIds = [...new Set(selectedResourceIds)];
+  return (dispatch, getState) => {
+    if (shouldUpdateOutputMapperReports) {
+      const {
+        bundleId,
+        addedFilePaths = []
+      } = getState().bundleManageResources;
+      const addedFilePathsSet = immutableJs.Set(addedFilePaths);
+      dispatch(
+        updateOutputMapperReports(
+          bundleId,
+          distinctSelectedResourceIds.filter(id => !addedFilePathsSet.has(id))
+        )
+      );
+    }
+    dispatch({
+      type: bundleResourceManagerConstants.RESOURCES_SELECTED,
+      selectedResourceIds: distinctSelectedResourceIds
+    });
   };
 }
 
@@ -486,6 +735,10 @@ function updateInputMapperReports(bundleId, filePaths, fullToRelativePaths) {
       utilities.getFilePathResourceData(filePath, fullToRelativePaths).uri
   );
   return getMapperReport('input', mapperReportUris, bundleId);
+}
+
+export function updateOutputMapperReports(bundleId, mapperReportUris) {
+  return getMapperReport('output', mapperReportUris, bundleId);
 }
 
 export function updateAddedFilePaths(addedFilePaths, fullToRelativePaths) {
@@ -541,7 +794,8 @@ export function editContainers(newContainer) {
       editedContainers: editedContainersOrig = {}
     } = state.bundleManageResources;
     const { selectedResourceIds = [] } = state.bundleManageResourcesUx;
-    const toAddResourceIds = Set(addedFilePaths)
+    const toAddResourceIds = immutableJs
+      .Set(addedFilePaths)
       .intersect(selectedResourceIds)
       .toArray();
     const newlyEditedContainers = toAddResourceIds.reduce((acc, filePath) => {

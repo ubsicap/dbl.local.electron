@@ -1,3 +1,31 @@
+### Version 0.39.2 (Export / Converters)
+
+#### Fix
+
+- Fix spinning circle on Export / Convert button
+- Remember last exported folder for entry (session only)
+
+### Version 0.39.1 (Export / Converters)
+
+#### Fix
+
+- Added "Export selected resources As Is" option to export option table
+- Better counting for Export / Converters button in Resource dialog
+- Only include stored resources in export count
+- Remove overwrites column for exports
+- Try fix metadata.xml export to include latest changes (adding resources to the manifest)
+
+### Version 0.39.0 (Export / Converters & Download as Publisher)
+
+#### Feature
+
+- Added Export / Converters table & button for Resource dialog (e.g. timing files)
+- Workspace Settings > added switch "Download as Publisher" for Content Contributor (IPC)
+- dbl_dot_local_app (6/26/2019)
+  - overwrites for output mappers
+  - assorted offline report and JSON versification generation code
+  - support for "download as publisher, upload as archivist" for Compass Braille
+
 ### Version 0.38.0 (Resource publication columns)
 
 #### Feature

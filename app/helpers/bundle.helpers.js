@@ -1,7 +1,10 @@
 export const bundleHelpers = {
   getStoredResourcePaths,
   getManifestResourcePaths,
-  getAddedBundle
+  getAddedBundle,
+  getApplicableMappersForResourcePath,
+  buildFullUriWithOptionalMapper,
+  getResourceUris
 };
 export default bundleHelpers;
 
@@ -20,4 +23,32 @@ export function getAddedBundle(getState, bundleId) {
   const { addedByBundleIds = {} } = bundles;
   const addedBundles = addedByBundleIds[bundleId];
   return addedBundles;
+}
+
+function buildFullUriWithOptionalMapper(uri, mapper) {
+  return mapper ? `${uri}?mapper=${mapper}` : uri;
+}
+
+function getApplicableMappersForResourcePath(selectedMappers, resourcePath) {
+  const applicableOutputMappers = Object.entries(selectedMappers)
+    .filter(([, mapperUris]) => mapperUris.includes(resourcePath))
+    .map(([mapperKey]) => mapperKey);
+  return applicableOutputMappers;
+}
+
+function getResourceUris(resourcePaths, selectedMappers) {
+  const resourceUris = resourcePaths.reduce((acc, resourcePath) => {
+    const applicableOutputMappers = getApplicableMappersForResourcePath(
+      selectedMappers,
+      resourcePath
+    );
+    if (applicableOutputMappers.length === 0) {
+      return acc.concat([resourcePath]);
+    }
+    const mappedUris = applicableOutputMappers.map(mapper =>
+      buildFullUriWithOptionalMapper(resourcePath, mapper)
+    );
+    return acc.concat(mappedUris);
+  }, []);
+  return resourceUris;
 }

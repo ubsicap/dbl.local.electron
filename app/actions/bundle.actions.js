@@ -26,7 +26,6 @@ export const bundleActions = {
   removeBundle,
   setupBundlesEventSource,
   downloadResources,
-  requestSaveBundleTo,
   removeResources,
   toggleSelectEntry,
   uploadBundle,
@@ -771,99 +770,6 @@ function removeBundleSuccess(id) {
       deletedBundle
     });
   };
-}
-
-export function requestSaveBundleTo(id, selectedFolder) {
-  return async (dispatch, getState) => {
-    const bundleInfo = await bundleService.fetchById(id);
-    const bundleBytesToSave = traverse(bundleInfo.store.file_info).reduce(
-      addByteSize,
-      0
-    );
-    const resourcePaths = getStoredResourcePaths(getState, id);
-    const filePathsToExport = [...resourcePaths, 'metadata.xml'];
-    const resourcePathsProgress = filePathsToExport.reduce(
-      (acc, resourcePath) => {
-        acc[resourcePath] = 0;
-        return acc;
-      },
-      {}
-    );
-    let bundleBytesSaved = 0;
-    dispatch(request(id, selectedFolder, bundleBytesToSave, filePathsToExport));
-    dispatch(updateSearchResultsForBundleId(id));
-    filePathsToExport.forEach(async resourcePath => {
-      try {
-        const downloadItem = await bundleService.requestSaveResourceTo(
-          selectedFolder,
-          id,
-          resourcePath,
-          (resourceTotalBytesSaved, resourceProgress) => {
-            const originalResourceBytesTransferred =
-              resourcePathsProgress[resourcePath];
-            resourcePathsProgress[resourcePath] = resourceTotalBytesSaved;
-            const bytesDiff =
-              resourceTotalBytesSaved - originalResourceBytesTransferred;
-            bundleBytesSaved += bytesDiff;
-            if (resourceProgress && resourceProgress % 100 === 0) {
-              const updatedArgs = {
-                _id: id,
-                apiBundle: bundleInfo,
-                resourcePath,
-                resourceTotalBytesSaved,
-                bundleBytesSaved,
-                bundleBytesToSave
-              };
-              dispatch(updated(updatedArgs));
-              dispatch(updateSearchResultsForBundleId(id));
-            }
-          }
-        );
-        return downloadItem;
-      } catch (error) {
-        dispatch(failure(id, error));
-      }
-    });
-  };
-
-  function addByteSize(accBytes, fileInfoNode) {
-    if (fileInfoNode.is_dir || this.isRoot || fileInfoNode.size === undefined) {
-      return accBytes;
-    }
-    return accBytes + fileInfoNode.size;
-  }
-
-  function request(_id, _folderName, bundleBytesToSave, resourcePaths) {
-    return {
-      type: bundleConstants.SAVETO_REQUEST,
-      id: _id,
-      folderName: _folderName,
-      bundleBytesToSave,
-      resourcePaths
-    };
-  }
-
-  function updated({
-    _id,
-    apiBundle,
-    resourcePath,
-    resourceTotalBytesSaved,
-    bundleBytesSaved,
-    bundleBytesToSave
-  }) {
-    return {
-      type: bundleConstants.SAVETO_UPDATED,
-      id: _id,
-      apiBundle,
-      resourcePath,
-      resourceTotalBytesSaved,
-      bundleBytesSaved,
-      bundleBytesToSave
-    };
-  }
-  function failure(_id, error) {
-    return { type: bundleConstants.SAVETO_FAILURE, id: _id, error };
-  }
 }
 
 export function toggleSelectEntry(selectedBundle) {

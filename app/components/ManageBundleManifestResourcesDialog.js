@@ -29,7 +29,8 @@ import {
   selectRevisions,
   updateSortOrder,
   appendAddedFilePaths,
-  editContainers
+  editContainers,
+  requestSaveBundleTo
 } from '../actions/bundleManageResources.actions';
 import { pasteItems, clearClipboard } from '../actions/clipboard.actions';
 import {
@@ -60,6 +61,7 @@ type Props = {
   classes: {},
   theme: {},
   loading: boolean,
+  isExporting: boolean,
   progress: number,
   bundleId: ?string,
   bundlesById: ?{},
@@ -77,7 +79,9 @@ type Props = {
   publicationsHealthSuccessMessage: ?string,
   wizardsResults: ?{},
   mapperInputData: ?{},
+  mapperOutputData: ?{},
   selectedIdsInputConverters: ?{},
+  selectedIdsOutputConverters: ?{},
   goFixPublications: ?() => {},
   selectedItemsToPaste: ?{},
   selectedRowIds: [],
@@ -101,7 +105,8 @@ type Props = {
   selectBundleRevisions: () => {},
   appendResourceDialogAddedFilePaths: () => {},
   editResourceDialogContainers: () => {},
-  updateResourceDialogSortOrder: () => {}
+  updateResourceDialogSortOrder: () => {},
+  requestSaveResourcesTo: () => {}
 };
 
 const defaultProps = {
@@ -350,6 +355,8 @@ const getMapperInputData = state =>
   getMapperReports(state).input || emptyObject;
 const getMapperInputReport = state =>
   getMapperInputData(state).report || emptyObject;
+const getMapperOutputData = state =>
+  getMapperReports(state).output || emptyObject;
 const getSelectedMappers = state =>
   state.bundleManageResources.selectedMappers || emptyObject;
 const getUxCanons = state =>
@@ -420,6 +427,7 @@ const getPreviousManifestResourcesDataSelector = createSelector(
 );
 
 const getIsLoading = state => state.bundleManageResources.loading || false;
+const getIsExporting = state => state.bundlesSaveTo.isExporting || false;
 
 const getActiveBundleSelector = createSelector(
   [getBundleId, getBundlesById],
@@ -949,7 +957,6 @@ function mapStateToProps(state, props) {
     loading = false,
     isStoreMode = false,
     fetchingMetadata = false,
-    mapperReports = emptyObject,
     selectedMappers = emptyObject
   } = bundleManageResources;
   const {
@@ -977,10 +984,12 @@ function mapStateToProps(state, props) {
     mode !== 'revisions'
       ? getPreviousManifestResourcesDataSelector(state, props)
       : { previousManifestResources: emptyBundleManifestResources };
-  const { input: mapperInputData } = mapperReports;
-  const { report: mapperReport = emptyObject } = mapperInputData || emptyObject;
+  const mapperOutputData = getMapperOutputData(state);
+  const mapperInputData = getMapperInputData(state);
+  const mapperInputReport = getMapperInputReport(state);
   const selectedIdsInputConverters =
-    selectedMappers.input || Object.keys(mapperReport);
+    selectedMappers.input || Object.keys(mapperInputReport);
+  const selectedIdsOutputConverters = selectedMappers.output || emptyArray;
   const entryRevisions =
     mode === 'revisions'
       ? getEntryRevisionsDataSelector(state, props)
@@ -996,8 +1005,10 @@ function mapStateToProps(state, props) {
     props
   );
   const { orderDirection, orderBy } = getSortOrderOrDefault(mode, sortOrder);
+  const isExporting = getIsExporting(state);
   return {
-    loading: loading || fetchingMetadata || !isStoreMode,
+    loading: loading || fetchingMetadata || !isStoreMode || isExporting,
+    isExporting,
     progress,
     bundleId,
     bundlesById,
@@ -1005,7 +1016,9 @@ function mapStateToProps(state, props) {
     mode,
     showMetadataFile,
     mapperInputData,
+    mapperOutputData,
     selectedIdsInputConverters,
+    selectedIdsOutputConverters,
     selectedRowIds,
     autoSelectAllResources,
     previousEntryRevision,
@@ -1043,7 +1056,8 @@ const mapDispatchToProps = {
   selectBundleRevisions: selectRevisions,
   appendResourceDialogAddedFilePaths: appendAddedFilePaths,
   editResourceDialogContainers: editContainers,
-  updateResourceDialogSortOrder: updateSortOrder
+  updateResourceDialogSortOrder: updateSortOrder,
+  requestSaveResourcesTo: requestSaveBundleTo
 };
 
 const materialStyles = theme => ({
@@ -1087,6 +1101,16 @@ function mapSuggestions(suggestions) {
   return suggestions.map(suggestion => ({ label: suggestion }));
 }
 
+function getSelectedMapperMap(mappers, selectedMapperKeys) {
+  const selectedMappers = Object.keys(mappers)
+    .filter(mapperKey => selectedMapperKeys.includes(mapperKey))
+    .reduce(
+      (acc, mapperKey) => ({ ...acc, [mapperKey]: mappers[mapperKey] }),
+      {}
+    );
+  return selectedMappers;
+}
+
 class ManageBundleManifestResourcesDialog extends Component<Props> {
   props: Props;
 
@@ -1121,7 +1145,15 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         return;
       }
     }
-    const { mode, previousEntryRevision, bundlePreviousRevision } = this.props;
+    const {
+      mode,
+      previousEntryRevision,
+      bundlePreviousRevision,
+      isExporting
+    } = this.props;
+    if (prevProps.isExporting && !isExporting) {
+      // TODO: launch folder via refactored DBLEntryRow openInFolder to action
+    }
     if (mode !== 'revisions') {
       if (
         !prevProps.previousEntryRevision &&
@@ -1151,6 +1183,24 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
   handleCleanResources = (bundleId, storedResources) => () => {
     const { removeBundleResources } = this.props;
     removeBundleResources(bundleId, storedResources.map(r => r.uri));
+  };
+
+  handleExportResources = (bundleId, storedResources) => () => {
+    const { requestSaveResourcesTo } = this.props;
+    const { mapperOutputData = {} } = this.props;
+    const { report: outputMappers = {}, overwrites } = mapperOutputData;
+    const { selectedIdsOutputConverters: selectedMapperKeys = [] } = this.props;
+    const selectedMappers = getSelectedMapperMap(
+      outputMappers,
+      selectedMapperKeys
+    );
+    requestSaveResourcesTo(
+      bundleId,
+      undefined,
+      storedResources.map(r => r.uri),
+      selectedMappers,
+      overwrites
+    );
   };
 
   handleDownloadRevision = () => {
@@ -1231,12 +1281,10 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { mapperInputData = {} } = this.props;
     const { report: inputMappers = {} } = mapperInputData;
     const { selectedIdsInputConverters: selectedMapperKeys = [] } = this.props;
-    const selectedMappers = Object.keys(inputMappers)
-      .filter(mapperKey => selectedMapperKeys.includes(mapperKey))
-      .reduce(
-        (acc, mapperKey) => ({ ...acc, [mapperKey]: inputMappers[mapperKey] }),
-        {}
-      );
+    const selectedMappers = getSelectedMapperMap(
+      inputMappers,
+      selectedMapperKeys
+    );
     const filesToContainers = sort(toAddResources)
       .asc('uri')
       .reduce(
@@ -1266,7 +1314,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     if (mode === 'revisions') {
       selectBundleRevisions(selectedIds);
     } else {
-      selectBundleResources(selectedIds);
+      selectBundleResources(selectedIds, true);
     }
   };
 
@@ -1427,16 +1475,26 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     let OkButtonLabel = '';
     let OkButtonClickHandler;
     if ([storedResources, discardableResources].includes(inEffect)) {
-      const discardMsg = discardableResources.length
-        ? ` / Discard (${discardableResources.length})`
-        : '';
-      OkButtonLabel = `Clean (${inEffectCount -
-        discardableResources.length})${discardMsg}`;
-      OkButtonClickHandler = this.handleCleanAndDiscardFiles(
-        bundleId,
-        storedResources,
-        discardableResources
-      );
+      const { selectedIdsOutputConverters } = this.props;
+      if (selectedIdsOutputConverters.length > 0) {
+        const {
+          OkButtonLabel: label,
+          OkButtonClickHandler: clickHandler
+        } = this.getExportConvertOkButton(storedResources);
+        OkButtonLabel = label;
+        OkButtonClickHandler = clickHandler;
+      } else {
+        const discardMsg = discardableResources.length
+          ? ` / Discard (${discardableResources.length})`
+          : '';
+        OkButtonLabel = `Clean (${inEffectCount -
+          discardableResources.length})${discardMsg}`;
+        OkButtonClickHandler = this.handleCleanAndDiscardFiles(
+          bundleId,
+          storedResources,
+          discardableResources
+        );
+      }
     } else if (manifestResources === inEffect) {
       OkButtonLabel = `Delete from Manifest (${inEffectCount})`;
       OkButtonClickHandler = this.handleDeleteFromManifest(
@@ -1472,8 +1530,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         toAddResources
       );
       OkButtonLabel = addMessageBuilder.join('');
-    } else if (loading) {
-      OkButtonLabel = 'Adding...';
+    }
+    if (loading) {
       OkButtonClickHandler = () => {};
     }
     const OkButtonIcon = this.getOkButtonIcon(resourceSelectionStatus, loading);
@@ -1498,8 +1556,32 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     return <Delete className={classNames(classes.leftIcon)} />;
   };
 
+  getExportConvertOkButton = storedResources => {
+    const { bundleId, mapperOutputData = {} } = this.props;
+    const { report: outputMappers = {} } = mapperOutputData;
+    const { selectedIdsOutputConverters: selectedMapperKeys = [] } = this.props;
+    const numToConvert = selectedMapperKeys
+      .filter(key => key !== 'as_is')
+      .reduce((acc, selectedMapperKey) => {
+        const outputMapper = outputMappers[selectedMapperKey] || [];
+        return acc + outputMapper.length;
+      }, 0);
+    const distinctStoredResources = Set(
+      storedResources.map(sr => sr.id)
+    ).toArray();
+    const numToExport = selectedMapperKeys.includes('as_is')
+      ? distinctStoredResources.length
+      : distinctStoredResources.length - numToConvert;
+    const OkButtonLabel = `Export (${numToExport}) / Convert (${numToConvert})`;
+    const OkButtonClickHandler = this.handleExportResources(
+      bundleId,
+      storedResources
+    );
+    return { OkButtonLabel, OkButtonClickHandler };
+  };
+
   getOkButtonDataDownloadOrCleanResources = () => {
-    const { classes, bundleId } = this.props;
+    const { classes, bundleId, selectedIdsOutputConverters } = this.props;
     const resourceSelectionStatus = this.getSelectedResourcesByStatus();
     const {
       storedResources,
@@ -1517,13 +1599,25 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         bundleId,
         manifestResources
       );
+    } else if (storedResources === inEffect) {
+      if (selectedIdsOutputConverters.length > 0) {
+        const {
+          OkButtonLabel: label,
+          OkButtonClickHandler: clickHandler
+        } = this.getExportConvertOkButton(storedResources);
+        OkButtonLabel = label;
+        OkButtonClickHandler = clickHandler;
+      } else {
+        OkButtonLabel = `Clean (${storedResources.length})`;
+        OkButtonClickHandler = this.handleCleanResources(
+          bundleId,
+          storedResources
+        );
+      }
     }
-    if (storedResources === inEffect) {
-      OkButtonLabel = `Clean (${storedResources.length})`;
-      OkButtonClickHandler = this.handleCleanResources(
-        bundleId,
-        storedResources
-      );
+    const { loading } = this.props;
+    if (loading) {
+      OkButtonClickHandler = () => {};
     }
     const OkButtonIcon = this.getDownloadOkButtonIcon(resourceSelectionStatus);
     const OkButtonProps = {
@@ -1532,7 +1626,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       color: isManifestResourcesInEffect ? 'inherit' : 'secondary',
       variant: isManifestResourcesInEffect ? 'text' : 'contained',
       onClick: OkButtonClickHandler,
-      disabled: this.shouldDisableDownload()
+      disabled: this.shouldDisableDownload() || loading
     };
     return { OkButtonLabel, OkButtonIcon, OkButtonProps };
   };
@@ -1738,6 +1832,7 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           {...addModeProps}
         />
         {this.renderInputMapperReportTable()}
+        {this.renderOutputMapperReportTable()}
       </React.Fragment>
     );
   };
@@ -1757,6 +1852,31 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     const { selectedIdsInputConverters = [] } = this.props;
     return (
       <MapperTable direction="input" selectedIds={selectedIdsInputConverters} />
+    );
+  };
+
+  renderOutputMapperReportTable = () => {
+    const {
+      storedResources,
+      toAddResources
+    } = this.getSelectedResourcesByStatus();
+    if (storedResources.length === 0 || toAddResources.length > 0) {
+      return null;
+    }
+    const {
+      mapperOutputData = {},
+      selectedIdsOutputConverters = emptyArray
+    } = this.props;
+    const { report = {} } = mapperOutputData;
+    const mapperKeys = Object.keys(report);
+    if (mapperKeys.length === 0) {
+      return null;
+    }
+    return (
+      <MapperTable
+        direction="output"
+        selectedIds={selectedIdsOutputConverters}
+      />
     );
   };
 
