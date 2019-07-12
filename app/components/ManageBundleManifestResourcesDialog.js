@@ -447,7 +447,7 @@ function getSrcRoleData(acc, node) {
   const myPubNode = parents[2].node;
   const { canonSpec: pubCanonSpec = emptyObject } = myPubNode;
   const { components: pubCanonSpecComponents = emptyArray } = pubCanonSpec;
-  const { src, role } = node;
+  const { src, role = '' } = node;
   const [book, chapter] = role.split(' ');
   const {
     canonComponent = 'unspecifiedCanonComponent',
