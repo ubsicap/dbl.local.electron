@@ -767,17 +767,23 @@ function getFileSizes(newlyAddedFilePaths) {
   return async (dispatch, getState) => {
     const { fileSizes: fileSizesOrig = {} } = getState().bundleManageResources;
     const fileSizesPromises = newlyAddedFilePaths.map(async filePath => {
-      const stats = await fs.stat(filePath);
-      const { size: sizeRaw } = stats;
-      const size = utilities.formatBytesByKbs(sizeRaw);
-      return { filePath, size };
+      try {
+        const stats = await fs.stat(filePath);
+        const { size: sizeRaw } = stats;
+        const size = utilities.formatBytesByKbs(sizeRaw);
+        return { filePath, size };
+      } catch (error) {
+        console.error(error); // returns undefined data
+      }
       // const checksum = size < 268435456 ? await md5File(filePath) : '(too expensive)';
     });
     const fileSizesList = await Promise.all(fileSizesPromises);
-    const fileSizes = fileSizesList.reduce((acc, data) => {
-      acc[data.filePath] = data.size;
-      return acc;
-    }, fileSizesOrig);
+    const fileSizes = fileSizesList
+      .filter(data => data !== undefined)
+      .reduce((acc, data) => {
+        acc[data.filePath] = data.size;
+        return acc;
+      }, fileSizesOrig);
     dispatch({
       type: bundleResourceManagerConstants.UPDATE_FILE_STATS_SIZES,
       fileSizes
