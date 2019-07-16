@@ -146,11 +146,12 @@ function getFilePathResourceData(
     utilities.getOrDefault(fullToRelativePaths, filePath, '')
   );
   const relativeFolder = formatContainer(path.dirname(relativePath));
-  const uri = utilities.formatUri(relativeFolder, fileName);
+  const container = editedContainer || relativeFolder;
+  const uri = utilities.formatUri(container, fileName);
   return {
     fileName,
     relativeFolder,
-    container: editedContainer || relativeFolder,
+    container,
     uri
   };
 }

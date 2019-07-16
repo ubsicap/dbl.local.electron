@@ -729,10 +729,19 @@ export function appendAddedFilePaths(
   };
 }
 
-function updateInputMapperReports(bundleId, filePaths, fullToRelativePaths) {
+function updateInputMapperReports(
+  bundleId,
+  filePaths,
+  fullToRelativePaths,
+  editedContainers
+) {
   const mapperReportUris = filePaths.map(
     filePath =>
-      utilities.getFilePathResourceData(filePath, fullToRelativePaths).uri
+      utilities.getFilePathResourceData(
+        filePath,
+        fullToRelativePaths,
+        editedContainers
+      ).uri
   );
   return getMapperReport('input', mapperReportUris, bundleId);
 }
@@ -797,7 +806,8 @@ export function editContainers(newContainer) {
     const {
       addedFilePaths = [],
       fullToRelativePaths = {},
-      editedContainers: editedContainersOrig = {}
+      editedContainers: editedContainersOrig = {},
+      bundleId
     } = state.bundleManageResources;
     const { selectedResourceIds = [] } = state.bundleManageResourcesUx;
     const toAddResourceIds = immutableJs
@@ -826,5 +836,13 @@ export function editContainers(newContainer) {
       type: bundleResourceManagerConstants.EDIT_RESOURCE_CONTAINERS,
       editedContainers
     });
+    dispatch(
+      updateInputMapperReports(
+        bundleId,
+        toAddResourceIds,
+        fullToRelativePaths,
+        editedContainers
+      )
+    );
   };
 }
