@@ -1,3 +1,9 @@
+### Version 0.40.2 (Containers)
+
+#### Fix
+
+- Greater user control/consistency over container behavior when adding resources by File or by Folder
+
 ### Version 0.40.1 (Import / Converters)
 
 #### Fix
