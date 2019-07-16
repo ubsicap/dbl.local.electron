@@ -272,11 +272,19 @@ export function addManifestResources(
             fullToRelativePaths
           }
         } = getState();
-        const remainingAddedFilePaths = utilities.subtract(origAddedFilePaths, [
-          filePath
-        ]);
+        const {
+          remainingAddedFilePaths,
+          remainingFullToRelativePaths
+        } = bundleHelpers.reduceAddedFilePaths(
+          origAddedFilePaths,
+          [filePath],
+          fullToRelativePaths
+        );
         dispatch(
-          updateAddedFilePaths(remainingAddedFilePaths, fullToRelativePaths)
+          updateAddedFilePaths(
+            remainingAddedFilePaths,
+            remainingFullToRelativePaths
+          )
         );
       } catch (error) {
         dispatch(failure(_bundleId, error));
@@ -722,8 +730,14 @@ export function appendAddedFilePaths(
       )
     );
     dispatch(selectResources(selectedIds));
+    const { editedContainers } = state.bundleManageResources;
     dispatch(
-      updateInputMapperReports(bundleId, selectedIds, fullToRelativePaths)
+      updateInputMapperReports(
+        bundleId,
+        selectedIds,
+        fullToRelativePaths,
+        editedContainers
+      )
     );
     dispatch(getFileSizes(newAddedFilePaths));
   };

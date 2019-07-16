@@ -1,10 +1,14 @@
+import immutableJs from 'immutable';
+import { utilities } from '../utils/utilities';
+
 export const bundleHelpers = {
   getStoredResourcePaths,
   getManifestResourcePaths,
   getAddedBundle,
   getApplicableMappersForResourcePath,
   buildFullUriWithOptionalMapper,
-  getResourceUris
+  getResourceUris,
+  reduceAddedFilePaths
 };
 export default bundleHelpers;
 
@@ -51,4 +55,23 @@ function getResourceUris(resourcePaths, selectedMappers) {
     return acc.concat(mappedUris);
   }, []);
   return resourceUris;
+}
+
+function reduceAddedFilePaths(
+  origAddedFilePaths,
+  filePathsToRemove,
+  fullToRelativePaths
+) {
+  const remainingAddedFilePaths = utilities.subtract(
+    origAddedFilePaths,
+    filePathsToRemove
+  );
+  const remainingAddedFilePathsSet = immutableJs.Set(remainingAddedFilePaths);
+  const remainingFullToRelativePaths = Object.entries(fullToRelativePaths)
+    .filter(([fullPath]) => remainingAddedFilePathsSet.has(fullPath))
+    .reduce((acc, [fullPath, relativePath]) => {
+      acc[fullPath] = relativePath;
+      return acc;
+    }, {});
+  return { remainingAddedFilePaths, remainingFullToRelativePaths };
 }

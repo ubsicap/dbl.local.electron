@@ -52,6 +52,7 @@ import EntryAppBar from './EntryAppBar';
 import EntryDrawer from './EntryDrawer';
 import EntryDialogBody from './EntryDialogBody';
 import { emptyArray, emptyObject } from '../utils/defaultValues';
+import { bundleHelpers } from '../helpers/bundle.helpers';
 
 const { dialog } = require('electron').remote;
 
@@ -90,6 +91,8 @@ type Props = {
   selectedResourcesByStatus: {},
   orderDirection?: string,
   orderBy?: string,
+  addedFilePaths: {},
+  fullToRelativePaths: {},
   closeBundleResourceManager: () => {},
   getEntryRevisionsData: () => {},
   downloadBundleResources: () => {},
@@ -1036,7 +1039,9 @@ function mapStateToProps(state, props) {
     tableData,
     selectedResourcesByStatus,
     orderDirection,
-    orderBy
+    orderBy,
+    addedFilePaths: getAddedFilePaths(state),
+    fullToRelativePaths: getFullToRelativePaths(state)
   };
 }
 
@@ -1385,7 +1390,16 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     if (!newAddedFilePaths) {
       return;
     }
-    this.setAddedFilePathsAndSelectAll(newAddedFilePaths);
+    const { addedFilePaths, fullToRelativePaths } = this.props;
+    const { remainingFullToRelativePaths } = bundleHelpers.reduceAddedFilePaths(
+      addedFilePaths,
+      newAddedFilePaths,
+      fullToRelativePaths
+    );
+    this.setAddedFilePathsAndSelectAll(
+      newAddedFilePaths,
+      remainingFullToRelativePaths
+    );
   };
 
   setAddedFilePathsAndSelectAll = (
