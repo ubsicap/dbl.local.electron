@@ -1,4 +1,10 @@
-### Version 0.40.0 (Export / Converters)
+### Version 0.40.1 (Import / Converters)
+
+#### Fix
+
+- Respect any edited containers when adding resources to entry manifest
+
+### Version 0.40.0 (Import / Converters)
 
 #### Feature
 
