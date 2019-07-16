@@ -60,7 +60,7 @@ function getResourceUris(resourcePaths, selectedMappers) {
 function reduceAddedFilePaths(
   origAddedFilePaths,
   filePathsToRemove,
-  fullToRelativePaths
+  fullToRelativePaths = {}
 ) {
   const remainingAddedFilePaths = utilities.subtract(
     origAddedFilePaths,

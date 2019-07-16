@@ -283,7 +283,8 @@ export function addManifestResources(
         dispatch(
           updateAddedFilePaths(
             remainingAddedFilePaths,
-            remainingFullToRelativePaths
+            remainingFullToRelativePaths,
+            [filePath]
           )
         );
       } catch (error) {
@@ -726,19 +727,12 @@ export function appendAddedFilePaths(
     dispatch(
       updateAddedFilePaths(
         addedFilePaths,
-        fullToRelativePaths || fullToRelativePathsOrig
+        fullToRelativePaths || fullToRelativePathsOrig,
+        newAddedFilePaths,
+        selectedIds
       )
     );
     dispatch(selectResources(selectedIds));
-    const { editedContainers } = state.bundleManageResources;
-    dispatch(
-      updateInputMapperReports(
-        bundleId,
-        selectedIds,
-        fullToRelativePaths,
-        editedContainers
-      )
-    );
     dispatch(getFileSizes(newAddedFilePaths));
   };
 }
@@ -764,11 +758,37 @@ export function updateOutputMapperReports(bundleId, mapperReportUris) {
   return getMapperReport('output', mapperReportUris, bundleId);
 }
 
-export function updateAddedFilePaths(addedFilePaths, fullToRelativePaths) {
-  return {
-    type: bundleResourceManagerConstants.UPDATE_ADDED_FILEPATHS,
-    addedFilePaths,
-    fullToRelativePaths
+export function updateAddedFilePaths(
+  addedFilePaths,
+  fullToRelativePaths,
+  filePathsToRemoveFromContainers,
+  selectedIdsForInputMapperResults
+) {
+  return (dispatch, getState) => {
+    const { editedContainers, bundleId } = getState().bundleManageResources;
+    const {
+      remainingFullToRelativePaths: remainingEditedContainers
+    } = bundleHelpers.reduceAddedFilePaths(
+      addedFilePaths,
+      filePathsToRemoveFromContainers,
+      editedContainers
+    );
+    dispatch(updateEditedResourceContainers(remainingEditedContainers));
+    if (selectedIdsForInputMapperResults) {
+      dispatch(
+        updateInputMapperReports(
+          bundleId,
+          selectedIdsForInputMapperResults,
+          fullToRelativePaths,
+          remainingEditedContainers
+        )
+      );
+    }
+    dispatch({
+      type: bundleResourceManagerConstants.UPDATE_ADDED_FILEPATHS,
+      addedFilePaths,
+      fullToRelativePaths
+    });
   };
 }
 
@@ -846,10 +866,7 @@ export function editContainers(newContainer) {
       ...editedContainersOrig,
       ...newlyEditedContainers
     };
-    dispatch({
-      type: bundleResourceManagerConstants.EDIT_RESOURCE_CONTAINERS,
-      editedContainers
-    });
+    dispatch(updateEditedResourceContainers(editedContainers));
     dispatch(
       updateInputMapperReports(
         bundleId,
@@ -858,5 +875,12 @@ export function editContainers(newContainer) {
         editedContainers
       )
     );
+  };
+}
+
+function updateEditedResourceContainers(editedContainers) {
+  return {
+    type: bundleResourceManagerConstants.EDIT_RESOURCE_CONTAINERS,
+    editedContainers
   };
 }
