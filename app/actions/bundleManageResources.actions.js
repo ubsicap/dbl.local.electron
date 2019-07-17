@@ -272,11 +272,20 @@ export function addManifestResources(
             fullToRelativePaths
           }
         } = getState();
-        const remainingAddedFilePaths = utilities.subtract(origAddedFilePaths, [
-          filePath
-        ]);
+        const {
+          remainingAddedFilePaths,
+          remainingFullToRelativePaths
+        } = bundleHelpers.reduceAddedFilePaths(
+          origAddedFilePaths,
+          [filePath],
+          fullToRelativePaths
+        );
         dispatch(
-          updateAddedFilePaths(remainingAddedFilePaths, fullToRelativePaths)
+          updateAddedFilePaths(
+            remainingAddedFilePaths,
+            remainingFullToRelativePaths,
+            [filePath]
+          )
         );
       } catch (error) {
         dispatch(failure(_bundleId, error));
@@ -718,21 +727,29 @@ export function appendAddedFilePaths(
     dispatch(
       updateAddedFilePaths(
         addedFilePaths,
-        fullToRelativePaths || fullToRelativePathsOrig
+        fullToRelativePaths || fullToRelativePathsOrig,
+        newAddedFilePaths,
+        addedFilePaths
       )
     );
     dispatch(selectResources(selectedIds));
-    dispatch(
-      updateInputMapperReports(bundleId, selectedIds, fullToRelativePaths)
-    );
     dispatch(getFileSizes(newAddedFilePaths));
   };
 }
 
-function updateInputMapperReports(bundleId, filePaths, fullToRelativePaths) {
+function updateInputMapperReports(
+  bundleId,
+  filePaths,
+  fullToRelativePaths,
+  editedContainers
+) {
   const mapperReportUris = filePaths.map(
     filePath =>
-      utilities.getFilePathResourceData(filePath, fullToRelativePaths).uri
+      utilities.getFilePathResourceData(
+        filePath,
+        fullToRelativePaths,
+        editedContainers
+      ).uri
   );
   return getMapperReport('input', mapperReportUris, bundleId);
 }
@@ -741,11 +758,37 @@ export function updateOutputMapperReports(bundleId, mapperReportUris) {
   return getMapperReport('output', mapperReportUris, bundleId);
 }
 
-export function updateAddedFilePaths(addedFilePaths, fullToRelativePaths) {
-  return {
-    type: bundleResourceManagerConstants.UPDATE_ADDED_FILEPATHS,
-    addedFilePaths,
-    fullToRelativePaths
+export function updateAddedFilePaths(
+  addedFilePaths,
+  fullToRelativePaths,
+  filePathsToRemoveFromContainers,
+  selectedIdsForInputMapperResults
+) {
+  return (dispatch, getState) => {
+    const { editedContainers, bundleId } = getState().bundleManageResources;
+    const {
+      remainingFullToRelativePaths: remainingEditedContainers
+    } = bundleHelpers.reduceAddedFilePaths(
+      addedFilePaths,
+      filePathsToRemoveFromContainers,
+      editedContainers
+    );
+    dispatch(updateEditedResourceContainers(remainingEditedContainers));
+    if (selectedIdsForInputMapperResults) {
+      dispatch(
+        updateInputMapperReports(
+          bundleId,
+          selectedIdsForInputMapperResults,
+          fullToRelativePaths,
+          remainingEditedContainers
+        )
+      );
+    }
+    dispatch({
+      type: bundleResourceManagerConstants.UPDATE_ADDED_FILEPATHS,
+      addedFilePaths,
+      fullToRelativePaths
+    });
   };
 }
 
@@ -767,17 +810,23 @@ function getFileSizes(newlyAddedFilePaths) {
   return async (dispatch, getState) => {
     const { fileSizes: fileSizesOrig = {} } = getState().bundleManageResources;
     const fileSizesPromises = newlyAddedFilePaths.map(async filePath => {
-      const stats = await fs.stat(filePath);
-      const { size: sizeRaw } = stats;
-      const size = utilities.formatBytesByKbs(sizeRaw);
-      return { filePath, size };
+      try {
+        const stats = await fs.stat(filePath);
+        const { size: sizeRaw } = stats;
+        const size = utilities.formatBytesByKbs(sizeRaw);
+        return { filePath, size };
+      } catch (error) {
+        console.error(error); // returns undefined data
+      }
       // const checksum = size < 268435456 ? await md5File(filePath) : '(too expensive)';
     });
     const fileSizesList = await Promise.all(fileSizesPromises);
-    const fileSizes = fileSizesList.reduce((acc, data) => {
-      acc[data.filePath] = data.size;
-      return acc;
-    }, fileSizesOrig);
+    const fileSizes = fileSizesList
+      .filter(data => data !== undefined)
+      .reduce((acc, data) => {
+        acc[data.filePath] = data.size;
+        return acc;
+      }, fileSizesOrig);
     dispatch({
       type: bundleResourceManagerConstants.UPDATE_FILE_STATS_SIZES,
       fileSizes
@@ -791,7 +840,8 @@ export function editContainers(newContainer) {
     const {
       addedFilePaths = [],
       fullToRelativePaths = {},
-      editedContainers: editedContainersOrig = {}
+      editedContainers: editedContainersOrig = {},
+      bundleId
     } = state.bundleManageResources;
     const { selectedResourceIds = [] } = state.bundleManageResourcesUx;
     const toAddResourceIds = immutableJs
@@ -816,9 +866,21 @@ export function editContainers(newContainer) {
       ...editedContainersOrig,
       ...newlyEditedContainers
     };
-    dispatch({
-      type: bundleResourceManagerConstants.EDIT_RESOURCE_CONTAINERS,
-      editedContainers
-    });
+    dispatch(updateEditedResourceContainers(editedContainers));
+    dispatch(
+      updateInputMapperReports(
+        bundleId,
+        toAddResourceIds,
+        fullToRelativePaths,
+        editedContainers
+      )
+    );
+  };
+}
+
+function updateEditedResourceContainers(editedContainers) {
+  return {
+    type: bundleResourceManagerConstants.EDIT_RESOURCE_CONTAINERS,
+    editedContainers
   };
 }

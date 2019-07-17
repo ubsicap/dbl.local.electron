@@ -276,10 +276,16 @@ function getDialog() {
   return dialog;
 }
 
+function getFileNameWithOsExtension(
+  filename,
+  extensionOptions = { win32: '.exe' }
+) {
+  const execName = `${filename}${extensionOptions[process.platform] || ''}`;
+  return execName;
+}
+
 function getDblDotLocalExecPath() {
-  const execName = `dbl_dot_local_app${
-    process.platform === 'win32' ? '.exe' : ''
-  }`;
+  const execName = getFileNameWithOsExtension('dbl_dot_local_app');
   return path.join(getDblDotLocalExecCwd(), execName);
 }
 
@@ -410,6 +416,33 @@ function updateAndWriteConfigXmlSettings({ configXmlSettings, workspace }) {
   // set paths
   const newConfigXmlSettings = JSON.parse(JSON.stringify(configXmlSettings));
   const { fullPath } = workspace;
+  const pathToConfigSettingsSystemExecutables = getResourcePath([
+    'extraFiles',
+    'config_settings_system_executables'
+  ]);
+  if (
+    !newConfigXmlSettings.settings.system[0].executables ||
+    !newConfigXmlSettings.settings.system[0].executables[0].sox ||
+    !newConfigXmlSettings.settings.system[0].executables[0].ffmpeg
+  ) {
+    const ffmpegPath = path.join(
+      pathToConfigSettingsSystemExecutables,
+      path.join('ffmpeg', 'bin', getFileNameWithOsExtension('ffmpeg'))
+    );
+    const isFfmpegInstalled = fs.existsSync(ffmpegPath);
+    newConfigXmlSettings.settings.system[0].executables = {};
+    if (isFfmpegInstalled) {
+      newConfigXmlSettings.settings.system[0].executables.ffmpeg = [ffmpegPath];
+    }
+    const soxPath = path.join(
+      pathToConfigSettingsSystemExecutables,
+      path.join('sox', getFileNameWithOsExtension('sox'))
+    );
+    const isSoxInstalled = fs.existsSync(soxPath);
+    if (isSoxInstalled) {
+      newConfigXmlSettings.settings.system[0].executables.sox = [soxPath];
+    }
+  }
   newConfigXmlSettings.settings.storer[0].bundleRootDir[0] = path.join(
     fullPath,
     'bundles'

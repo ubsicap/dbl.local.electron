@@ -1,3 +1,28 @@
+### Version 0.40.3 (Select Recently Selected Resources)
+
+#### Fix
+
+- Select only the resources that were most recently added `By File` or `By Folder`
+
+### Version 0.40.2 (Containers)
+
+#### Fix
+
+- Greater user control/consistency over container behavior when adding resources by File or by Folder
+- Always have input mapper match on all added (staged) files
+
+### Version 0.40.1 (Import / Converters)
+
+#### Fix
+
+- Respect any edited containers when adding resources to entry manifest
+
+### Version 0.40.0 (Import / Converters)
+
+#### Feature
+
+- Include ffmpeg (vob) and sox (wav) for audio converters
+
 ### Version 0.39.2 (Export / Converters)
 
 #### Fix

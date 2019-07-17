@@ -24,7 +24,7 @@ export const utilities = {
   formatContainer,
   getOrDefault,
   getFilePathResourceData,
-  formatUri,
+  formatUri
 };
 export default utilities;
 
@@ -56,7 +56,10 @@ export function areEqualArrays(a1, a2, funcSort) {
 }
 
 export function areEqualArraysDeep(a1, a2) {
-  return a1 === a2 || (a1.length === a2.length && JSON.stringify(a1) === JSON.stringify(a2));
+  return (
+    a1 === a2 ||
+    (a1.length === a2.length && JSON.stringify(a1) === JSON.stringify(a2))
+  );
 }
 
 export function haveEqualKeysLength(o1, o2) {
@@ -68,22 +71,23 @@ function haveEqualKeys(o1, o2) {
 }
 
 export function areEqualObjectsDeep(o1, o2) {
-  return o1 === o2 ||
-  (haveEqualKeys(o1, o2) &&
-   areEqualArraysDeep(Object.values(o1), Object.values(o2)));
+  return (
+    o1 === o2 ||
+    (haveEqualKeys(o1, o2) &&
+      areEqualArraysDeep(Object.values(o1), Object.values(o2)))
+  );
 }
 
 export function areEqualCollections(c1, c2) {
-  return areEqualArrays(c1, c2, (c) => sort(c).asc());
+  return areEqualArrays(c1, c2, c => sort(c).asc());
 }
 
 function getUnionOfValues(obj) {
-  return Object.values(obj).reduce((acc, values) =>
-    acc.union(values), Set());
+  return Object.values(obj).reduce((acc, values) => acc.union(values), Set());
 }
 
 function onOpenLink(url) {
-  return (event) => {
+  return event => {
     event.preventDefault();
     event.stopPropagation();
     shell.openExternal(url);
@@ -96,7 +100,7 @@ function sleep(ms) {
 
 function buildRouteUrl(routeUrl, params) {
   const url = Object.entries(params).reduce(
-    (acc, [key, value]) => (acc.replace(`:${key}`, value)),
+    (acc, [key, value]) => acc.replace(`:${key}`, value),
     routeUrl
   );
   return url;
@@ -107,7 +111,7 @@ function calculatePercentage(completed, total) {
 }
 
 function formatBytesByKbs(bytes) {
-  return (Math.round(Number(bytes) / 1024)).toLocaleString();
+  return Math.round(Number(bytes) / 1024).toLocaleString();
 }
 
 function formatContainer(containerInput) {
@@ -127,14 +131,28 @@ function getOrDefault(obj, prop, defaultValue) {
   return obj[prop] || defaultValue;
 }
 
-function getFilePathResourceData(filePath, fullToRelativePaths, editedContainers = {}) {
+function getFilePathResourceData(
+  filePath,
+  fullToRelativePaths,
+  editedContainers = {}
+) {
   const fileName = path.basename(filePath);
-  const editedContainer = utilities.getOrDefault(editedContainers, filePath, null);
-  const relativePath = upath.normalizeTrim(utilities.getOrDefault(fullToRelativePaths, filePath, ''));
+  const editedContainer = utilities.getOrDefault(
+    editedContainers,
+    filePath,
+    null
+  );
+  const relativePath = upath.normalizeTrim(
+    utilities.getOrDefault(fullToRelativePaths, filePath, '')
+  );
   const relativeFolder = formatContainer(path.dirname(relativePath));
-  const uri = utilities.formatUri(relativeFolder, fileName);
+  const container = editedContainer || relativeFolder;
+  const uri = utilities.formatUri(container, fileName);
   return {
-    fileName, relativeFolder, container: editedContainer || relativeFolder, uri
+    fileName,
+    relativeFolder,
+    container,
+    uri
   };
 }
 
