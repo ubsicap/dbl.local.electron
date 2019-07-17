@@ -729,7 +729,7 @@ export function appendAddedFilePaths(
         addedFilePaths,
         fullToRelativePaths || fullToRelativePathsOrig,
         newAddedFilePaths,
-        selectedIds
+        addedFilePaths
       )
     );
     dispatch(selectResources(selectedIds));
