@@ -1410,7 +1410,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     appendResourceDialogAddedFilePaths(
       bundleId,
       newAddedFilePaths,
-      fullToRelativePaths
+      fullToRelativePaths,
+      true
     );
   };
 

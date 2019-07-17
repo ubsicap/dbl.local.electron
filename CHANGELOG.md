@@ -1,3 +1,9 @@
+### Version 0.40.3 (Select Recently Selected Resources)
+
+#### Fix
+
+- Select only the resources that were most recently added `By File` or `By Folder`
+
 ### Version 0.40.2 (Containers)
 
 #### Fix
