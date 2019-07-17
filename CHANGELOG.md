@@ -3,6 +3,7 @@
 #### Fix
 
 - Greater user control/consistency over container behavior when adding resources by File or by Folder
+- Always have input mapper match on all added (staged) files
 
 ### Version 0.40.1 (Import / Converters)
 
