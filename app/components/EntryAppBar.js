@@ -16,10 +16,13 @@ import Link from '@material-ui/icons/Link';
 import classNames from 'classnames';
 import { ux } from '../utils/ux';
 import CopyForPasteButton from './CopyForPasteButton';
-import EntryTitle from '../components/EntryTitle';
+import EntryTitle from "./EntryTitle";
 import { bundleService } from '../services/bundle.service';
 import { utilities } from '../utils/utilities';
-import { openEntryDrawer, resetEntryAppBar } from '../actions/entryAppBar.actions';
+import {
+  openEntryDrawer,
+  resetEntryAppBar
+} from '../actions/entryAppBar.actions';
 import { selectItemsToPaste } from '../actions/clipboard.actions';
 import { emptyObject } from '../utils/defaultValues';
 
@@ -50,16 +53,19 @@ const materialStyles = theme => ({
   ...ux.getEntryUxStyles(theme)
 });
 
-
 const getBundleId = (state, props) => props.origBundle.id;
-const getBundlesById = (state) => state.bundles.addedByBundleIds || emptyObject;
-const getDblBaseUrl = (state) => state.dblDotLocalConfig.dblBaseUrl;
+const getBundlesById = state => state.bundles.addedByBundleIds || emptyObject;
+const getDblBaseUrl = state => state.dblDotLocalConfig.dblBaseUrl;
 const getEntryPageUrl = createSelector(
   [getDblBaseUrl, getBundlesById, getBundleId],
   (dblBaseUrl, bundlesById, bundleId) => {
     const origBundle = bundlesById[bundleId];
     const { dblId, revision, parent } = origBundle;
-    const revisionNum = bundleService.getRevisionOrParentRevision(dblId, revision, parent);
+    const revisionNum = bundleService.getRevisionOrParentRevision(
+      dblId,
+      revision,
+      parent
+    );
     const revisionQuery = revisionNum ? `&revision=${revisionNum}` : '';
     const url = `${dblBaseUrl}/entry?id=${dblId}${revisionQuery}`;
     return url;
@@ -69,7 +75,7 @@ const getEntryPageUrl = createSelector(
 function mapStateToProps(state, props) {
   return {
     entryPageUrl: getEntryPageUrl(state, props),
-    openDrawer: state.entryAppBar.openDrawer,
+    openDrawer: state.entryAppBar.openDrawer
   };
 }
 
@@ -90,33 +96,57 @@ class EntryAppBar extends Component<Props> {
     this.props.resetEntryAppBar();
   }
 
-  onOpenDBLEntryLink = (event) => {
+  onOpenDBLEntryLink = event => {
     utilities.onOpenLink(this.props.entryPageUrl)(event);
-  }
+  };
 
   handleCopyFiles = () => {
     const { selectedItemsForCopy } = this.props;
-    this.props.selectItemsToPaste(this.props.origBundle.id, selectedItemsForCopy, this.props.itemsTypeForCopy);
+    this.props.selectItemsToPaste(
+      this.props.origBundle.id,
+      selectedItemsForCopy,
+      this.props.itemsTypeForCopy
+    );
     this.props.handleClose();
-  }
+  };
 
   render() {
     const {
-      classes, origBundle = {}, openDrawer, mode, modeUi, selectedItemsForCopy,
+      classes,
+      origBundle = {},
+      openDrawer,
+      mode,
+      modeUi,
+      selectedItemsForCopy
     } = this.props;
     const { displayAs = {} } = origBundle;
     const { revision } = displayAs;
     const { status, parent, dblId } = origBundle;
-    const modeIcon = ux.getModeIcon(mode, { color: 'inherit', className: classNames(classes.leftIcon) });
-    const revBackground =
-      ux.getDblRowBackgroundColor(false, classes, status, revision, parent, dblId, origBundle.mode);
+    const modeIcon = ux.getModeIcon(mode, {
+      color: 'inherit',
+      className: classNames(classes.leftIcon)
+    });
+    const revBackground = ux.getDblRowBackgroundColor(
+      false,
+      classes,
+      status,
+      revision,
+      parent,
+      dblId,
+      origBundle.mode
+    );
     return (
-      <AppBar className={classNames(classes.appBar, {
-        [classes.appBarShift]: openDrawer,
-      })}
+      <AppBar
+        className={classNames(classes.appBar, {
+          [classes.appBarShift]: openDrawer
+        })}
       >
         <Toolbar className={classes.toolBar} disableGutters={!openDrawer}>
-          <IconButton color="inherit" onClick={this.props.handleClose} aria-label="Close">
+          <IconButton
+            color="inherit"
+            onClick={this.props.handleClose}
+            aria-label="Close"
+          >
             <CloseIcon />
           </IconButton>
           <Grid container justify="flex-start" alignItems="center" spacing={24}>
@@ -126,7 +156,15 @@ class EntryAppBar extends Component<Props> {
                 {modeUi.appBar.title}:
               </Typography>
             </Grid>
-            <Grid item container justify="flex-start" alignItems="center" lg={6} sm={6} md={6}>
+            <Grid
+              item
+              container
+              justify="flex-start"
+              alignItems="center"
+              lg={6}
+              sm={6}
+              md={6}
+            >
               <Grid item>
                 <Typography variant="h6" color="inherit" noWrap>
                   {<EntryTitle bundle={origBundle} />}
@@ -134,8 +172,16 @@ class EntryAppBar extends Component<Props> {
               </Grid>
               <Grid item>
                 <Tooltip title={this.props.entryPageUrl}>
-                  <Button onClick={this.onOpenDBLEntryLink} className={classNames(classes.button, revBackground)}>
-                    <Link className={classNames(classes.leftIcon, classes.iconSmall)} />
+                  <Button
+                    onClick={this.onOpenDBLEntryLink}
+                    className={classNames(classes.button, revBackground)}
+                  >
+                    <Link
+                      className={classNames(
+                        classes.leftIcon,
+                        classes.iconSmall
+                      )}
+                    />
                     {revision}
                   </Button>
                 </Tooltip>
@@ -143,20 +189,24 @@ class EntryAppBar extends Component<Props> {
             </Grid>
           </Grid>
           <div className={classes.flex} />
-          {mode !== 'revisions' && selectedItemsForCopy &&
-          <CopyForPasteButton
-            key="btnCopyForPaste"
-            classes={classes}
-            color="inherit"
-            onClick={this.handleCopyFiles}
-            disabled={selectedItemsForCopy.length === 0}
-            selectedItems={selectedItemsForCopy}
-          />}
+          {mode !== 'revisions' && selectedItemsForCopy && (
+            <CopyForPasteButton
+              key="btnCopyForPaste"
+              classes={classes}
+              color="inherit"
+              onClick={this.handleCopyFiles}
+              disabled={selectedItemsForCopy.length === 0}
+              selectedItems={selectedItemsForCopy}
+            />
+          )}
           {this.props.actionButton}
           <IconButton
             aria-label="Open drawer"
             onClick={this.props.openEntryDrawer}
-            className={classNames(classes.menuButton, openDrawer && classes.hide)}
+            className={classNames(
+              classes.menuButton,
+              openDrawer && classes.hide
+            )}
             color="inherit"
           >
             <MoreVertIcon />
