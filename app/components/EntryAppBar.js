@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
+import Save from '@material-ui/icons/Save';
 import AppBar from '@material-ui/core/AppBar';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -16,7 +17,7 @@ import Link from '@material-ui/icons/Link';
 import classNames from 'classnames';
 import { ux } from '../utils/ux';
 import CopyForPasteButton from './CopyForPasteButton';
-import EntryTitle from "./EntryTitle";
+import EntryTitle from './EntryTitle';
 import { bundleService } from '../services/bundle.service';
 import { utilities } from '../utils/utilities';
 import {
@@ -31,6 +32,7 @@ type Props = {
   origBundle: {},
   entryPageUrl: string,
   openDrawer: boolean,
+  canSaveAsTemplate: boolean,
   mode: string,
   modeUi: {},
   selectedItemsForCopy?: [],
@@ -56,10 +58,14 @@ const materialStyles = theme => ({
 const getBundleId = (state, props) => props.origBundle.id;
 const getBundlesById = state => state.bundles.addedByBundleIds || emptyObject;
 const getDblBaseUrl = state => state.dblDotLocalConfig.dblBaseUrl;
+const getActiveBundle = createSelector(
+  [getBundlesById, getBundleId],
+  (bundlesById, bundleId) => bundlesById[bundleId]
+);
+
 const getEntryPageUrl = createSelector(
-  [getDblBaseUrl, getBundlesById, getBundleId],
-  (dblBaseUrl, bundlesById, bundleId) => {
-    const origBundle = bundlesById[bundleId];
+  [getDblBaseUrl, getActiveBundle],
+  (dblBaseUrl, origBundle) => {
     const { dblId, revision, parent } = origBundle;
     const revisionNum = bundleService.getRevisionOrParentRevision(
       dblId,
@@ -72,10 +78,25 @@ const getEntryPageUrl = createSelector(
   }
 );
 
+const getCurrentWorkspace = state => state.workspace || emptyObject;
+const getCurrentMetadataChecksum = state =>
+  state.bundleEditMetadata.currentMetadataChecksum || '';
+
+const getCanSaveAsTemplate = createSelector(
+  [getCurrentWorkspace, getCurrentMetadataChecksum, getActiveBundle],
+  (currentWorkspace, currentMetadataChecksum, activeBundle) => {
+    const { medium } = activeBundle;
+    const { templateChecksums = emptyObject } = currentWorkspace || emptyObject;
+    const templateChecksum = templateChecksums[medium];
+    return templateChecksum !== currentMetadataChecksum;
+  }
+);
+
 function mapStateToProps(state, props) {
   return {
     entryPageUrl: getEntryPageUrl(state, props),
-    openDrawer: state.entryAppBar.openDrawer
+    openDrawer: state.entryAppBar.openDrawer,
+    canSaveAsTemplate: getCanSaveAsTemplate(state, props)
   };
 }
 
@@ -97,17 +118,56 @@ class EntryAppBar extends Component<Props> {
   }
 
   onOpenDBLEntryLink = event => {
-    utilities.onOpenLink(this.props.entryPageUrl)(event);
+    const { entryPageUrl } = this.props;
+    utilities.onOpenLink(entryPageUrl)(event);
   };
 
   handleCopyFiles = () => {
-    const { selectedItemsForCopy } = this.props;
+    const { selectedItemsForCopy, origBundle, itemsTypeForCopy } = this.props;
     this.props.selectItemsToPaste(
-      this.props.origBundle.id,
+      origBundle.id,
       selectedItemsForCopy,
-      this.props.itemsTypeForCopy
+      itemsTypeForCopy
     );
     this.props.handleClose();
+  };
+
+  renderSecondaryActionButton = () => {
+    const {
+      classes,
+      mode,
+      selectedItemsForCopy,
+      canSaveAsTemplate
+    } = this.props;
+    if (mode === 'revisions') {
+      return null;
+    }
+    if (selectedItemsForCopy && selectedItemsForCopy.length > 0) {
+      return (
+        <CopyForPasteButton
+          key="btnCopyForPaste"
+          classes={classes}
+          color="inherit"
+          onClick={this.handleCopyFiles}
+          disabled={selectedItemsForCopy.length === 0}
+          selectedItems={selectedItemsForCopy}
+        />
+      );
+    }
+    if (canSaveAsTemplate) {
+      return (
+        <Tooltip title="Save as metadata template">
+          <Button
+            onClick={this.handleSaveAsTempalte}
+            className={classes.button}
+          >
+            <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
+            Save as template
+          </Button>
+        </Tooltip>
+      );
+    }
+    return null;
   };
 
   render() {
@@ -117,7 +177,9 @@ class EntryAppBar extends Component<Props> {
       openDrawer,
       mode,
       modeUi,
-      selectedItemsForCopy
+      actionButton,
+      entryPageUrl,
+      handleClose
     } = this.props;
     const { displayAs = {} } = origBundle;
     const { revision } = displayAs;
@@ -142,11 +204,7 @@ class EntryAppBar extends Component<Props> {
         })}
       >
         <Toolbar className={classes.toolBar} disableGutters={!openDrawer}>
-          <IconButton
-            color="inherit"
-            onClick={this.props.handleClose}
-            aria-label="Close"
-          >
+          <IconButton color="inherit" onClick={handleClose} aria-label="Close">
             <CloseIcon />
           </IconButton>
           <Grid container justify="flex-start" alignItems="center" spacing={24}>
@@ -171,7 +229,7 @@ class EntryAppBar extends Component<Props> {
                 </Typography>
               </Grid>
               <Grid item>
-                <Tooltip title={this.props.entryPageUrl}>
+                <Tooltip title={entryPageUrl}>
                   <Button
                     onClick={this.onOpenDBLEntryLink}
                     className={classNames(classes.button, revBackground)}
@@ -189,17 +247,8 @@ class EntryAppBar extends Component<Props> {
             </Grid>
           </Grid>
           <div className={classes.flex} />
-          {mode !== 'revisions' && selectedItemsForCopy && (
-            <CopyForPasteButton
-              key="btnCopyForPaste"
-              classes={classes}
-              color="inherit"
-              onClick={this.handleCopyFiles}
-              disabled={selectedItemsForCopy.length === 0}
-              selectedItems={selectedItemsForCopy}
-            />
-          )}
-          {this.props.actionButton}
+          {this.renderSecondaryActionButton()}
+          {actionButton}
           <IconButton
             aria-label="Open drawer"
             onClick={this.props.openEntryDrawer}
