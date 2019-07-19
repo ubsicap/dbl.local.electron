@@ -12,7 +12,7 @@ import Save from '@material-ui/icons/Save';
 import classNames from 'classnames';
 import Tooltip from '@material-ui/core/Tooltip';
 import { updateBundle } from '../actions/bundle.actions';
-import { closeEditMetadata, saveFieldValuesForActiveForm } from '../actions/bundleEditMetadata.actions';
+import { closeEditMetadata, saveFieldValuesForActiveForm, computeMetadataChecksum } from '../actions/bundleEditMetadata.actions';
 import { pasteItems } from '../actions/clipboard.actions';
 import editMetadataService from '../services/editMetadata.service';
 import EditMetadataStepper from './EditMetadataStepper';
@@ -63,7 +63,8 @@ const mapDispatchToProps = {
   closeEditMetadata,
   saveFieldValuesForActiveForm,
   updateBundle,
-  pasteItems
+  pasteItems,
+  computeEntryMetadataChecksum: computeMetadataChecksum
 };
 
 const materialStyles = theme => ({
@@ -106,7 +107,8 @@ type Props = {
   requestingSaveMetadata: boolean,
   formStructure: {},
   selectedItemsToPaste: ?{},
-  pasteItems: () => {}
+  pasteItems: () => {},
+  computeEntryMetadataChecksum: () => {}
 };
 
 class EditEntryMetadataDialog extends PureComponent<Props> {
@@ -114,6 +116,11 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   state = {
     sectionSelections: {}
   };
+
+  componentDidMount() {
+    const { bundleId, computeEntryMetadataChecksum } = this.props;
+    computeEntryMetadataChecksum(bundleId);
+  }
 
   componentDidUpdate(prevProps) {
     if (this.props.moveNext && this.props.moveNext.exit
