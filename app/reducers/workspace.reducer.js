@@ -6,17 +6,18 @@ const initialState = {
 
 export function workspace(state = initialState, action) {
   switch (action.type) {
-    case dblDotLocalConfigConstants.START_WORKSPACE_PROCESS: {
-      const { configXmlFile, fullPath } = action;
-      if (dblDotLocalExecProcess) {
-        return {
-          ...state,
-          configXmlFile,
-          dblDotLocalExecProcess,
-          isRunningKnownDblLocalProcess: true,
-          isRunningUnknownDblDotLocalProcess: false
-        };
-      }
+    case workspaceConstants.GOT_METADATA_FILE_CHECKSUM: {
+      const {
+        templateFilePath,
+        templateMedium,
+        templateChecksum
+      } = action;
+      return {
+        ...state,
+        templateFilePath,
+        templateMedium,
+        templateChecksum
+      };
       return state;
     }
     default:
