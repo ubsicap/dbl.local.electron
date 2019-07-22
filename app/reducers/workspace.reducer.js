@@ -1,27 +1,23 @@
 import { workspaceConstants } from '../constants/workspace.constants';
+import dblDotLocalConfigConstants from '../constants/dblDotLocal.constants';
 
 const initialState = {
-  openDrawer: false
 };
 
-export function entryAppBar(state = initialState, action) {
+export function workspace(state = initialState, action) {
   switch (action.type) {
-    case workspaceConstants.RESET_ENTRY_APP_BAR:
-    case workspaceConstants.OPEN_ENTRY:
-    case workspaceConstants.CLOSE_ENTRY: {
-      return initialState;
-    }
-    case workspaceConstants.OPEN_ENTRY_DRAWER: {
-      return {
-        ...state,
-        openDrawer: true
-      };
-    }
-    case workspaceConstants.CLOSE_ENTRY_DRAWER: {
-      return {
-        ...state,
-        openDrawer: false,
-      };
+    case dblDotLocalConfigConstants.START_WORKSPACE_PROCESS: {
+      const { configXmlFile, fullPath } = action;
+      if (dblDotLocalExecProcess) {
+        return {
+          ...state,
+          configXmlFile,
+          dblDotLocalExecProcess,
+          isRunningKnownDblLocalProcess: true,
+          isRunningUnknownDblDotLocalProcess: false
+        };
+      }
+      return state;
     }
     default:
       return state;

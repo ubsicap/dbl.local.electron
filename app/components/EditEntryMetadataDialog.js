@@ -12,17 +12,20 @@ import Save from '@material-ui/icons/Save';
 import classNames from 'classnames';
 import Tooltip from '@material-ui/core/Tooltip';
 import { updateBundle } from '../actions/bundle.actions';
-import { closeEditMetadata, saveFieldValuesForActiveForm, computeMetadataChecksum } from '../actions/bundleEditMetadata.actions';
+import {
+  closeEditMetadata,
+  saveFieldValuesForActiveForm
+} from '../actions/bundleEditMetadata.actions';
+import { computeWorkspaceTemplateChecksum } from '../actions/workspace.actions';
 import { pasteItems } from '../actions/clipboard.actions';
 import editMetadataService from '../services/editMetadata.service';
 import EditMetadataStepper from './EditMetadataStepper';
 import { clipboardHelpers } from '../helpers/clipboard';
-import EntryAppBar from '../components/EntryAppBar';
-import EntryDrawer from '../components/EntryDrawer';
-import EntryDialogBody from '../components/EntryDialogBody';
+import EntryAppBar from './EntryAppBar';
+import EntryDrawer from './EntryDrawer';
+import EntryDialogBody from './EntryDialogBody';
 import PasteButton from './PasteButton';
 import { ux } from '../utils/ux';
-
 
 const getFormsErrors = editMetadataService.makeGetFormsErrors();
 
@@ -31,12 +34,15 @@ function mapStateToProps(state, props) {
   const { bundleId } = props.match.params;
   const { selectedItemsToPaste } = clipboard;
   const {
-    currentFormWithErrors, nextFormWithErrors, formStructure
+    currentFormWithErrors,
+    nextFormWithErrors,
+    formStructure
   } = bundleEditMetadata;
   const { addedByBundleIds } = bundles;
   const selectedBundle = bundleId ? addedByBundleIds[bundleId] : {};
   const formsErrors = getFormsErrors(state, selectedBundle);
-  const currentFormNumWithErrors = Object.keys(formsErrors).indexOf(currentFormWithErrors) + 1;
+  const currentFormNumWithErrors =
+    Object.keys(formsErrors).indexOf(currentFormWithErrors) + 1;
   const {
     requestingSaveMetadata = false,
     wasMetadataSaved = false,
@@ -64,7 +70,7 @@ const mapDispatchToProps = {
   saveFieldValuesForActiveForm,
   updateBundle,
   pasteItems,
-  computeEntryMetadataChecksum: computeMetadataChecksum
+  computeMediumTemplateChecksum: computeWorkspaceTemplateChecksum
 };
 
 const materialStyles = theme => ({
@@ -74,21 +80,21 @@ const materialStyles = theme => ({
     position: 'sticky'
   },
   toolBar: {
-    paddingLeft: '0px',
+    paddingLeft: '0px'
   },
   flex: {
-    flex: 1,
+    flex: 1
   },
   leftIcon: {
-    marginRight: theme.spacing.unit,
+    marginRight: theme.spacing.unit
   },
   iconSmall: {
-    fontSize: 20,
+    fontSize: 20
   },
   badge: {
     marginRight: theme.spacing.unit * 2,
     marginLeft: theme.spacing.unit
-  },
+  }
 });
 
 type Props = {
@@ -108,28 +114,35 @@ type Props = {
   formStructure: {},
   selectedItemsToPaste: ?{},
   pasteItems: () => {},
-  computeEntryMetadataChecksum: () => {}
+  computeMediumTemplateChecksum: () => {}
 };
 
 class EditEntryMetadataDialog extends PureComponent<Props> {
   props: Props;
+
   state = {
     sectionSelections: {}
   };
 
   componentDidMount() {
-    const { bundleId, computeEntryMetadataChecksum } = this.props;
-    computeEntryMetadataChecksum(bundleId);
+    const { selectedBundle, computeMediumTemplateChecksum } = this.props;
+    computeMediumTemplateChecksum(selectedBundle.medium);
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props.moveNext && this.props.moveNext.exit
-      && this.props.wasMetadataSaved
-      && !prevProps.wasMetadataSaved) {
+    if (
+      this.props.moveNext &&
+      this.props.moveNext.exit &&
+      this.props.wasMetadataSaved &&
+      !prevProps.wasMetadataSaved
+    ) {
       this.props.closeEditMetadata(this.props.bundleId);
       this.props.updateBundle(this.props.bundleId);
-    } else if (this.props.couldNotSaveMetadataMessage &&
-      this.props.couldNotSaveMetadataMessage !== prevProps.couldNotSaveMetadataMessage) {
+    } else if (
+      this.props.couldNotSaveMetadataMessage &&
+      this.props.couldNotSaveMetadataMessage !==
+        prevProps.couldNotSaveMetadataMessage
+    ) {
       // TODO: post confirm message.
       // if confirmed: this.props.closeEditMetadata();
     }
@@ -141,23 +154,29 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
 
   navigateToNextErrror = () => {
     const { nextFormWithErrors } = this.props;
-    const moveNext = nextFormWithErrors ? { formKey: nextFormWithErrors } : null;
+    const moveNext = nextFormWithErrors
+      ? { formKey: nextFormWithErrors }
+      : null;
     this.props.saveFieldValuesForActiveForm({ moveNext });
-  }
+  };
 
   handlePasteMetadataSections = () => {
     this.props.pasteItems(this.props.bundleId);
-  }
+  };
 
   conditionallyRenderPrimaryActionButton = () => {
+    const { classes, formsErrors, selectedItemsToPaste, bundleId } = this.props;
     const {
-      classes, formsErrors, selectedItemsToPaste, bundleId
-    } = this.props;
-    const { items: sectionsToPaste = [], itemsType, bundleId: bundleIdOnClipboard }
-      = selectedItemsToPaste || {};
-    if (selectedItemsToPaste &&
+      items: sectionsToPaste = [],
+      itemsType,
+      bundleId: bundleIdOnClipboard
+    } = selectedItemsToPaste || {};
+    if (
+      selectedItemsToPaste &&
       itemsType === 'metadata sections' &&
-      bundleId !== bundleIdOnClipboard && sectionsToPaste.length > 0) {
+      bundleId !== bundleIdOnClipboard &&
+      sectionsToPaste.length > 0
+    ) {
       return (
         <PasteButton
           key="btnPasteMetadataSections"
@@ -172,8 +191,16 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     const formsErrorsCount = Object.keys(formsErrors).length;
     if (!formsErrorsCount) {
       return (
-        <Button key="btnSave" color="inherit" disable={this.props.requestingSaveMetadata.toString()} onClick={this.handleClose}>
-          <Save key="iconSave" className={classNames(classes.leftIcon, classes.iconSmall)} />
+        <Button
+          key="btnSave"
+          color="inherit"
+          disable={this.props.requestingSaveMetadata.toString()}
+          onClick={this.handleClose}
+        >
+          <Save
+            key="iconSave"
+            className={classNames(classes.leftIcon, classes.iconSmall)}
+          />
           Save
         </Button>
       );
@@ -181,23 +208,41 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     const { currentFormNumWithErrors } = this.props;
     return (
       <Tooltip title="Navigate to next form with error">
-        <Button key="btnGotoError" color="secondary" variant="contained" onClick={this.navigateToNextErrror}>
+        <Button
+          key="btnGotoError"
+          color="secondary"
+          variant="contained"
+          onClick={this.navigateToNextErrror}
+        >
           {currentFormNumWithErrors || ''}
-          <Badge key="badge" className={classes.badge} badgeContent={formsErrorsCount} color="error">
-            <NavigateNext style={{ background: '#F8F6AE' }} color="action" key="navigateNext" className={classNames(classes.iconSmall)} />
+          <Badge
+            key="badge"
+            className={classes.badge}
+            badgeContent={formsErrorsCount}
+            color="error"
+          >
+            <NavigateNext
+              style={{ background: '#F8F6AE' }}
+              color="action"
+              key="navigateNext"
+              className={classNames(classes.iconSmall)}
+            />
           </Badge>
           Next
         </Button>
       </Tooltip>
     );
-  }
+  };
 
   handleClickSectionSelection = event => {
     event.stopPropagation();
     event.preventDefault();
     const { value } = event.target;
     const newCheckedState = !this.state.sectionSelections[value];
-    const sectionSelections = { ...this.state.sectionSelections, [value]: newCheckedState };
+    const sectionSelections = {
+      ...this.state.sectionSelections,
+      [value]: newCheckedState
+    };
     this.setState({ sectionSelections });
   };
 
@@ -210,38 +255,37 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     const incompatibleSections = clipboardHelpers.getUnsupportedMetadataSections();
     const areAllSelected =
       Object.keys(sectionSelections).length ===
-        (formStructure.length - incompatibleSections.length) &&
+        formStructure.length - incompatibleSections.length &&
       Object.values(sectionSelections).every(value => value);
     return areAllSelected;
-  }
+  };
 
-  handleClickSelectAll = (event) => {
+  handleClickSelectAll = event => {
     event.stopPropagation();
     event.preventDefault();
     const { formStructure } = this.props;
     const incompatibleSections = clipboardHelpers.getUnsupportedMetadataSections();
     const areAllSelected = this.getAreAllSectionsSelected();
     const valueToSet = !areAllSelected;
-    const sectionSelectionsMap =
-      formStructure.map(step => step.section)
-        .filter(sectionName => !incompatibleSections.includes(sectionName))
-        .reduce((acc, k) => acc.set(k, valueToSet), Map());
+    const sectionSelectionsMap = formStructure
+      .map(step => step.section)
+      .filter(sectionName => !incompatibleSections.includes(sectionName))
+      .reduce((acc, k) => acc.set(k, valueToSet), Map());
     const sectionSelections = sectionSelectionsMap.toObject();
     this.setState({ sectionSelections });
-  }
+  };
 
   modeUi = () => {
     const title = 'Metadata';
-    return { appBar: { title, OkButtonLabel: '', OkButtonIcon: (null) } };
-  }
+    return { appBar: { title, OkButtonLabel: '', OkButtonIcon: null } };
+  };
 
   render() {
-    const {
-      selectedBundle = {}, bundleId
-    } = this.props;
+    const { selectedBundle = {}, bundleId } = this.props;
     const { sectionSelections } = this.state;
     const sectionsSelected = Object.entries(sectionSelections)
-      .filter(([, isSelected]) => isSelected).map(([s]) => s);
+      .filter(([, isSelected]) => isSelected)
+      .map(([s]) => s);
     const areAllSelected = this.getAreAllSectionsSelected();
     const modeUi = this.modeUi();
     return (
@@ -255,9 +299,7 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
           actionButton={this.conditionallyRenderPrimaryActionButton()}
           handleClose={this.handleClose}
         />
-        <EntryDrawer
-          activeBundle={selectedBundle}
-        />
+        <EntryDrawer activeBundle={selectedBundle} />
         <EntryDialogBody>
           <FormControlLabel
             style={{ paddingTop: '8px', paddingLeft: '55px' }}
@@ -288,5 +330,5 @@ export default compose(
   connect(
     mapStateToProps,
     mapDispatchToProps
-  ),
+  )
 )(EditEntryMetadataDialog);

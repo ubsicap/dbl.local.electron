@@ -79,16 +79,20 @@ const getEntryPageUrl = createSelector(
 );
 
 const getCurrentWorkspace = state => state.workspace || emptyObject;
-const getCurrentMetadataChecksum = state =>
-  state.bundleEditMetadata.currentMetadataChecksum || '';
+const getCurrentMetadataFileChecksum = createSelector(
+  [getActiveBundle],
+  activeBundle => activeBundle.dbl.checksum
+);
 
 const getCanSaveAsTemplate = createSelector(
-  [getCurrentWorkspace, getCurrentMetadataChecksum, getActiveBundle],
+  [getCurrentWorkspace, getCurrentMetadataFileChecksum, getActiveBundle],
   (currentWorkspace, currentMetadataChecksum, activeBundle) => {
     const { medium } = activeBundle;
     const { templateChecksums = emptyObject } = currentWorkspace || emptyObject;
     const templateChecksum = templateChecksums[medium];
-    return templateChecksum !== currentMetadataChecksum;
+    return (
+      currentMetadataChecksum && templateChecksum !== currentMetadataChecksum
+    );
   }
 );
 
@@ -158,11 +162,11 @@ class EntryAppBar extends Component<Props> {
       return (
         <Tooltip title="Save as metadata template">
           <Button
-            onClick={this.handleSaveAsTempalte}
+            onClick={this.handleSaveAsTemplate}
             className={classes.button}
           >
             <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
-            Save as template
+            Save to templates
           </Button>
         </Tooltip>
       );
