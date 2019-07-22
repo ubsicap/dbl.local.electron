@@ -17,6 +17,7 @@ import Link from '@material-ui/icons/Link';
 import classNames from 'classnames';
 import { ux } from '../utils/ux';
 import CopyForPasteButton from './CopyForPasteButton';
+import ConfirmButton from '../components/ConfirmButton';
 import EntryTitle from './EntryTitle';
 import { bundleService } from '../services/bundle.service';
 import { utilities } from '../utils/utilities';
@@ -81,7 +82,7 @@ const getEntryPageUrl = createSelector(
 const getCurrentWorkspace = state => state.workspace || emptyObject;
 const getCurrentMetadataFileChecksum = createSelector(
   [getActiveBundle],
-  activeBundle => activeBundle.dbl.checksum
+  activeBundle => activeBundle.raw.dbl.checksum
 );
 
 const getCanSaveAsTemplate = createSelector(
@@ -140,8 +141,7 @@ class EntryAppBar extends Component<Props> {
     const {
       classes,
       mode,
-      selectedItemsForCopy,
-      canSaveAsTemplate
+      selectedItemsForCopy
     } = this.props;
     if (mode === 'revisions') {
       return null;
@@ -158,20 +158,25 @@ class EntryAppBar extends Component<Props> {
         />
       );
     }
-    if (canSaveAsTemplate) {
-      return (
-        <Tooltip title="Save as metadata template">
-          <Button
-            onClick={this.handleSaveAsTemplate}
-            className={classes.button}
-          >
-            <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
-            Save to templates
-          </Button>
-        </Tooltip>
-      );
-    }
-    return null;
+    const { canSaveAsTemplate } = this.props;
+    const buttonProps = {
+      classes,
+      color: 'primary',
+      variant: 'contained',
+      onClick: this.handleSaveAsTemplate,
+      disabled: canSaveAsTemplate
+    };
+    return (
+      <Tooltip title="Save as metadata template">
+        <ConfirmButton
+          classes={classes}
+          {...buttonProps}
+        >
+          <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
+          Save to templates
+        </ConfirmButton>
+      </Tooltip>
+    );
   };
 
   render() {
