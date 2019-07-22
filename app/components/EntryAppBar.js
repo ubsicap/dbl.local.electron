@@ -17,7 +17,7 @@ import Link from '@material-ui/icons/Link';
 import classNames from 'classnames';
 import { ux } from '../utils/ux';
 import CopyForPasteButton from './CopyForPasteButton';
-import ConfirmButton from '../components/ConfirmButton';
+import ConfirmButton from './ConfirmButton';
 import EntryTitle from './EntryTitle';
 import { bundleService } from '../services/bundle.service';
 import { utilities } from '../utils/utilities';
@@ -25,6 +25,7 @@ import {
   openEntryDrawer,
   resetEntryAppBar
 } from '../actions/entryAppBar.actions';
+import { saveAsTemplate } from '../actions/workspace.actions';
 import { selectItemsToPaste } from '../actions/clipboard.actions';
 import { emptyObject } from '../utils/defaultValues';
 
@@ -42,7 +43,8 @@ type Props = {
   selectItemsToPaste: () => {},
   openEntryDrawer: () => {},
   resetEntryAppBar: () => {},
-  handleClose: () => {}
+  handleClose: () => {},
+  saveMetadataAsTemplate: () => {}
 };
 
 const defaultProps = {
@@ -108,7 +110,8 @@ function mapStateToProps(state, props) {
 const mapDispatchToProps = {
   selectItemsToPaste,
   openEntryDrawer,
-  resetEntryAppBar
+  resetEntryAppBar,
+  saveMetadataAsTemplate: saveAsTemplate
 };
 
 class EntryAppBar extends Component<Props> {
@@ -137,12 +140,13 @@ class EntryAppBar extends Component<Props> {
     this.props.handleClose();
   };
 
+  handleSaveAsTemplate = () => {
+    const { saveMetadataAsTemplate, origBundle } = this.props;
+    saveMetadataAsTemplate(origBundle.id);
+  };
+
   renderSecondaryActionButton = () => {
-    const {
-      classes,
-      mode,
-      selectedItemsForCopy
-    } = this.props;
+    const { classes, mode, selectedItemsForCopy } = this.props;
     if (mode === 'revisions') {
       return null;
     }
@@ -168,10 +172,7 @@ class EntryAppBar extends Component<Props> {
     };
     return (
       <Tooltip title="Save as metadata template">
-        <ConfirmButton
-          classes={classes}
-          {...buttonProps}
-        >
+        <ConfirmButton classes={classes} {...buttonProps}>
           <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
           Save to templates
         </ConfirmButton>

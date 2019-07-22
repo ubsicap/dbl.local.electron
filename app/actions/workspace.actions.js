@@ -5,30 +5,35 @@ import { workspaceConstants } from '../constants/workspace.constants';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 
 export const workspaceActions = {
-  computeWorkspaceTemplateChecksum
+  computeWorkspaceTemplateChecksum,
+  saveAsTemplate
 };
 
-export function getWorkspaceConfigXml() {}
+export async function getMetadataTemplateDir(configXmlFile, medium) {
+  const configXmlSettings = await dblDotLocalService.convertConfigXmlToJson(
+    configXmlFile
+  );
+  const {
+    settings: { storer }
+  } = configXmlSettings;
+  const { metadataTemplateDir: metadataTemplateDirOrNot = [null] } = storer[0];
+  const [metadataTemplateDir] = metadataTemplateDirOrNot;
+  const templateFilePath = path.join(metadataTemplateDir, `${medium}.xml`);
+  return { metadataTemplateDir, templateFilePath };
+}
 
 export function computeWorkspaceTemplateChecksum(medium) {
   return async (dispatch, getState) => {
     // get workspace template folder
     const { dblDotLocalConfig } = getState();
     const { configXmlFile } = dblDotLocalConfig;
-    const configXmlSettings = await dblDotLocalService.convertConfigXmlToJson(
-      configXmlFile
+    const { metadataTemplateDir, templateFilePath } = getMetadataTemplateDir(
+      configXmlFile,
+      medium
     );
-    const {
-      settings: { storer }
-    } = configXmlSettings;
-    const {
-      metadataTemplateDir: metadataTemplateDirOrNot = [null]
-    } = storer[0];
-    const [metadataTemplateDir] = metadataTemplateDirOrNot;
     if (!metadataTemplateDir) {
       return;
     }
-    const templateFilePath = path.join(metadataTemplateDir, `${medium}.xml`);
     if (!(await fs.exists(templateFilePath))) {
       return;
     }
@@ -39,5 +44,24 @@ export function computeWorkspaceTemplateChecksum(medium) {
       templateMedium: medium,
       templateChecksum
     });
+  };
+}
+
+export function saveAsTemplate(bundleId) {
+  return async (dispatch, getState) => {
+    const { addedBundlesById } = bundles;
+    const activeBundle = addedBundlesById[bundleId];
+    const { dblDotLocalConfig, bundles } = getState();
+    const { configXmlFile } = dblDotLocalConfig;
+    const { metadataTemplateDir, templateFilePath } = getMetadataTemplateDir(
+      configXmlFile,
+      activeBundle.medium,
+      'TodoDefaultPath'
+    );
+    if (await fs.exists(templateFilePath)) {
+      // TODO: prompt before saving? // change confirm button to say "Overwrite"
+    }
+    // get metadata.xml
+    // Save to template directory
   };
 }
