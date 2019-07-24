@@ -1,24 +1,20 @@
 import { workspaceConstants } from '../constants/workspace.constants';
-import dblDotLocalConfigConstants from '../constants/dblDotLocal.constants';
+import { entryAppBarConstants } from '../constants/entryAppBar.constants';
 
-const initialState = {
-};
+const initialState = {};
 
 export function workspace(state = initialState, action) {
   switch (action.type) {
+    case entryAppBarConstants.RESET_ENTRY_APP_BAR:
+      return initialState;
     case workspaceConstants.GOT_METADATA_FILE_CHECKSUM: {
-      const {
-        templateFilePath,
-        templateMedium,
-        templateChecksum
-      } = action;
+      const { templateFilePath, templateMedium, templateChecksum } = action;
       return {
         ...state,
         templateFilePath,
         templateMedium,
         templateChecksum
       };
-      return state;
     }
     default:
       return state;
@@ -26,4 +22,3 @@ export function workspace(state = initialState, action) {
 }
 
 export default workspace;
-

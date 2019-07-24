@@ -35,6 +35,7 @@ type Props = {
   entryPageUrl: string,
   openDrawer: boolean,
   canSaveAsTemplate: boolean,
+  templateExists: boolean,
   mode: string,
   modeUi: {},
   selectedItemsForCopy?: [],
@@ -87,15 +88,27 @@ const getCurrentMetadataFileChecksum = createSelector(
   activeBundle => activeBundle.raw.dbl.checksum
 );
 
+const getTemplateChecksum = createSelector(
+  [getCurrentWorkspace],
+  currentWorkspace => {
+    const { templateChecksum } = currentWorkspace || emptyObject;
+    return templateChecksum;
+  }
+);
+
 const getCanSaveAsTemplate = createSelector(
-  [getCurrentWorkspace, getCurrentMetadataFileChecksum, getActiveBundle],
-  (currentWorkspace, currentMetadataChecksum, activeBundle) => {
-    const { medium } = activeBundle;
-    const { templateChecksums = emptyObject } = currentWorkspace || emptyObject;
-    const templateChecksum = templateChecksums[medium];
+  [getCurrentMetadataFileChecksum, getTemplateChecksum],
+  (currentMetadataChecksum, templateChecksum) => {
     return (
-      currentMetadataChecksum && templateChecksum !== currentMetadataChecksum
+      currentMetadataChecksum && currentMetadataChecksum !== templateChecksum
     );
+  }
+);
+
+const getTemplateExists = createSelector(
+  [getCurrentMetadataFileChecksum, getTemplateChecksum],
+  (currentMetadataChecksum, templateChecksum) => {
+    return Boolean(templateChecksum);
   }
 );
 
@@ -103,7 +116,8 @@ function mapStateToProps(state, props) {
   return {
     entryPageUrl: getEntryPageUrl(state, props),
     openDrawer: state.entryAppBar.openDrawer,
-    canSaveAsTemplate: getCanSaveAsTemplate(state, props)
+    canSaveAsTemplate: getCanSaveAsTemplate(state, props),
+    templateExists: getTemplateExists(state, props)
   };
 }
 
@@ -162,7 +176,10 @@ class EntryAppBar extends Component<Props> {
         />
       );
     }
-    const { canSaveAsTemplate } = this.props;
+    const { canSaveAsTemplate, templateExists } = this.props;
+    const labelTemplateAction = templateExists
+      ? 'Overwrite template'
+      : 'Save as template';
     const buttonProps = {
       classes,
       color: 'primary',
@@ -174,7 +191,7 @@ class EntryAppBar extends Component<Props> {
       <Tooltip title="Save as metadata template">
         <ConfirmButton classes={classes} {...buttonProps}>
           <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
-          Save to templates
+          {labelTemplateAction}
         </ConfirmButton>
       </Tooltip>
     );
