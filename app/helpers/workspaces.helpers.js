@@ -27,17 +27,20 @@ function getCurrentWorkspaceFullPath(state) {
 function getToggledStarredEntries(bundleFilterReducerState, dblIdToToggle) {
   const { starredEntries: starredEntriesOrig } = bundleFilterReducerState;
   const wasEntryStarred = starredEntriesOrig.has(dblIdToToggle);
-  const starredEntries = wasEntryStarred ?
-    starredEntriesOrig.delete(dblIdToToggle) : starredEntriesOrig.add(dblIdToToggle);
+  const starredEntries = wasEntryStarred
+    ? starredEntriesOrig.delete(dblIdToToggle)
+    : starredEntriesOrig.add(dblIdToToggle);
   return { starredEntries, isEntryStarred: !wasEntryStarred };
 }
 
-
 function persistStarredEntries(state, starredEntries) {
-  const { workspaceFullPath, email } =
-  workspaceHelpers.getCurrentWorkspaceFullPath(state);
+  const {
+    workspaceFullPath,
+    email
+  } = workspaceHelpers.getCurrentWorkspaceFullPath(state);
   workspaceUserSettingsStoreServices.saveStarredEntries(
-    workspaceFullPath, email,
+    workspaceFullPath,
+    email,
     starredEntries.toArray()
   );
 }
