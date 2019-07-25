@@ -12,12 +12,12 @@ export const workspaceActions = {
 };
 
 export async function getMetadataTemplateDir(
-  configXmlFile,
+  workspace,
   medium,
   defaultTemplatePath
 ) {
   const configXmlSettings = await dblDotLocalService.convertConfigXmlToJson(
-    configXmlFile
+    workspace
   );
   const {
     settings: { storer }
@@ -58,13 +58,12 @@ export function getMetadataTemplateDirAndTemplateFilePathFromState(
   appState,
   medium
 ) {
-  const { dblDotLocalConfig } = appState;
-  const { configXmlFile } = dblDotLocalConfig;
-  const workspaceFullPath = workspaceHelpers.getCurrentWorkspaceFullPath(
-    appState
-  );
+  const {
+    workspaceFullPath,
+    workspace
+  } = workspaceHelpers.getCurrentWorkspaceFullPath(appState);
   const paths = getMetadataTemplateDir(
-    configXmlFile,
+    workspace,
     medium,
     path.join(workspaceFullPath, 'templates')
   );
@@ -81,7 +80,7 @@ export function saveAsTemplate(bundleId) {
       metadataTemplateDir,
       templateFilePath
     } = getMetadataTemplateDirAndTemplateFilePathFromState(
-      getState(),
+      appState,
       activeBundle.medium
     );
     fs.ensureDirSync(metadataTemplateDir);
@@ -93,6 +92,17 @@ export function saveAsTemplate(bundleId) {
       templateFilePath,
       () => {}
     );
-    // Save to template directory
+    const { workspace } = workspaceHelpers.getCurrentWorkspaceFullPath(
+      appState
+    );
+    // Save template directory setting if save completed.
+    const configXmlSettings = await dblDotLocalService.convertConfigXmlToJson(
+      workspace
+    );
+    configXmlSettings.settings.storer.metadataTemplateDir = metadataTemplateDir;
+    dblDotLocalService.updateAndWriteConfigXmlSettings({
+      configXmlSettings,
+      workspace
+    });
   };
 }

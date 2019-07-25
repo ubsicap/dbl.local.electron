@@ -21,7 +21,13 @@ function getCurrentWorkspaceFullPath(state) {
   }
   const { username: email } = user || {};
   const workspaceFullPath = path.join(workspacesLocation, workspaceName);
-  return { workspaceFullPath, email };
+  return {
+    workspaceFullPath,
+    email,
+    workspacesLocation,
+    workspaceName,
+    workspace: { fullPath: workspaceFullPath, name: workspaceName }
+  };
 }
 
 function getToggledStarredEntries(bundleFilterReducerState, dblIdToToggle) {
