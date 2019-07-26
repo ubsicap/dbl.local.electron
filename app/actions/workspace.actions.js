@@ -1,4 +1,4 @@
-import md5File from 'md5-file';
+import md5File from 'md5-file/promise';
 import path from 'path';
 import fs from 'fs-extra';
 import { workspaceConstants } from '../constants/workspace.constants';
@@ -26,20 +26,20 @@ export async function getMetadataTemplateDir(
     metadataTemplateDir: metadataTemplateDirOrDefault = [defaultTemplatePath]
   } = storer[0];
   const [metadataTemplateDir] = metadataTemplateDirOrDefault;
-  const templateFilePath = path.join(metadataTemplateDir, `${medium}.xml`);
-  return { metadataTemplateDir, templateFilePath };
+  const templateFileName = `${medium}.xml`;
+  const templateFilePath = path.join(metadataTemplateDir, templateFileName);
+  return { metadataTemplateDir, templateFilePath, templateFileName };
 }
 
 export function computeWorkspaceTemplateChecksum(medium) {
   return async (dispatch, getState) => {
     // get workspace template folder
     const {
-      metadataTemplateDir,
       templateFilePath
-    } = getMetadataTemplateDirAndTemplateFilePathFromState(getState(), medium);
-    if (!metadataTemplateDir) {
-      return;
-    }
+    } = await getMetadataTemplateDirAndTemplateFilePathFromState(
+      getState(),
+      medium
+    );
     const templateExists = await fs.exists(templateFilePath);
     const templateChecksum = templateExists
       ? await md5File(templateFilePath)
@@ -54,7 +54,7 @@ export function computeWorkspaceTemplateChecksum(medium) {
   };
 }
 
-export function getMetadataTemplateDirAndTemplateFilePathFromState(
+export async function getMetadataTemplateDirAndTemplateFilePathFromState(
   appState,
   medium
 ) {
@@ -62,7 +62,7 @@ export function getMetadataTemplateDirAndTemplateFilePathFromState(
     workspaceFullPath,
     workspace
   } = workspaceHelpers.getCurrentWorkspaceFullPath(appState);
-  const paths = getMetadataTemplateDir(
+  const paths = await getMetadataTemplateDir(
     workspace,
     medium,
     path.join(workspaceFullPath, 'templates')
@@ -74,22 +74,22 @@ export function saveAsTemplate(bundleId) {
   return async (dispatch, getState) => {
     const appState = getState();
     const { bundles } = appState;
-    const { addedBundlesById } = bundles;
-    const activeBundle = addedBundlesById[bundleId];
+    const { addedByBundleIds } = bundles;
+    const activeBundle = addedByBundleIds[bundleId];
     const {
       metadataTemplateDir,
-      templateFilePath
-    } = getMetadataTemplateDirAndTemplateFilePathFromState(
+      templateFileName
+    } = await getMetadataTemplateDirAndTemplateFilePathFromState(
       appState,
       activeBundle.medium
     );
-    fs.ensureDirSync(metadataTemplateDir);
+    await fs.ensureDir(metadataTemplateDir);
     // save metadata.xml to templateFilePath
     await bundleService.requestSaveResourceTo(
       metadataTemplateDir,
       bundleId,
       'metadata.xml',
-      templateFilePath,
+      templateFileName,
       () => {}
     );
     const { workspace } = workspaceHelpers.getCurrentWorkspaceFullPath(
@@ -99,10 +99,13 @@ export function saveAsTemplate(bundleId) {
     const configXmlSettings = await dblDotLocalService.convertConfigXmlToJson(
       workspace
     );
-    configXmlSettings.settings.storer.metadataTemplateDir = metadataTemplateDir;
+    configXmlSettings.settings.storer[0].metadataTemplateDir = [
+      metadataTemplateDir
+    ];
     dblDotLocalService.updateAndWriteConfigXmlSettings({
       configXmlSettings,
       workspace
     });
+    dispatch(computeWorkspaceTemplateChecksum(activeBundle.medium));
   };
 }

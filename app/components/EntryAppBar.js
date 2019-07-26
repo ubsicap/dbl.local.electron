@@ -185,7 +185,7 @@ class EntryAppBar extends Component<Props> {
       color: 'primary',
       variant: 'contained',
       onClick: this.handleSaveAsTemplate,
-      disabled: canSaveAsTemplate
+      disabled: !canSaveAsTemplate
     };
     return (
       <Tooltip title="Save as metadata template">
