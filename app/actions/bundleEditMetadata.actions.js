@@ -1,5 +1,6 @@
 import log from 'electron-log';
 import waitUntil from 'node-wait-until';
+import md5File from 'md5-file/promise';
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
@@ -27,7 +28,8 @@ export const bundleEditMetadataActions = {
   saveFieldValuesForActiveForm,
   reloadActiveForm,
   setArchivistStatusOverrides,
-  saveMetadatFileToTempBundleFolder
+  saveMetadatFileToTempBundleFolder,
+  computeMetadataChecksum
 };
 
 export default bundleEditMetadataActions;
@@ -76,6 +78,7 @@ export function fetchFormStructure(
   }
 }
 
+/*
 function tryUpdateMetadataSources(bundleId, formStructure) {
   return async (dispatch, getState) => {
     const relationInstances = bundleService.getSubSectionInstances(
@@ -122,6 +125,7 @@ function tryUpdateMetadataSources(bundleId, formStructure) {
     }
   };
 }
+*/
 
 export function fetchActiveFormInputs(
   bundleId,
@@ -313,6 +317,25 @@ export function openMetadataFile(bundleId) {
   };
 }
 
+export function computeMetadataChecksum(bundleId) {
+  return async dispatch => {
+    const metadataFile = await bundleService.saveMetadataToTempFolder(bundleId);
+    dispatch(computeMetadataFileChecksum(bundleId, metadataFile));
+  };
+}
+
+function computeMetadataFileChecksum(bundleId, metadataFile) {
+  return async dispatch => {
+    const metadataFileChecksum = await md5File(metadataFile);
+    dispatch({
+      type: bundleEditMetadataConstants.METADATA_FILE_CHECKSUM_COMPUTED,
+      bundleId,
+      metadataFile,
+      metadataFileChecksum
+    });
+  };
+}
+
 export function saveMetadatFileToTempBundleFolder(bundleId) {
   return async dispatch => {
     dispatch({
@@ -325,15 +348,9 @@ export function saveMetadatFileToTempBundleFolder(bundleId) {
       bundleId,
       metadataFile
     });
+    dispatch(computeMetadataFileChecksum(bundleId, metadataFile));
     return metadataFile;
   };
-}
-
-function getActiveFormKey(getState) {
-  const { bundleEditMetadata } = getState();
-  const { activeFormInputs } = bundleEditMetadata;
-  const [formKey] = Object.keys(activeFormInputs);
-  return formKey;
 }
 
 export function deleteForm(bundleId, formKey, shouldReloadActiveForm) {

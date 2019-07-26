@@ -14,7 +14,8 @@ import Tooltip from '@material-ui/core/Tooltip';
 import { updateBundle } from '../actions/bundle.actions';
 import {
   closeEditMetadata,
-  saveFieldValuesForActiveForm
+  saveFieldValuesForActiveForm,
+  computeMetadataChecksum
 } from '../actions/bundleEditMetadata.actions';
 import { computeWorkspaceTemplateChecksum } from '../actions/workspace.actions';
 import { pasteItems } from '../actions/clipboard.actions';
@@ -70,7 +71,8 @@ const mapDispatchToProps = {
   saveFieldValuesForActiveForm,
   updateBundle,
   pasteItems,
-  computeMediumTemplateChecksum: computeWorkspaceTemplateChecksum
+  computeMediumTemplateChecksum: computeWorkspaceTemplateChecksum,
+  computeEntryMetadataChecksum: computeMetadataChecksum
 };
 
 const materialStyles = theme => ({
@@ -114,7 +116,8 @@ type Props = {
   formStructure: {},
   selectedItemsToPaste: ?{},
   pasteItems: () => {},
-  computeMediumTemplateChecksum: () => {}
+  computeMediumTemplateChecksum: () => {},
+  computeEntryMetadataChecksum: () => {}
 };
 
 class EditEntryMetadataDialog extends PureComponent<Props> {
@@ -125,23 +128,32 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   };
 
   componentDidMount() {
-    const { selectedBundle, computeMediumTemplateChecksum } = this.props;
+    const {
+      selectedBundle,
+      computeMediumTemplateChecksum,
+      computeEntryMetadataChecksum
+    } = this.props;
     computeMediumTemplateChecksum(selectedBundle.medium);
+    computeEntryMetadataChecksum(selectedBundle.id);
   }
 
   componentDidUpdate(prevProps) {
+    const {
+      moveNext,
+      wasMetadataSaved,
+      couldNotSaveMetadataMessage
+    } = this.props;
     if (
-      this.props.moveNext &&
-      this.props.moveNext.exit &&
-      this.props.wasMetadataSaved &&
+      moveNext &&
+      moveNext.exit &&
+      wasMetadataSaved &&
       !prevProps.wasMetadataSaved
     ) {
       this.props.closeEditMetadata(this.props.bundleId);
       this.props.updateBundle(this.props.bundleId);
     } else if (
-      this.props.couldNotSaveMetadataMessage &&
-      this.props.couldNotSaveMetadataMessage !==
-        prevProps.couldNotSaveMetadataMessage
+      couldNotSaveMetadataMessage &&
+      couldNotSaveMetadataMessage !== prevProps.couldNotSaveMetadataMessage
     ) {
       // TODO: post confirm message.
       // if confirmed: this.props.closeEditMetadata();
@@ -161,7 +173,8 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
   };
 
   handlePasteMetadataSections = () => {
-    this.props.pasteItems(this.props.bundleId);
+    const { bundleId } = this.props;
+    this.props.pasteItems(bundleId);
   };
 
   conditionallyRenderPrimaryActionButton = () => {
@@ -190,11 +203,12 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     }
     const formsErrorsCount = Object.keys(formsErrors).length;
     if (!formsErrorsCount) {
+      const { requestingSaveMetadata } = this.props;
       return (
         <Button
           key="btnSave"
           color="inherit"
-          disable={this.props.requestingSaveMetadata.toString()}
+          disable={requestingSaveMetadata.toString()}
           onClick={this.handleClose}
         >
           <Save
@@ -238,12 +252,13 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     event.stopPropagation();
     event.preventDefault();
     const { value } = event.target;
-    const newCheckedState = !this.state.sectionSelections[value];
-    const sectionSelections = {
-      ...this.state.sectionSelections,
+    const { sectionSelections } = this.state;
+    const newCheckedState = !sectionSelections[value];
+    const newsSctionSelections = {
+      ...sectionSelections,
       [value]: newCheckedState
     };
-    this.setState({ sectionSelections });
+    this.setState({ sectionSelections: newsSctionSelections });
   };
 
   getAreAllSectionsSelected = () => {

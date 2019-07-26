@@ -76,13 +76,16 @@ export function saveAsTemplate(bundleId) {
     const { bundles } = appState;
     const { addedByBundleIds } = bundles;
     const activeBundle = addedByBundleIds[bundleId];
+    const { medium } = activeBundle;
     const {
       metadataTemplateDir,
-      templateFileName
+      templateFileName,
+      templateFilePath
     } = await getMetadataTemplateDirAndTemplateFilePathFromState(
       appState,
-      activeBundle.medium
+      medium
     );
+    const didExistMetadataTemplateDir = await fs.exists(metadataTemplateDir);
     await fs.ensureDir(metadataTemplateDir);
     // save metadata.xml to templateFilePath
     await bundleService.requestSaveResourceTo(
@@ -92,20 +95,32 @@ export function saveAsTemplate(bundleId) {
       templateFileName,
       () => {}
     );
-    const { workspace } = workspaceHelpers.getCurrentWorkspaceFullPath(
-      appState
-    );
-    // Save template directory setting if save completed.
-    const configXmlSettings = await dblDotLocalService.convertConfigXmlToJson(
-      workspace
-    );
-    configXmlSettings.settings.storer[0].metadataTemplateDir = [
-      metadataTemplateDir
-    ];
-    dblDotLocalService.updateAndWriteConfigXmlSettings({
-      configXmlSettings,
-      workspace
+    dispatch({
+      type: workspaceConstants.SAVED_TEMPLATE,
+      medium,
+      templateFilePath
     });
-    dispatch(computeWorkspaceTemplateChecksum(activeBundle.medium));
+    dispatch(computeWorkspaceTemplateChecksum(medium));
+    if (!didExistMetadataTemplateDir) {
+      // Save template directory setting if save completed.
+      const { workspace } = workspaceHelpers.getCurrentWorkspaceFullPath(
+        appState
+      );
+      const configXmlSettings = await dblDotLocalService.convertConfigXmlToJson(
+        workspace
+      );
+      configXmlSettings.settings.storer[0].metadataTemplateDir = [
+        metadataTemplateDir
+      ];
+      dblDotLocalService.updateAndWriteConfigXmlSettings({
+        configXmlSettings,
+        workspace
+      });
+      dispatch({
+        type: workspaceConstants.METADATA_TEMPLATE_FOLDER_UPDATED,
+        metadataTemplateDir,
+        configXmlSettings
+      });
+    }
   };
 }
