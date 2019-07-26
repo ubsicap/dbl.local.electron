@@ -45,7 +45,7 @@ export function computeWorkspaceTemplateChecksum(medium) {
       ? await md5File(templateFilePath)
       : undefined;
     dispatch({
-      type: workspaceConstants.GOT_METADATA_FILE_CHECKSUM,
+      type: workspaceConstants.GOT_TEMPLATE_FILE_CHECKSUM,
       templateFilePath,
       templateMedium: medium,
       templateChecksum,
@@ -88,12 +88,11 @@ export function saveAsTemplate(bundleId) {
     const didExistMetadataTemplateDir = await fs.exists(metadataTemplateDir);
     await fs.ensureDir(metadataTemplateDir);
     // save metadata.xml to templateFilePath
-    await bundleService.requestSaveResourceTo(
+    await bundleService.completelySaveResourceTo(
       metadataTemplateDir,
       bundleId,
       'metadata.xml',
-      templateFileName,
-      () => {}
+      templateFileName
     );
     dispatch({
       type: workspaceConstants.SAVED_TEMPLATE,

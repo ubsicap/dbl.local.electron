@@ -29,6 +29,7 @@ export const bundleService = {
   downloadResources,
   removeResources,
   requestSaveResourceTo,
+  completelySaveResourceTo,
   saveMetadataToTempFolder,
   saveJobSpecToTempFolder,
   getJobSpec,
@@ -406,12 +407,11 @@ async function saveMetadataToTempFolder(bundleId) {
     filePath: metadataFile,
     fileName: metadataXmlResource
   } = getTempFolderForFile(bundleId, 'metadata.xml');
-  await bundleService.requestSaveResourceTo(
+  await bundleService.completelySaveResourceTo(
     tmpFolder,
     bundleId,
     metadataXmlResource,
-    metadataXmlResource,
-    () => {}
+    metadataXmlResource
   );
   return metadataFile;
 }
@@ -438,6 +438,35 @@ async function saveJobSpecToTempFolder(bundleId) {
   return jobSpecPath;
 }
 
+function completelySaveResourceTo(
+  selectedFolder,
+  bundleId,
+  uriRelativePath,
+  relativeDestinationPath
+) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      return await bundleService.requestSaveResourceTo(
+        selectedFolder,
+        bundleId,
+        uriRelativePath,
+        relativeDestinationPath,
+        (resourceTotalBytesSaved, resourceProgress) => {
+          if (resourceProgress && resourceProgress % 100 === 0) {
+            const targetPath = path.join(
+              selectedFolder,
+              relativeDestinationPath
+            );
+            resolve(targetPath);
+          }
+        }
+      );
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
 /*
  * Downloader.download('https://download.damieng.com/fonts/original/EnvyCodeR-PR7.zip',
  *  'envy-code-r.zip', (bytes, percent) => console.log(`Downloaded ${bytes} (${percent})`));
@@ -445,7 +474,7 @@ async function saveJobSpecToTempFolder(bundleId) {
 function requestSaveResourceTo(
   selectedFolder,
   bundleId,
-  resourcePath,
+  uriRelativePath,
   relativeDestinationPath,
   progressCallback
 ) {
@@ -453,7 +482,7 @@ function requestSaveResourceTo(
     relativeDestinationPath === 'metadata.xml'
       ? RESOURCE_API
       : `${RESOURCE_API}-stream`;
-  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${resourceApi}/${resourcePath}`;
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${resourceApi}/${uriRelativePath}`;
   const targetPath = path.join(selectedFolder, relativeDestinationPath);
   return download(url, targetPath, progressCallback, authHeader());
 }
