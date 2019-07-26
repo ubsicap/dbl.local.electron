@@ -2107,8 +2107,6 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           origBundle={origBundle}
           mode={mode}
           modeUi={modeUi}
-          selectedItemsForCopy={selectedItemsForCopy}
-          itemsTypeForCopy="resources"
           actionButton={this.renderOkOrPasteResourcesButton()}
           secondaryActionButton={this.renderCopyForPasteButton(
             selectedItemsForCopy
