@@ -4,7 +4,6 @@ import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
 import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
-import Save from '@material-ui/icons/Save';
 import AppBar from '@material-ui/core/AppBar';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -16,8 +15,6 @@ import CloseIcon from '@material-ui/icons/Close';
 import Link from '@material-ui/icons/Link';
 import classNames from 'classnames';
 import { ux } from '../utils/ux';
-import CopyForPasteButton from './CopyForPasteButton';
-import ConfirmButton from './ConfirmButton';
 import EntryTitle from './EntryTitle';
 import { bundleService } from '../services/bundle.service';
 import { utilities } from '../utils/utilities';
@@ -25,8 +22,6 @@ import {
   openEntryDrawer,
   resetEntryAppBar
 } from '../actions/entryAppBar.actions';
-import { saveAsTemplate } from '../actions/workspace.actions';
-import { selectItemsToPaste } from '../actions/clipboard.actions';
 import { emptyObject } from '../utils/defaultValues';
 
 type Props = {
@@ -34,23 +29,17 @@ type Props = {
   origBundle: {},
   entryPageUrl: string,
   openDrawer: boolean,
-  canSaveAsTemplate: boolean,
-  templateExists: boolean,
   mode: string,
   modeUi: {},
-  selectedItemsForCopy?: [],
-  itemsTypeForCopy?: string,
   actionButton: React.Node,
-  selectItemsToPaste: () => {},
+  secondaryActionButton?: React.Node,
   openEntryDrawer: () => {},
   resetEntryAppBar: () => {},
-  handleClose: () => {},
-  saveMetadataAsTemplate: () => {}
+  handleClose: () => {}
 };
 
 const defaultProps = {
-  selectedItemsForCopy: undefined,
-  itemsTypeForCopy: undefined
+  secondaryActionButton: null
 };
 
 const materialStyles = theme => ({
@@ -82,49 +71,16 @@ const getEntryPageUrl = createSelector(
   }
 );
 
-const getCurrentWorkspace = state => state.workspace || emptyObject;
-
-const getCurrentMetadataFileChecksum = state =>
-  state.entryAppBar.metadataFileChecksum;
-
-const getTemplateChecksum = createSelector(
-  [getCurrentWorkspace],
-  currentWorkspace => {
-    const { templateChecksum } = currentWorkspace || emptyObject;
-    return templateChecksum;
-  }
-);
-
-const getCanSaveAsTemplate = createSelector(
-  [getCurrentMetadataFileChecksum, getTemplateChecksum],
-  (currentMetadataChecksum, templateChecksum) => {
-    return (
-      currentMetadataChecksum && currentMetadataChecksum !== templateChecksum
-    );
-  }
-);
-
-const getTemplateExists = createSelector(
-  [getCurrentMetadataFileChecksum, getTemplateChecksum],
-  (currentMetadataChecksum, templateChecksum) => {
-    return Boolean(templateChecksum);
-  }
-);
-
 function mapStateToProps(state, props) {
   return {
     entryPageUrl: getEntryPageUrl(state, props),
-    openDrawer: state.entryAppBar.openDrawer,
-    canSaveAsTemplate: getCanSaveAsTemplate(state, props),
-    templateExists: getTemplateExists(state, props)
+    openDrawer: state.entryAppBar.openDrawer
   };
 }
 
 const mapDispatchToProps = {
-  selectItemsToPaste,
   openEntryDrawer,
-  resetEntryAppBar,
-  saveMetadataAsTemplate: saveAsTemplate
+  resetEntryAppBar
 };
 
 class EntryAppBar extends Component<Props> {
@@ -143,61 +99,6 @@ class EntryAppBar extends Component<Props> {
     utilities.onOpenLink(entryPageUrl)(event);
   };
 
-  handleCopyFiles = () => {
-    const { selectedItemsForCopy, origBundle, itemsTypeForCopy } = this.props;
-    this.props.selectItemsToPaste(
-      origBundle.id,
-      selectedItemsForCopy,
-      itemsTypeForCopy
-    );
-    this.props.handleClose();
-  };
-
-  handleSaveAsTemplate = () => {
-    const { saveMetadataAsTemplate, origBundle } = this.props;
-    saveMetadataAsTemplate(origBundle.id);
-  };
-
-  renderSecondaryActionButton = () => {
-    const { classes, mode, selectedItemsForCopy } = this.props;
-    if (mode === 'revisions') {
-      return null;
-    }
-    if (selectedItemsForCopy && selectedItemsForCopy.length > 0) {
-      return (
-        <CopyForPasteButton
-          key="btnCopyForPaste"
-          classes={classes}
-          color="inherit"
-          onClick={this.handleCopyFiles}
-          disabled={selectedItemsForCopy.length === 0}
-          selectedItems={selectedItemsForCopy}
-        />
-      );
-    }
-    const { canSaveAsTemplate, templateExists, origBundle } = this.props;
-    const labelTemplateAction = templateExists
-      ? `Overwrite ${origBundle.medium} template`
-      : `Save as ${origBundle.medium} template`;
-    const buttonProps = {
-      classes,
-      color: 'primary',
-      variant: 'contained',
-      onClick: this.handleSaveAsTemplate,
-      disabled: !canSaveAsTemplate
-    };
-    return (
-      <Tooltip title="Save as metadata template">
-        <div>
-          <ConfirmButton classes={classes} {...buttonProps}>
-            <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
-            {labelTemplateAction}
-          </ConfirmButton>
-        </div>
-      </Tooltip>
-    );
-  };
-
   render() {
     const {
       classes,
@@ -206,6 +107,7 @@ class EntryAppBar extends Component<Props> {
       mode,
       modeUi,
       actionButton,
+      secondaryActionButton,
       entryPageUrl,
       handleClose
     } = this.props;
@@ -275,7 +177,8 @@ class EntryAppBar extends Component<Props> {
             </Grid>
           </Grid>
           <div className={classes.flex} />
-          {this.renderSecondaryActionButton()}
+          {secondaryActionButton}
+          <div style={{ marginRight: '20px' }} />
           {actionButton}
           <IconButton
             aria-label="Open drawer"

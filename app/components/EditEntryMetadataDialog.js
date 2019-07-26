@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
+import { createSelector } from 'reselect';
 import { withStyles } from '@material-ui/core/styles';
 import Badge from '@material-ui/core/Badge';
 import Button from '@material-ui/core/Button';
@@ -17,8 +18,11 @@ import {
   saveFieldValuesForActiveForm,
   computeMetadataChecksum
 } from '../actions/bundleEditMetadata.actions';
-import { computeWorkspaceTemplateChecksum } from '../actions/workspace.actions';
-import { pasteItems } from '../actions/clipboard.actions';
+import {
+  computeWorkspaceTemplateChecksum,
+  saveAsTemplate
+} from '../actions/workspace.actions';
+import { pasteItems, selectItemsToPaste } from '../actions/clipboard.actions';
 import editMetadataService from '../services/editMetadata.service';
 import EditMetadataStepper from './EditMetadataStepper';
 import { clipboardHelpers } from '../helpers/clipboard';
@@ -27,8 +31,39 @@ import EntryDrawer from './EntryDrawer';
 import EntryDialogBody from './EntryDialogBody';
 import PasteButton from './PasteButton';
 import { ux } from '../utils/ux';
+import { emptyObject } from '../utils/defaultValues';
+import CopyForPasteButton from './CopyForPasteButton';
+import ConfirmButton from './ConfirmButton';
 
 const getFormsErrors = editMetadataService.makeGetFormsErrors();
+const getCurrentWorkspace = state => state.workspace || emptyObject;
+
+const getCurrentMetadataFileChecksum = state =>
+  state.entryAppBar.metadataFileChecksum;
+
+const getTemplateChecksum = createSelector(
+  [getCurrentWorkspace],
+  currentWorkspace => {
+    const { templateChecksum } = currentWorkspace || emptyObject;
+    return templateChecksum;
+  }
+);
+
+const getCanSaveAsTemplate = createSelector(
+  [getCurrentMetadataFileChecksum, getTemplateChecksum],
+  (currentMetadataChecksum, templateChecksum) => {
+    return (
+      currentMetadataChecksum && currentMetadataChecksum !== templateChecksum
+    );
+  }
+);
+
+const getTemplateExists = createSelector(
+  [getCurrentMetadataFileChecksum, getTemplateChecksum],
+  (currentMetadataChecksum, templateChecksum) => {
+    return Boolean(templateChecksum);
+  }
+);
 
 function mapStateToProps(state, props) {
   const { bundleEditMetadata, bundles, clipboard } = state;
@@ -62,7 +97,9 @@ function mapStateToProps(state, props) {
     currentFormNumWithErrors,
     nextFormWithErrors,
     formStructure,
-    selectedItemsToPaste
+    selectedItemsToPaste,
+    canSaveAsTemplate: getCanSaveAsTemplate(state, props),
+    templateExists: getTemplateExists(state, props)
   };
 }
 
@@ -71,6 +108,8 @@ const mapDispatchToProps = {
   saveFieldValuesForActiveForm,
   updateBundle,
   pasteItems,
+  selectSectionItemsToPaste: selectItemsToPaste,
+  saveMetadataAsTemplate: saveAsTemplate,
   computeMediumTemplateChecksum: computeWorkspaceTemplateChecksum,
   computeEntryMetadataChecksum: computeMetadataChecksum
 };
@@ -116,8 +155,12 @@ type Props = {
   formStructure: {},
   selectedItemsToPaste: ?{},
   pasteItems: () => {},
+  canSaveAsTemplate: boolean,
+  templateExists: boolean,
+  saveMetadataAsTemplate: () => {},
   computeMediumTemplateChecksum: () => {},
-  computeEntryMetadataChecksum: () => {}
+  computeEntryMetadataChecksum: () => {},
+  selectSectionItemsToPaste: () => {}
 };
 
 class EditEntryMetadataDialog extends PureComponent<Props> {
@@ -248,6 +291,59 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     );
   };
 
+  handleSaveAsTemplate = () => {
+    const { saveMetadataAsTemplate, selectedBundle } = this.props;
+    saveMetadataAsTemplate(selectedBundle.id);
+  };
+
+  handleCopySections = selectedItemsForCopy => () => {
+    const { selectedBundle, selectSectionItemsToPaste } = this.props;
+    selectSectionItemsToPaste(
+      selectedBundle.id,
+      selectedItemsForCopy,
+      'metadata sections'
+    );
+    this.handleClose();
+  };
+
+  conditionallyRenderSecondaryActionButton = selectedItemsForCopy => {
+    const { classes } = this.props;
+    if (selectedItemsForCopy && selectedItemsForCopy.length > 0) {
+      return (
+        <CopyForPasteButton
+          key="btnCopyForPaste"
+          classes={classes}
+          color="inherit"
+          onClick={this.handleCopySections(selectedItemsForCopy)}
+          disabled={selectedItemsForCopy.length === 0}
+          selectedItems={selectedItemsForCopy}
+        />
+      );
+    }
+    const { canSaveAsTemplate, templateExists, selectedBundle } = this.props;
+    const { medium } = selectedBundle;
+    const labelTemplateAction = templateExists
+      ? `Overwrite ${medium} template`
+      : `Save as ${medium} template`;
+    const buttonProps = {
+      classes,
+      color: 'primary',
+      variant: 'contained',
+      onClick: this.handleSaveAsTemplate,
+      disabled: !canSaveAsTemplate
+    };
+    return (
+      <Tooltip title="Save as metadata template">
+        <div>
+          <ConfirmButton classes={classes} {...buttonProps}>
+            <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
+            {labelTemplateAction}
+          </ConfirmButton>
+        </div>
+      </Tooltip>
+    );
+  };
+
   handleClickSectionSelection = event => {
     event.stopPropagation();
     event.preventDefault();
@@ -295,13 +391,19 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
     return { appBar: { title, OkButtonLabel: '', OkButtonIcon: null } };
   };
 
-  render() {
-    const { selectedBundle = {}, bundleId } = this.props;
+  getSelectedItemsForCopy = () => {
     const { sectionSelections } = this.state;
     const sectionsSelected = Object.entries(sectionSelections)
       .filter(([, isSelected]) => isSelected)
       .map(([s]) => s);
+    return sectionsSelected;
+  };
+
+  render() {
+    const { selectedBundle = {}, bundleId } = this.props;
+    const { sectionSelections } = this.state;
     const areAllSelected = this.getAreAllSectionsSelected();
+    const selectedItemsForCopy = this.getSelectedItemsForCopy();
     const modeUi = this.modeUi();
     return (
       <div>
@@ -309,9 +411,10 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
           origBundle={selectedBundle}
           mode="metadata"
           modeUi={modeUi}
-          selectedItemsForCopy={sectionsSelected}
-          itemsTypeForCopy="metadata sections"
           actionButton={this.conditionallyRenderPrimaryActionButton()}
+          secondaryActionButton={this.conditionallyRenderSecondaryActionButton(
+            selectedItemsForCopy
+          )}
           handleClose={this.handleClose}
         />
         <EntryDrawer activeBundle={selectedBundle} />
@@ -323,10 +426,12 @@ class EditEntryMetadataDialog extends PureComponent<Props> {
                 onClick={this.handleClickSelectAll}
                 value="selectAllSectionCheckboxes"
                 checked={areAllSelected}
-                indeterminate={sectionsSelected.length > 0 && !areAllSelected}
+                indeterminate={
+                  selectedItemsForCopy.length > 0 && !areAllSelected
+                }
               />
             }
-            label={`Selected Sections (${sectionsSelected.length})`}
+            label={`Selected Sections (${selectedItemsForCopy.length})`}
           />
           <EditMetadataStepper
             bundleId={bundleId}

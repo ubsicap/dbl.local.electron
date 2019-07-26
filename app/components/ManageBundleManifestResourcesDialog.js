@@ -32,7 +32,11 @@ import {
   editContainers,
   requestSaveBundleTo
 } from '../actions/bundleManageResources.actions';
-import { pasteItems, clearClipboard } from '../actions/clipboard.actions';
+import {
+  pasteItems,
+  clearClipboard,
+  selectItemsToPaste
+} from '../actions/clipboard.actions';
 import {
   downloadResources,
   removeResources,
@@ -53,6 +57,7 @@ import EntryDrawer from './EntryDrawer';
 import EntryDialogBody from './EntryDialogBody';
 import { emptyArray, emptyObject } from '../utils/defaultValues';
 import { bundleHelpers } from '../helpers/bundle.helpers';
+import CopyForPasteButton from './CopyForPasteButton';
 
 const { dialog } = require('electron').remote;
 
@@ -109,7 +114,8 @@ type Props = {
   appendResourceDialogAddedFilePaths: () => {},
   editResourceDialogContainers: () => {},
   updateResourceDialogSortOrder: () => {},
-  requestSaveResourcesTo: () => {}
+  requestSaveResourcesTo: () => {},
+  selectBundleResourcesToPaste: () => {}
 };
 
 const defaultProps = {
@@ -1057,6 +1063,7 @@ const mapDispatchToProps = {
   removeBundleResources: removeResources,
   pasteResourcesFromClipboard: pasteItems,
   clearResourcesFromClipboard: clearClipboard,
+  selectBundleResourcesToPaste: selectItemsToPaste,
   selectBundleResources: selectResources,
   selectBundleRevisions: selectRevisions,
   appendResourceDialogAddedFilePaths: appendAddedFilePaths,
@@ -2054,6 +2061,33 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     );
   };
 
+  handleCopyFiles = selectedItemsForCopy => () => {
+    const { origBundle, selectBundleResourcesToPaste } = this.props;
+    selectBundleResourcesToPaste(
+      origBundle.id,
+      selectedItemsForCopy,
+      'resources'
+    );
+    this.handleClose();
+  };
+
+  renderCopyForPasteButton = selectedItemsForCopy => {
+    const { classes } = this.props;
+    if (selectedItemsForCopy) {
+      return (
+        <CopyForPasteButton
+          key="btnCopyForPaste"
+          classes={classes}
+          color="inherit"
+          onClick={this.handleCopyFiles(selectedItemsForCopy)}
+          disabled={selectedItemsForCopy.length === 0}
+          selectedItems={selectedItemsForCopy}
+        />
+      );
+    }
+    return null;
+  };
+
   render() {
     const {
       classes,
@@ -2076,6 +2110,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
           selectedItemsForCopy={selectedItemsForCopy}
           itemsTypeForCopy="resources"
           actionButton={this.renderOkOrPasteResourcesButton()}
+          secondaryActionButton={this.renderCopyForPasteButton(
+            selectedItemsForCopy
+          )}
           handleClose={this.handleClose}
         />
         <EntryDrawer activeBundle={origBundle} />
