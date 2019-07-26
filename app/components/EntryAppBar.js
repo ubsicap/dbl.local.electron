@@ -176,10 +176,10 @@ class EntryAppBar extends Component<Props> {
         />
       );
     }
-    const { canSaveAsTemplate, templateExists } = this.props;
+    const { canSaveAsTemplate, templateExists, origBundle } = this.props;
     const labelTemplateAction = templateExists
-      ? 'Overwrite template'
-      : 'Save as template';
+      ? `Overwrite ${origBundle.medium} template`
+      : `Save as ${origBundle.medium} template`;
     const buttonProps = {
       classes,
       color: 'primary',
