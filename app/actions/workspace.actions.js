@@ -41,6 +41,9 @@ export function computeWorkspaceTemplateChecksum(medium) {
       medium
     );
     const templateExists = await fs.exists(templateFilePath);
+    const templateContents = templateExists
+      ? await fs.readFile(templateFilePath, 'utf8')
+      : '';
     const templateChecksum = templateExists
       ? await md5File(templateFilePath)
       : undefined;
@@ -49,7 +52,8 @@ export function computeWorkspaceTemplateChecksum(medium) {
       templateFilePath,
       templateMedium: medium,
       templateChecksum,
-      templateExists
+      templateExists,
+      templateContents
     });
   };
 }
@@ -88,7 +92,7 @@ export function saveAsTemplate(bundleId) {
     const didExistMetadataTemplateDir = await fs.exists(metadataTemplateDir);
     await fs.ensureDir(metadataTemplateDir);
     // save metadata.xml to templateFilePath
-    await bundleService.completelySaveResourceTo(
+    await bundleService.requestSaveResourceTo(
       metadataTemplateDir,
       bundleId,
       'metadata.xml',

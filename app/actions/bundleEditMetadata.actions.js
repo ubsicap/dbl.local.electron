@@ -1,6 +1,7 @@
 import log from 'electron-log';
 import waitUntil from 'node-wait-until';
 import md5File from 'md5-file/promise';
+import fs from 'fs-extra';
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
@@ -326,12 +327,14 @@ export function computeMetadataChecksum(bundleId) {
 
 function computeMetadataFileChecksum(bundleId, metadataFile) {
   return async dispatch => {
+    const metadataContents = await fs.readFile(metadataFile, 'utf8');
     const metadataFileChecksum = await md5File(metadataFile);
     dispatch({
       type: bundleEditMetadataConstants.METADATA_FILE_CHECKSUM_COMPUTED,
       bundleId,
       metadataFile,
-      metadataFileChecksum
+      metadataFileChecksum,
+      metadataContents
     });
   };
 }

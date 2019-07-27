@@ -29,7 +29,6 @@ export const bundleService = {
   downloadResources,
   removeResources,
   requestSaveResourceTo,
-  completelySaveResourceTo,
   saveMetadataToTempFolder,
   saveJobSpecToTempFolder,
   getJobSpec,
@@ -407,7 +406,7 @@ async function saveMetadataToTempFolder(bundleId) {
     filePath: metadataFile,
     fileName: metadataXmlResource
   } = getTempFolderForFile(bundleId, 'metadata.xml');
-  await bundleService.completelySaveResourceTo(
+  await bundleService.requestSaveResourceTo(
     tmpFolder,
     bundleId,
     metadataXmlResource,
@@ -438,35 +437,6 @@ async function saveJobSpecToTempFolder(bundleId) {
   return jobSpecPath;
 }
 
-function completelySaveResourceTo(
-  selectedFolder,
-  bundleId,
-  uriRelativePath,
-  relativeDestinationPath
-) {
-  return new Promise(async (resolve, reject) => {
-    try {
-      return await bundleService.requestSaveResourceTo(
-        selectedFolder,
-        bundleId,
-        uriRelativePath,
-        relativeDestinationPath,
-        (resourceTotalBytesSaved, resourceProgress) => {
-          if (resourceProgress && resourceProgress % 100 === 0) {
-            const targetPath = path.join(
-              selectedFolder,
-              relativeDestinationPath
-            );
-            resolve(targetPath);
-          }
-        }
-      );
-    } catch (error) {
-      reject(error);
-    }
-  });
-}
-
 /*
  * Downloader.download('https://download.damieng.com/fonts/original/EnvyCodeR-PR7.zip',
  *  'envy-code-r.zip', (bytes, percent) => console.log(`Downloaded ${bytes} (${percent})`));
@@ -476,7 +446,7 @@ function requestSaveResourceTo(
   bundleId,
   uriRelativePath,
   relativeDestinationPath,
-  progressCallback
+  progressCallback = () => {}
 ) {
   const resourceApi =
     relativeDestinationPath === 'metadata.xml'
