@@ -406,13 +406,18 @@ async function saveMetadataToTempFolder(bundleId) {
     filePath: metadataFile,
     fileName: metadataXmlResource
   } = getTempFolderForFile(bundleId, 'metadata.xml');
-  await bundleService.requestSaveResourceTo(
+  await requestSaveResourceTo(
     tmpFolder,
     bundleId,
     metadataXmlResource,
     metadataXmlResource
   );
-  return metadataFile;
+  // NOTE. fs.readFile() is meant to help get around a weird timing issue following
+  // downloading the metadata.xml from dbl_dot_local_app api
+  // Otherwise subsequent operations (e.g. md5File or opening in browser window)
+  // seems to give results for the previous file state.
+  const metadataContents = await fs.readFile(metadataFile, 'utf8');
+  return { metadataFile, metadataContents };
 }
 
 function getTempFolderForFile(bundleId, fileName) {
@@ -448,8 +453,10 @@ function requestSaveResourceTo(
   relativeDestinationPath,
   progressCallback = () => {}
 ) {
+  // NOTE: for some reason getting metadata.xml via /resource-stream/ api leads to `Review metadata.xml`
+  // getting the earlier version of the document. So use `/resource/` api instead.
   const resourceApi =
-    relativeDestinationPath === 'metadata.xml'
+    uriRelativePath === 'metadata.xml'
       ? RESOURCE_API
       : `${RESOURCE_API}-stream`;
   const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${resourceApi}/${uriRelativePath}`;

@@ -41,6 +41,9 @@ export function computeWorkspaceTemplateChecksum(medium) {
       medium
     );
     const templateExists = await fs.exists(templateFilePath);
+    // NOTE. fs.readFile() is meant to help get around a weird timing issue following
+    // downloading the metadata.xml from dbl_dot_local_app api
+    // Otherwise the md5File seems to give results for the previous file state.
     const templateContents = templateExists
       ? await fs.readFile(templateFilePath, 'utf8')
       : '';

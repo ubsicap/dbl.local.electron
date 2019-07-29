@@ -320,14 +320,18 @@ export function openMetadataFile(bundleId) {
 
 export function computeMetadataChecksum(bundleId) {
   return async dispatch => {
-    const metadataFile = await bundleService.saveMetadataToTempFolder(bundleId);
-    dispatch(computeMetadataFileChecksum(bundleId, metadataFile));
+    const {
+      metadataFile,
+      metadataContents
+    } = await bundleService.saveMetadataToTempFolder(bundleId);
+    dispatch(
+      computeMetadataFileChecksum(bundleId, metadataFile, metadataContents)
+    );
   };
 }
 
-function computeMetadataFileChecksum(bundleId, metadataFile) {
+function computeMetadataFileChecksum(bundleId, metadataFile, metadataContents) {
   return async dispatch => {
-    const metadataContents = await fs.readFile(metadataFile, 'utf8');
     const metadataFileChecksum = await md5File(metadataFile);
     dispatch({
       type: bundleEditMetadataConstants.METADATA_FILE_CHECKSUM_COMPUTED,
@@ -345,11 +349,15 @@ export function saveMetadatFileToTempBundleFolder(bundleId) {
       type: bundleEditMetadataConstants.METADATA_FILE_REQUEST,
       bundleId
     });
-    const metadataFile = await bundleService.saveMetadataToTempFolder(bundleId);
+    const {
+      metadataFile,
+      metadataContents
+    } = await bundleService.saveMetadataToTempFolder(bundleId);
     dispatch({
       type: bundleEditMetadataConstants.METADATA_FILE_SAVED,
       bundleId,
-      metadataFile
+      metadataFile,
+      metadataContents
     });
     dispatch(computeMetadataFileChecksum(bundleId, metadataFile));
     return metadataFile;
