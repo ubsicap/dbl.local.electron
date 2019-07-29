@@ -148,25 +148,30 @@ function exportStateToSettings(state, origSettings) {
     name: workspaceName,
     fullPath: newFullPath
   };
-  const downloadAsPublisherOrNot =
-    origSettings.configXmlSettings.settings.dbl[0].downloadAsPublisher ||
-    settings_dbl_downloadAsPublisher
-      ? { downloadAsPublisher: [settings_dbl_downloadAsPublisher] }
-      : {};
-  const downloadOpenAccessEntriesOrNot =
-    origSettings.configXmlSettings.settings.dbl[0].downloadOpenAccessEntries ||
-    settings_dbl_downloadOpenAccessEntries
-      ? { downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries] }
-      : {};
+  const downloadAsPublisherOrNot = settings_dbl_downloadAsPublisher
+    ? { downloadAsPublisher: [settings_dbl_downloadAsPublisher] }
+    : {};
+  const downloadOpenAccessEntriesOrNot = settings_dbl_downloadOpenAccessEntries
+    ? { downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries] }
+    : {};
+  const {
+    downloadAsPublisher: voidDownloadAsPublisher,
+    downloadOpenAccessEntries: voidDownloadOpenAccessEntries,
+    ...dblOrigSettings
+  } = origSettings.configXmlSettings.settings.dbl[0];
   const settings_storer_metadataTemplateDirOrNot = metadataTemplateDir
     ? { metadataTemplateDir }
     : {};
+  const {
+    metadataTemplateDir: voidMetadataTemplateDir,
+    ...storerOrigSettings
+  } = origSettings.configXmlSettings.settings.storer[0];
   const configXmlSettings = {
     settings: {
       ...origSettings.configXmlSettings.settings,
       dbl: [
         {
-          ...origSettings.configXmlSettings.settings.dbl[0],
+          ...dblOrigSettings,
           host: [settings_dbl_host],
           html: [selectHtmlSetting(settings_dbl_host)],
           accessToken: [settings_dbl_accessToken],
@@ -174,12 +179,11 @@ function exportStateToSettings(state, origSettings) {
           organizationType: [settings_dbl_organizationType],
           ...downloadAsPublisherOrNot,
           ...downloadOpenAccessEntriesOrNot
-          /* downloadOpenAccessEntries: [settings_dbl_downloadOpenAccessEntries] */
         }
       ],
       storer: [
         {
-          ...origSettings.configXmlSettings.settings.storer[0],
+          ...storerOrigSettings,
           ...settings_storer_metadataTemplateDirOrNot
         }
       ]
