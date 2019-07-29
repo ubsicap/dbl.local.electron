@@ -2,8 +2,7 @@
 import fsExtra from 'fs-extra';
 import fs from 'fs';
 import path from 'path';
-
-const events = require('events');
+import events from 'events';
 
 /*
  * Downloader.download('https://download.damieng.com/fonts/original/EnvyCodeR-PR7.zip',
