@@ -1,3 +1,15 @@
+### Version 0.41.0 (Metadata > Save as template)
+
+#### Feature
+
+- Add secondary button `Save as [or Overwrite] ... template` in Metadata page.
+- Automatically setup Metadata template folder for workspace when saving as template
+
+#### Fix
+
+- Fix timing issues exporting `metadata.xml` e.g. opening in browser window
+- Fix issues saving deleted workspace settings
+
 ### Version 0.40.3 (Select Recently Selected Resources)
 
 #### Fix
