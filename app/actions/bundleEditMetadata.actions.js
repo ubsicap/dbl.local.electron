@@ -1,11 +1,13 @@
 import log from 'electron-log';
 import waitUntil from 'node-wait-until';
+import md5File from 'md5-file/promise';
+import fs from 'fs-extra';
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
 import { bundleService } from '../services/bundle.service';
 import editMetadataService from '../services/editMetadata.service';
-import { bundleActions } from '../actions/bundle.actions';
+import { bundleActions } from './bundle.actions';
 import { utilities } from '../utils/utilities';
 import { browserWindowService } from '../services/browserWindow.service';
 
@@ -27,7 +29,8 @@ export const bundleEditMetadataActions = {
   saveFieldValuesForActiveForm,
   reloadActiveForm,
   setArchivistStatusOverrides,
-  saveMetadatFileToTempBundleFolder
+  saveMetadatFileToTempBundleFolder,
+  computeMetadataChecksum
 };
 
 export default bundleEditMetadataActions;
@@ -57,38 +60,65 @@ export function fetchFormStructure(
     }
   };
   function request(bundleId) {
-    return { type: bundleEditMetadataConstants.METADATA_FORM_STRUCTURE_REQUEST, bundleId };
+    return {
+      type: bundleEditMetadataConstants.METADATA_FORM_STRUCTURE_REQUEST,
+      bundleId
+    };
   }
   function success(formStructure) {
-    return { type: bundleEditMetadataConstants.METADATA_FORM_STRUCTURE_UPDATED, formStructure };
+    return {
+      type: bundleEditMetadataConstants.METADATA_FORM_STRUCTURE_UPDATED,
+      formStructure
+    };
   }
   function failure(error) {
-    return { type: bundleEditMetadataConstants.METADATA_FORM_FETCH_ERROR, error };
+    return {
+      type: bundleEditMetadataConstants.METADATA_FORM_FETCH_ERROR,
+      error
+    };
   }
 }
 
+/*
 function tryUpdateMetadataSources(bundleId, formStructure) {
   return async (dispatch, getState) => {
-    const relationInstances = bundleService.getSubSectionInstances(formStructure, 'relationships', 'relation');
+    const relationInstances = bundleService.getSubSectionInstances(
+      formStructure,
+      'relationships',
+      'relation'
+    );
     const relationInstanceIds = Object.keys(relationInstances);
     if (relationInstanceIds.length === 0) {
       return;
     }
     try {
       const relationPathBase = '/relationships/relation/';
-      relationInstanceIds.forEach(async (dblIdTarget) => {
+      relationInstanceIds.forEach(async dblIdTarget => {
         const formKey = `${relationPathBase}${dblIdTarget}`;
-        const formRelation = await bundleService.getFormFields(bundleId, formKey);
-        const [revisionField] = formRelation.fields.filter(f => f.name === 'revision');
+        const formRelation = await bundleService.getFormFields(
+          bundleId,
+          formKey
+        );
+        const [revisionField] = formRelation.fields.filter(
+          f => f.name === 'revision'
+        );
         const revisionTarget = revisionField.default[0];
-        const { bundles: { allBundles } } = getState();
-        const dblTargetBundles = allBundles.filter(b => b.dblId === dblIdTarget && b.revision === revisionTarget);
+        const {
+          bundles: { allBundles }
+        } = getState();
+        const dblTargetBundles = allBundles.filter(
+          b => b.dblId === dblIdTarget && b.revision === revisionTarget
+        );
         if (dblTargetBundles.length === 0) {
           // download entry/revision to bundle
-          console.log(`create bundle and download for entry: ${dblIdTarget}/${revisionTarget}`);
+          console.log(
+            `create bundle and download for entry: ${dblIdTarget}/${revisionTarget}`
+          );
         } else {
           // update links to review this metadata
-          console.log(`found bundle for entry: ${dblIdTarget}/${revisionTarget}`);
+          console.log(
+            `found bundle for entry: ${dblIdTarget}/${revisionTarget}`
+          );
         }
       });
     } catch (error) {
@@ -96,8 +126,13 @@ function tryUpdateMetadataSources(bundleId, formStructure) {
     }
   };
 }
+*/
 
-export function fetchActiveFormInputs(bundleId, _formKey, doUpdateBundleFormFieldErrors) {
+export function fetchActiveFormInputs(
+  bundleId,
+  _formKey,
+  doUpdateBundleFormFieldErrors
+) {
   return async dispatch => {
     dispatch(request(_formKey));
     try {
@@ -111,19 +146,32 @@ export function fetchActiveFormInputs(bundleId, _formKey, doUpdateBundleFormFiel
     }
   };
   function request(formKey) {
-    return { type: bundleEditMetadataConstants.METADATA_FORM_INPUTS_REQUEST, formKey };
+    return {
+      type: bundleEditMetadataConstants.METADATA_FORM_INPUTS_REQUEST,
+      formKey
+    };
   }
   function success(formKey, inputs) {
-    return { type: bundleEditMetadataConstants.METADATA_FORM_INPUTS_LOADED, formKey, inputs };
+    return {
+      type: bundleEditMetadataConstants.METADATA_FORM_INPUTS_LOADED,
+      formKey,
+      inputs
+    };
   }
   function failure(error) {
-    return { type: bundleEditMetadataConstants.METADATA_FORM_FETCH_ERROR, error };
+    return {
+      type: bundleEditMetadataConstants.METADATA_FORM_FETCH_ERROR,
+      error
+    };
   }
 }
 
 export function editActiveFormInput(formKey, inputName, newValue) {
   return {
-    type: bundleEditMetadataConstants.METADATA_FORM_INPUT_EDITED, formKey, inputName, newValue
+    type: bundleEditMetadataConstants.METADATA_FORM_INPUT_EDITED,
+    formKey,
+    inputName,
+    newValue
   };
 }
 
@@ -134,17 +182,25 @@ export function setArchivistStatusOverrides(_bundleId) {
     const formStructure = await getFormStructure(_bundleId);
     const appMetadataOverrides = getAppMetadataOverrides(formStructure);
     const userMetadataOverrides = getUserMetadataOverrides(whoami);
-    const metadataOverrides = { ...appMetadataOverrides, ...userMetadataOverrides };
+    const metadataOverrides = {
+      ...appMetadataOverrides,
+      ...userMetadataOverrides
+    };
     dispatch(myAction(_bundleId, metadataOverrides));
   };
 
   function myAction(bundleId, metadataOverrides) {
-    return { type: bundleEditMetadataConstants.SET_METADATA_OVERRIDES, metadataOverrides };
+    return {
+      type: bundleEditMetadataConstants.SET_METADATA_OVERRIDES,
+      metadataOverrides
+    };
   }
 }
 
 function getAppMetadataOverrides(formStructure) {
-  const { id: identificationStatusFormKey } = formStructure.find(section => section.id.endsWith('dentification'));
+  const { id: identificationStatusFormKey } = formStructure.find(section =>
+    section.id.endsWith('dentification')
+  );
   const bundleProducerDefault = `${app.getName()}/${app.getVersion()}`;
   const bundleProducer = { default: [bundleProducerDefault] };
   return { [`/${identificationStatusFormKey}`]: { bundleProducer } };
@@ -164,7 +220,10 @@ function getUserMetadataOverrides(whoami) {
 
 export function openEditMetadata(_bundleId, _moveNextStep) {
   return async (dispatch, getState) => {
-    const bundleToEdit = bundleService.getCurrentBundleState(getState, _bundleId);
+    const bundleToEdit = bundleService.getCurrentBundleState(
+      getState,
+      _bundleId
+    );
     dispatch(request(bundleToEdit, _moveNextStep));
     if (bundleToEdit.mode === 'create') {
       dispatch(navigate(bundleToEdit, _moveNextStep));
@@ -172,10 +231,19 @@ export function openEditMetadata(_bundleId, _moveNextStep) {
     }
     try {
       try {
-        const bundleReady = bundleService.getCurrentBundleState(getState, _bundleId);
+        const bundleReady = bundleService.getCurrentBundleState(
+          getState,
+          _bundleId
+        );
         dispatch(navigate(bundleReady, _moveNextStep));
       } catch (error) {
-        dispatch(failure(_bundleId, `error ${error} while waiting for create mode`, _moveNextStep));
+        dispatch(
+          failure(
+            _bundleId,
+            `error ${error} while waiting for create mode`,
+            _moveNextStep
+          )
+        );
       }
     } catch (errorReadable) {
       const error = await errorReadable.text();
@@ -211,7 +279,10 @@ export function openEditMetadata(_bundleId, _moveNextStep) {
   }
   function failure(bundleId, error, moveNextStep) {
     return {
-      type: bundleEditMetadataConstants.OPEN_EDIT_METADATA_FAILED, bundleId, error, moveNextStep
+      type: bundleEditMetadataConstants.OPEN_EDIT_METADATA_FAILED,
+      bundleId,
+      error,
+      moveNextStep
     };
   }
 }
@@ -219,15 +290,24 @@ export function openEditMetadata(_bundleId, _moveNextStep) {
 export function closeEditMetadata(bundleId) {
   return async dispatch => {
     await bundleService.waitStopCreateMode(bundleId);
-    dispatch({ type: bundleEditMetadataConstants.CLOSE_EDIT_METADATA, bundleId });
+    dispatch({
+      type: bundleEditMetadataConstants.CLOSE_EDIT_METADATA,
+      bundleId
+    });
     dispatch(switchBackToBundlesPage);
   };
 }
 
 export function openMetadataFile(bundleId) {
   return async (dispatch, getState) => {
-    dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_SHOW_REQUEST, bundleId });
-    dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_REQUEST, bundleId });
+    dispatch({
+      type: bundleEditMetadataConstants.METADATA_FILE_SHOW_REQUEST,
+      bundleId
+    });
+    dispatch({
+      type: bundleEditMetadataConstants.METADATA_FILE_REQUEST,
+      bundleId
+    });
     dispatch(saveMetadatFileToTempBundleFolder(bundleId));
     const metadataFile = await waitUntil(
       () => getState().bundleEditMetadata.showMetadataFile,
@@ -238,20 +318,50 @@ export function openMetadataFile(bundleId) {
   };
 }
 
-export function saveMetadatFileToTempBundleFolder(bundleId) {
+export function computeMetadataChecksum(bundleId) {
   return async dispatch => {
-    dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_REQUEST, bundleId });
-    const metadataFile = await bundleService.saveMetadataToTempFolder(bundleId);
-    dispatch({ type: bundleEditMetadataConstants.METADATA_FILE_SAVED, bundleId, metadataFile });
-    return metadataFile;
+    const {
+      metadataFile,
+      metadataContents
+    } = await bundleService.saveMetadataToTempFolder(bundleId);
+    dispatch(
+      computeMetadataFileChecksum(bundleId, metadataFile, metadataContents)
+    );
   };
 }
 
-function getActiveFormKey(getState) {
-  const { bundleEditMetadata } = getState();
-  const { activeFormInputs } = bundleEditMetadata;
-  const [formKey] = Object.keys(activeFormInputs);
-  return formKey;
+function computeMetadataFileChecksum(bundleId, metadataFile, metadataContents) {
+  return async dispatch => {
+    const metadataFileChecksum = await md5File(metadataFile);
+    dispatch({
+      type: bundleEditMetadataConstants.METADATA_FILE_CHECKSUM_COMPUTED,
+      bundleId,
+      metadataFile,
+      metadataFileChecksum,
+      metadataContents
+    });
+  };
+}
+
+export function saveMetadatFileToTempBundleFolder(bundleId) {
+  return async dispatch => {
+    dispatch({
+      type: bundleEditMetadataConstants.METADATA_FILE_REQUEST,
+      bundleId
+    });
+    const {
+      metadataFile,
+      metadataContents
+    } = await bundleService.saveMetadataToTempFolder(bundleId);
+    dispatch({
+      type: bundleEditMetadataConstants.METADATA_FILE_SAVED,
+      bundleId,
+      metadataFile,
+      metadataContents
+    });
+    dispatch(computeMetadataFileChecksum(bundleId, metadataFile));
+    return metadataFile;
+  };
 }
 
 export function deleteForm(bundleId, formKey, shouldReloadActiveForm) {
@@ -270,7 +380,9 @@ export function deleteForm(bundleId, formKey, shouldReloadActiveForm) {
     }
   };
   function request() {
-    return { type: bundleEditMetadataConstants.METADATA_FORM_INSTANCE_DELETE_REQUEST };
+    return {
+      type: bundleEditMetadataConstants.METADATA_FORM_INSTANCE_DELETE_REQUEST
+    };
   }
   function success(_bundleId, _formKey) {
     return {
@@ -280,7 +392,10 @@ export function deleteForm(bundleId, formKey, shouldReloadActiveForm) {
     };
   }
   function failure(error) {
-    return { type: bundleEditMetadataConstants.METADATA_FORM_INSTANCE_DELETE_FAILED, error };
+    return {
+      type: bundleEditMetadataConstants.METADATA_FORM_INSTANCE_DELETE_FAILED,
+      error
+    };
   }
 }
 
@@ -291,13 +406,23 @@ function switchBackToBundlesPage() {
 export function reloadActiveForm(shouldUpdateBundleFormErrors = false) {
   return (dispatch, getState) => {
     const { bundleEditMetadata } = getState();
-    const { bundleToEdit, moveNext: moveNextStep, activeFormInputs } = bundleEditMetadata;
+    const {
+      bundleToEdit,
+      moveNext: moveNextStep,
+      activeFormInputs
+    } = bundleEditMetadata;
     const [activeFormKey] = Object.keys(activeFormInputs || {});
     if (!bundleToEdit || !activeFormKey) {
       return; // no active form
     }
     dispatch(saveMetadataRequest({ moveNextStep }));
-    dispatch(fetchActiveFormInputs(bundleToEdit.id, activeFormKey, shouldUpdateBundleFormErrors));
+    dispatch(
+      fetchActiveFormInputs(
+        bundleToEdit.id,
+        activeFormKey,
+        shouldUpdateBundleFormErrors
+      )
+    );
     return dispatch(saveMetadataSuccess(bundleToEdit.id, activeFormKey));
   };
 }
@@ -321,9 +446,14 @@ export function saveFieldValuesForActiveForm({ moveNext, forceSave } = {}) {
     }
  */
 export function saveMetadata({
-  bundleId, formKey, fieldNameValues,
-  moveNext, isFactory, instanceKeyValue,
-  saveOverrides = true, forceSave = false
+  bundleId,
+  formKey,
+  fieldNameValues,
+  moveNext,
+  isFactory,
+  instanceKeyValue,
+  saveOverrides = true,
+  forceSave = false
 } = {}) {
   return async (dispatch, getState) => {
     const { bundleEditMetadata } = getState();
@@ -333,30 +463,47 @@ export function saveMetadata({
       const fieldNameInfo = fieldNameValues[name];
       const { values: newFieldValues, type: fieldType } = fieldNameInfo;
       const type = fieldType === 'xml' ? fieldType : 'values';
-      const normalizedValues = newFieldValues.map(fieldValue => fieldValue.replace(/(\r\n\t|\n|\r\t)/gm, '').trim());
-      const valueObj = type === 'xml' ?
-        { text: `${normalizedValues}` } : { valueList: normalizedValues };
+      const normalizedValues = newFieldValues.map(fieldValue =>
+        fieldValue.replace(/(\r\n\t|\n|\r\t)/gm, '').trim()
+      );
+      const valueObj =
+        type === 'xml'
+          ? { text: `${normalizedValues}` }
+          : { valueList: normalizedValues };
       return [...acc, { type, name, ...valueObj }];
     }, []);
-    dispatch(saveMetadataRequest({
-      bundleId, fields, moveNextStep, forceSave: forceSaveState
-    }));
+    dispatch(
+      saveMetadataRequest({
+        bundleId,
+        fields,
+        moveNextStep,
+        forceSave: forceSaveState
+      })
+    );
     let postFormArgs = null;
     try {
       const [keyFieldName] = Object.keys(instanceKeyValue || {});
       const [keyFieldValue] = Object.values(instanceKeyValue || {});
       if (keyFieldName && !(keyFieldValue && keyFieldValue.trim())) {
         const error = {
-          field_issues: [[keyFieldName, 'Required field', keyFieldValue, 'Required field']],
+          field_issues: [
+            [keyFieldName, 'Required field', keyFieldValue, 'Required field']
+          ],
           response_valid: false
         };
         dispatch(saveMetadataFailed(bundleId, formKey, error));
         return;
       }
       postFormArgs = {
-        bundleId, formKey, payload: { formId: bundleId, fields }, keyField: keyFieldValue
+        bundleId,
+        formKey,
+        payload: { formId: bundleId, fields },
+        keyField: keyFieldValue
       };
-      await bundleService.waitUntilPostFormFields({ ...postFormArgs }, !saveOverrides);
+      await bundleService.waitUntilPostFormFields(
+        { ...postFormArgs },
+        !saveOverrides
+      );
       if (saveOverrides) {
         // reset state so that saving overrides does not result in infinite loop when errors occur
         dispatch(fetchActiveFormInputs(bundleId, formKey));
@@ -377,7 +524,9 @@ export function saveMetadata({
         const error = JSON.parse(errorText);
         dispatch(saveMetadataFailed(bundleId, formKey, error));
       } catch (errorParsingJson) {
-        dispatch(saveMetadataFailed(bundleId, formKey, null, errorText, postFormArgs));
+        dispatch(
+          saveMetadataFailed(bundleId, formKey, null, errorText, postFormArgs)
+        );
       }
     }
   };
@@ -387,9 +536,7 @@ export function updateFormFieldIssues(bundleId) {
   return bundleActions.updateBundle(bundleId); // adjust formsErrorStatus (form field issues)
 }
 
-function saveMetadataRequest({
-  bundleId, fields, moveNextStep, forceSave
-}) {
+function saveMetadataRequest({ bundleId, fields, moveNextStep, forceSave }) {
   return {
     type: bundleEditMetadataConstants.SAVE_METADATA_REQUEST,
     bundleId,
@@ -400,23 +547,39 @@ function saveMetadataRequest({
 }
 
 export function setMoveNextStep(moveNextStep) {
-  return { type: bundleEditMetadataConstants.SET_EDIT_METADATA_MOVE_NEXT, moveNextStep };
+  return {
+    type: bundleEditMetadataConstants.SET_EDIT_METADATA_MOVE_NEXT,
+    moveNextStep
+  };
 }
 
 export function saveMetadataSuccess(bundleId, formKey, moveNextStep) {
   return {
-    type: bundleEditMetadataConstants.SAVE_METADATA_SUCCESS, bundleId, formKey, moveNextStep
+    type: bundleEditMetadataConstants.SAVE_METADATA_SUCCESS,
+    bundleId,
+    formKey,
+    moveNextStep
   };
 }
 
 function tryUpdatePublications(formKey, bundleId) {
   return async (dispatch, getState) => {
     try {
-      if (formKey.startsWith('/publications/publication/') && formKey.endsWith('/canonSpec')) {
-        const { bundleEditMetadata: { formStructure } } = getState();
-        const publicationInstances = bundleService.getPublicationsInstances(formStructure);
+      if (
+        formKey.startsWith('/publications/publication/') &&
+        formKey.endsWith('/canonSpec')
+      ) {
+        const {
+          bundleEditMetadata: { formStructure }
+        } = getState();
+        const publicationInstances = bundleService.getPublicationsInstances(
+          formStructure
+        );
         await bundleService.waitStartCreateMode(bundleId);
-        await bundleService.updatePublications(bundleId, Object.keys(publicationInstances));
+        await bundleService.updatePublications(
+          bundleId,
+          Object.keys(publicationInstances)
+        );
         return;
       }
     } catch (error) {
@@ -430,42 +593,76 @@ function tryUpdatePublications(formKey, bundleId) {
 function saveSuccessMiddleware(bundleId, formKey) {
   return dispatch => {
     /*
-      * technically this middleWare should be AFTER metadata success and formStructure reloaded,
-      * since formStructure can change based on state of posting metadata
-      */
+     * technically this middleWare should be AFTER metadata success and formStructure reloaded,
+     * since formStructure can change based on state of posting metadata
+     */
     dispatch(tryUpdatePublications(formKey, bundleId));
   };
 }
 
-export function saveMetadataFailed(bundleId, formKey, error, errorText, postFormArgs) {
+export function saveMetadataFailed(
+  bundleId,
+  formKey,
+  error,
+  errorText,
+  postFormArgs
+) {
   if (!error && errorText) {
     log.error(`POST form args: ${JSON.stringify(postFormArgs)}`);
     log.error(`POST form error: ${errorText}`);
   }
   return {
-    type: bundleEditMetadataConstants.SAVE_METADATA_FAILED, bundleId, formKey, error, errorText
+    type: bundleEditMetadataConstants.SAVE_METADATA_FAILED,
+    bundleId,
+    formKey,
+    error,
+    errorText
   };
 }
 
 function saveAllOverrides(bundleId) {
   return (dispatch, getState) => {
-    const { bundleEditMetadata: { metadataOverrides } } = getState();
+    const {
+      bundleEditMetadata: { metadataOverrides }
+    } = getState();
     Object.keys(metadataOverrides).forEach(async formKey => {
       try {
         const formInputs = await bundleService.getFormFields(bundleId, formKey);
         const formOverrides = metadataOverrides[formKey];
-        const overridesAsEdits = Object.keys(formOverrides).reduce((acc, override) =>
-          ({ ...acc, [override]: formOverrides[override].default }), {});
-        if (!editMetadataService.getHasFormFieldsChanged(formInputs.fields, overridesAsEdits)) {
+        const overridesAsEdits = Object.keys(formOverrides).reduce(
+          (acc, override) => ({
+            ...acc,
+            [override]: formOverrides[override].default
+          }),
+          {}
+        );
+        if (
+          !editMetadataService.getHasFormFieldsChanged(
+            formInputs.fields,
+            overridesAsEdits
+          )
+        ) {
           return;
         }
-        const formWithOverrides =
-          editMetadataService.getFormInputsWithOverrides(formKey, formInputs, metadataOverrides);
-        const fieldNameValues =
-          editMetadataService.getFormFieldValues(bundleId, formKey, formWithOverrides.fields, {});
-        dispatch(saveMetadata({
-          bundleId, formKey, fieldNameValues, saveOverrides: false
-        }));
+        const formWithOverrides = editMetadataService.getFormInputsWithOverrides(
+          formKey,
+          formInputs,
+          metadataOverrides
+        );
+        const fieldNameValues = editMetadataService.getFormFieldValues(
+          bundleId,
+          formKey,
+          formWithOverrides.fields,
+          {}
+        );
+        dispatch(
+          saveMetadata({
+            bundleId,
+            formKey,
+            fieldNameValues,
+            saveOverrides: false
+          })
+        );
       } catch (error) {
         // be silent about fetch form errors
       }

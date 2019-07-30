@@ -400,16 +400,18 @@ class WorkspacesPage extends PureComponent<Props> {
                             </b>
                           </Typography>
                           <Typography variant="body1" align="center" paragraph>
-                            {card.configXmlSettings.settings.dbl[0]
-                              .downloadAsPublisher &&
-                            card.configXmlSettings.settings.dbl[0]
-                              .downloadAsPublisher[0] === 'true'
+                            {existsAndIsFirstTrue(
+                              card.configXmlSettings.settings.dbl[0]
+                                .downloadAsPublisher
+                            )
                               ? 'download as publisher is ENABLED'
                               : ''}
                           </Typography>
                           <Typography variant="body1" align="center" paragraph>
-                            {card.configXmlSettings.settings.dbl[0]
-                              .downloadOpenAccessEntries[0] === 'true'
+                            {existsAndIsFirstTrue(
+                              card.configXmlSettings.settings.dbl[0]
+                                .downloadOpenAccessEntries
+                            )
                               ? 'download open-access entries is ENABLED'
                               : 'download open-access entries is DISABLED'}
                           </Typography>
@@ -539,6 +541,10 @@ function getDblWebsiteUrl(workspace) {
   const dblBaseUrl = workspace.configXmlSettings.settings.dbl[0].html[0];
   const transport = dblBaseUrl.startsWith('http') ? '' : 'https://';
   return `${transport}${dblBaseUrl}`;
+}
+
+function existsAndIsFirstTrue(fuzzyBoolean) {
+  return fuzzyBoolean && fuzzyBoolean[0] === 'true';
 }
 
 function updateWorkspaceLastAccess(workspace) {

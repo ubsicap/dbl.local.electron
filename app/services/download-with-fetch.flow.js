@@ -1,6 +1,25 @@
 // @flow
-import fs from 'fs-extra';
+import fsExtra from 'fs-extra';
+import fs from 'fs';
 import path from 'path';
+
+/*
+ * Ensure completion without errors.
+ * NOTE: when upgrading to electron 5(?) do the following instead:
+ * // import events from 'events';
+ * // await events.prototype.once(writer, 'finish');
+ */
+function onFinish(writable) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      writable.on('finish', () => {
+        resolve();
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
 
 /*
  * Downloader.download('https://download.damieng.com/fonts/original/EnvyCodeR-PR7.zip',
@@ -50,11 +69,12 @@ export default async function download(
     length || parseInt(response.headers.get('Content-Length') || '0', 10);
   const reader = body.getReader();
   const directory = path.dirname(targetFile);
-  await fs.ensureDir(directory);
+  await fsExtra.ensureDir(directory);
   const writer = fs.createWriteStream(targetFile);
 
   await streamWithProgress(finalLength, reader, writer, progressCallback);
   writer.end();
+  await onFinish(writer);
 }
 
 // Stream from a {ReadableStreamReader} to a {WriteStream} with progress callback.

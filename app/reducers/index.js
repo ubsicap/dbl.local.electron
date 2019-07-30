@@ -14,6 +14,7 @@ import { alert } from './alert.reducer';
 import { clipboard } from './clipboard.reducer';
 import { reports } from './report.reducer';
 import { entryAppBar } from './entryAppBar.reducer';
+import { workspace } from './workspace.reducer';
 
 export default function createRootReducer(history: History) {
   return combineReducers<{}, *>({
@@ -30,6 +31,7 @@ export default function createRootReducer(history: History) {
     alert,
     clipboard,
     reports,
-    entryAppBar
+    entryAppBar,
+    workspace
   });
 }
