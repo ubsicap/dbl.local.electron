@@ -3,6 +3,7 @@
 #### Fix
 
 - Save metadata template folder if it already exists but isn't in the workspace's `config.xml`
+- dbl_dot_local_app (7/31/2019): braille output_mapping
 
 ### Version 0.41.0 (Metadata > Save as template)
 
