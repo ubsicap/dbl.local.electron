@@ -107,14 +107,19 @@ export function saveAsTemplate(bundleId) {
       templateFilePath
     });
     dispatch(computeWorkspaceTemplateChecksum(medium));
-    if (!didExistMetadataTemplateDir) {
-      // Save template directory setting if save completed.
-      const { workspace } = workspaceHelpers.getCurrentWorkspaceFullPath(
-        appState
-      );
-      const configXmlSettings = await dblDotLocalService.convertConfigXmlToJson(
-        workspace
-      );
+    // Save template directory setting if save completed.
+    const { workspace } = workspaceHelpers.getCurrentWorkspaceFullPath(
+      appState
+    );
+    const configXmlSettings = await dblDotLocalService.convertConfigXmlToJson(
+      workspace
+    );
+    if (
+      !didExistMetadataTemplateDir ||
+      !configXmlSettings.settings.storer[0].metadataTemplateDir ||
+      configXmlSettings.settings.storer[0].metadataTemplateDir[0] !==
+        metadataTemplateDir
+    ) {
       configXmlSettings.settings.storer[0].metadataTemplateDir = [
         metadataTemplateDir
       ];

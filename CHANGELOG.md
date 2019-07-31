@@ -1,3 +1,9 @@
+### Version 0.41.1 (Metadata > Save as template)
+
+#### Fix
+
+- Save metadata template folder if it already exists but isn't in the workspace's `config.xml`
+
 ### Version 0.41.0 (Metadata > Save as template)
 
 #### Feature
