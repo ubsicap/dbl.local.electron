@@ -455,6 +455,8 @@ function requestSaveResourceTo(
 ) {
   // NOTE: for some reason getting metadata.xml via /resource-stream/ api leads to `Review metadata.xml`
   // getting the earlier version of the document. So use `/resource/` api instead.
+  // Might be a Chrome feature for responses with attachments
+  // see --disable-http-cache and https://github.com/electron/electron/issues/1720
   const resourceApi =
     uriRelativePath === 'metadata.xml'
       ? RESOURCE_API
