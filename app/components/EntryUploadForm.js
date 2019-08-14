@@ -20,9 +20,11 @@ const getArchiveStatusFormInputs = createSelector(
   activeFormInputs => activeFormInputs[archiveStatusFormKey] || emptyObject
 );
 
-function mapStateToProps(state) {
+function mapStateToProps(state, props) {
+  const { bundleId } = props.match.params;
   const archiveStatusFormInputs = getArchiveStatusFormInputs(state);
   return {
+    bundleId,
     archiveStatusFormInputs
   };
 }
