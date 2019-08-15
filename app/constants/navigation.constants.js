@@ -10,7 +10,8 @@ export const navigationConstants = {
     '/bundles/:bundleId/edit-metadata:formKey',
   NAVIGATION_BUNDLE_MANAGE_RESOURCES:
     '/bundles/:bundleId/manage-resources/:mode',
-  NAVIGATION_ENTRY_REPORTS: '/entries/:bundleId/reports'
+  NAVIGATION_ENTRY_REPORTS: '/entries/:bundleId/reports',
+  NAVIGATION_ENTRY_UPLOAD_FORM: '/entries/:bundleId/uploadForm'
 };
 
 export default navigationConstants;

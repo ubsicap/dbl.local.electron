@@ -4,6 +4,7 @@ import Description from '@material-ui/icons/Description';
 import FolderOpen from '@material-ui/icons/FolderOpen';
 import InsertChartOutlined from '@material-ui/icons/InsertChartOutlined';
 import ListAltIcon from '@material-ui/icons/FormatListNumberedRtl';
+import CloudUpload from '@material-ui/icons/CloudUpload';
 import { lighten } from '@material-ui/core/styles/colorManipulator';
 import { bundleService } from '../services/bundle.service';
 
@@ -17,7 +18,7 @@ export const ux = {
   getHighlightTheme,
   conditionallyRenderBadge,
   getClipboardTooltip,
-  getModeIcon,
+  getModeIcon
 };
 export default ux;
 
@@ -38,40 +39,43 @@ function getFormattedRevision(bundle, insertStr) {
   const parentRevision = getMatchingParentEntryRevision(bundle);
   if (parentRevision) {
     return `> ${insertStr}${parentRevision}`;
-  } else if (revision === '0') {
+  }
+  if (revision === '0') {
     return `${insertStr}1 (New)`;
   }
   return `${insertStr}${revision}`;
 }
 
 function getDblRowStyles(theme) {
-  return ({
+  return {
     button: {
-      margin: theme.spacing.unit,
+      margin: theme.spacing.unit
     },
     badge: {
-      marginRight: theme.spacing.unit * 2,
+      marginRight: theme.spacing.unit * 2
     },
     badgeTight: {
-      marginRight: -15,
+      marginRight: -15
     },
     leftIcon: {
-      marginRight: theme.spacing.unit,
+      marginRight: theme.spacing.unit
     },
     rightIcon: {
-      marginLeft: theme.spacing.unit,
+      marginLeft: theme.spacing.unit
     },
     iconSmall: {
-      fontSize: 20,
+      fontSize: 20
     },
     iconSmaller: {
-      fontSize: 10,
+      fontSize: 10
     },
-    draftRevision: { backgroundColor: lighten(theme.palette.secondary.light, 0.85) },
-    draftNew: { backgroundColor: lighten(theme.palette.primary.main, 0.60) },
+    draftRevision: {
+      backgroundColor: lighten(theme.palette.secondary.light, 0.85)
+    },
+    draftNew: { backgroundColor: lighten(theme.palette.primary.main, 0.6) },
     storedMode: { backgroundColor: 'white' },
-    noneStoredMode: { backgroundColor: '#EDEDED' },
-  });
+    noneStoredMode: { backgroundColor: '#EDEDED' }
+  };
 }
 
 const drawerWidth = 240;
@@ -79,88 +83,88 @@ const drawerWidth = 240;
 function getEntryDrawerStyles(theme) {
   return {
     root: {
-      display: 'flex',
+      display: 'flex'
     },
     appBar: {
       position: 'sticky',
       transition: theme.transitions.create(['margin', 'width'], {
         easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.leavingScreen,
-      }),
+        duration: theme.transitions.duration.leavingScreen
+      })
     },
     appBarShift: {
       width: `calc(100% - ${drawerWidth}px)`,
       marginRight: drawerWidth,
       transition: theme.transitions.create(['margin', 'width'], {
         easing: theme.transitions.easing.easeOut,
-        duration: theme.transitions.duration.enteringScreen,
-      }),
+        duration: theme.transitions.duration.enteringScreen
+      })
     },
     menuButton: {
       marginLeft: 12,
-      marginRight: 20,
+      marginRight: 20
     },
     hide: {
-      display: 'none',
+      display: 'none'
     },
     drawer: {
       width: drawerWidth,
-      flexShrink: 0,
+      flexShrink: 0
     },
     drawerPaper: {
-      width: drawerWidth,
+      width: drawerWidth
     },
     drawerHeader: {
       display: 'flex',
       alignItems: 'center',
       padding: '0 8px',
       ...theme.mixins.toolbar,
-      justifyContent: 'flex-start',
+      justifyContent: 'flex-start'
     },
     content: {
       flexGrow: 1,
       padding: theme.spacing.unit * 3,
       transition: theme.transitions.create('margin', {
         easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.leavingScreen,
+        duration: theme.transitions.duration.leavingScreen
       }),
-      marginRight: 0,
+      marginRight: 0
     },
     contentShift: {
       transition: theme.transitions.create('margin', {
         easing: theme.transitions.easing.easeOut,
-        duration: theme.transitions.duration.enteringScreen,
+        duration: theme.transitions.duration.enteringScreen
       }),
-      marginRight: drawerWidth,
-    },
+      marginRight: drawerWidth
+    }
   };
 }
 
 function getEntryUxStyles(theme) {
   return {
     errorBar: {
-      color: theme.palette.secondary.light,
+      color: theme.palette.secondary.light
     },
     successBar: {
-      color: theme.palette.primary.light,
+      color: theme.palette.primary.light
     },
     toolBar: {
-      paddingLeft: '10px',
+      paddingLeft: '10px'
     },
     flex: {
-      flex: 1,
+      flex: 1
     },
     leftIcon: {
-      marginRight: theme.spacing.unit,
+      marginRight: theme.spacing.unit
     },
     iconSmall: {
-      fontSize: 20,
+      fontSize: 20
     },
     button: {
-      margin: theme.spacing.unit,
+      margin: theme.spacing.unit
     },
     input: {
-      display: 'none',
+      display: 'none'
     },
     buttonProgress: {
       color: theme.palette.secondary.main,
@@ -168,59 +172,95 @@ function getEntryUxStyles(theme) {
       top: '50%',
       left: '50%',
       marginTop: -25,
-      marginLeft: -23,
+      marginLeft: -23
     }
-  }
+  };
 }
 
 function mapColumns(columns, getIsNumeric, getColumnLabel) {
-  return Object.keys(columns).filter(c => c !== 'id')
-    .map(c => ({ name: c, type: getIsNumeric(c) ? 'numeric' : 'string', label: getColumnLabel(c) }));
+  return Object.keys(columns)
+    .filter(c => c !== 'id')
+    .map(c => ({
+      name: c,
+      type: getIsNumeric(c) ? 'numeric' : 'string',
+      label: getColumnLabel(c)
+    }));
 }
 
-function getBackgroundForDraftNewOrRevision(classes, isForRow, dblId, revision, parent) {
+function getBackgroundForDraftNewOrRevision(
+  classes,
+  isForRow,
+  dblId,
+  revision,
+  parent
+) {
   if (isForRow) {
     return classes.storedMode;
   }
-  const effectiveRevision = bundleService.getRevisionOrParentRevision(dblId, revision, parent);
+  const effectiveRevision = bundleService.getRevisionOrParentRevision(
+    dblId,
+    revision,
+    parent
+  );
   return effectiveRevision ? classes.draftRevision : classes.draftNew;
 }
 
-function getDblRowBackgroundColor(isForRow, classes, status, revision, parent, dblId, mode) {
+function getDblRowBackgroundColor(
+  isForRow,
+  classes,
+  status,
+  revision,
+  parent,
+  dblId,
+  mode
+) {
   if (mode === 'upload' || status === 'DRAFT') {
-    return getBackgroundForDraftNewOrRevision(classes, isForRow, dblId, revision, parent);
+    return getBackgroundForDraftNewOrRevision(
+      classes,
+      isForRow,
+      dblId,
+      revision,
+      parent
+    );
   }
   switch (status) {
-    case 'NOT_STARTED': return classes.noneStoredMode;
+    case 'NOT_STARTED':
+      return classes.noneStoredMode;
     default:
       return classes.storedMode;
   }
 }
 
 function getHighlightTheme(theme, themeType) {
-  return (themeType === 'light'
+  return themeType === 'light'
     ? {
-      color: theme.palette.secondary.main,
-      backgroundColor: lighten(theme.palette.secondary.light, 0.85),
-    }
+        color: theme.palette.secondary.main,
+        backgroundColor: lighten(theme.palette.secondary.light, 0.85)
+      }
     : {
-      color: theme.palette.text.primary,
-      backgroundColor: theme.palette.secondary.dark,
-    });
+        color: theme.palette.text.primary,
+        backgroundColor: theme.palette.secondary.dark
+      };
 }
 
 function conditionallyRenderBadge(props, content, node) {
   if (!content) {
     return node;
   }
-  return <Badge key="badge" {...props} badgeContent={content}>{node}</Badge>;
+  return (
+    <Badge key="badge" {...props} badgeContent={content}>
+      {node}
+    </Badge>
+  );
 }
 
 function getClipboardTooltip(selectedItemsToPaste) {
-  const {
-    bundleId, itemsType, getDisplayAs, getMedium
-  } = selectedItemsToPaste;
-  const clipboardTooltip = bundleId ? `${itemsType} from (${getMedium()}) ${getDisplayAs().name} ${getDisplayAs().revision}` : '';
+  const { bundleId, itemsType, getDisplayAs, getMedium } = selectedItemsToPaste;
+  const clipboardTooltip = bundleId
+    ? `${itemsType} from (${getMedium()}) ${getDisplayAs().name} ${
+        getDisplayAs().revision
+      }`
+    : '';
   return clipboardTooltip;
 }
 
@@ -232,6 +272,8 @@ function getModeIcon(mode, props) {
       return <Description {...props} />;
     case 'reports':
       return <InsertChartOutlined {...props} />;
+    case 'upload':
+      return <CloudUpload {...props} />;
     case 'download':
     case 'addFiles':
     case 'store':

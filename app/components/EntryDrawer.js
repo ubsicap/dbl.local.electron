@@ -86,6 +86,11 @@ class EntryDrawer extends PureComponent<Props> {
       label: 'Reports',
       icon: ux.getModeIcon('reports'),
       handleClick: this.handleSwitchToReports
+    },
+    {
+      label: 'Upload to DBL',
+      icon: ux.getModeIcon('upload'),
+      handleClick: this.handleSwitchToReports
     }
   ];
 
