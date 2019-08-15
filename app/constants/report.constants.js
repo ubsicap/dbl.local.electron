@@ -5,7 +5,7 @@ export const reportConstants = {
   REPORT_COMPLETED: 'REPORT_COMPLETED',
   REPORT_LISTENERS_STARTED: 'REPORT_LISTENERS_STARTED',
   REPORTS_SELECTED_TO_RUN: 'REPORTS_SELECTED_TO_RUN',
-  ChecksUseContent: 'ChecksUseContent',
+  ChecksUseContent: 'ChecksUseContent'
 };
 
 export default reportConstants;
