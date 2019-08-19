@@ -9,6 +9,7 @@ import { PrivateRoute } from './components/PrivateRoute';
 import { navigationConstants } from './constants/navigation.constants';
 import WorkspacesPage from './containers/WorkspacesPage';
 import EntryReports from './components/EntryReports';
+import EntryUploadForm from './components/EntryUploadForm';
 
 export default () => (
   <App>
@@ -58,6 +59,11 @@ export default () => (
         exact
         path={navigationConstants.NAVIGATION_ENTRY_REPORTS}
         component={EntryReports}
+      />
+      <PrivateRoute
+        exact
+        path={navigationConstants.NAVIGATION_ENTRY_UPLOAD_FORM}
+        component={EntryUploadForm}
       />
     </Switch>
   </App>

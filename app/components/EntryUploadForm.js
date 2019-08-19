@@ -39,7 +39,7 @@ const getActiveBundle = createSelector(
 );
 
 function mapStateToProps(state, props) {
-  const { bundleId } = getBundleId(state, props);
+  const bundleId = getBundleId(state, props);
   const activeBundle = getActiveBundle(state, props);
   const archiveStatusFormInputs = getArchiveStatusFormInputs(state);
   return {

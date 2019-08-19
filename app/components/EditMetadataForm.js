@@ -37,14 +37,15 @@ type Props = {
   saveMetadataSuccess: () => {}
 };
 
-function mapStateToProps(state) {
-  const { bundleEditMetadata } = state;
+function mapStateToProps(state, props) {
+  const { bundleEditMetadata, bundles } = state;
+  const { addedByBundleIds = {} } = bundles;
+  const bundleToEdit = addedByBundleIds[props.bundleId];
   const {
     requestingSaveMetadata = false,
     formFieldIssues = {},
     activeFormEdits = {},
-    forceSave = false,
-    bundleToEdit
+    forceSave = false
   } = bundleEditMetadata;
   return {
     requestingSaveMetadata,

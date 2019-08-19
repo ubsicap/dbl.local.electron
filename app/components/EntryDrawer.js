@@ -18,6 +18,7 @@ import {
 } from '../actions/bundleEditMetadata.actions';
 import { openResourceManager } from '../actions/bundleManageResources.actions';
 import { openEntryReports } from '../actions/report.actions';
+import { openUploadForm } from '../actions/uploadForm.actions';
 import { closeEntryDrawer } from '../actions/entryAppBar.actions';
 import { ux } from '../utils/ux';
 
@@ -31,7 +32,8 @@ type Props = {
   openEntryMetadataFile: () => {},
   openEditEntryMetadata: () => {},
   openEntryResourceManager: () => {},
-  switchToEntryReports: () => {}
+  switchToEntryReports: () => {},
+  switchToUploadForm: () => {}
 };
 
 function mapStateToProps(state, props) {
@@ -47,7 +49,8 @@ const mapDispatchToProps = {
   openEditEntryMetadata: openEditMetadata,
   openEntryResourceManager: openResourceManager,
   hideEntryDrawer: closeEntryDrawer,
-  switchToEntryReports: openEntryReports
+  switchToEntryReports: openEntryReports,
+  switchToUploadForm: openUploadForm
 };
 
 const materialStyles = theme => ({
@@ -90,7 +93,7 @@ class EntryDrawer extends PureComponent<Props> {
     {
       label: 'Upload to DBL',
       icon: ux.getModeIcon('upload'),
-      handleClick: this.handleSwitchToReports
+      handleClick: this.handleSwitchToUploadForm
     }
   ];
 
@@ -122,9 +125,19 @@ class EntryDrawer extends PureComponent<Props> {
     openEntryResourceManager(bundleId, 'revisions', false);
   };
 
+  handleSwitchToUploadForm = () => {
+    const { switchToUploadForm, bundleId } = this.props;
+    switchToUploadForm(bundleId, 'reports');
+  };
+
   handleSwitchToReports = () => {
     const { switchToEntryReports, bundleId } = this.props;
     switchToEntryReports(bundleId, 'reports');
+  };
+
+  handleSwitchToUploadForm = () => {
+    const { switchToUploadForm, bundleId } = this.props;
+    switchToUploadForm(bundleId);
   };
 
   render() {
