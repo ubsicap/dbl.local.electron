@@ -23,7 +23,7 @@ type Props = {
   uploadEntryBundle: () => {}
 };
 
-const archiveStatusFormKey = 'archiveStatus';
+const archiveStatusFormKey = '/archiveStatus';
 const getActiveFormInputs = state => state.bundleEditMetadata.activeFormInputs;
 const getArchiveStatusFormInputs = createSelector(
   [getActiveFormInputs],

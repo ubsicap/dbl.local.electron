@@ -2,7 +2,7 @@ import { history } from '../store/configureStore';
 import { uploadFormConstants } from '../constants/uploadForm.constants';
 import { navigationConstants } from '../constants/navigation.constants';
 import { utilities } from '../utils/utilities';
-import { fetchActiveFormInputs } from 'bundleEditMetadata.actions';
+import { fetchActiveFormInputs } from '../actions/bundleEditMetadata.actions';
 
 export const uploadFormActions = {
   openUploadForm,
