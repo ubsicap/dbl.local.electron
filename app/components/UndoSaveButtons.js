@@ -1,5 +1,7 @@
 import React, { PureComponent } from 'react';
-import { Button, Undo, Save } from '@material-ui/core';
+import { Button } from '@material-ui/core';
+import Save from '@material-ui/icons/Save';
+import Undo from '@material-ui/icons/Undo';
 import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
 import classNames from 'classnames';
@@ -24,6 +26,7 @@ class UndoSaveButtons extends PureComponent<Props> {
     return (
       <div>
         <Button className={classes.button} onClick={handleUndo}>
+          <Undo className={classNames(classes.leftIcon, classes.iconSmall)} />
           Undo
         </Button>
         <Button
@@ -32,6 +35,7 @@ class UndoSaveButtons extends PureComponent<Props> {
           className={classes.button}
           onClick={handleSave}
         >
+          <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
           Save
         </Button>
       </div>

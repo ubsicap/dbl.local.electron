@@ -10,8 +10,6 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import StepContent from '@material-ui/core/StepContent';
 import Button from '@material-ui/core/Button';
-import Save from '@material-ui/icons/Save';
-import Undo from '@material-ui/icons/Undo';
 import Delete from '@material-ui/icons/Delete';
 import Tooltip from '@material-ui/core/Tooltip';
 import NavigateNext from '@material-ui/icons/NavigateNext';
