@@ -3,6 +3,7 @@ import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
+import Badge from '@material-ui/core/Badge';
 import Drawer from '@material-ui/core/Drawer';
 import MaterialUiList from '@material-ui/core/List';
 import Divider from '@material-ui/core/Divider';
@@ -16,6 +17,7 @@ import {
   openMetadataFile,
   openEditMetadata
 } from '../actions/bundleEditMetadata.actions';
+import editMetadataService from '../services/editMetadata.service';
 import { openResourceManager } from '../actions/bundleManageResources.actions';
 import { openEntryReports } from '../actions/report.actions';
 import { openUploadForm } from '../actions/uploadForm.actions';
@@ -28,6 +30,7 @@ type Props = {
   bundleId: string,
   activeBundle: {},
   openDrawer: boolean,
+  formsWithErrors: [],
   hideEntryDrawer: () => {},
   openEntryMetadataFile: () => {},
   openEditEntryMetadata: () => {},
@@ -36,10 +39,16 @@ type Props = {
   switchToUploadForm: () => {}
 };
 
+const getFormsErrors = editMetadataService.makeGetFormsErrors();
+
 function mapStateToProps(state, props) {
   const { id: bundleId } = props.activeBundle;
+  const formsWithErrors = Object.keys(
+    getFormsErrors(state, props.activeBundle)
+  );
   return {
     bundleId,
+    formsWithErrors,
     openDrawer: state.entryAppBar.openDrawer
   };
 }
@@ -62,56 +71,86 @@ const materialStyles = theme => ({
 class EntryDrawer extends PureComponent<Props> {
   props: Props;
 
-  getResourceMode = () => {
+  getBundleStatus = () => {
     const { activeBundle } = this.props;
     const { status } = activeBundle;
+    return status;
+  };
+
+  getResourceMode = () => {
+    const status = this.getBundleStatus();
     const mode = status === 'DRAFT' ? 'addFiles' : 'download';
     return mode;
   };
 
-  getDrawerItems = () => [
-    {
-      label: 'Metadata',
-      icon: ux.getModeIcon('metadata'),
-      handleClick: this.handleSwitchToMetadata
-    },
-    {
-      label: 'Resources',
-      icon: ux.getModeIcon(this.getResourceMode()),
-      handleClick: this.handleSwitchToResources
-    },
-    {
-      label: 'Revisions',
-      icon: ux.getModeIcon('revisions'),
-      handleClick: this.handleSwitchToRevisions
-    },
-    {
-      label: 'Reports',
-      icon: ux.getModeIcon('reports'),
-      handleClick: this.handleSwitchToReports
-    },
-    {
-      type: 'divider'
-    },
-    {
-      label: 'Review metadata.xml',
-      icon: <OpenInNew />,
-      handleClick: this.handleOpenMetadataXml
-    },
-    {
-      label: 'Upload to DBL',
-      icon: ux.getModeIcon('upload'),
-      handleClick: this.handleSwitchToUploadForm
-    }
-  ];
+  shouldDisableUpload = () => {
+    const status = this.getBundleStatus();
+    const { formsWithErrors } = this.props;
+    return status !== 'DRAFT' || formsWithErrors.length > 0;
+  };
+
+  getDrawerItems = () => {
+    const { formsWithErrors } = this.props;
+    const formsErrorCount = formsWithErrors.length;
+    return [
+      {
+        badge: formsErrorCount,
+        label: 'Metadata',
+        icon: ux.getModeIcon('metadata'),
+        handleClick: this.handleSwitchToMetadata
+      },
+      {
+        label: 'Resources',
+        icon: ux.getModeIcon(this.getResourceMode()),
+        handleClick: this.handleSwitchToResources
+      },
+      {
+        label: 'Revisions',
+        icon: ux.getModeIcon('revisions'),
+        handleClick: this.handleSwitchToRevisions
+      },
+      {
+        label: 'Reports',
+        icon: ux.getModeIcon('reports'),
+        handleClick: this.handleSwitchToReports
+      },
+      {
+        label: 'Action-Divider',
+        type: 'divider'
+      },
+      {
+        label: 'Review metadata.xml',
+        icon: <OpenInNew />,
+        handleClick: this.handleOpenMetadataXml
+      },
+      {
+        label: 'Upload to DBL',
+        icon: ux.getModeIcon('upload'),
+        handleClick: this.handleSwitchToUploadForm,
+        disabled: this.shouldDisableUpload()
+      }
+    ];
+  };
 
   renderListItem = item => {
     if (item.type === 'divider') {
       return <Divider />;
     }
+    const { classes } = this.props;
     return (
-      <ListItem button key={item.label} onClick={item.handleClick}>
-        <ListItemIcon>{item.icon}</ListItemIcon>
+      <ListItem
+        button
+        key={item.label}
+        onClick={item.handleClick}
+        disabled={item.disabled}
+      >
+        <ListItemIcon>
+          {ux.conditionallyRenderBadge(
+            { className: classes.badge, color: 'error' },
+            item.badge,
+            item.icon
+          )}
+        </ListItemIcon>
         <ListItemText primary={item.label} />
       </ListItem>
     );
