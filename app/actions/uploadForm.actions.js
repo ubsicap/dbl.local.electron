@@ -11,7 +11,7 @@ export const uploadFormActions = {
 
 export function openUploadForm(bundleId) {
   return dispatch => {
-    dispatch(fetchActiveFormInputs(bundleId, 'archiveStatus'));
+    dispatch(fetchActiveFormInputs(bundleId, '/archiveStatus'));
     const url = utilities.buildRouteUrl(
       navigationConstants.NAVIGATION_ENTRY_UPLOAD_FORM,
       { bundleId }
