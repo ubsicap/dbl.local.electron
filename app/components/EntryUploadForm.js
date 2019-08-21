@@ -4,6 +4,9 @@ import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
 import { Button } from '@material-ui/core';
 import Grid from '@material-ui/core/Grid';
+import Typography from '@material-ui/core/Typography';
+import Divider from '@material-ui/core/Divider';
+import OpenInNew from '@material-ui/icons/OpenInNew';
 import { createSelector } from 'reselect';
 import EditMetadataForm from './EditMetadataForm';
 import { emptyObject } from '../utils/defaultValues';
@@ -169,6 +172,29 @@ class EntryUploadForm extends Component<Props> {
     saveActiveFormFieldValues();
   };
 
+  renderRightsHolders = () => {
+    const {
+      activeBundle: { raw: rawBundle }
+    } = this.props;
+    const {
+      metadata: { agencies }
+    } = rawBundle;
+    const rightsHolders = agencies.filter(a => a.type === 'rightsHolder');
+    return rightsHolders.map(rh => (
+      <Grid container direction="column" justify="center">
+        <Grid item>
+          <Typography noWrap>
+            <span style={{ fontWeight: 'bold' }}>{rh.abbr}</span>
+          </Typography>
+        </Grid>
+        <Grid item>
+          <Typography noWrap>{rh.name}</Typography>
+        </Grid>
+        <Divider />
+      </Grid>
+    ));
+  };
+
   renderSaveUndoButtons = () => {
     const { activeFormEdits } = this.props;
     const hasFormChanged = this.computeHasActiveFormChanged(activeFormEdits);
@@ -188,7 +214,8 @@ class EntryUploadForm extends Component<Props> {
       bundleId,
       archiveStatusFormInputs,
       activeBundle,
-      formErrors
+      formErrors,
+      classes
     } = this.props;
     const modeUi = this.modeUi();
     return (
@@ -215,12 +242,32 @@ class EntryUploadForm extends Component<Props> {
               />
               {this.renderSaveUndoButtons()}
             </Grid>
-            <Grid item>Rights holders</Grid>
-            <Grid item>
-              <Button> Run Checks Content Use Report </Button>
+            <Grid item style={{ margin: '10px' }}>
+              <Typography variant="title" noWrap>
+                Rightsholders
+              </Typography>
+              <Divider />
             </Grid>
-            <Grid item>
-              <Button> Review metadata.xml </Button>
+            <Grid item style={{ margin: '10px' }}>
+              {this.renderRightsHolders()}
+            </Grid>
+            <Grid item style={{ margin: '10px' }}>
+              <Typography variant="title" noWrap>
+                Checks
+              </Typography>
+              <Divider />
+            </Grid>
+            <Grid item style={{ margin: '10px' }}>
+              <Button variant="outlined">
+                {ux.getModeIcon('reports', { className: classes.leftIcon })}
+                Run Checks Content Use Report
+              </Button>
+            </Grid>
+            <Grid item style={{ margin: '10px' }}>
+              <Button variant="outlined">
+                <OpenInNew className={classes.leftIcon} />
+                Review metadata.xml
+              </Button>
             </Grid>
           </Grid>
         </EntryDialogBody>

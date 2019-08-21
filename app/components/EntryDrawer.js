@@ -3,7 +3,6 @@ import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
-import Badge from '@material-ui/core/Badge';
 import Drawer from '@material-ui/core/Drawer';
 import MaterialUiList from '@material-ui/core/List';
 import Divider from '@material-ui/core/Divider';
