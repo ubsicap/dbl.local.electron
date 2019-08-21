@@ -27,6 +27,7 @@ type Props = {
   activeBundle: {},
   activeFormEdits: {},
   archiveStatusFormInputs: {},
+  formErrors: {},
   fetchToActiveFormInputs: () => {},
   closeEntryUploadForm: () => {},
   uploadEntryBundle: () => {},
@@ -54,16 +55,31 @@ const getActiveBundle = createSelector(
   (bundlesById, bundleId) => bundlesById[bundleId]
 );
 
+const getFormFieldIssues = state =>
+  state.bundleEditMetadata.formFieldIssues || emptyObject;
+
+const getFormErrors = createSelector(
+  [getFormFieldIssues],
+  formFieldIssues => {
+    const {
+      [archiveStatusFormKey]: formIssues = emptyObject
+    } = formFieldIssues;
+    return formIssues;
+  }
+);
+
 function mapStateToProps(state, props) {
   const bundleId = getBundleId(state, props);
   const activeBundle = getActiveBundle(state, props);
   const archiveStatusFormInputs = getArchiveStatusFormInputs(state);
   const activeFormEdits = getActiveFormEdits(state);
+  const formErrors = getFormErrors(state);
   return {
     bundleId,
     archiveStatusFormInputs,
     activeFormEdits,
-    activeBundle
+    activeBundle,
+    formErrors
   };
 }
 
@@ -168,7 +184,12 @@ class EntryUploadForm extends Component<Props> {
   };
 
   render() {
-    const { bundleId, archiveStatusFormInputs, activeBundle } = this.props;
+    const {
+      bundleId,
+      archiveStatusFormInputs,
+      activeBundle,
+      formErrors
+    } = this.props;
     const modeUi = this.modeUi();
     return (
       <div>
@@ -188,7 +209,7 @@ class EntryUploadForm extends Component<Props> {
                 bundleId={bundleId}
                 formKey={archiveStatusFormKey}
                 isFactory={false}
-                formErrors={false}
+                formErrors={formErrors}
                 inputs={archiveStatusFormInputs}
                 isActiveForm
               />
