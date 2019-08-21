@@ -35,28 +35,15 @@ import { utilities } from '../utils/utilities';
 import { clipboardHelpers } from '../helpers/clipboard';
 import ConfirmButton from './ConfirmButton';
 import { emptyArray, emptyObject } from '../utils/defaultValues';
+import { ux } from '../utils/ux';
+import UndoSaveButtons from './UndoSaveButtons';
 
 const materialStyles = theme => ({
   root: {},
-  button: {
-    marginTop: theme.spacing.unit,
-    marginRight: theme.spacing.unit
-  },
   actionsContainer: {
     marginBottom: theme.spacing.unit * 2
   },
-  resetContainer: {
-    padding: theme.spacing.unit * 3
-  },
-  leftIcon: {
-    marginRight: theme.spacing.unit
-  },
-  rightIcon: {
-    marginLeft: theme.spacing.unit
-  },
-  iconSmall: {
-    fontSize: 20
-  }
+  ...ux.getEditMetadataStyles(theme)
 });
 
 const detailsStep = {
@@ -546,13 +533,15 @@ class _EditMetadataStepper extends React.Component<Props> {
   };
 
   renderStepContentActionsContainer = stepIndex => {
-    const { classes, activeFormDeleting = false, steps = [] } = this.props;
+    const { classes, steps = [] } = this.props;
     const { activeStepIndex } = this.state;
     const hasFormChanged = this.getHasFormChanged(stepIndex);
+    /*
     const hasFieldContent =
       activeStepIndex === stepIndex
         ? this.getActiveFormFields().some(f => f.default && f.default.length)
         : false;
+    */
     const step = this.getStep(stepIndex);
     const { contains, isInstance = false, present, isFactory } = step;
     const isNotYetPresent = present !== undefined && !present;
@@ -565,28 +554,14 @@ class _EditMetadataStepper extends React.Component<Props> {
     const isLastStep = this.isLastStep(activeStepIndex, steps);
     if (hasFormChanged /* ||  hasFormErrors */ && (!contains || isFactory)) {
       return (
-        <div>
-          <Button
-            className={classes.button}
-            onClick={this.handleUndo(stepIndex)}
-          >
-            <Undo className={classNames(classes.leftIcon, classes.iconSmall)} />
-            Undo
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            className={classes.button}
-            onClick={
-              isNotYetPresent
-                ? this.handleSaveAndReloadStructure
-                : this.handleSave
-            }
-          >
-            <Save className={classNames(classes.leftIcon, classes.iconSmall)} />
-            Save
-          </Button>
-        </div>
+        <UndoSaveButtons
+          handleUndo={this.handleUndo(stepIndex)}
+          handleSave={
+            isNotYetPresent
+              ? this.handleSaveAndReloadStructure
+              : this.handleSave
+          }
+        />
       );
     }
     const navigateTo = 'Navigate to ';

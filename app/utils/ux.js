@@ -18,7 +18,8 @@ export const ux = {
   getHighlightTheme,
   conditionallyRenderBadge,
   getClipboardTooltip,
-  getModeIcon
+  getModeIcon,
+  getEditMetadataStyles
 };
 export default ux;
 
@@ -173,6 +174,24 @@ function getEntryUxStyles(theme) {
       left: '50%',
       marginTop: -25,
       marginLeft: -23
+    }
+  };
+}
+
+function getEditMetadataStyles(theme) {
+  return {
+    button: {
+      marginTop: theme.spacing.unit,
+      marginRight: theme.spacing.unit
+    },
+    leftIcon: {
+      marginRight: theme.spacing.unit
+    },
+    rightIcon: {
+      marginLeft: theme.spacing.unit
+    },
+    iconSmall: {
+      fontSize: 20
     }
   };
 }

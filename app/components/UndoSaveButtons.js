@@ -1,0 +1,42 @@
+import React, { PureComponent } from 'react';
+import { Button, Undo, Save } from '@material-ui/core';
+import { compose } from 'recompose';
+import { withStyles } from '@material-ui/core/styles';
+import classNames from 'classnames';
+import { ux } from '../utils/ux';
+
+type Props = {
+  classes: {},
+  handleUndo: () => {},
+  handleSave: () => {}
+};
+
+const materialStyles = theme => ({
+  root: {},
+  ...ux.getEditMetadataStyles(theme)
+});
+
+class UndoSaveButtons extends PureComponent<Props> {
+  props: Props;
+
+  render() {
+    const { classes = {}, handleUndo, handleSave } = this.props;
+    return (
+      <div>
+        <Button className={classes.button} onClick={handleUndo}>
+          Undo
+        </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          className={classes.button}
+          onClick={handleSave}
+        >
+          Save
+        </Button>
+      </div>
+    );
+  }
+}
+
+export default withStyles(materialStyles, { withTheme: true })(UndoSaveButtons);
