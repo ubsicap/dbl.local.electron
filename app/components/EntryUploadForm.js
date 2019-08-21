@@ -1,10 +1,14 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
+import { withStyles } from '@material-ui/core/styles';
 import { createSelector } from 'reselect';
 import EditMetadataForm from './EditMetadataForm';
 import { emptyObject } from '../utils/defaultValues';
-import { fetchActiveFormInputs } from '../actions/bundleEditMetadata.actions';
+import {
+  fetchActiveFormInputs,
+  saveFieldValuesForActiveForm
+} from '../actions/bundleEditMetadata.actions';
 import { uploadBundle } from '../actions/bundle.actions';
 import { closeUploadForm } from '../actions/uploadForm.actions';
 import EntryAppBar from './EntryAppBar';
@@ -23,8 +27,14 @@ type Props = {
   archiveStatusFormInputs: {},
   fetchToActiveFormInputs: () => {},
   closeEntryUploadForm: () => {},
-  uploadEntryBundle: () => {}
+  uploadEntryBundle: () => {},
+  saveActiveFormFieldValues: () => {}
 };
+
+const materialStyles = theme => ({
+  root: {},
+  ...ux.getEditMetadataStyles(theme)
+});
 
 const archiveStatusFormKey = '/archiveStatus';
 const getActiveFormEdits = state => state.bundleEditMetadata.activeFormEdits;
@@ -58,7 +68,8 @@ function mapStateToProps(state, props) {
 const mapDispatchToProps = {
   fetchToActiveFormInputs: fetchActiveFormInputs,
   uploadEntryBundle: uploadBundle,
-  closeEntryUploadForm: closeUploadForm
+  closeEntryUploadForm: closeUploadForm,
+  saveActiveFormFieldValues: saveFieldValuesForActiveForm
 };
 
 class EntryUploadForm extends Component<Props> {
@@ -95,7 +106,10 @@ class EntryUploadForm extends Component<Props> {
       appBar: {
         title,
         OkButtonLabel: `Upload`,
-        OkButtonIcon: ux.getModeIcon('upload'),
+        OkButtonIcon: ux.getModeIcon('upload', {
+          color: 'inherit',
+          className: classes.leftIcon
+        }),
         OkButtonProps
       }
     };
@@ -130,13 +144,25 @@ class EntryUploadForm extends Component<Props> {
     return hasFormChanged;
   };
 
+  handleUndo = () => {};
+
+  handleSave = () => {
+    const { saveActiveFormFieldValues } = this.props;
+    saveActiveFormFieldValues();
+  };
+
   renderSaveUndoButtons = () => {
     const { activeFormEdits } = this.props;
     const hasFormChanged = this.computeHasActiveFormChanged(activeFormEdits);
     if (!hasFormChanged) {
       return null;
     }
-    return <UndoSaveButtons handleUndo={() => {}} handleSave={() => {}} />;
+    return (
+      <UndoSaveButtons
+        handleUndo={this.handleUndo}
+        handleSave={this.handleSave}
+      />
+    );
   };
 
   render() {
@@ -170,6 +196,7 @@ class EntryUploadForm extends Component<Props> {
 }
 
 export default compose(
+  withStyles(materialStyles),
   connect(
     mapStateToProps,
     mapDispatchToProps

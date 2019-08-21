@@ -2,7 +2,6 @@ import React, { PureComponent } from 'react';
 import { Button } from '@material-ui/core';
 import Save from '@material-ui/icons/Save';
 import Undo from '@material-ui/icons/Undo';
-import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
 import classNames from 'classnames';
 import { ux } from '../utils/ux';

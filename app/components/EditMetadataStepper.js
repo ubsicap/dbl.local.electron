@@ -190,7 +190,7 @@ const mapDispatchToProps = {
   fetchFormStructure,
   setArchivistStatusOverrides,
   saveMetadataSuccess,
-  saveFieldValuesForActiveForm,
+  saveActiveFormFieldValues: saveFieldValuesForActiveForm,
   fetchActiveFormInputs,
   deleteForm,
   updateFormFieldIssues,
@@ -220,7 +220,7 @@ type Props = {
   classes: {},
   fetchFormStructure: () => {},
   saveMetadataSuccess: () => {},
-  saveFieldValuesForActiveForm: () => {},
+  saveActiveFormFieldValues: () => {},
   fetchActiveFormInputs: () => {},
   deleteForm: () => {},
   setArchivistStatusOverrides: () => {},
@@ -396,7 +396,8 @@ class _EditMetadataStepper extends React.Component<Props> {
   trySaveFormAndMoveStep = newStepIndex => {
     const nextStep = this.getStep(newStepIndex);
     const { formKey, id } = nextStep || {};
-    this.props.saveFieldValuesForActiveForm({
+    const { saveActiveFormFieldValues } = this.props;
+    saveActiveFormFieldValues({
       moveNext: { newStepIndex, formKey, id }
     });
   };
@@ -405,10 +406,15 @@ class _EditMetadataStepper extends React.Component<Props> {
     this.trySaveFormAndMoveStep(stepIndex);
   };
 
-  handleSave = () => this.props.saveFieldValuesForActiveForm();
+  handleSave = () => {
+    const { saveActiveFormFieldValues } = this.props;
+    saveActiveFormFieldValues();
+  };
 
-  handleSaveAndReloadStructure = () =>
-    this.props.saveFieldValuesForActiveForm({ forceSave: true });
+  handleSaveAndReloadStructure = () => {
+    const { saveActiveFormFieldValues } = this.props;
+    saveActiveFormFieldValues({ forceSave: true });
+  };
 
   handleUndo = stepIndex => () => {
     const { bundleId } = this.props;
