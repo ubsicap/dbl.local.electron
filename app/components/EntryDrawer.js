@@ -91,18 +91,31 @@ class EntryDrawer extends PureComponent<Props> {
       handleClick: this.handleSwitchToReports
     },
     {
+      type: 'divider'
+    },
+    {
+      label: 'Review metadata.xml',
+      icon: <OpenInNew />,
+      handleClick: this.handleOpenMetadataXml
+    },
+    {
       label: 'Upload to DBL',
       icon: ux.getModeIcon('upload'),
       handleClick: this.handleSwitchToUploadForm
     }
   ];
 
-  renderListItem = item => (
-    <ListItem button key={item.label} onClick={item.handleClick}>
-      <ListItemIcon>{item.icon}</ListItemIcon>
-      <ListItemText primary={item.label} />
-    </ListItem>
-  );
+  renderListItem = item => {
+    if (item.type === 'divider') {
+      return <Divider />;
+    }
+    return (
+      <ListItem button key={item.label} onClick={item.handleClick}>
+        <ListItemIcon>{item.icon}</ListItemIcon>
+        <ListItemText primary={item.label} />
+      </ListItem>
+    );
+  };
 
   handleOpenMetadataXml = () => {
     const { openEntryMetadataFile, bundleId } = this.props;
@@ -163,32 +176,7 @@ class EntryDrawer extends PureComponent<Props> {
             )}
           </IconButton>
         </div>
-        <Divider />
-        <MaterialUiList>
-          <ListItem
-            button
-            key="metadataXml"
-            onClick={this.handleOpenMetadataXml}
-          >
-            <ListItemIcon>
-              <OpenInNew />
-            </ListItemIcon>
-            <ListItemText primary="Review metadata.xml" />
-          </ListItem>
-        </MaterialUiList>
-        <Divider />
         <MaterialUiList>{items.map(this.renderListItem)}</MaterialUiList>
-        {/*
-        <Divider />
-        <MaterialUiList>
-          {['Make Revision', 'Export To', 'Copy As'].map((text, index) => (
-            <ListItem button key={text}>
-              <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
-              <ListItemText primary={text} />
-            </ListItem>
-          ))}
-        </MaterialUiList>
-        */}
       </Drawer>
     );
   }
