@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
+import { Button } from '@material-ui/core';
+import Grid from '@material-ui/core/Grid';
 import { createSelector } from 'reselect';
 import EditMetadataForm from './EditMetadataForm';
 import { emptyObject } from '../utils/defaultValues';
@@ -179,16 +181,27 @@ class EntryUploadForm extends Component<Props> {
         />
         <EntryDrawer activeBundle={activeBundle} />
         <EntryDialogBody>
-          <EditMetadataForm
-            key={archiveStatusFormKey}
-            bundleId={bundleId}
-            formKey={archiveStatusFormKey}
-            isFactory={false}
-            formErrors={false}
-            inputs={archiveStatusFormInputs}
-            isActiveForm
-          />
-          {this.renderSaveUndoButtons()}
+          <Grid container direction="column">
+            <Grid item>
+              <EditMetadataForm
+                key={archiveStatusFormKey}
+                bundleId={bundleId}
+                formKey={archiveStatusFormKey}
+                isFactory={false}
+                formErrors={false}
+                inputs={archiveStatusFormInputs}
+                isActiveForm
+              />
+              {this.renderSaveUndoButtons()}
+            </Grid>
+            <Grid item>Rights holders</Grid>
+            <Grid item>
+              <Button> Run Checks Content Use Report </Button>
+            </Grid>
+            <Grid item>
+              <Button> Review metadata.xml </Button>
+            </Grid>
+          </Grid>
         </EntryDialogBody>
       </div>
     );
