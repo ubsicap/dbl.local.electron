@@ -12,11 +12,14 @@ import EntryDrawer from './EntryDrawer';
 import EntryDialogBody from './EntryDialogBody';
 import ConfirmButton from './ConfirmButton';
 import { ux } from '../utils/ux';
+import editMetadataService from '../services/editMetadata.service';
+import UndoSaveButtons from './UndoSaveButtons';
 
 type Props = {
   classes: {},
   bundleId: string,
   activeBundle: {},
+  activeFormEdits: {},
   archiveStatusFormInputs: {},
   fetchToActiveFormInputs: () => {},
   closeEntryUploadForm: () => {},
@@ -24,6 +27,7 @@ type Props = {
 };
 
 const archiveStatusFormKey = '/archiveStatus';
+const getActiveFormEdits = state => state.bundleEditMetadata.activeFormEdits;
 const getActiveFormInputs = state => state.bundleEditMetadata.activeFormInputs;
 const getArchiveStatusFormInputs = createSelector(
   [getActiveFormInputs],
@@ -42,9 +46,11 @@ function mapStateToProps(state, props) {
   const bundleId = getBundleId(state, props);
   const activeBundle = getActiveBundle(state, props);
   const archiveStatusFormInputs = getArchiveStatusFormInputs(state);
+  const activeFormEdits = getActiveFormEdits(state);
   return {
     bundleId,
     archiveStatusFormInputs,
+    activeFormEdits,
     activeBundle
   };
 }
@@ -109,6 +115,30 @@ class EntryUploadForm extends Component<Props> {
     );
   };
 
+  getActiveFormFields = () => {
+    const { archiveStatusFormInputs } = this.props;
+    const { fields = [] } = archiveStatusFormInputs;
+    return fields;
+  };
+
+  computeHasActiveFormChanged = activeFormEdits => {
+    const fields = this.getActiveFormFields();
+    const hasFormChanged = editMetadataService.getHasFormFieldsChanged(
+      fields,
+      activeFormEdits
+    );
+    return hasFormChanged;
+  };
+
+  renderSaveUndoButtons = () => {
+    const { activeFormEdits } = this.props;
+    const hasFormChanged = this.computeHasActiveFormChanged(activeFormEdits);
+    if (!hasFormChanged) {
+      return null;
+    }
+    return <UndoSaveButtons handleUndo={() => {}} handleSave={() => {}} />;
+  };
+
   render() {
     const { bundleId, archiveStatusFormInputs, activeBundle } = this.props;
     const modeUi = this.modeUi();
@@ -132,6 +162,7 @@ class EntryUploadForm extends Component<Props> {
             inputs={archiveStatusFormInputs}
             isActiveForm
           />
+          {this.renderSaveUndoButtons()}
         </EntryDialogBody>
       </div>
     );
