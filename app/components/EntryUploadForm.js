@@ -12,7 +12,8 @@ import EditMetadataForm from './EditMetadataForm';
 import { emptyObject } from '../utils/defaultValues';
 import {
   fetchActiveFormInputs,
-  saveFieldValuesForActiveForm
+  saveFieldValuesForActiveForm,
+  openMetadataFile
 } from '../actions/bundleEditMetadata.actions';
 import { uploadBundle } from '../actions/bundle.actions';
 import { closeUploadForm } from '../actions/uploadForm.actions';
@@ -34,7 +35,8 @@ type Props = {
   fetchToActiveFormInputs: () => {},
   closeEntryUploadForm: () => {},
   uploadEntryBundle: () => {},
-  saveActiveFormFieldValues: () => {}
+  saveActiveFormFieldValues: () => {},
+  openEntryMetadataFile: () => {}
 };
 
 const materialStyles = theme => ({
@@ -89,6 +91,7 @@ function mapStateToProps(state, props) {
 const mapDispatchToProps = {
   fetchToActiveFormInputs: fetchActiveFormInputs,
   uploadEntryBundle: uploadBundle,
+  openEntryMetadataFile: openMetadataFile,
   closeEntryUploadForm: closeUploadForm,
   saveActiveFormFieldValues: saveFieldValuesForActiveForm
 };
@@ -209,6 +212,11 @@ class EntryUploadForm extends Component<Props> {
     );
   };
 
+  handleOpenMetadataXml = () => {
+    const { openEntryMetadataFile, bundleId } = this.props;
+    openEntryMetadataFile(bundleId);
+  };
+
   render() {
     const {
       bundleId,
@@ -264,7 +272,7 @@ class EntryUploadForm extends Component<Props> {
               </Button>
             </Grid>
             <Grid item style={{ margin: '10px' }}>
-              <Button variant="outlined">
+              <Button variant="outlined" onClick={this.handleOpenMetadataXml}>
                 <OpenInNew className={classes.leftIcon} />
                 Review metadata.xml
               </Button>
