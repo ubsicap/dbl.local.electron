@@ -1,4 +1,8 @@
 import React, { Component } from 'react';
+import Card from '@material-ui/core/Card';
+import CardContent from '@material-ui/core/CardContent';
+import CardActions from '@material-ui/core/CardActions';
+import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
@@ -41,7 +45,28 @@ type Props = {
 
 const materialStyles = theme => ({
   root: {},
-  ...ux.getEditMetadataStyles(theme)
+  ...ux.getEditMetadataStyles(theme),
+  title: {
+    fontSize: 14
+  },
+  layout: {
+    width: 'auto',
+    marginLeft: theme.spacing.unit * 3,
+    marginRight: theme.spacing.unit * 3,
+    [theme.breakpoints.up(1100 + theme.spacing.unit * 3 * 2)]: {
+      width: 1100,
+      marginLeft: 'auto',
+      marginRight: 'auto'
+    }
+  },
+  cardGrid: {
+    padding: `${theme.spacing.unit * 8}px 0`
+  },
+  card: {
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column'
+  }
 });
 
 const archiveStatusFormKey = '/archiveStatus';
@@ -237,47 +262,84 @@ class EntryUploadForm extends Component<Props> {
         />
         <EntryDrawer activeBundle={activeBundle} />
         <EntryDialogBody>
-          <Grid container direction="column">
-            <Grid item>
-              <EditMetadataForm
-                key={archiveStatusFormKey}
-                bundleId={bundleId}
-                formKey={archiveStatusFormKey}
-                isFactory={false}
-                formErrors={formErrors}
-                inputs={archiveStatusFormInputs}
-                isActiveForm
-              />
-              {this.renderSaveUndoButtons()}
+          <div className={classNames(classes.layout, classes.cardGrid)}>
+            <Grid container spacing={40}>
+              <Grid item key="archiveStatus" sm={12} md={12} lg={12}>
+                <Card className={classes.card}>
+                  <CardContent>
+                    <Typography
+                      variant="title"
+                      noWrap
+                      color="title"
+                      gutterBottom
+                    >
+                      Archive Status
+                    </Typography>
+                    <EditMetadataForm
+                      key={archiveStatusFormKey}
+                      bundleId={bundleId}
+                      formKey={archiveStatusFormKey}
+                      isFactory={false}
+                      formErrors={formErrors}
+                      inputs={archiveStatusFormInputs}
+                      isActiveForm
+                    />
+                  </CardContent>
+                  <CardActions>{this.renderSaveUndoButtons()}</CardActions>
+                </Card>
+              </Grid>
+              <Grid item key="rightsHolders" sm={12} md={12} lg={12}>
+                <Card className={classes.card}>
+                  <CardContent>
+                    <Typography
+                      variant="title"
+                      noWrap
+                      color="title"
+                      gutterBottom
+                    >
+                      Rightsholders
+                    </Typography>
+                    {this.renderRightsHolders()}
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item key="Checks" sm={12} md={12} lg={12}>
+                <Card className={classes.card}>
+                  <CardContent>
+                    <Typography
+                      variant="title"
+                      noWrap
+                      color="title"
+                      gutterBottom
+                    >
+                      Checks
+                    </Typography>
+                  </CardContent>
+                  <CardActions>
+                    <Grid container direction="column">
+                      <Grid item style={{ margin: '10px' }}>
+                        <Button variant="outlined">
+                          {ux.getModeIcon('reports', {
+                            className: classes.leftIcon
+                          })}
+                          Run Checks Content Use Report
+                        </Button>
+                      </Grid>
+                      <Grid item style={{ margin: '10px' }}>
+                        <Button
+                          variant="outlined"
+                          onClick={this.handleOpenMetadataXml}
+                        >
+                          <OpenInNew className={classes.leftIcon} />
+                          Review metadata.xml
+                        </Button>
+                      </Grid>
+                    </Grid>
+                  </CardActions>
+                </Card>
+              </Grid>
             </Grid>
-            <Grid item style={{ margin: '10px' }}>
-              <Typography variant="title" noWrap>
-                Rightsholders
-              </Typography>
-              <Divider />
-            </Grid>
-            <Grid item style={{ margin: '10px' }}>
-              {this.renderRightsHolders()}
-            </Grid>
-            <Grid item style={{ margin: '10px' }}>
-              <Typography variant="title" noWrap>
-                Checks
-              </Typography>
-              <Divider />
-            </Grid>
-            <Grid item style={{ margin: '10px' }}>
-              <Button variant="outlined">
-                {ux.getModeIcon('reports', { className: classes.leftIcon })}
-                Run Checks Content Use Report
-              </Button>
-            </Grid>
-            <Grid item style={{ margin: '10px' }}>
-              <Button variant="outlined" onClick={this.handleOpenMetadataXml}>
-                <OpenInNew className={classes.leftIcon} />
-                Review metadata.xml
-              </Button>
-            </Grid>
-          </Grid>
+          </div>
         </EntryDialogBody>
       </div>
     );
