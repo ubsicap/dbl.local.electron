@@ -1,7 +1,6 @@
 import log from 'electron-log';
 import waitUntil from 'node-wait-until';
 import md5File from 'md5-file/promise';
-import fs from 'fs-extra';
 import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.constants';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
@@ -623,7 +622,7 @@ export function saveMetadataFailed(
 function saveAllOverrides(bundleId) {
   return (dispatch, getState) => {
     const {
-      bundleEditMetadata: { metadataOverrides }
+      bundleEditMetadata: { metadataOverrides = {} }
     } = getState();
     Object.keys(metadataOverrides).forEach(async formKey => {
       try {

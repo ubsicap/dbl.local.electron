@@ -8,14 +8,19 @@ type Props = {
 
 export default class EntryTitle extends PureComponent<Props> {
   props: Props;
+
   render() {
-    const { displayAs = {}, medium } = this.props.bundle || {};
+    const { bundle = {} } = this.props;
+    const { displayAs = {}, medium } = bundle;
     const { languageAndCountry, name } = displayAs;
     return (
       <React.Fragment>
         <MediumIcon medium={medium} />
-        <span className={rowStyles.languageAndCountryLabel}>{languageAndCountry} </span>
+        <span className={rowStyles.languageAndCountryLabel}>
+          {languageAndCountry}{' '}
+        </span>
         {name}
-      </React.Fragment>);
+      </React.Fragment>
+    );
   }
 }

@@ -29,7 +29,7 @@ export function openEntryReports(bundleId) {
 
 export function closeEntryReports(bundleId) {
   history.push(navigationConstants.NAVIGATION_BUNDLES);
-  return { type: reportConstants.ENTRY_REPORTS_OPENED, bundleId };
+  return { type: reportConstants.ENTRY_REPORTS_CLOSED, bundleId };
 }
 
 export function setupReportListeners() {
