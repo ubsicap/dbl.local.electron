@@ -135,6 +135,7 @@ class EntryUploadForm extends Component<Props> {
     const { bundleId, uploadEntryBundle } = this.props;
     uploadEntryBundle(bundleId);
     event.stopPropagation();
+    this.handleClose();
   };
 
   handleClose = () => {
