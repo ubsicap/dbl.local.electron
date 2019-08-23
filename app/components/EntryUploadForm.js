@@ -8,17 +8,20 @@ import { compose } from 'recompose';
 import { withStyles } from '@material-ui/core/styles';
 import { Button } from '@material-ui/core';
 import Grid from '@material-ui/core/Grid';
+import Checkbox from '@material-ui/core/Checkbox';
+import { green } from '@material-ui/core/colors';
 import Typography from '@material-ui/core/Typography';
-import Divider from '@material-ui/core/Divider';
 import OpenInNew from '@material-ui/icons/OpenInNew';
 import { createSelector } from 'reselect';
 import EditMetadataForm from './EditMetadataForm';
 import { emptyObject } from '../utils/defaultValues';
+import { reportConstants } from '../constants/report.constants';
 import {
   fetchActiveFormInputs,
   saveFieldValuesForActiveForm,
   openMetadataFile
 } from '../actions/bundleEditMetadata.actions';
+import { startReport } from '../actions/report.actions';
 import { uploadBundle } from '../actions/bundle.actions';
 import { closeUploadForm } from '../actions/uploadForm.actions';
 import EntryAppBar from './EntryAppBar';
@@ -40,7 +43,8 @@ type Props = {
   closeEntryUploadForm: () => {},
   uploadEntryBundle: () => {},
   saveActiveFormFieldValues: () => {},
-  openEntryMetadataFile: () => {}
+  openEntryMetadataFile: () => {},
+  runReport: () => {}
 };
 
 const materialStyles = theme => ({
@@ -118,11 +122,14 @@ const mapDispatchToProps = {
   uploadEntryBundle: uploadBundle,
   openEntryMetadataFile: openMetadataFile,
   closeEntryUploadForm: closeUploadForm,
-  saveActiveFormFieldValues: saveFieldValuesForActiveForm
+  saveActiveFormFieldValues: saveFieldValuesForActiveForm,
+  runReport: startReport
 };
 
 class EntryUploadForm extends Component<Props> {
   props: Props;
+
+  state = {};
 
   componentDidMount() {
     const { fetchToActiveFormInputs, bundleId } = this.props;
@@ -142,13 +149,17 @@ class EntryUploadForm extends Component<Props> {
 
   modeUi = () => {
     const title = 'Upload to DBL';
-    const { classes } = this.props;
+    const { classes, formErrors } = this.props;
+    const { hasCheckedContentUse, hasCheckedMetadataXml } = this.state;
+    const hasFormErrors = Object.keys(formErrors).length > 0;
     const OkButtonProps = {
       classes,
       confirmingProps: { variant: 'contained' },
       color: 'inherit',
       variant: 'text',
-      onClick: this.handleClickUpload
+      onClick: this.handleClickUpload,
+      disabled:
+        hasFormErrors || !(hasCheckedContentUse && hasCheckedMetadataXml)
     };
 
     const modeUi = {
@@ -202,24 +213,28 @@ class EntryUploadForm extends Component<Props> {
 
   renderRightsHolders = () => {
     const {
-      activeBundle: { raw: rawBundle }
+      activeBundle: { raw: rawBundle },
+      classes
     } = this.props;
     const {
       metadata: { agencies }
     } = rawBundle;
     const rightsHolders = agencies.filter(a => a.type === 'rightsHolder');
     return rightsHolders.map(rh => (
-      <Grid container direction="column" justify="center">
-        <Grid item>
-          <Typography noWrap>
-            <span style={{ fontWeight: 'bold' }}>{rh.abbr}</span>
-          </Typography>
-        </Grid>
-        <Grid item>
-          <Typography noWrap>{rh.name}</Typography>
-        </Grid>
-        <Divider />
-      </Grid>
+      <Card className={classes.card} key={rh.uid}>
+        <CardActions>
+          <Grid container direction="column" justify="center">
+            <Grid item>
+              <Typography noWrap>
+                <span style={{ fontWeight: 'bold' }}>{rh.abbr}</span>
+              </Typography>
+            </Grid>
+            <Grid item>
+              <Typography noWrap>{rh.name}</Typography>
+            </Grid>
+          </Grid>
+        </CardActions>
+      </Card>
     ));
   };
 
@@ -237,9 +252,16 @@ class EntryUploadForm extends Component<Props> {
     );
   };
 
+  handleRunReportChecksContentUse = () => {
+    const { runReport, bundleId } = this.props;
+    runReport(bundleId, reportConstants.ChecksUseContent);
+    this.setState({ hasCheckedContentUse: true });
+  };
+
   handleOpenMetadataXml = () => {
     const { openEntryMetadataFile, bundleId } = this.props;
     openEntryMetadataFile(bundleId);
+    this.setState({ hasCheckedMetadataXml: true });
   };
 
   render() {
@@ -250,6 +272,10 @@ class EntryUploadForm extends Component<Props> {
       formErrors,
       classes
     } = this.props;
+    const {
+      hasCheckedContentUse = false,
+      hasCheckedMetadataXml = false
+    } = this.state;
     const modeUi = this.modeUi();
     return (
       <div>
@@ -267,12 +293,7 @@ class EntryUploadForm extends Component<Props> {
               <Grid item key="archiveStatus" sm={12} md={12} lg={12}>
                 <Card className={classes.card}>
                   <CardContent>
-                    <Typography
-                      variant="title"
-                      noWrap
-                      color="title"
-                      gutterBottom
-                    >
+                    <Typography variant="h6" noWrap gutterBottom>
                       Archive Status
                     </Typography>
                     <EditMetadataForm
@@ -291,12 +312,7 @@ class EntryUploadForm extends Component<Props> {
               <Grid item key="rightsHolders" sm={12} md={12} lg={12}>
                 <Card className={classes.card}>
                   <CardContent>
-                    <Typography
-                      variant="title"
-                      noWrap
-                      color="title"
-                      gutterBottom
-                    >
+                    <Typography variant="h6" noWrap gutterBottom>
                       Rightsholders
                     </Typography>
                     {this.renderRightsHolders()}
@@ -306,26 +322,32 @@ class EntryUploadForm extends Component<Props> {
               <Grid item key="Checks" sm={12} md={12} lg={12}>
                 <Card className={classes.card}>
                   <CardContent>
-                    <Typography
-                      variant="title"
-                      noWrap
-                      color="title"
-                      gutterBottom
-                    >
+                    <Typography variant="h6" noWrap gutterBottom>
                       Checks
                     </Typography>
                   </CardContent>
                   <CardActions>
-                    <Grid container direction="column">
-                      <Grid item style={{ margin: '10px' }}>
-                        <Button variant="outlined">
+                    <Grid container direction="column" spacing={24}>
+                      <Grid item>
+                        <GreenCheckbox
+                          checked={hasCheckedContentUse}
+                          disabled={!hasCheckedContentUse}
+                        />
+                        <Button
+                          variant="outlined"
+                          onClick={this.handleRunReportChecksContentUse}
+                        >
                           {ux.getModeIcon('reports', {
                             className: classes.leftIcon
                           })}
                           Run Checks Content Use Report
                         </Button>
                       </Grid>
-                      <Grid item style={{ margin: '10px' }}>
+                      <Grid item>
+                        <GreenCheckbox
+                          checked={hasCheckedMetadataXml}
+                          disabled={!hasCheckedMetadataXml}
+                        />
                         <Button
                           variant="outlined"
                           onClick={this.handleOpenMetadataXml}
@@ -345,6 +367,16 @@ class EntryUploadForm extends Component<Props> {
     );
   }
 }
+
+const GreenCheckbox = withStyles({
+  root: {
+    color: green[400],
+    '&$checked': {
+      color: green[600]
+    }
+  },
+  checked: {}
+})(props => <Checkbox color="default" {...props} />);
 
 export default compose(
   withStyles(materialStyles),
