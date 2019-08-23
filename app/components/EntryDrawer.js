@@ -133,7 +133,7 @@ class EntryDrawer extends PureComponent<Props> {
 
   renderListItem = item => {
     if (item.type === 'divider') {
-      return <Divider />;
+      return <Divider key={item.label} />;
     }
     const { classes } = this.props;
     return (
