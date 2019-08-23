@@ -1,3 +1,11 @@
+### Version 0.42.0 (Upload Form)
+
+#### Feature
+
+- Add Upload form so user can run checks, enter archive comment, and see rightsHolders prior to upload
+- Added Upload form to bottom of Entry Drawer
+- Added field errors Badge to Metadata Entry Drawer item
+
 ### Version 0.41.1 (Metadata > Save as template)
 
 #### Fix
