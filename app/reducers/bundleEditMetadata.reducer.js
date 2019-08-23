@@ -2,6 +2,7 @@ import { bundleEditMetadataConstants } from '../constants/bundleEditMetadata.con
 import editMetadataService from '../services/editMetadata.service';
 import { bundleConstants } from '../constants/bundle.constants';
 import { bundleResourceManagerConstants } from '../constants/bundleResourceManager.constants';
+import { uploadFormConstants } from '../constants/uploadForm.constants';
 
 const initialState = {
   editingMetadata: null,
@@ -47,6 +48,7 @@ export function bundleEditMetadata(state = initialState, action) {
         moveNext: action.moveNextStep
       };
     }
+    case uploadFormConstants.UPLOAD_FORM_OPENED:
     case bundleEditMetadataConstants.OPEN_EDIT_METADATA: {
       const { bundleToEdit, bundleId: editingMetadata } = action;
       const { formFieldIssues, errorTree } = getFormErrorData(bundleToEdit);
@@ -71,6 +73,7 @@ export function bundleEditMetadata(state = initialState, action) {
     case bundleResourceManagerConstants.CLOSE_RESOURCE_MANAGER: {
       return initialState;
     }
+    case uploadFormConstants.UPLOAD_FORM_CLOSED:
     case bundleEditMetadataConstants.CLOSE_EDIT_METADATA: {
       return initialState;
     }

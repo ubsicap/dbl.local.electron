@@ -1,8 +1,9 @@
 import { history } from '../store/configureStore';
 import { uploadFormConstants } from '../constants/uploadForm.constants';
 import { navigationConstants } from '../constants/navigation.constants';
+import { bundleService } from '../services/bundle.service';
 import { utilities } from '../utils/utilities';
-import { fetchActiveFormInputs } from '../actions/bundleEditMetadata.actions';
+import { fetchActiveFormInputs } from './bundleEditMetadata.actions';
 
 export const uploadFormActions = {
   openUploadForm,
@@ -10,14 +11,22 @@ export const uploadFormActions = {
 };
 
 export function openUploadForm(bundleId) {
-  return dispatch => {
+  return (dispatch, getState) => {
     dispatch(fetchActiveFormInputs(bundleId, '/archiveStatus'));
     const url = utilities.buildRouteUrl(
       navigationConstants.NAVIGATION_ENTRY_UPLOAD_FORM,
       { bundleId }
     );
     history.push(url);
-    dispatch({ type: uploadFormConstants.UPLOAD_FORM_OPENED, bundleId });
+    const bundleToEdit = bundleService.getCurrentBundleState(
+      getState,
+      bundleId
+    );
+    dispatch({
+      type: uploadFormConstants.UPLOAD_FORM_OPENED,
+      bundleId,
+      bundleToEdit
+    });
   };
 }
 
