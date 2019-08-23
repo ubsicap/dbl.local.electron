@@ -64,7 +64,7 @@ const materialStyles = theme => ({
     }
   },
   cardGrid: {
-    padding: `${theme.spacing.unit * 8}px 0`
+    padding: `${theme.spacing.unit * 0}px 0`
   },
   card: {
     height: '100%',
@@ -131,7 +131,7 @@ class EntryUploadForm extends Component<Props> {
 
   state = {};
 
-  onClickUploadBundle = event => {
+  handleClickUpload = event => {
     const { bundleId, uploadEntryBundle } = this.props;
     uploadEntryBundle(bundleId);
     event.stopPropagation();
@@ -288,35 +288,6 @@ class EntryUploadForm extends Component<Props> {
         <EntryDialogBody>
           <div className={classNames(classes.layout, classes.cardGrid)}>
             <Grid container spacing={40}>
-              <Grid item key="archiveStatus" sm={12} md={12} lg={12}>
-                <Card className={classes.card}>
-                  <CardContent>
-                    <Typography variant="h6" noWrap gutterBottom>
-                      Archive Status
-                    </Typography>
-                    <EditMetadataForm
-                      key={archiveStatusFormKey}
-                      bundleId={bundleId}
-                      formKey={archiveStatusFormKey}
-                      isFactory={false}
-                      formErrors={formErrors}
-                      inputs={archiveStatusFormInputs}
-                      isActiveForm
-                    />
-                  </CardContent>
-                  <CardActions>{this.renderSaveUndoButtons()}</CardActions>
-                </Card>
-              </Grid>
-              <Grid item key="rightsHolders" sm={12} md={12} lg={12}>
-                <Card className={classes.card}>
-                  <CardContent>
-                    <Typography variant="h6" noWrap gutterBottom>
-                      Rightsholders
-                    </Typography>
-                    {this.renderRightsHolders()}
-                  </CardContent>
-                </Card>
-              </Grid>
               <Grid item key="Checks" sm={12} md={12} lg={12}>
                 <Card className={classes.card}>
                   <CardContent>
@@ -356,6 +327,35 @@ class EntryUploadForm extends Component<Props> {
                       </Grid>
                     </Grid>
                   </CardActions>
+                </Card>
+              </Grid>
+              <Grid item key="archiveStatus" sm={12} md={12} lg={12}>
+                <Card className={classes.card}>
+                  <CardContent>
+                    <Typography variant="h6" noWrap gutterBottom>
+                      Archive Status
+                    </Typography>
+                    <EditMetadataForm
+                      key={archiveStatusFormKey}
+                      bundleId={bundleId}
+                      formKey={archiveStatusFormKey}
+                      isFactory={false}
+                      formErrors={formErrors}
+                      inputs={archiveStatusFormInputs}
+                      isActiveForm
+                    />
+                  </CardContent>
+                  <CardActions>{this.renderSaveUndoButtons()}</CardActions>
+                </Card>
+              </Grid>
+              <Grid item key="rightsHolders" sm={12} md={12} lg={12}>
+                <Card className={classes.card}>
+                  <CardContent>
+                    <Typography variant="h6" noWrap gutterBottom>
+                      Rightsholders
+                    </Typography>
+                    {this.renderRightsHolders()}
+                  </CardContent>
                 </Card>
               </Grid>
             </Grid>
