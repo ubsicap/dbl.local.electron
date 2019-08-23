@@ -46,9 +46,9 @@ import {
 import { bundleService } from '../services/bundle.service';
 import { ux } from '../utils/ux';
 import DeleteOrCleanButton from './DeleteOrCleanButton';
-import ConfirmButton from './ConfirmButton';
 import MediumIcon from './MediumIcon';
 import { emptyArray, emptyObject } from '../utils/defaultValues';
+import { openUploadForm } from '../actions/uploadForm.actions';
 
 type Props = {
   bundleId: string,
@@ -85,6 +85,7 @@ type Props = {
   forkEntryIntoNewBundle: () => {},
   openEntryEditMetadata: () => {},
   uploadEntryBundle: () => {},
+  switchToUploadForm: () => {},
   updateEntryBundle: () => {},
   createEntryDraftRevision: () => {},
   openEntryJobSpecInBrowser: () => {},
@@ -99,6 +100,7 @@ const mapDispatchToProps = {
   forkEntryIntoNewBundle: forkIntoNewBundle,
   openEntryEditMetadata: openEditMetadata,
   uploadEntryBundle: uploadBundle,
+  switchToUploadForm: openUploadForm,
   updateEntryBundle: updateBundle,
   createEntryDraftRevision: createDraftRevision,
   openEntryJobSpecInBrowser: openJobSpecInBrowser,
@@ -421,8 +423,8 @@ class DBLEntryRow extends PureComponent<Props> {
   };
 
   onClickUploadBundle = event => {
-    const { bundleId, uploadEntryBundle } = this.props;
-    uploadEntryBundle(bundleId);
+    const { bundleId, switchToUploadForm } = this.props;
+    switchToUploadForm(bundleId);
     event.stopPropagation();
   };
 
@@ -823,8 +825,7 @@ class DBLEntryRow extends PureComponent<Props> {
               shouldDisableCleanResources={this.shouldDisableCleanResources()}
             />
             {this.shouldShowUpload() && (
-              <ConfirmButton
-                classes={classes}
+              <Button
                 variant="text"
                 size="small"
                 className={classes.button}
@@ -836,7 +837,7 @@ class DBLEntryRow extends PureComponent<Props> {
                   className={classNames(classes.leftIcon, classes.iconSmall)}
                 />
                 Upload
-              </ConfirmButton>
+              </Button>
             )}
           </Toolbar>
         )}
