@@ -131,11 +131,6 @@ class EntryUploadForm extends Component<Props> {
 
   state = {};
 
-  componentDidMount() {
-    const { fetchToActiveFormInputs, bundleId } = this.props;
-    fetchToActiveFormInputs(bundleId, archiveStatusFormKey);
-  }
-
   onClickUploadBundle = event => {
     const { bundleId, uploadEntryBundle } = this.props;
     uploadEntryBundle(bundleId);
@@ -204,7 +199,10 @@ class EntryUploadForm extends Component<Props> {
     return hasFormChanged;
   };
 
-  handleUndo = () => {};
+  handleUndo = () => {
+    const { bundleId, fetchToActiveFormInputs } = this.props;
+    fetchToActiveFormInputs(bundleId, archiveStatusFormKey, true);
+  };
 
   handleSave = () => {
     const { saveActiveFormFieldValues } = this.props;
