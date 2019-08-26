@@ -1,7 +1,7 @@
 import waitUntil from 'node-wait-until';
 import { clipboardConstants } from '../constants/clipboard.constants';
 import { bundleService } from '../services/bundle.service';
-import { fetchFormStructure } from '../actions/bundleEditMetadata.actions';
+import { fetchFormStructure } from './bundleEditMetadata.actions';
 import { clipboardHelpers } from '../helpers/clipboard';
 
 export const clipboardActions = {
@@ -19,7 +19,8 @@ export function selectItemsToPaste(bundleId, items, type) {
       items,
       itemsType: type,
       getMedium: () => getState().bundles.addedByBundleIds[bundleId].medium,
-      getDisplayAs: () => getState().bundles.addedByBundleIds[bundleId].displayAs
+      getDisplayAs: () =>
+        getState().bundles.addedByBundleIds[bundleId].displayAs
     });
   };
 }
@@ -44,16 +45,23 @@ export function pasteItems(bundleId) {
     dispatch(request(bundleId, selectedItemsToPaste.items));
     if (selectedItemsToPaste.itemsType === 'resources') {
       await bundleService.copyResources(
-        bundleId, selectedItemsToPaste.bundleId,
+        bundleId,
+        selectedItemsToPaste.bundleId,
         selectedItemsToPaste.items
       );
     } else if (selectedItemsToPaste.itemsType === 'metadata sections') {
       const targetBundle = getState().bundles.addedByBundleIds[bundleId];
-      const sectionsToPaste = selectedItemsToPaste.items
-        .filter(sectionName => clipboardHelpers.getIsMetadataSectionCompatibleForPasting(selectedItemsToPaste.getMedium(), targetBundle.medium, sectionName));
+      const sectionsToPaste = selectedItemsToPaste.items.filter(sectionName =>
+        clipboardHelpers.getIsMetadataSectionCompatibleForPasting(
+          selectedItemsToPaste.getMedium(),
+          targetBundle.medium,
+          sectionName
+        )
+      );
       await bundleService.waitStopCreateMode(bundleId);
       await bundleService.copyMetadata(
-        bundleId, selectedItemsToPaste.bundleId,
+        bundleId,
+        selectedItemsToPaste.bundleId,
         sectionsToPaste
       );
       // wait for eventSource listeners to change the state
@@ -82,23 +90,30 @@ export function pasteItems(bundleId) {
 
 export function setupClipboardListeners() {
   return (dispatch, getState) => {
-    const { authentication: { eventSource } } = getState();
+    const {
+      authentication: { eventSource }
+    } = getState();
     if (!eventSource) {
       console.error('EventSource undefined');
       return;
     }
-    const dispatchListenStorerExecuteTask = (e) => dispatch(listenStorerExecuteTask(e));
-    const dispatchListenStorerChangeMode = (e) => dispatch(listenStorerChangeMode(e));
+    const dispatchListenStorerExecuteTask = e =>
+      dispatch(listenStorerExecuteTask(e));
+    const dispatchListenStorerChangeMode = e =>
+      dispatch(listenStorerChangeMode(e));
 
     const listeners = {
       'storer/execute_task': dispatchListenStorerExecuteTask,
-      'storer/change_mode': dispatchListenStorerChangeMode,
+      'storer/change_mode': dispatchListenStorerChangeMode
     };
-    Object.keys(listeners).forEach((evType) => {
+    Object.keys(listeners).forEach(evType => {
       const handler = listeners[evType];
       eventSource.addEventListener(evType, handler);
     });
-    return dispatch({ type: clipboardConstants.CLIPBOARD_LISTENERS, listeners });
+    return dispatch({
+      type: clipboardConstants.CLIPBOARD_LISTENERS,
+      listeners
+    });
   };
 }
 
@@ -120,7 +135,10 @@ function listenStorerExecuteTask(event) {
     }
     console.log(`clipboard listenStorerExecuteTask: ${event.data}`);
     if (['copyMetadata', 'copyResources'].includes(task)) {
-      dispatch({ type: clipboardConstants.CLIPBOARD_HAS_STARTED_PASTE_ITEMS, task });
+      dispatch({
+        type: clipboardConstants.CLIPBOARD_HAS_STARTED_PASTE_ITEMS,
+        task
+      });
     }
   };
 }
@@ -135,7 +153,11 @@ function listenStorerExecuteTask(event) {
 function listenStorerChangeMode(event) {
   return (dispatch, getState) => {
     const { clipboard } = getState();
-    const { selectedItemsToPaste = null, isPastingSelectedItems, bundleIdTarget } = clipboard;
+    const {
+      selectedItemsToPaste = null,
+      isPastingSelectedItems,
+      bundleIdTarget
+    } = clipboard;
     if (!selectedItemsToPaste || !bundleIdTarget || !isPastingSelectedItems) {
       return;
     }
@@ -147,9 +169,11 @@ function listenStorerChangeMode(event) {
     console.log(`clipboard listenStorerChangeMode: ${event.data}`);
     if (mode === 'store') {
       dispatch({ type: clipboardConstants.CLIPBOARD_HAS_FINISHED_PASTE_ITEMS });
-      const { authentication: { eventSource } } = getState();
+      const {
+        authentication: { eventSource }
+      } = getState();
       const { listeners } = clipboard;
-      Object.keys(listeners).forEach((evType) => {
+      Object.keys(listeners).forEach(evType => {
         const handler = listeners[evType];
         eventSource.removeEventListener(evType, handler);
       });

@@ -16,8 +16,10 @@ import {
   openMetadataFile,
   openEditMetadata
 } from '../actions/bundleEditMetadata.actions';
+import editMetadataService from '../services/editMetadata.service';
 import { openResourceManager } from '../actions/bundleManageResources.actions';
 import { openEntryReports } from '../actions/report.actions';
+import { openUploadForm } from '../actions/uploadForm.actions';
 import { closeEntryDrawer } from '../actions/entryAppBar.actions';
 import { ux } from '../utils/ux';
 
@@ -27,17 +29,25 @@ type Props = {
   bundleId: string,
   activeBundle: {},
   openDrawer: boolean,
+  formsWithErrors: [],
   hideEntryDrawer: () => {},
   openEntryMetadataFile: () => {},
   openEditEntryMetadata: () => {},
   openEntryResourceManager: () => {},
-  switchToEntryReports: () => {}
+  switchToEntryReports: () => {},
+  switchToUploadForm: () => {}
 };
+
+const getFormsErrors = editMetadataService.makeGetFormsErrors();
 
 function mapStateToProps(state, props) {
   const { id: bundleId } = props.activeBundle;
+  const formsWithErrors = Object.keys(
+    getFormsErrors(state, props.activeBundle)
+  );
   return {
     bundleId,
+    formsWithErrors,
     openDrawer: state.entryAppBar.openDrawer
   };
 }
@@ -47,7 +57,8 @@ const mapDispatchToProps = {
   openEditEntryMetadata: openEditMetadata,
   openEntryResourceManager: openResourceManager,
   hideEntryDrawer: closeEntryDrawer,
-  switchToEntryReports: openEntryReports
+  switchToEntryReports: openEntryReports,
+  switchToUploadForm: openUploadForm
 };
 
 const materialStyles = theme => ({
@@ -59,42 +70,90 @@ const materialStyles = theme => ({
 class EntryDrawer extends PureComponent<Props> {
   props: Props;
 
-  getResourceMode = () => {
+  getBundleStatus = () => {
     const { activeBundle } = this.props;
     const { status } = activeBundle;
+    return status;
+  };
+
+  getResourceMode = () => {
+    const status = this.getBundleStatus();
     const mode = status === 'DRAFT' ? 'addFiles' : 'download';
     return mode;
   };
 
-  getDrawerItems = () => [
-    {
-      label: 'Metadata',
-      icon: ux.getModeIcon('metadata'),
-      handleClick: this.handleSwitchToMetadata
-    },
-    {
-      label: 'Resources',
-      icon: ux.getModeIcon(this.getResourceMode()),
-      handleClick: this.handleSwitchToResources
-    },
-    {
-      label: 'Revisions',
-      icon: ux.getModeIcon('revisions'),
-      handleClick: this.handleSwitchToRevisions
-    },
-    {
-      label: 'Reports',
-      icon: ux.getModeIcon('reports'),
-      handleClick: this.handleSwitchToReports
-    }
-  ];
+  shouldDisableUpload = () => {
+    const status = this.getBundleStatus();
+    const { formsWithErrors } = this.props;
+    return status !== 'DRAFT' || formsWithErrors.length > 0;
+  };
 
-  renderListItem = item => (
-    <ListItem button key={item.label} onClick={item.handleClick}>
-      <ListItemIcon>{item.icon}</ListItemIcon>
-      <ListItemText primary={item.label} />
-    </ListItem>
-  );
+  getDrawerItems = () => {
+    const { formsWithErrors } = this.props;
+    const formsErrorCount = formsWithErrors.length;
+    return [
+      {
+        badge: formsErrorCount,
+        label: 'Metadata',
+        icon: ux.getModeIcon('metadata'),
+        handleClick: this.handleSwitchToMetadata
+      },
+      {
+        label: 'Resources',
+        icon: ux.getModeIcon(this.getResourceMode()),
+        handleClick: this.handleSwitchToResources
+      },
+      {
+        label: 'Revisions',
+        icon: ux.getModeIcon('revisions'),
+        handleClick: this.handleSwitchToRevisions
+      },
+      {
+        label: 'Reports',
+        icon: ux.getModeIcon('reports'),
+        handleClick: this.handleSwitchToReports
+      },
+      {
+        label: 'Action-Divider',
+        type: 'divider'
+      },
+      {
+        label: 'Review metadata.xml',
+        icon: <OpenInNew />,
+        handleClick: this.handleOpenMetadataXml
+      },
+      {
+        label: 'Upload to DBL',
+        icon: ux.getModeIcon('upload'),
+        handleClick: this.handleSwitchToUploadForm,
+        disabled: this.shouldDisableUpload()
+      }
+    ];
+  };
+
+  renderListItem = item => {
+    if (item.type === 'divider') {
+      return <Divider key={item.label} />;
+    }
+    const { classes } = this.props;
+    return (
+      <ListItem
+        button
+        key={item.label}
+        onClick={item.handleClick}
+        disabled={item.disabled}
+      >
+        <ListItemIcon>
+          {ux.conditionallyRenderBadge(
+            { className: classes.badge, color: 'error' },
+            item.badge,
+            item.icon
+          )}
+        </ListItemIcon>
+        <ListItemText primary={item.label} />
+      </ListItem>
+    );
+  };
 
   handleOpenMetadataXml = () => {
     const { openEntryMetadataFile, bundleId } = this.props;
@@ -117,9 +176,19 @@ class EntryDrawer extends PureComponent<Props> {
     openEntryResourceManager(bundleId, 'revisions', false);
   };
 
+  handleSwitchToUploadForm = () => {
+    const { switchToUploadForm, bundleId } = this.props;
+    switchToUploadForm(bundleId, 'reports');
+  };
+
   handleSwitchToReports = () => {
     const { switchToEntryReports, bundleId } = this.props;
     switchToEntryReports(bundleId, 'reports');
+  };
+
+  handleSwitchToUploadForm = () => {
+    const { switchToUploadForm, bundleId } = this.props;
+    switchToUploadForm(bundleId);
   };
 
   render() {
@@ -145,32 +214,7 @@ class EntryDrawer extends PureComponent<Props> {
             )}
           </IconButton>
         </div>
-        <Divider />
-        <MaterialUiList>
-          <ListItem
-            button
-            key="metadataXml"
-            onClick={this.handleOpenMetadataXml}
-          >
-            <ListItemIcon>
-              <OpenInNew />
-            </ListItemIcon>
-            <ListItemText primary="Review metadata.xml" />
-          </ListItem>
-        </MaterialUiList>
-        <Divider />
         <MaterialUiList>{items.map(this.renderListItem)}</MaterialUiList>
-        {/*
-        <Divider />
-        <MaterialUiList>
-          {['Make Revision', 'Export To', 'Copy As'].map((text, index) => (
-            <ListItem button key={text}>
-              <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
-              <ListItemText primary={text} />
-            </ListItem>
-          ))}
-        </MaterialUiList>
-        */}
       </Drawer>
     );
   }
