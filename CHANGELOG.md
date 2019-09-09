@@ -1,3 +1,9 @@
+### Version 0.43.0 (Capture console log)
+
+#### Feature
+
+- Help > Open Log... now captures most of what gets sent to console.log
+
 ### Version 0.42.0 (Upload Form)
 
 #### Feature
