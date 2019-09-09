@@ -42,6 +42,9 @@ if (process.env.NODE_ENV === 'development') {
 } else {
   log.transports.file.level = 'debug';
 }
+log.transports.console.level = 'error';
+log.catchErrors({});
+
 log.info('App starting...');
 log.info(`Log file: ${log.transports.file.file}`);
 
@@ -145,11 +148,11 @@ app.on('ready', async () => {
   });
 
   mainWindow.onerror = err => {
-    log.error(JSON.stringify(err));
+    // log.error(JSON.stringify(err));
   };
 
   process.on('uncaughtException', err => {
-    log.error(JSON.stringify(err));
+    // log.error(JSON.stringify(err));
   });
 
   /*
