@@ -81,7 +81,7 @@ export function gotoWorkspaceLoginPage(workspace) {
         history.push(loginUrl);
       });
     } catch (error) {
-      console.log(error);
+      log.error(error);
     }
   };
   function setWorkspaceFullPath(fullPath, configXmlFile, dblDotLocalExecProcess) {

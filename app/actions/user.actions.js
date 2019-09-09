@@ -88,12 +88,12 @@ function connectSSE(authToken) {
 function startPowerMonitor() {
   return (dispatch, getState) => {
     remote.powerMonitor.on('resume', () => {
-      console.log('The system is resuming. Checking SSE...');
+      log.info('The system is resuming. Checking SSE...');
       const { authentication } = getState();
       const { user, eventSource } = authentication;
       if (user && user.auth_token && eventSource &&
           dblDotLocalService.getIsClosedEventSource(eventSource)) {
-        console.log('SSE eventSource was closed. Re-establishing');
+        log.info('SSE eventSource was closed. Re-establishing');
         dispatch(connectSSE(user.auth_token));
         dispatch(setupBundlesEventSource());
       }

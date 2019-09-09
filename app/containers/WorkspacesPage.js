@@ -216,7 +216,7 @@ class WorkspacesPage extends PureComponent<Props> {
         // console.log(`renaming workspace path to ${newWorkspacePath}`);
         fs.renameSync(oldWorkspacePath, newWorkspacePath);
       } catch (error) {
-        console.log(error);
+        log.error(error);
       }
     }
     dblDotLocalService.updateAndWriteConfigXmlSettings(newSettings);
