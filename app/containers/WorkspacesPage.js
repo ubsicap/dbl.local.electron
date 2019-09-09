@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import fs from 'fs-extra';
 import path from 'path';
+import log from 'electron-log';
 import sort from 'fast-sort';
 import uuidv1 from 'uuid/v1';
 import classNames from 'classnames';
@@ -29,8 +30,12 @@ import MenuAppBar from '../components/MenuAppBar';
 import WorkspaceEditDialog from '../components/WorkspaceEditDialog';
 import ConfirmButton from '../components/ConfirmButton';
 import { utilities } from '../utils/utilities';
+import { logHelpers } from '../helpers/log.helpers';
 
 const { dialog } = require('electron').remote;
+
+logHelpers.setupLogFile(__dirname, 'debug', 'debug');
+log.info('UI starting...');
 
 type Props = {
   classes: {},
@@ -211,7 +216,7 @@ class WorkspacesPage extends PureComponent<Props> {
         // console.log(`renaming workspace path to ${newWorkspacePath}`);
         fs.renameSync(oldWorkspacePath, newWorkspacePath);
       } catch (error) {
-        console.log(error);
+        log.error(error);
       }
     }
     dblDotLocalService.updateAndWriteConfigXmlSettings(newSettings);

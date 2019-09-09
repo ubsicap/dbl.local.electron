@@ -611,7 +611,7 @@ export function removeExcessBundles() {
       }
       return true;
     });
-    console.log(`Deleting ${bundleIdsToRemove.length} empty/unused revisions`);
+    log.info(`Deleting ${bundleIdsToRemove.length} empty/unused revisions`);
     bundleIdsToRemove.forEach(idBundleToRemove => {
       dispatch(removeBundle(idBundleToRemove));
     });
