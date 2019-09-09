@@ -17,6 +17,7 @@ import path from 'path';
 import MenuBuilder from './menu';
 import { autoUpdaterServices } from './main-process/autoUpdater.services';
 import { navigationConstants } from './constants/navigation.constants';
+import { logHelpers } from './helpers/log.helpers';
 
 /*
 export default class AppUpdater {
@@ -30,23 +31,8 @@ export default class AppUpdater {
 
 let mainWindow = null;
 
-/*
- * from https://github.com/megahertz/electron-log
- * on Linux: ~/.config/<app name>/log.log
- * on OS X: ~/Library/Logs/<app name>/log.log
- * on Windows: %USERPROFILE%\AppData\Roaming\<app name>\log.log
- */
-if (process.env.NODE_ENV === 'development') {
-  log.transports.file.level = 'debug';
-  log.transports.file.file = path.join(__dirname, 'log-dev.txt');
-} else {
-  log.transports.file.level = 'debug';
-}
-log.transports.console.level = 'error';
-log.catchErrors({});
-
-log.info('App starting...');
-log.info(`Log file: ${log.transports.file.file}`);
+logHelpers.setupLogFile(__dirname, 'debug', 'error');
+log.info('Main App starting...');
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');

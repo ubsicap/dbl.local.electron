@@ -15,17 +15,6 @@ import {
   parseAsJson
 } from '../helpers/services';
 
-if (process.env.NODE_ENV === 'development') {
-  log.transports.file.level = 'debug';
-  log.transports.file.file = path.join(__dirname, 'log-dev-renderer.txt');
-} else {
-  log.transports.file.level = 'debug';
-}
-log.transports.console.level = log.transports.file.level;
-
-log.info('Renderer starting...');
-log.info(`Renderer Log file: ${log.transports.file.file}`);
-
 export const dblDotLocalService = {
   health,
   htmlBaseUrl,

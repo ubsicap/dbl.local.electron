@@ -807,7 +807,8 @@ async function getMapperOverwrites(bundleId, direction, mappers, uris) {
     );
     return servicesHelpers.handleResponseAsReadable(response).json();
   } catch (error) {
-    return servicesHelpers.handleResponseAsReadable(error).text();
+    const err = servicesHelpers.handleResponseAsReadable(error).text();
+    log.error(err);
   }
 }
 

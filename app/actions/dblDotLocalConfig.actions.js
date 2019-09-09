@@ -1,3 +1,4 @@
+import log from 'electron-log';
 import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { history } from '../store/configureStore';
@@ -22,6 +23,7 @@ export function loadHtmlBaseUrl() {
       dispatch(success(dblBaseUrl));
     } catch (readableError) {
       const errorMsg = await readableError.text();
+      log.error(errorMsg);
       dispatch(failure(errorMsg));
     }
   };
