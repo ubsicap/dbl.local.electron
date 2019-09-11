@@ -457,6 +457,24 @@ function updateAndWriteConfigXmlSettings({ configXmlSettings, workspace }) {
       newConfigXmlSettings.settings.system[0].executables.sox = [soxPath];
     }
   }
+  if (!newConfigXmlSettings.settings.dbl[0].metadataVersions) {
+    /* <metadataVersions>
+    <read>2.0</read>
+    <read>2.1</read>
+    <read>2.2</read>
+    <read>2.2.1</read>
+    <write>2.2.1</write>
+      </metadataVersions>
+    */
+    const metadataVersions = [
+      { read: '2.0' },
+      { read: '2.1' },
+      { read: '2.2' },
+      { read: '2.2.1' },
+      { write: '2.2.1' }
+    ];
+    newConfigXmlSettings.settings.dbl[0].metadataVersions = [metadataVersions];
+  }
   newConfigXmlSettings.settings.storer[0].bundleRootDir[0] = path.join(
     fullPath,
     'bundles'
