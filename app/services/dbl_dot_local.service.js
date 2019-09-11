@@ -4,6 +4,8 @@ import Store from 'electron-store';
 import childProcess from 'child_process';
 import xml2js from 'xml2js';
 import log from 'electron-log';
+// import * as winston from 'winston';
+// import { ConsoleForElectron } from 'winston-console-for-electron';
 import dblDotLocalConstants from '../constants/dblDotLocal.constants';
 import { authHeader } from '../helpers';
 import {
@@ -42,6 +44,18 @@ export const dblDotLocalService = {
   getApp
 };
 export default dblDotLocalService;
+
+/*
+const logger = winston.createLogger({
+  transports: [
+    new ConsoleForElectron({
+      prefix: 'winstonConsole',
+      stderrLevels: ['error', 'debug'],
+      level: 'info'
+    })
+  ]
+});
+*/
 
 const UX_API = 'ux';
 const SESSION_API = 'session';
@@ -215,14 +229,14 @@ async function startDblDotLocal(configXmlFile) {
     }
     return startDblDotLocalSubProcess(configXmlFile);
   } catch (error) {
-    console.log(error);
+    log.error(error);
   }
 }
 
 function startDblDotLocalSubProcess(configXmlFile) {
   // try to start local dbl_dot_local_app process if it exists.
   const dblDotLocalExecPath = getDblDotLocalExecPath();
-  console.log(dblDotLocalExecPath);
+  log.info(dblDotLocalExecPath);
   if (!fs.exists(dblDotLocalExecPath)) {
     throw new Error(`Not found: ${dblDotLocalExecPath}`);
   }
@@ -234,13 +248,13 @@ function startDblDotLocalSubProcess(configXmlFile) {
   });
   subProcess.stderr.on('data', data => {
     // log.error(data);
-    console.log(`dbl_dot_local_app: ${data}`);
+    log.info(`dbl_dot_local_app: ${data}`);
   });
   ['error', 'close', 'exit'].forEach(event => {
     subProcess.on(event, code => {
       const msg = `dbl_dot_local_app (${event}): ${code}`;
       if (code === null) {
-        console.log(msg);
+        log.info(msg);
         return;
       }
       log.error(msg);
@@ -391,7 +405,7 @@ function readFileOrTemplate(configXmlPath) {
       'config.xml.template'
     );
     if (!fs.existsSync(templateConfigXml)) {
-      console.log(`Missing ${templateConfigXml}`);
+      log.error(`Missing ${templateConfigXml}`);
       return null;
     }
     return fs.readFileSync(templateConfigXml);
@@ -485,12 +499,12 @@ function startEventSource(authToken, getState) {
   const eventSource = new EventSource(
     `${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/events/${authToken}`
   );
-  console.log(`SSE connected: ${authToken}`);
+  log.info(`SSE connected: ${authToken}`);
   eventSource.onmessage = event => {
-    console.log(event);
+    log.info(event);
   };
   eventSource.onopen = () => {
-    console.log('Connection to event source opened.');
+    log.info('Connection to event source opened.');
   };
   eventSource.onerror = error => {
     const { isTrusted, ...rest } = error;
@@ -504,7 +518,7 @@ function startEventSource(authToken, getState) {
     } = getState();
     if (!dblDotLocalExecProcess && !getIsClosedEventSource(evtSource)) {
       evtSource.close();
-      console.log('session EventSource closed');
+      log.info('session EventSource closed');
     }
   };
   return eventSource;

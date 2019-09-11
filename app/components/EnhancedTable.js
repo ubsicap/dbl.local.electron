@@ -1,3 +1,4 @@
+import log from 'electron-log';
 import React, { Component } from 'react';
 import { Set } from 'immutable';
 import MUIDataTable from 'mui-datatables';
@@ -216,8 +217,8 @@ class EnhancedTable extends Component<Props> {
 
   componentDidCatch(error, info) {
     // https://github.com/gregnb/mui-datatables/issues/370
-    console.log(error);
-    console.log(info);
+    log.error(error);
+    log.info(info);
     this.setState({ page: 0 });
   }
 

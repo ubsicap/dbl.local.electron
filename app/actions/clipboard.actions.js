@@ -1,3 +1,4 @@
+import log from 'electron-log';
 import waitUntil from 'node-wait-until';
 import { clipboardConstants } from '../constants/clipboard.constants';
 import { bundleService } from '../services/bundle.service';
@@ -133,7 +134,7 @@ function listenStorerExecuteTask(event) {
     if (bundleId !== bundleIdTarget) {
       return;
     }
-    console.log(`clipboard listenStorerExecuteTask: ${event.data}`);
+    log.debug(`clipboard listenStorerExecuteTask: ${event.data}`);
     if (['copyMetadata', 'copyResources'].includes(task)) {
       dispatch({
         type: clipboardConstants.CLIPBOARD_HAS_STARTED_PASTE_ITEMS,
@@ -166,7 +167,7 @@ function listenStorerChangeMode(event) {
     if (bundleId !== bundleIdTarget) {
       return;
     }
-    console.log(`clipboard listenStorerChangeMode: ${event.data}`);
+    log.debug(`clipboard listenStorerChangeMode: ${event.data}`);
     if (mode === 'store') {
       dispatch({ type: clipboardConstants.CLIPBOARD_HAS_FINISHED_PASTE_ITEMS });
       const {

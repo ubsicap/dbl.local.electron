@@ -763,7 +763,7 @@ async function updatePublications(bundleId, publicationIds) {
   } = bundleRaw;
   const applicableWizards = await getApplicableWizards(bundleId, medium);
   if (applicableWizards.length === 0) {
-    console.log(
+    log.info(
       `Publications not updated. No publication wizards were found for medium ${medium}`
     );
     return;
@@ -774,16 +774,16 @@ async function updatePublications(bundleId, publicationIds) {
   for (const bestWizard of bestWizards) {
     const { wizard, uri, pubId, testResults } = bestWizard;
     if (!wizard) {
-      console.log(
+      log.info(
         `Publication ${pubId} not updated. No publication wizard hits were found in these tests:`
       );
-      console.log(testResults);
+      log.info(testResults);
     } else {
       await bundleService.runPublicationWizard(bundleId, pubId, wizard, uri);
-      console.log(
+      log.info(
         `Publication ${pubId} was updated by wizard ${wizard} for uri ${uri}`
       );
-      console.log(bestWizard);
+      log.info(bestWizard);
     }
   }
 }
@@ -807,7 +807,8 @@ async function getMapperOverwrites(bundleId, direction, mappers, uris) {
     );
     return servicesHelpers.handleResponseAsReadable(response).json();
   } catch (error) {
-    return servicesHelpers.handleResponseAsReadable(error).text();
+    const err = servicesHelpers.handleResponseAsReadable(error).text();
+    log.error(err);
   }
 }
 

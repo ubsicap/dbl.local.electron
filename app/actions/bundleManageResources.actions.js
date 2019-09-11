@@ -367,7 +367,7 @@ function promptForFolderToSaveTo(bundlesSaveTo, bundleId) {
     properties: ['openDirectory']
   });
   if (selectedFolder) {
-    console.log(selectedFolder.toString());
+    log.debug(selectedFolder.toString());
   }
   return selectedFolder;
 }
