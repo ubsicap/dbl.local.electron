@@ -1,3 +1,10 @@
+### Version 0.44.0 (Upgrade metadata to 2.2.1)
+
+#### Feature
+
+- On click Login button, upgrade workspace config.xml to create new drafts with metadata 2.2.1
+- Upgrade dbl_dot_local_app metadataVersions (9/11/2019)
+
 ### Version 0.43.0 (Capture console log)
 
 #### Feature
