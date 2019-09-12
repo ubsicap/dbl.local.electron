@@ -1,3 +1,9 @@
+### Version 0.44.2 (Debug progress bar)
+
+#### Fix
+
+- Experimental debug for progress bar issues
+
 ### Version 0.44.1 (Fix Upgrade metadata to 2.2.1)
 
 #### Fix
