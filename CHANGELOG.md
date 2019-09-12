@@ -1,3 +1,9 @@
+### Version 0.44.1 (Fix Upgrade metadata to 2.2.1)
+
+#### Fix
+
+- Upgrade dbl_dot_local_app versions_are_not_floats (9/12/2019)
+
 ### Version 0.44.0 (Upgrade metadata to 2.2.1)
 
 #### Feature
