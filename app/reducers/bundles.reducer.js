@@ -643,19 +643,8 @@ function formatStatus(bundle) {
 function formatProgress(bundle) {
   const progress = bundle.progress ? bundle.progress : 0;
   if (typeof progress === 'number' && progress > 100) {
-    const {
-      resourceCountUploaded,
-      resourceCountToUpload,
-      resourceCountStored,
-      resourceCountManifest
-    } = bundle;
     log.error(`progress > 100%`);
-    log.error({
-      resourceCountUploaded,
-      resourceCountToUpload,
-      resourceCountStored,
-      resourceCountManifest
-    });
+    logBundleState(bundle);
   }
   return `(${progress}%)`;
 }
@@ -673,10 +662,10 @@ function logBundleState(bundle) {
     progress,
     license,
     mode,
-    storedResourcePaths,
-    manifestResourcePaths,
     resourceCountUploaded,
     resourceCountToUpload,
+    resourceCountStored,
+    resourceCountManifest,
     displayAs,
     isUploading
   } = bundle;
@@ -688,8 +677,8 @@ function logBundleState(bundle) {
     task,
     status,
     mode,
-    storedResourcePaths: storedResourcePaths.length,
-    manifestResourcePaths: manifestResourcePaths.length,
+    resourceCountStored,
+    resourceCountManifest,
     resourceCountUploaded,
     resourceCountToUpload,
     progress,
