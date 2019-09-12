@@ -664,8 +664,8 @@ function logBundleState(bundle) {
     mode,
     resourceCountUploaded,
     resourceCountToUpload,
-    resourceCountStored,
-    resourceCountManifest,
+    storedResourcePaths,
+    manifestResourcePaths,
     displayAs,
     isUploading
   } = bundle;
@@ -677,8 +677,8 @@ function logBundleState(bundle) {
     task,
     status,
     mode,
-    resourceCountStored,
-    resourceCountManifest,
+    resourceCountStored: storedResourcePaths.length,
+    resourceCountManifest: manifestResourcePaths.length,
     resourceCountUploaded,
     resourceCountToUpload,
     progress,
