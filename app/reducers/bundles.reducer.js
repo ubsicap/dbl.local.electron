@@ -1,3 +1,4 @@
+import log from 'electron-log';
 import sort from 'fast-sort';
 import { List, Set } from 'immutable';
 import { bundleConstants } from '../constants/bundle.constants';
@@ -280,11 +281,12 @@ export function bundles(state = initialState, action) {
       );
     }
     case bundleConstants.UPLOAD_RESOURCES_UPDATE_PROGRESS: {
+      const { resourceCountUploaded, resourceCountToUpload } = action;
       const percentage =
         action.resourceCountToUpload > 0
           ? utilities.calculatePercentage(
-              action.resourceCountUploaded,
-              action.resourceCountToUpload
+              resourceCountUploaded,
+              resourceCountToUpload
             )
           : 100; /* metadata only */
       return updateTaskStatusProgress(
@@ -293,7 +295,9 @@ export function bundles(state = initialState, action) {
         'IN_PROGRESS',
         percentage,
         () => ({
-          isUploading: true
+          isUploading: true,
+          resourceCountUploaded,
+          resourceCountToUpload
         })
       );
     }
@@ -507,7 +511,7 @@ export function bundles(state = initialState, action) {
   function updateBundleItem(bundle, task, status, progress, updateDecorators) {
     const newProgress =
       typeof progress === 'number' ? progress : bundle.progress; // could be 'COMPLETED'
-    return addBundleDecorators(
+    const updatedBundle = addBundleDecorators(
       {
         ...bundle,
         task: task || bundle.task,
@@ -516,6 +520,17 @@ export function bundles(state = initialState, action) {
       },
       updateDecorators
     );
+    if (
+      updatedBundle.status !== 'IN_PROGRESS' &&
+      bundle.status === 'IN_PROGRESS'
+    ) {
+      log.debug(`Leaving IN_PROGRESS status`);
+      log.debug(`current state:`);
+      logBundleState(bundle);
+      log.debug(`next state:`);
+      logBundleState(updatedBundle);
+    }
+    return updatedBundle;
   }
 
   function updateBundleItems(
@@ -627,5 +642,47 @@ function formatStatus(bundle) {
 
 function formatProgress(bundle) {
   const progress = bundle.progress ? bundle.progress : 0;
+  if (typeof progress === 'number' && progress > 100) {
+    log.error(`progress > 100%`);
+    logBundleState(bundle);
+  }
   return `(${progress}%)`;
+}
+
+function logBundleState(bundle) {
+  if (!bundle) {
+    log.debug(bundle);
+  }
+  const {
+    bundleId,
+    dblId,
+    revision,
+    task,
+    status,
+    progress,
+    license,
+    mode,
+    resourceCountUploaded,
+    resourceCountToUpload,
+    storedResourcePaths,
+    manifestResourcePaths,
+    displayAs,
+    isUploading
+  } = bundle;
+  log.debug({
+    bundleId,
+    dblId,
+    revision,
+    license,
+    task,
+    status,
+    mode,
+    resourceCountStored: storedResourcePaths.length,
+    resourceCountManifest: manifestResourcePaths.length,
+    resourceCountUploaded,
+    resourceCountToUpload,
+    progress,
+    displayAs,
+    isUploading
+  });
 }
