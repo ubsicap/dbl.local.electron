@@ -1,3 +1,9 @@
+### Version 0.43.1 (Debug progress bar)
+
+#### Fix
+
+- Experimental debug for progress bar issues
+
 ### Version 0.43.0 (Capture console log)
 
 #### Feature
