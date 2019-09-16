@@ -34,7 +34,15 @@ import { logHelpers } from '../helpers/log.helpers';
 
 const { dialog } = require('electron').remote;
 
-logHelpers.setupLogFile(__dirname, 'debug', 'debug');
+function errorHook(msg, transport) {
+  if (transport !== log.transports.file || msg.level !== 'error') {
+    return msg;
+  }
+  console.error(msg);
+  return msg;
+}
+
+logHelpers.setupLogFile(__dirname, 'debug', 'debug', errorHook);
 log.info('UI starting...');
 
 type Props = {

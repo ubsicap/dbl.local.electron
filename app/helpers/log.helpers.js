@@ -12,7 +12,13 @@ export default logHelpers;
  * on OS X: ~/Library/Logs/<app name>/log.log
  * on Windows: %USERPROFILE%\AppData\Roaming\<app name>\log.log
  */
-function setupLogFile(dirname, fileLevel = 'debug', consoleLevel = 'error') {
+function setupLogFile(
+  dirname,
+  fileLevel = 'debug',
+  consoleLevel = 'error',
+  hooks: () => {} = undefined,
+  catchErrorOptions = {}
+) {
   log.transports.console.level = consoleLevel;
   if (process.env.NODE_ENV === 'development') {
     log.transports.file.level = fileLevel;
@@ -20,6 +26,9 @@ function setupLogFile(dirname, fileLevel = 'debug', consoleLevel = 'error') {
   } else {
     log.transports.file.level = fileLevel;
   }
-  log.catchErrors({});
+  if (hooks) {
+    log.hooks.push(hooks);
+  }
+  log.catchErrors(catchErrorOptions);
   log.info(`Log file: ${log.transports.file.file}`);
 }
