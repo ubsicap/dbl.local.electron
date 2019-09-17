@@ -4,6 +4,7 @@ import { compose } from 'recompose';
 import fs from 'fs-extra';
 import path from 'path';
 import log from 'electron-log';
+import log4js from 'log4js';
 import sort from 'fast-sort';
 import uuidv1 from 'uuid/v1';
 import classNames from 'classnames';
@@ -34,16 +35,24 @@ import { logHelpers } from '../helpers/log.helpers';
 
 const { dialog } = require('electron').remote;
 
+logHelpers.setupLogFile(__dirname, 'debug', 'debug', errorHook);
+log.info('UI starting...');
+const filename = `error-${path.basename(log.transports.file.file)}`
+const filePath = path.join(path.dirname(log.transports.file.file), filename);
+log4js.configure({
+  appenders: { e: { type: 'file', filename: filePath } },
+  categories: { default: { appenders: ['e'], level: 'error' } }
+});
+
+const logger = log4js.getLogger('e');
+
 function errorHook(msg, transport) {
   if (transport !== log.transports.file || msg.level !== 'error') {
     return msg;
   }
-  console.error(msg);
+  logger.error(msg.data[0]);
   return msg;
 }
-
-logHelpers.setupLogFile(__dirname, 'debug', 'debug', errorHook);
-log.info('UI starting...');
 
 type Props = {
   classes: {},
