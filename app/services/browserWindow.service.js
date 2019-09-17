@@ -121,7 +121,7 @@ function buildBrowserMenu(browserWin) {
   return menu;
 }
 
-function openFileInChromeBrowser(filePath, hotReload = false, webPreferences = {}) {
+function openFileInChromeBrowser(filePath, hotReload = false, webPreferences = {}, options = {}) {
   const currentWindow = remote.getCurrentWindow();
   const normalizedFilePath = upath.normalize(filePath);
   const url = `file:///${normalizedFilePath}`;
@@ -134,7 +134,8 @@ function openFileInChromeBrowser(filePath, hotReload = false, webPreferences = {
       ...webPreferences
     },
     title: filePath,
-    show: false
+    show: false,
+    ...options
   });
   browserWin.loadURL(url);
   browserWin.on('focus', () => {
@@ -155,4 +156,5 @@ function openFileInChromeBrowser(filePath, hotReload = false, webPreferences = {
       }
     });
   }
+  return browserWin;
 }

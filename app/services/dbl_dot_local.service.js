@@ -248,11 +248,11 @@ function startDblDotLocalSubProcess(configXmlFile) {
   });
   subProcess.stderr.on('data', data => {
     // log.error(data);
-    log.info(`dbl_dot_local_app: ${data}`);
+    log.info(`${dblDotLocalConstants.DDL_APP_LOG_PREFIX}: ${data}`);
   });
   ['error', 'close', 'exit'].forEach(event => {
     subProcess.on(event, code => {
-      const msg = `dbl_dot_local_app (${event}): ${code}`;
+      const msg = `${dblDotLocalConstants.DDL_APP_LOG_PREFIX} (${event}): ${code}`;
       if (code === null) {
         log.info(msg);
         return;
