@@ -4,12 +4,14 @@ import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
 import { utilities } from '../utils/utilities';
-import { alertActions } from '../actions/alert.actions';
+import { alertActions } from './alert.actions';
 
 export const dblDotLocalConfigActions = {
   getDblDotLocalExecStatus,
   loadHtmlBaseUrl,
-  gotoWorkspaceLoginPage
+  gotoWorkspaceLoginPage,
+  incrementErrorLogCount,
+  resetErrorLogCount
 };
 
 export default dblDotLocalConfigActions;
@@ -41,7 +43,10 @@ export function loadHtmlBaseUrl() {
 export function getDblDotLocalExecStatus() {
   return async dispatch => {
     const { isRunning } = await dblDotLocalService.getDblDotLocalExecStatus();
-    return dispatch({ type: dblDotLocalConfig.DBL_DOT_LOCAL_PROCESS_STATUS, isRunning });
+    return dispatch({
+      type: dblDotLocalConfig.DBL_DOT_LOCAL_PROCESS_STATUS,
+      isRunning
+    });
   };
 }
 
@@ -55,16 +60,20 @@ export function gotoWorkspaceLoginPage(workspace) {
       await dblDotLocalService.updateConfigXmlWithNewPaths(workspace);
       const { fullPath: workspaceFullPath, name: workspaceName } = workspace;
       const configXmlFile = dblDotLocalService.getConfigXmlFullPath(workspace);
-      const dblDotLocalExecProcess = await dblDotLocalService.startDblDotLocal(configXmlFile);
-      dblDotLocalExecProcess.stderr.on('data', (data) => {
+      const dblDotLocalExecProcess = await dblDotLocalService.startDblDotLocal(
+        configXmlFile
+      );
+      dblDotLocalExecProcess.stderr.on('data', data => {
         // log.error(data);
-        const [, errorMessage] = `${data}`.split('dbl_dot_local.dbl_app.DblAppException:');
+        const [, errorMessage] = `${data}`.split(
+          'dbl_dot_local.dbl_app.DblAppException:'
+        );
         if (errorMessage) {
           dispatch(alertActions.error({ message: errorMessage }));
         }
       });
       ['error', 'close', 'exit'].forEach(event => {
-        dblDotLocalExecProcess.on(event, (dblDotLocalExecProcessCode) => {
+        dblDotLocalExecProcess.on(event, dblDotLocalExecProcessCode => {
           dispatch({
             type: dblDotLocalConfig.STOP_WORKSPACE_PROCESS_DONE,
             dblDotLocalExecProcess,
@@ -72,19 +81,28 @@ export function gotoWorkspaceLoginPage(workspace) {
           });
           dispatch(getDblDotLocalExecStatus());
         });
-        dispatch(setWorkspaceFullPath(workspaceFullPath, configXmlFile, dblDotLocalExecProcess));
-        const loginUrl =
-          utilities.buildRouteUrl(
-            navigationConstants.NAVIGATION_WORKSPACE_LOGIN,
-            { workspaceName }
-          );
+        dispatch(
+          setWorkspaceFullPath(
+            workspaceFullPath,
+            configXmlFile,
+            dblDotLocalExecProcess
+          )
+        );
+        const loginUrl = utilities.buildRouteUrl(
+          navigationConstants.NAVIGATION_WORKSPACE_LOGIN,
+          { workspaceName }
+        );
         history.push(loginUrl);
       });
     } catch (error) {
       log.error(error);
     }
   };
-  function setWorkspaceFullPath(fullPath, configXmlFile, dblDotLocalExecProcess) {
+  function setWorkspaceFullPath(
+    fullPath,
+    configXmlFile,
+    dblDotLocalExecProcess
+  ) {
     return {
       type: dblDotLocalConfig.START_WORKSPACE_PROCESS,
       fullPath,
@@ -92,4 +110,12 @@ export function gotoWorkspaceLoginPage(workspace) {
       dblDotLocalExecProcess
     };
   }
+}
+
+export function incrementErrorLogCount() {
+  return { type: dblDotLocalConfig.DDL_ERROR_LOG_COUNT_INCREMENT };
+}
+
+export function resetErrorLogCount() {
+  return { type: dblDotLocalConfig.DDL_ERROR_LOG_COUNT_RESET };
 }

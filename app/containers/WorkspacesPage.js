@@ -23,6 +23,7 @@ import {
   gotoWorkspaceLoginPage,
   getDblDotLocalExecStatus
 } from '../actions/dblDotLocalConfig.actions';
+
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { clearClipboard } from '../actions/clipboard.actions';
 import { logout } from '../actions/user.actions';
@@ -30,12 +31,8 @@ import MenuAppBar from '../components/MenuAppBar';
 import WorkspaceEditDialog from '../components/WorkspaceEditDialog';
 import ConfirmButton from '../components/ConfirmButton';
 import { utilities } from '../utils/utilities';
-import { logHelpers } from '../helpers/log.helpers';
 
 const { dialog } = require('electron').remote;
-
-logHelpers.setupLogFile(__dirname, 'debug', 'debug');
-log.info('UI starting...');
 
 type Props = {
   classes: {},

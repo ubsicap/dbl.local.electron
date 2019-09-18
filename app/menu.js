@@ -1,12 +1,13 @@
 // @flow
 import { app, Menu, shell, BrowserWindow } from 'electron';
 import log from 'electron-log';
+import { logHelpers } from './helpers/log.helpers';
 import { ipcRendererConstants } from './constants/ipcRenderer.constants';
 import { navigationConstants } from './constants/navigation.constants';
 
-
 export default class MenuBuilder {
   mainWindow: BrowserWindow;
+
   constructor(mainWindow: BrowserWindow) {
     this.mainWindow = mainWindow;
   }
@@ -180,116 +181,170 @@ export default class MenuBuilder {
    */
   navigate(routePath) {
     if (this.mainWindow.webContents) {
-      this.mainWindow.webContents.send(ipcRendererConstants.KEY_IPC_NAVIGATE, routePath);
+      this.mainWindow.webContents.send(
+        ipcRendererConstants.KEY_IPC_NAVIGATE,
+        routePath
+      );
     }
   }
 
   buildDefaultTemplate() {
     const logFile = log.transports.file.file;
+    const errorLogPath = logHelpers.getErrorLogPath();
     // console.log('menu/buildDefaultTemplate');
     // console.log(loginLabel);
     const templateDefault = [
       {
         label: '&File',
-        submenu: [{
-          label: 'Switch Wor&kspace',
-          accelerator: 'Ctrl+K',
-          click: () => (this.navigate(navigationConstants.NAVIGATION_WORKSPACES))
-        },
-        {
-          label: 'E&xit',
-          accelerator: 'Ctrl+W',
-          click: () => {
-            this.mainWindow.close();
+        submenu: [
+          {
+            label: 'Switch Wor&kspace',
+            accelerator: 'Ctrl+K',
+            click: () =>
+              this.navigate(navigationConstants.NAVIGATION_WORKSPACES)
+          },
+          {
+            label: 'E&xit',
+            accelerator: 'Ctrl+W',
+            click: () => {
+              this.mainWindow.close();
+            }
           }
-        }]
+        ]
       },
       {
         label: 'Edit',
         submenu: [
           { label: 'Undo', accelerator: 'CmdOrCtrl+Z', selector: 'undo:' },
-          { label: 'Redo', accelerator: 'Shift+CmdOrCtrl+Z', selector: 'redo:' },
+          {
+            label: 'Redo',
+            accelerator: 'Shift+CmdOrCtrl+Z',
+            selector: 'redo:'
+          },
           { type: 'separator' },
           { label: 'Cut', accelerator: 'CmdOrCtrl+X', selector: 'cut:' },
           { label: 'Copy', accelerator: 'CmdOrCtrl+C', selector: 'copy:' },
           { label: 'Paste', accelerator: 'CmdOrCtrl+V', selector: 'paste:' },
-          { label: 'Select All', accelerator: 'CmdOrCtrl+A', selector: 'selectAll:' }
+          {
+            label: 'Select All',
+            accelerator: 'CmdOrCtrl+A',
+            selector: 'selectAll:'
+          }
         ]
       },
       {
         label: '&View',
-        submenu: (process.env.NODE_ENV === 'development') ? [{
-          label: '&Reload',
-          accelerator: 'Ctrl+R',
-          click: () => {
-            this.mainWindow.webContents.reload();
-          }
-        }, {
-          label: 'Toggle &Full Screen',
-          accelerator: 'F11',
-          click: () => {
-            this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
-          }
-        }, {
-          label: 'Toggle &Developer Tools',
-          accelerator: 'Alt+Ctrl+I',
-          click: () => {
-            const opened: boolean = this.mainWindow.webContents.isDevToolsOpened();
-            if (opened) {
-              this.mainWindow.webContents.closeDevTools();
-            } else {
-              this.mainWindow.webContents.openDevTools({ mode: 'right' });
-            }
-          }
-        }] : [{
-          label: 'Toggle &Full Screen',
-          accelerator: 'F11',
-          click: () => {
-            this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
-          }
-        }]
+        submenu:
+          process.env.NODE_ENV === 'development'
+            ? [
+                {
+                  label: '&Reload',
+                  accelerator: 'Ctrl+R',
+                  click: () => {
+                    this.mainWindow.webContents.reload();
+                  }
+                },
+                {
+                  label: 'Toggle &Full Screen',
+                  accelerator: 'F11',
+                  click: () => {
+                    this.mainWindow.setFullScreen(
+                      !this.mainWindow.isFullScreen()
+                    );
+                  }
+                },
+                {
+                  label: 'Toggle &Developer Tools',
+                  accelerator: 'Alt+Ctrl+I',
+                  click: () => {
+                    const opened: boolean = this.mainWindow.webContents.isDevToolsOpened();
+                    if (opened) {
+                      this.mainWindow.webContents.closeDevTools();
+                    } else {
+                      this.mainWindow.webContents.openDevTools({
+                        mode: 'right'
+                      });
+                    }
+                  }
+                }
+              ]
+            : [
+                {
+                  label: 'Toggle &Full Screen',
+                  accelerator: 'F11',
+                  click: () => {
+                    this.mainWindow.setFullScreen(
+                      !this.mainWindow.isFullScreen()
+                    );
+                  }
+                }
+              ]
       },
       {
         label: 'Help',
-        submenu: [{
-          label: 'Toggle &Developer Tools',
-          accelerator: 'Shift+CmdOrCtrl+I',
-          click: () => {
-            this.mainWindow.toggleDevTools();
+        submenu: [
+          {
+            label: 'Toggle &Developer Tools',
+            accelerator: 'Shift+CmdOrCtrl+I',
+            click: () => {
+              this.mainWindow.toggleDevTools();
+            }
+          },
+          {
+            label: 'See Nathanael releases',
+            click() {
+              shell.openExternal(
+                'https://github.com/ubsicap/dbl.local.electron/releases'
+              );
+            }
+          },
+          {
+            label: 'Learn More',
+            click() {
+              shell.openExternal(
+                'https://github.com/ubsicap/dbl.local.electron'
+              );
+            }
+          },
+          {
+            label: 'Documentation (dbl.local.electron)',
+            click() {
+              shell.openExternal(
+                'https://github.com/ubsicap/dbl.local.electron/blob/master/README.md'
+              );
+            }
+          },
+          {
+            label: 'Documentation (DBL dot Local)',
+            click() {
+              shell.openExternal(
+                'https://github.com/ubsicap/dbl-uploader-clients'
+              );
+            }
+          },
+          {
+            label: 'Search Issues',
+            click() {
+              shell.openExternal(
+                'https://github.com/ubsicap/dbl.local.electron/issues'
+              );
+            }
+          },
+          {
+            label: `Open Log: ${logFile}`,
+            click() {
+              logHelpers.openLogWindow(logFile);
+            }
+          },
+          {
+            label: `Open Error Log: ${errorLogPath}`,
+            click() {
+              logHelpers.openErrorLogWindow(errorLogPath);
+            }
           }
-        }, {
-          label: 'See Nathanael releases',
-          click() {
-            shell.openExternal('https://github.com/ubsicap/dbl.local.electron/releases');
-          }
-        }, {
-          label: 'Learn More',
-          click() {
-            shell.openExternal('https://github.com/ubsicap/dbl.local.electron');
-          }
-        }, {
-          label: 'Documentation (dbl.local.electron)',
-          click() {
-            shell.openExternal('https://github.com/ubsicap/dbl.local.electron/blob/master/README.md');
-          }
-        }, {
-          label: 'Documentation (DBL dot Local)',
-          click() {
-            shell.openExternal('https://github.com/ubsicap/dbl-uploader-clients');
-          }
-        }, {
-          label: 'Search Issues',
-          click() {
-            shell.openExternal('https://github.com/ubsicap/dbl.local.electron/issues');
-          }
-        },
-        {
-          label: `Open Log: ${logFile}`,
-          click() {
-            shell.openItem(logFile);
-          }
-        }]
-      }];
+        ]
+      }
+    ];
 
     return templateDefault;
   }

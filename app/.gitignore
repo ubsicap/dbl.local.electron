@@ -1,3 +1,4 @@
 /log-dev.txt
-/debug/
-/log-dev-renderer.txt
+/debug
+/error-log-dev.txt
+/log-dev.old.txt

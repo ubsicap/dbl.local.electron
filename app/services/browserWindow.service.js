@@ -2,13 +2,11 @@ import log from 'electron-log';
 import fs from 'fs-extra';
 import path from 'path';
 import upath from 'upath';
+import { servicesHelpers } from '../helpers/services';
 
-const electron = require('electron');
-
-const { remote = {} } = electron;
 const {
   BrowserWindow, Menu, dialog, app, shell
-} = remote;
+} = servicesHelpers.getElectronShared();
 
 export const browserWindowService = {
   openFileInChromeBrowser
@@ -121,8 +119,8 @@ function buildBrowserMenu(browserWin) {
   return menu;
 }
 
-function openFileInChromeBrowser(filePath, hotReload = false, webPreferences = {}) {
-  const currentWindow = remote.getCurrentWindow();
+function openFileInChromeBrowser(filePath, hotReload = false, webPreferences = {}, options = {}) {
+  const currentWindow = servicesHelpers.getCurrentWindow();
   const normalizedFilePath = upath.normalize(filePath);
   const url = `file:///${normalizedFilePath}`;
   const browserWin = new BrowserWindow({
@@ -134,7 +132,8 @@ function openFileInChromeBrowser(filePath, hotReload = false, webPreferences = {
       ...webPreferences
     },
     title: filePath,
-    show: false
+    show: false,
+    ...options
   });
   browserWin.loadURL(url);
   browserWin.on('focus', () => {
@@ -144,7 +143,11 @@ function openFileInChromeBrowser(filePath, hotReload = false, webPreferences = {
     fs.unwatchFile(filePath);
   });
   currentWindow.on('close', () => {
-    browserWin.close();
+    try {
+      browserWin.close();
+    } catch {
+      // Object has been destroyed?
+    }
   });
   browserWin.show();
   browserWin.focus();
@@ -155,4 +158,5 @@ function openFileInChromeBrowser(filePath, hotReload = false, webPreferences = {
       }
     });
   }
+  return browserWin;
 }

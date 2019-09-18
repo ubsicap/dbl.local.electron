@@ -4,7 +4,10 @@ import xml2js from 'xml2js';
 export const servicesHelpers = {
   handleResponseAsReadable,
   getApp,
-  getIsMainProcess
+  getIsMainProcess,
+  getDialog,
+  getCurrentWindow,
+  getElectronShared
 };
 export default servicesHelpers;
 
@@ -31,6 +34,28 @@ export function getApp() {
 
 function getIsMainProcess() {
   return Boolean(electron.app);
+}
+
+export function getElectronShared() {
+  if (remote.app) {
+    return remote;
+  }
+  if (electron.app) {
+    return electron;
+  }
+}
+
+export function getCurrentWindow() {
+  if (getIsMainProcess()) {
+    const { BrowserWindow } = electron;
+    return BrowserWindow.getAllWindows()[0];
+  }
+  return remote.getCurrentWindow();
+}
+
+export function getDialog() {
+  const { dialog } = getElectronShared();
+  return dialog;
 }
 
 export function getResourcePath(extraFilesPath: array) {
