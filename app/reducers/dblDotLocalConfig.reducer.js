@@ -11,7 +11,8 @@ export function dblDotLocalConfig(state = initialState, action) {
       const { isRunning } = action;
       return {
         ...state,
-        isRunningUnknownDblDotLocalProcess: !isRunningKnownDblLocalProcess && isRunning
+        isRunningUnknownDblDotLocalProcess:
+          !isRunningKnownDblLocalProcess && isRunning
       };
     }
     case dblDotLocalConfigConstants.START_WORKSPACE_PROCESS: {
@@ -51,13 +52,25 @@ export function dblDotLocalConfig(state = initialState, action) {
       }
       return state;
     }
-    case dblDotLocalConfigConstants.HTML_BASE_URL_RESPONSE:
-    {
+    case dblDotLocalConfigConstants.HTML_BASE_URL_RESPONSE: {
       const { dblBaseUrl } = action;
       const transport = dblBaseUrl.startsWith('http') ? '' : 'https://';
       return {
         ...state,
         dblBaseUrl: `${transport}${dblBaseUrl}`
+      };
+    }
+    case dblDotLocalConfigConstants.DDL_ERROR_LOG_COUNT_INCREMENT: {
+      const { loginSessionErrorCount = 0 } = state;
+      return {
+        ...state,
+        loginSessionErrorCount: loginSessionErrorCount + 1
+      };
+    }
+    case dblDotLocalConfigConstants.DDL_ERROR_LOG_COUNT_RESET: {
+      return {
+        ...state,
+        loginSessionErrorCount: 0
       };
     }
     default:
