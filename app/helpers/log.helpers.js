@@ -85,8 +85,9 @@ function setupRendererErrorLogs() {
   }
 }
 
-function openErrorLogWindow(errorLogPath) {
-  openLogWindow(errorLogPath, { backgroundColor: '#FFBABA' }, 'body{ color: #cc0000; }');
+function openErrorLogWindow(logPath) {
+  const errorLogPath = logPath || getErrorLogPath();
+  openLogWindow(errorLogPath, { backgroundColor: `${dblDotLocalConstants.DDL_ERROR_LOG_BACKGROUND_COLOR}` }, `body{ color: ${dblDotLocalConstants.DDL_ERROR_LOG_FONT_COLOR}; }`);
 }
 
 function openLogWindow(logPath, options, css) {

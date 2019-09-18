@@ -9,11 +9,13 @@ import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import StarIcon from '@material-ui/icons/Star';
 import ListIcon from '@material-ui/icons/List';
+import ErrorIcon from '@material-ui/icons/Error';
 import ListAltIcon from '@material-ui/icons/FormatListNumberedRtl';
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 import { Button, Menu, MenuItem } from '@material-ui/core';
-
+import dblDotLocalConstants from '../constants/dblDotLocal.constants';
+import { logHelpers } from '../helpers/log.helpers';
 import { fetchDownloadQueueCounts, fetchUploadQueueCounts, removeExcessBundles }
   from '../actions/bundle.actions';
 import { toggleShowStarredEntries } from '../actions/bundleFilter.actions';
@@ -113,6 +115,10 @@ class DblDotLocalAppBar extends React.PureComponent {
     this.props.toggleShowStarredEntries();
   }
 
+  handleClickErrorLog = () => {
+    logHelpers.openErrorLogWindow();
+  }
+
   render() {
     const {
       classes, entries, entriesMatching, isSearchActive, downloadQueue, uploadQueue, allBundles,
@@ -181,6 +187,21 @@ class DblDotLocalAppBar extends React.PureComponent {
             </MenuItem>
           </Menu>
           <div className={classes.flex} />
+          <Tooltip title="Errors">
+            <Button
+                color="inherit"
+                className={classes.textSmall}
+                style={{ margin: 10, backgroundColor: `${dblDotLocalConstants.DDL_ERROR_LOG_BACKGROUND_COLOR}` }}
+                onClick={this.handleClickErrorLog}
+              >
+              <div>
+                <ErrorIcon />
+                <Typography variant="h6" color="inherit" className={classes.textSmall}>
+                  <span style={{color: `${dblDotLocalConstants.DDL_ERROR_LOG_FONT_COLOR}`}}>1</span>
+                </Typography>
+              </div>
+            </Button>
+          </Tooltip>
           <Tooltip title="Uploads (Entries/Atoms)">
             <div className={classes.dblDotLocalBarItem}>
               <ArrowUpwardIcon />
