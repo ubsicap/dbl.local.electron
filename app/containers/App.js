@@ -1,5 +1,8 @@
 // @flow
 import * as React from 'react';
+import { logHelpers } from '../helpers/log.helpers';
+
+logHelpers.setupRendererErrorLogs();
 
 type Props = {
   children: React.Node
