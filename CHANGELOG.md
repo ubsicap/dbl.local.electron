@@ -1,3 +1,15 @@
+### Version 0.45.0 (Error log)
+
+#### Feature
+
+- Help > Open Error Log...
+- Help > Open Log... now uses browser window and watches for updates
+- Keep track of session errors in bottom DBL bar
+
+#### Fix
+
+- Upgrade dbl_dot_local_app checks_and_wizards (9/16/2019)
+
 ### Version 0.44.2 (Debug progress bar)
 
 #### Fix
