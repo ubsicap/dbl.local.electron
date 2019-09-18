@@ -6,7 +6,10 @@ import dblDotLocalConstants from '../constants/dblDotLocal.constants';
 
 export const logHelpers = {
   setupLogFile,
-  setupRendererErrorLogs
+  getErrorLogPath,
+  setupRendererErrorLogs,
+  openErrorLogWindow,
+  openLogWindow
 };
 export default logHelpers;
 
@@ -37,15 +40,18 @@ function setupLogFile(
   log.info(`Log file: ${log.transports.file.file}`);
 }
 
-function setupRendererErrorLogs() {
-  logHelpers.setupLogFile(__dirname, 'debug', 'debug', errorHook);
-  log.info('UI starting...');
+function getErrorLogPath() {
   const errorLogFilename = `error-${path.basename(log.transports.file.file)}`;
   const errorLogPath = path.join(
     path.dirname(log.transports.file.file),
     errorLogFilename
   );
+  return errorLogPath;
+}
 
+function setupRendererErrorLogs() {
+  logHelpers.setupLogFile(__dirname, 'debug', 'debug', errorHook);
+  const errorLogPath = getErrorLogPath();
   const generalAppenderId = 'NAT';
   const ddlAppenderId = 'DDL';
 
@@ -77,14 +83,23 @@ function setupRendererErrorLogs() {
     }
     return msg;
   }
+}
 
+function openErrorLogWindow(errorLogPath) {
+  openLogWindow(errorLogPath, { backgroundColor: '#FFBABA' }, 'body{ color: #cc0000; }');
+}
+
+function openLogWindow(logPath, options, css) {
   const browserWin = browserWindowService.openFileInChromeBrowser(
-    errorLogPath,
+    logPath,
     true,
     undefined,
-    { backgroundColor: '#FFBABA' }
+    options
   );
-  browserWin.webContents.on('did-finish-load', function() {
-    browserWin.webContents.insertCSS('body{ color: #cc0000; }');
+  browserWin.webContents.on('did-finish-load', async function() {
+    if (css) {
+      browserWin.webContents.insertCSS('body{ color: #cc0000; }');
+    }
+    await browserWin.webContents.executeJavaScript('window.scrollTo(0,document.body.scrollHeight);');
   });
 }

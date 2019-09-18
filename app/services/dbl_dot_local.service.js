@@ -12,7 +12,8 @@ import {
   servicesHelpers,
   getApp,
   getResourcePath,
-  parseAsJson
+  parseAsJson,
+  getCurrentWindow
 } from '../helpers/services';
 
 export const dblDotLocalService = {
@@ -40,8 +41,7 @@ export const dblDotLocalService = {
   getMapperReport,
   getMappers,
   getUxCanons,
-  getIsClosedEventSource,
-  getApp
+  getIsClosedEventSource
 };
 export default dblDotLocalService;
 
@@ -268,27 +268,6 @@ function getDblDotLocalExecCwd() {
 }
 
 const electron = require('electron');
-
-const { remote = {} } = electron;
-
-function getElectronShared() {
-  if (remote.app) {
-    return remote;
-  }
-  if (electron.app) {
-    return electron;
-  }
-}
-
-function getCurrentWindow() {
-  const func = getElectronShared().getCurrentWindow;
-  return func();
-}
-
-function getDialog() {
-  const { dialog } = getElectronShared();
-  return dialog;
-}
 
 function getFileNameWithOsExtension(
   filename,

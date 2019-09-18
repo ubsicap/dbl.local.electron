@@ -1,8 +1,10 @@
 // @flow
 import * as React from 'react';
+import log from 'electron-log';
 import { logHelpers } from '../helpers/log.helpers';
 
 logHelpers.setupRendererErrorLogs();
+log.info('UI starting...');
 
 type Props = {
   children: React.Node

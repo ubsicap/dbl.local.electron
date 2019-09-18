@@ -1,6 +1,7 @@
 // @flow
 import { app, Menu, shell, BrowserWindow } from 'electron';
 import log from 'electron-log';
+import { logHelpers } from './helpers/log.helpers';
 import { ipcRendererConstants } from './constants/ipcRenderer.constants';
 import { navigationConstants } from './constants/navigation.constants';
 
@@ -189,6 +190,7 @@ export default class MenuBuilder {
 
   buildDefaultTemplate() {
     const logFile = log.transports.file.file;
+    const errorLogPath = logHelpers.getErrorLogPath();
     // console.log('menu/buildDefaultTemplate');
     // console.log(loginLabel);
     const templateDefault = [
@@ -331,7 +333,13 @@ export default class MenuBuilder {
           {
             label: `Open Log: ${logFile}`,
             click() {
-              shell.openItem(logFile);
+              logHelpers.openLogWindow(logFile);
+            }
+          },
+          {
+            label: `Open Error Log: ${errorLogPath}`,
+            click() {
+              logHelpers.openErrorLogWindow(errorLogPath);
             }
           }
         ]
