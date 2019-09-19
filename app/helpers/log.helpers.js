@@ -76,7 +76,8 @@ function setupRendererErrorLogs() {
     const tags = msg.data[1] || {};
     if (
       (typeof msgData === 'string' &&
-      msgData.startsWith(`${dblDotLocalConstants.DDL_APP_LOG_PREFIX}`)) || tags[ddlAppenderId]
+        msgData.startsWith(`${dblDotLocalConstants.DDL_APP_LOG_PREFIX}`)) ||
+      tags[ddlAppenderId]
     ) {
       ddlErrorLogger.error(msgData);
     } else {
@@ -88,7 +89,13 @@ function setupRendererErrorLogs() {
 
 function openErrorLogWindow(logPath) {
   const errorLogPath = logPath || getErrorLogPath();
-  openLogWindow(errorLogPath, { backgroundColor: `${dblDotLocalConstants.DDL_ERROR_LOG_BACKGROUND_COLOR}` }, `body{ color: ${dblDotLocalConstants.DDL_ERROR_LOG_FONT_COLOR}; }`);
+  openLogWindow(
+    errorLogPath,
+    {
+      backgroundColor: `${dblDotLocalConstants.DDL_ERROR_LOG_BACKGROUND_COLOR}`
+    },
+    `body{ color: ${dblDotLocalConstants.DDL_ERROR_LOG_FONT_COLOR}; }`
+  );
 }
 
 function openLogWindow(logPath, options, css) {
@@ -102,6 +109,8 @@ function openLogWindow(logPath, options, css) {
     if (css) {
       browserWin.webContents.insertCSS('body{ color: #cc0000; }');
     }
-    await browserWin.webContents.executeJavaScript('window.scrollTo(0,document.body.scrollHeight);');
+    await browserWin.webContents.executeJavaScript(
+      'window.scrollTo(0,document.body.scrollHeight);'
+    );
   });
 }
