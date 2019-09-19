@@ -1338,7 +1338,8 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
     }
     const allMsg = autoSelectAllResources ? 'All ' : '';
     const { inEffect = [] } = this.getSelectedResourcesByStatus();
-    return ` (${allMsg}${inEffect.length})`;
+    const distinctInEffect = utilities.distinct(inEffect.map(r => r.id));
+    return ` (${allMsg}${distinctInEffect.length})`;
   };
 
   getSelectedLocalBundle = () => {
@@ -1507,15 +1508,20 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         OkButtonLabel = label;
         OkButtonClickHandler = clickHandler;
       } else {
-        const discardMsg = discardableResources.length
-          ? ` / Discard (${discardableResources.length})`
+        const distinctDiscardableResources = utilities.distinct(
+          discardableResources,
+          'id'
+        );
+        const discardableCount = distinctDiscardableResources.length;
+        const discardMsg = discardableCount
+          ? ` / Discard (${discardableCount})`
           : '';
         OkButtonLabel = `Clean (${inEffectCount -
-          discardableResources.length})${discardMsg}`;
+          discardableCount})${discardMsg}`;
         OkButtonClickHandler = this.handleCleanAndDiscardFiles(
           bundleId,
           storedResources,
-          discardableResources
+          distinctDiscardableResources
         );
       }
     } else if (manifestResources === inEffect) {
@@ -1623,18 +1629,19 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
         manifestResources
       );
     } else if (storedResources === inEffect) {
+      const distinctStoredResources = utilities.distinct(storedResources, 'id');
       if (selectedIdsOutputConverters.length > 0) {
         const {
           OkButtonLabel: label,
           OkButtonClickHandler: clickHandler
-        } = this.getExportConvertOkButton(storedResources);
+        } = this.getExportConvertOkButton(distinctStoredResources);
         OkButtonLabel = label;
         OkButtonClickHandler = clickHandler;
       } else {
-        OkButtonLabel = `Clean (${storedResources.length})`;
+        OkButtonLabel = `Clean (${distinctStoredResources.length})`;
         OkButtonClickHandler = this.handleCleanResources(
           bundleId,
-          storedResources
+          distinctStoredResources
         );
       }
     }
@@ -2099,7 +2106,9 @@ class ManageBundleManifestResourcesDialog extends Component<Props> {
       loading
     } = this.props;
     const { storedResources } = this.getSelectedResourcesByStatus();
-    const selectedItemsForCopy = storedResources.map(r => r.uri);
+    const selectedItemsForCopy = utilities.distinct(
+      storedResources.map(r => r.uri)
+    );
     const modeUi = this.modeUi();
     const isModifyFilesMode = this.isModifyFilesMode();
     return (

@@ -673,7 +673,7 @@ export function selectResources(
   selectedResourceIds,
   shouldUpdateOutputMapperReports = false
 ) {
-  const distinctSelectedResourceIds = [...new Set(selectedResourceIds)];
+  const distinctSelectedResourceIds = utilities.distinct(selectedResourceIds);
   return (dispatch, getState) => {
     if (shouldUpdateOutputMapperReports) {
       const {

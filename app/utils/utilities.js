@@ -1,7 +1,7 @@
 import sort from 'fast-sort';
 import upath from 'upath';
 import path from 'path';
-import { Set } from 'immutable';
+import immutableJs from 'immutable';
 
 const { shell } = require('electron');
 
@@ -24,23 +24,43 @@ export const utilities = {
   formatContainer,
   getOrDefault,
   getFilePathResourceData,
-  formatUri
+  formatUri,
+  distinct
 };
 export default utilities;
 
 export function union(arrayA, arrayB = []) {
-  const u = Set(arrayA);
+  const u = immutableJs.Set(arrayA);
   return u.union(arrayB).toArray();
 }
 
 export function intersect(arrayA, arrayB = []) {
-  const u = Set(arrayA);
+  const u = immutableJs.Set(arrayA);
   return u.intersect(arrayB).toArray();
 }
 
 export function subtract(arrayA, arrayB = []) {
-  const diff = Set(arrayA);
+  const diff = immutableJs.Set(arrayA);
   return diff.subtract(arrayB).toArray();
+}
+
+export function distinct(array, key) {
+  if (!key) {
+    return [...new Set(array)];
+  }
+  const { filtered } = array.reduce(
+    (acc, item) => {
+      const keyValue = item[key];
+      if (acc.visited.has(keyValue)) {
+        return acc;
+      }
+      acc.visited.add(keyValue);
+      acc.filtered.push(item);
+      return acc;
+    },
+    { visited: new Set(), filtered: [] }
+  );
+  return filtered;
 }
 
 /* from https://stackoverflow.com/a/19746771 */
@@ -83,7 +103,10 @@ export function areEqualCollections(c1, c2) {
 }
 
 function getUnionOfValues(obj) {
-  return Object.values(obj).reduce((acc, values) => acc.union(values), Set());
+  return Object.values(obj).reduce(
+    (acc, values) => acc.union(values),
+    immutableJs.Set()
+  );
 }
 
 function onOpenLink(url) {

@@ -16,6 +16,7 @@ import {
   getStoredResourcePaths
 } from '../helpers/bundle.helpers';
 import dblDotLocalConstants from '../constants/dblDotLocal.constants';
+import { utilities } from '../utils/utilities';
 
 export const bundleActions = {
   fetchAll,
@@ -693,10 +694,11 @@ export function openJobSpecInBrowser(bundleId) {
 export function downloadResources(_id, _uris = []) {
   return async (dispatch, getState) => {
     try {
+      const distinctUris = utilities.distinct(_uris);
       const manifestResourcePaths = getManifestResourcePaths(getState, _id);
-      dispatch(request(_id, manifestResourcePaths, _uris));
+      dispatch(request(_id, manifestResourcePaths, distinctUris));
       dispatch(updateSearchResultsForBundleId(_id));
-      await bundleService.downloadResources(_id, _uris);
+      await bundleService.downloadResources(_id, distinctUris);
     } catch (errorReadable) {
       const error = await errorReadable.text();
       dispatch(failure(_id, error));
