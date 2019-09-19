@@ -53,7 +53,7 @@ function setupRendererErrorLogs() {
   logHelpers.setupLogFile(__dirname, 'debug', 'debug', errorHook);
   const errorLogPath = getErrorLogPath();
   const generalAppenderId = 'NAT';
-  const ddlAppenderId = 'DDL';
+  const ddlAppenderId = dblDotLocalConstants.DDL_APPENDER_ID;
 
   log4js.configure({
     appenders: {
@@ -73,9 +73,10 @@ function setupRendererErrorLogs() {
       return msg;
     }
     const msgData = msg.data[0];
+    const tags = msg.data[1] || {};
     if (
-      typeof msgData === 'string' &&
-      msgData.startsWith(`${dblDotLocalConstants.DDL_APP_LOG_PREFIX}`)
+      (typeof msgData === 'string' &&
+      msgData.startsWith(`${dblDotLocalConstants.DDL_APP_LOG_PREFIX}`)) || tags[ddlAppenderId]
     ) {
       ddlErrorLogger.error(msgData);
     } else {

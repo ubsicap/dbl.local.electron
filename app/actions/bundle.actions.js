@@ -15,6 +15,7 @@ import {
   getManifestResourcePaths,
   getStoredResourcePaths
 } from '../helpers/bundle.helpers';
+import dblDotLocalConstants from '../constants/dblDotLocal.constants';
 
 export const bundleActions = {
   fetchAll,
@@ -330,7 +331,7 @@ export function setupBundlesEventSource() {
     const { data: rawData } = event;
     const data = rawData ? JSON.parse(rawData) : {};
     if (rawData) {
-      log.error(data);
+      log.error(data, { [dblDotLocalConstants.DDL_APPENDER_ID]: true });
     }
     return {
       type: 'SSE_ERROR',
@@ -641,7 +642,7 @@ export function fetchDownloadQueueCounts() {
       );
       return dispatch(updateDownloadQueue(nSpecs, nAtoms));
     } catch (error) {
-      log.error(error);
+      log.error(error, { [dblDotLocalConstants.DDL_APPENDER_ID]: true });
     }
   };
 }
@@ -657,7 +658,7 @@ export function fetchUploadQueueCounts() {
       );
       return dispatch(updateUploadQueue(nSpecs, nAtoms));
     } catch (error) {
-      log.error(error);
+      log.error(error, { [dblDotLocalConstants.DDL_APPENDER_ID]: true });
     }
   };
 }
