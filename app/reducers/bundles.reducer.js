@@ -654,7 +654,7 @@ function logBundleState(bundle) {
     log.debug(bundle);
   }
   const {
-    bundleId: bundle.id,
+    id: bundleId,
     dblId,
     revision,
     task,
