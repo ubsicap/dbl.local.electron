@@ -419,23 +419,31 @@ export function setupBundlesEventSource() {
       const [type, ...nextArgs] = data.args;
       if (type === 'updated') {
         const [entryId, jobId, payload] = nextArgs;
+        const [resourceCountToUpload, resourceCountUploaded] = [
+          payload[0],
+          payload[5]
+        ];
         const bundleId = uploadJobs[jobId];
         const addedBundle = getAddedBundle(getState, bundleId);
-        if (addedBundle.mode === 'upload') {
-          const [resourceCountToUpload, resourceCountUploaded] = [
-            payload[0],
-            payload[5]
-          ];
-          dispatch(
-            updateUploadProgress(
-              bundleId,
-              entryId,
-              jobId,
-              resourceCountUploaded,
-              resourceCountToUpload
-            )
+        if (addedBundle.mode !== 'upload') {
+          // expected to be in upload mode, so try to fetch & update the bundle until we see that:
+          log.debug(
+            `${bundleId} mode '${
+              addedBundle.mode
+            }' while in uploader/job updated (${payload}). Retrying GET /bundle/${bundleId}`
           );
+          dispatch(updateBundle(bundleId));
+          return;
         }
+        dispatch(
+          updateUploadProgress(
+            bundleId,
+            entryId,
+            jobId,
+            resourceCountUploaded,
+            resourceCountToUpload
+          )
+        );
         dispatch(fetchUploadQueueCounts());
         return;
       }
