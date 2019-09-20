@@ -426,7 +426,7 @@ export function setupBundlesEventSource() {
         const bundleId = uploadJobs[jobId];
         const addedBundle = getAddedBundle(getState, bundleId);
         if (addedBundle.mode !== 'upload') {
-          // expected to be in upload mode, so try to fetch & update the bundle until we see that:
+          // expected to be in upload mode, so fetch & update the bundle until we find upload mode
           log.debug(
             `${bundleId} mode '${
               addedBundle.mode
