@@ -1,3 +1,12 @@
+### Version 0.45.1 (Error log)
+
+#### Fix
+
+- restore disappearing progress bar due to (SSE vs. `bundle_status.xml`) timing issue with getting `upload` mode
+- Fix some download/cleaup errors related to multiple publications include the same resources
+- Fix bundleId in Error debug IN_PROGRESS dump
+- Upgrade dbl_dot_local_app cli_tool (9/19/2019)
+
 ### Version 0.45.0 (Error log)
 
 #### Feature
