@@ -5,7 +5,11 @@ import upath from 'upath';
 import { servicesHelpers } from '../helpers/services';
 
 const {
-  BrowserWindow, Menu, dialog, app, shell
+  BrowserWindow,
+  Menu,
+  dialog,
+  app,
+  shell
 } = servicesHelpers.getElectronShared();
 
 export const browserWindowService = {
@@ -13,7 +17,6 @@ export const browserWindowService = {
 };
 
 export default browserWindowService;
-
 
 function saveFileToFolder(browserWin) {
   const fileUrl = decodeURIComponent(browserWin.webContents.getURL());
@@ -46,68 +49,41 @@ function buildBrowserTemplate(browserWin) {
   const templateBrowser = [
     {
       label: '&File',
-      submenu: [{
-        label: 'Save To',
-        accelerator: 'Ctrl+S',
-        click: () => (saveFileToFolder(browserWin))
-      },
-      {
-        label: 'E&xit',
-        accelerator: 'Ctrl+W',
-        click: () => {
-          browserWin.close();
+      submenu: [
+        {
+          label: 'Save To',
+          accelerator: 'Ctrl+S',
+          click: () => saveFileToFolder(browserWin)
+        },
+        {
+          role: 'exit'
         }
-      }]
+      ]
     },
     {
       label: 'Edit',
       submenu: [
         {
-          label: 'Copy',
-          accelerator: 'CmdOrCtrl+C',
-          selector: 'copy:',
-          click: () => browserWin.webContents.copy()
+          role: 'copy'
         },
         {
-          label: 'Select All',
-          accelerator: 'CmdOrCtrl+A',
-          selector: 'selectAll:',
-          click: () => browserWin.webContents.selectAll()
+          role: 'selectAll'
         }
       ]
     },
     {
       label: '&View',
-      submenu: [{
-        label: '&Reload',
-        accelerator: 'Ctrl+R',
-        click: () => {
-          browserWin.webContents.reload();
-        }
-      }, {
-        label: 'Toggle &Full Screen',
-        accelerator: 'F11',
-        click: () => {
-          browserWin.setFullScreen(!browserWin.isFullScreen());
-        }
-      }, {
-        label: 'Toggle &Developer Tools',
-        accelerator: 'Alt+Ctrl+I',
-        click: () => {
-          browserWin.toggleDevTools();
-        }
-      }]
+      submenu: [
+        { role: 'reload' },
+        { role: 'togglefullscreen' },
+        { role: 'toggleDevTools' }
+      ]
     },
     {
       label: 'Help',
-      submenu: [{
-        label: 'Toggle &Developer Tools',
-        accelerator: 'Shift+CmdOrCtrl+I',
-        click: () => {
-          browserWin.toggleDevTools();
-        }
-      }]
-    }];
+      submenu: [{ role: 'toggleDevTools' }]
+    }
+  ];
 
   return templateBrowser;
 }
@@ -119,7 +95,12 @@ function buildBrowserMenu(browserWin) {
   return menu;
 }
 
-function openFileInChromeBrowser(filePath, hotReload = false, webPreferences = {}, options = {}) {
+function openFileInChromeBrowser(
+  filePath,
+  hotReload = false,
+  webPreferences = {},
+  options = {}
+) {
   const currentWindow = servicesHelpers.getCurrentWindow();
   const normalizedFilePath = upath.normalize(filePath);
   const url = `file:///${normalizedFilePath}`;
