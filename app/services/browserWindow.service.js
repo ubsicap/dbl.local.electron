@@ -56,7 +56,7 @@ function buildBrowserTemplate(browserWin) {
           click: () => saveFileToFolder(browserWin)
         },
         {
-          role: 'exit'
+          role: 'close'
         }
       ]
     },
