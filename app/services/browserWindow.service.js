@@ -139,5 +139,25 @@ function openFileInChromeBrowser(
       }
     });
   }
+
+  browserWin.webContents.on('context-menu', (e, props) => {
+    const { x, y } = props;
+
+    const remote = require('remote')
+    const Menu = remote.require('menu')
+    const MenuItem = remote.require('menu-item')
+
+    let rightClickPosition = null
+
+    const menu = new Menu()
+    const menuItem = new MenuItem({
+      label: 'Inspect Element',
+      click: () => {
+        remote.getCurrentWindow().inspectElement(rightClickPosition.x, rightClickPosition.y)
+      }
+    })
+    menu.append(menuItem).popup(browserWin);
+  }
+  );
   return browserWin;
 }
