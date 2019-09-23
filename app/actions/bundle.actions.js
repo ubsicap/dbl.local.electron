@@ -303,6 +303,7 @@ export function setupBundlesEventSource() {
     }
     const listeners = {
       error: e => dispatch(listenError(e)),
+      'storer/tick_exception': e => dispatch(listenError(e)),
       'storer/execute_task': listenStorerExecuteTaskDownloadResources,
       'storer/change_mode': e => dispatch(listenStorerChangeMode(e)),
       'uploader/job': e => dispatch(listenUploaderJob(e)),
