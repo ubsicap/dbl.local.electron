@@ -2,6 +2,7 @@ import log from 'electron-log';
 import fs from 'fs-extra';
 import path from 'path';
 import upath from 'upath';
+import searchInPage from 'electron-in-page-search';
 import { servicesHelpers } from '../helpers/services';
 
 const {
@@ -44,6 +45,7 @@ function saveFileToFolder(browserWin) {
 }
 
 function buildBrowserTemplate(browserWin) {
+  const inPageSearch = searchInPage(browserWin.webContents);
   // console.log('menu/buildDefaultTemplate');
   // console.log(loginLabel);
   const templateBrowser = [
@@ -66,6 +68,15 @@ function buildBrowserTemplate(browserWin) {
         {
           role: 'copy'
         },
+        { type: 'separator' },
+        {
+          label: 'Find',
+          accelerator: 'CmdOrCtrl+F',
+          click: () => {
+            inPageSearch.openSearchWindow();
+          }
+        },
+        { type: 'separator' },
         {
           role: 'selectAll'
         }
