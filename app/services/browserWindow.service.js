@@ -49,8 +49,9 @@ let lastSearchIndex;
 let lastSearchResults;
 const findNextLabel = 'Find Next';
 const findNextShortcut = 'F3';
+const findBackShortcut = 'Shift+F3';
 
-function findNextInPageMenuItem(browserWin, searchText) {
+function findNextInPageMenuItem(browserWin, searchText, forward = true) {
   const findNextInfo = lastSearchResults
     ? ` (${lastSearchIndex}/${lastSearchResults})`
     : '';
@@ -58,8 +59,9 @@ function findNextInPageMenuItem(browserWin, searchText) {
     browserWin,
     searchText,
     false,
-    `${findNextLabel}${findNextInfo}`,
-    findNextShortcut
+    `${forward ? findNextLabel : 'Find Backward'}${findNextInfo}`,
+    forward ? findNextShortcut : findBackShortcut,
+    forward
   );
 }
 
@@ -68,7 +70,8 @@ function findInPageMenuItem(
   selectionText,
   openPrompt = true,
   label = 'Find',
-  accelerator = 'CmdOrCtrl+F'
+  accelerator = 'CmdOrCtrl+F',
+  forward = true
 ) {
   return {
     label,
@@ -104,7 +107,7 @@ function findInPageMenuItem(
         if (!selectionText || selectionText.length === 0) {
           return;
         }
-        webContents.findInPage(selectionText);
+        webContents.findInPage(selectionText, { forward });
       }
     }
   };
@@ -135,6 +138,7 @@ function buildBrowserTemplate(browserWin) {
         },
         { type: 'separator' },
         findInPageMenuItem(browserWin, lastSearchText),
+        findNextInPageMenuItem(browserWin, lastSearchText, true),
         findNextInPageMenuItem(browserWin, lastSearchText, false),
         { type: 'separator' },
         {
@@ -226,7 +230,8 @@ function openFileInChromeBrowser(
       { role: 'copy' },
       { type: 'separator' },
       findInPageMenuItem(browserWin, selectionText),
-      findNextInPageMenuItem(browserWin, searchText)
+      findNextInPageMenuItem(browserWin, searchText),
+      findNextInPageMenuItem(browserWin, searchText, false)
     ]).popup(browserWin);
   });
   return browserWin;
