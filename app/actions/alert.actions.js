@@ -1,3 +1,4 @@
+import log from 'electron-log';
 import { alertConstants } from '../constants';
 
 export const alertActions = {
@@ -13,7 +14,12 @@ function success(message) {
 }
 
 function error(data) {
-  return { type: alertConstants.ERROR, error: data.error, message: data.message };
+  log.error(data);
+  return {
+    type: alertConstants.ERROR,
+    error: data.error,
+    message: data.message
+  };
 }
 
 function clear() {

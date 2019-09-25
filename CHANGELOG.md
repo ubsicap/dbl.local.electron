@@ -1,3 +1,14 @@
+### Version 0.46.0 (Context Menu for Browser)
+
+#### Feature
+
+- Add Copy menu item to context-menu in extra browser windows (e.g. logs, metadata, reports, etc...)
+- Catch more DDL errors
+
+#### Fix
+
+- Upgrade dbl_dot_local_app cleaner_cli (9/24/2019)
+
 ### Version 0.45.1 (Error log)
 
 #### Fix

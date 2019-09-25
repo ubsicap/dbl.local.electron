@@ -139,5 +139,9 @@ function openFileInChromeBrowser(
       }
     });
   }
+
+  browserWin.webContents.on('context-menu', () => {
+    Menu.buildFromTemplate([{ role: 'copy' }]).popup(browserWin);
+  });
   return browserWin;
 }

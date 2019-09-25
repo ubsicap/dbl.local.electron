@@ -1,5 +1,5 @@
 import log from 'electron-log';
-import { dblDotLocalConfig } from '../constants/dblDotLocal.constants';
+import dblDotLocalConstants from '../constants/dblDotLocal.constants';
 import { dblDotLocalService } from '../services/dbl_dot_local.service';
 import { history } from '../store/configureStore';
 import { navigationConstants } from '../constants/navigation.constants';
@@ -30,13 +30,13 @@ export function loadHtmlBaseUrl() {
     }
   };
   function requestBaseUrl() {
-    return { type: dblDotLocalConfig.HTML_BASE_URL_REQUEST };
+    return { type: dblDotLocalConstants.HTML_BASE_URL_REQUEST };
   }
   function success(dblBaseUrl) {
-    return { type: dblDotLocalConfig.HTML_BASE_URL_RESPONSE, dblBaseUrl };
+    return { type: dblDotLocalConstants.HTML_BASE_URL_RESPONSE, dblBaseUrl };
   }
   function failure(error) {
-    return { type: dblDotLocalConfig.CONFIG_REQUEST_FAILURE, error };
+    return { type: dblDotLocalConstants.CONFIG_REQUEST_FAILURE, error };
   }
 }
 
@@ -44,7 +44,7 @@ export function getDblDotLocalExecStatus() {
   return async dispatch => {
     const { isRunning } = await dblDotLocalService.getDblDotLocalExecStatus();
     return dispatch({
-      type: dblDotLocalConfig.DBL_DOT_LOCAL_PROCESS_STATUS,
+      type: dblDotLocalConstants.DBL_DOT_LOCAL_PROCESS_STATUS,
       isRunning
     });
   };
@@ -64,18 +64,22 @@ export function gotoWorkspaceLoginPage(workspace) {
         configXmlFile
       );
       dblDotLocalExecProcess.stderr.on('data', data => {
-        // log.error(data);
-        const [, errorMessage] = `${data}`.split(
+        const dataString = `${data}`;
+        const [, errorMessage] = dataString.split(
           'dbl_dot_local.dbl_app.DblAppException:'
         );
         if (errorMessage) {
           dispatch(alertActions.error({ message: errorMessage }));
+        } else if (dataString.includes('File "')) {
+          log.error(dataString, {
+            [dblDotLocalConstants.DDL_APPENDER_ID]: true
+          });
         }
       });
       ['error', 'close', 'exit'].forEach(event => {
         dblDotLocalExecProcess.on(event, dblDotLocalExecProcessCode => {
           dispatch({
-            type: dblDotLocalConfig.STOP_WORKSPACE_PROCESS_DONE,
+            type: dblDotLocalConstants.STOP_WORKSPACE_PROCESS_DONE,
             dblDotLocalExecProcess,
             dblDotLocalExecProcessCode
           });
@@ -104,7 +108,7 @@ export function gotoWorkspaceLoginPage(workspace) {
     dblDotLocalExecProcess
   ) {
     return {
-      type: dblDotLocalConfig.START_WORKSPACE_PROCESS,
+      type: dblDotLocalConstants.START_WORKSPACE_PROCESS,
       fullPath,
       configXmlFile,
       dblDotLocalExecProcess
@@ -113,9 +117,9 @@ export function gotoWorkspaceLoginPage(workspace) {
 }
 
 export function incrementErrorLogCount() {
-  return { type: dblDotLocalConfig.DDL_ERROR_LOG_COUNT_INCREMENT };
+  return { type: dblDotLocalConstants.DDL_ERROR_LOG_COUNT_INCREMENT };
 }
 
 export function resetErrorLogCount() {
-  return { type: dblDotLocalConfig.DDL_ERROR_LOG_COUNT_RESET };
+  return { type: dblDotLocalConstants.DDL_ERROR_LOG_COUNT_RESET };
 }
