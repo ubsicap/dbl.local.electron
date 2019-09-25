@@ -1,3 +1,9 @@
+### Version 0.47.0 (Context Menu for Browser)
+
+#### Feature
+
+- Add Edit > Find / Next / Backward to Browser Menus
+
 ### Version 0.46.0 (Context Menu for Browser)
 
 #### Feature
