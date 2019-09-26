@@ -31,6 +31,11 @@ export default class AppUpdater {
 
 let mainWindow = null;
 
+// Disable caching resources to avoid unexpected behavior when exporting metadata.xml and resources
+// see https://github.com/electron/electron/issues/1720
+// and https://github.com/scramjs/scram-engine/issues/5#issuecomment-222323820
+app.commandLine.appendSwitch('--disable-http-cache');
+
 logHelpers.setupLogFile(__dirname, 'debug', 'error');
 log.info('Main App starting...');
 
@@ -68,13 +73,6 @@ app.on('window-all-closed', () => {
 });
 
 app.on('ready', async () => {
-  if (
-    process.env.NODE_ENV === 'development' ||
-    process.env.DEBUG_PROD === 'true'
-  ) {
-    await installExtensions();
-  }
-
   mainWindow = new BrowserWindow({
     show: false,
     width: 1024,
@@ -87,6 +85,20 @@ app.on('ready', async () => {
   mainWindow.loadURL(
     `file://${__dirname}/app.html#${navigationConstants.NAVIGATION_WORKSPACES}`
   );
+
+  /*
+     waiting until 'dom-ready' avoids startup errors related to devtools server extension
+     https://github.com/LN-Zap/zap-desktop/pull/500
+  */
+  mainWindow.webContents.on('dom-ready', async () => {
+    mainWindow.webContents.closeDevTools();
+    if (
+      process.env.NODE_ENV === 'development' ||
+      process.env.DEBUG_PROD === 'true'
+    ) {
+      await installExtensions();
+    }
+  });
 
   // @TODO: Use 'ready-to-show' event
   //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
@@ -133,6 +145,7 @@ app.on('ready', async () => {
     mainWindow = null;
   });
 
+  /*
   mainWindow.onerror = err => {
     // log.error(JSON.stringify(err));
   };
@@ -141,7 +154,6 @@ app.on('ready', async () => {
     // log.error(JSON.stringify(err));
   });
 
-  /*
   session.defaultSession.webRequest.onErrorOccurred((details) => {
     log.error(JSON.stringify(details));
   });

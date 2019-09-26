@@ -453,15 +453,10 @@ function requestSaveResourceTo(
   relativeDestinationPath,
   progressCallback = () => {}
 ) {
-  // NOTE: for some reason getting metadata.xml via /resource-stream/ api leads to `Review metadata.xml`
-  // getting the earlier version of the document. So use `/resource/` api instead.
-  // Might be a Chrome feature for responses with attachments
-  // see --disable-http-cache and https://github.com/electron/electron/issues/1720
-  const resourceApi =
-    uriRelativePath === 'metadata.xml'
-      ? RESOURCE_API
-      : `${RESOURCE_API}-stream`;
-  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${resourceApi}/${uriRelativePath}`;
+  // NOTE: getting resources via /resource-stream/ api can result in
+  // getting the earlier version of the cached resource.
+  // To avoid this use --disable-http-cache (see https://github.com/electron/electron/issues/1720)
+  const url = `${dblDotLocalConfigConstants.getHttpDblDotLocalBaseUrl()}/${BUNDLE_API}/${bundleId}/${RESOURCE_API}-stream/${uriRelativePath}`;
   const targetPath = path.join(selectedFolder, relativeDestinationPath);
   return download(url, targetPath, progressCallback, authHeader());
 }
