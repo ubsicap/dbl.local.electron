@@ -2,6 +2,7 @@ import log from 'electron-log';
 import fs from 'fs-extra';
 import path from 'path';
 import upath from 'upath';
+import prompt from 'electron-prompt';
 import { servicesHelpers } from '../helpers/services';
 
 const {
@@ -43,6 +44,75 @@ function saveFileToFolder(browserWin) {
   shell.showItemInFolder(targetFile);
 }
 
+let lastSearchText;
+let lastSearchIndex;
+let lastSearchResults;
+const findNextLabel = 'Find Next';
+const findNextShortcut = 'F3';
+const findBackShortcut = 'Shift+F3';
+
+function findNextInPageMenuItem(browserWin, searchText, forward = true) {
+  const findNextInfo = lastSearchResults
+    ? ` (${lastSearchIndex}/${lastSearchResults})`
+    : '';
+  return findInPageMenuItem(
+    browserWin,
+    searchText,
+    false,
+    `${forward ? findNextLabel : 'Find Backward'}${findNextInfo}`,
+    forward ? findNextShortcut : findBackShortcut,
+    forward
+  );
+}
+
+function findInPageMenuItem(
+  browserWin,
+  selectionText,
+  openPrompt = true,
+  label = 'Find',
+  accelerator = 'CmdOrCtrl+F',
+  forward = true
+) {
+  return {
+    label,
+    accelerator,
+    click: async () => {
+      const { webContents } = browserWin;
+      webContents.unselect();
+      if (openPrompt) {
+        try {
+          const promptResult = await prompt(
+            {
+              title: label,
+              label: '',
+              resizable: true,
+              value: selectionText,
+              inputAttrs: {
+                type: 'text'
+              }
+            },
+            browserWin
+          );
+          if (!promptResult || promptResult.length === 0) {
+            return;
+          }
+          lastSearchText = promptResult;
+          lastSearchIndex = undefined;
+          lastSearchResults = undefined;
+          webContents.findInPage(promptResult);
+        } catch (error) {
+          log.error(error);
+        }
+      } else {
+        if (!selectionText || selectionText.length === 0) {
+          return;
+        }
+        webContents.findInPage(selectionText, { forward });
+      }
+    }
+  };
+}
+
 function buildBrowserTemplate(browserWin) {
   // console.log('menu/buildDefaultTemplate');
   // console.log(loginLabel);
@@ -66,6 +136,11 @@ function buildBrowserTemplate(browserWin) {
         {
           role: 'copy'
         },
+        { type: 'separator' },
+        findInPageMenuItem(browserWin, lastSearchText),
+        findNextInPageMenuItem(browserWin, lastSearchText, true),
+        findNextInPageMenuItem(browserWin, lastSearchText, false),
+        { type: 'separator' },
         {
           role: 'selectAll'
         }
@@ -139,9 +214,25 @@ function openFileInChromeBrowser(
       }
     });
   }
-
-  browserWin.webContents.on('context-menu', () => {
-    Menu.buildFromTemplate([{ role: 'copy' }]).popup(browserWin);
+  browserWin.webContents.on('found-in-page', (event, result) => {
+    const { activeMatchOrdinal, matches } = result;
+    lastSearchResults = matches;
+    lastSearchIndex = activeMatchOrdinal;
+    buildBrowserMenu(browserWin);
+  });
+  browserWin.webContents.on('context-menu', (event, params) => {
+    const { selectionText } = params;
+    const searchText =
+      selectionText && selectionText.length > 0
+        ? selectionText
+        : lastSearchText;
+    Menu.buildFromTemplate([
+      { role: 'copy' },
+      { type: 'separator' },
+      findInPageMenuItem(browserWin, selectionText),
+      findNextInPageMenuItem(browserWin, searchText),
+      findNextInPageMenuItem(browserWin, searchText, false)
+    ]).popup(browserWin);
   });
   return browserWin;
 }
