@@ -1,3 +1,11 @@
+### Version 0.47.2 (Context Menu for Browser)
+
+#### Fix
+
+- Remove caching of resources so that right ones get exported
+- Don't open devTools by default
+- Upgrade dbl_dot_local_app master: Fix conflict with video wizard (9/26/2019)
+
 ### Version 0.47.1 (Context Menu for Browser)
 
 #### Fix
