@@ -1,3 +1,9 @@
+### Version 0.47.1 (Context Menu for Browser)
+
+#### Fix
+
+- Upgrade dbl_dot_local_app cleaner_cli (9/25/2019)
+
 ### Version 0.47.0 (Context Menu for Browser)
 
 #### Feature
