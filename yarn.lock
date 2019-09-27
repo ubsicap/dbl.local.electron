@@ -1571,6 +1571,16 @@
   dependencies:
     "@babel/types" "^7.3.0"
 
+"@types/bluebird@*":
+  version "3.5.27"
+  resolved "https://registry.yarnpkg.com/@types/bluebird/-/bluebird-3.5.27.tgz#61eb4d75dc6bfbce51cf49ee9bbebe941b2cb5d0"
+  integrity sha512-6BmYWSBea18+tSjjSC3QIyV93ZKAeNWGM7R6aYt1ryTZXrlHF+QLV0G2yV0viEGVyRkyQsWfMoJ0k/YghBX5sQ==
+
+"@types/caseless@*":
+  version "0.12.2"
+  resolved "https://registry.yarnpkg.com/@types/caseless/-/caseless-0.12.2.tgz#f65d3d6389e01eeb458bd54dc8f52b95a9463bc8"
+  integrity sha512-6ckxMjBBD8URvjB6J3NcnuAn5Pkl7t3TizAg+xdlzzQGSPSmBcXf8KoIH0ua/i+tio+ZRUHEXp0HEmvaR4kt0w==
+
 "@types/error-stack-parser@^1.3.18":
   version "1.3.18"
   resolved "https://registry.yarnpkg.com/@types/error-stack-parser/-/error-stack-parser-1.3.18.tgz#e01c9f8c85ca83b610320c62258b0c9026ade0f7"
@@ -1653,10 +1663,38 @@
     "@types/prop-types" "*"
     csstype "^2.2.0"
 
+"@types/request-promise@^4.1.42":
+  version "4.1.44"
+  resolved "https://registry.yarnpkg.com/@types/request-promise/-/request-promise-4.1.44.tgz#05b59cd18445832fae16b68d5bb3d4621b549485"
+  integrity sha512-RId7eFsUKxfal1LirDDIcOp9u3MM3NXFDBcC3sqIMcmu7f4U6DsCEMD8RbLZtnPrQlN5Jc79di/WPsIEDO4keg==
+  dependencies:
+    "@types/bluebird" "*"
+    "@types/request" "*"
+
+"@types/request@*", "@types/request@^2.48.0":
+  version "2.48.3"
+  resolved "https://registry.yarnpkg.com/@types/request/-/request-2.48.3.tgz#970b8ed2317568c390361d29c555a95e74bd6135"
+  integrity sha512-3Wo2jNYwqgXcIz/rrq18AdOZUQB8cQ34CXZo+LUwPJNpvRAL86+Kc2wwI8mqpz9Cr1V+enIox5v+WZhy/p3h8w==
+  dependencies:
+    "@types/caseless" "*"
+    "@types/node" "*"
+    "@types/tough-cookie" "*"
+    form-data "^2.5.0"
+
 "@types/stack-utils@^1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@types/stack-utils/-/stack-utils-1.0.1.tgz#0a851d3bd96498fa25c33ab7278ed3bd65f06c3e"
   integrity sha512-l42BggppR6zLmpfU6fq9HEa2oGPEI8yrSPL3GITjfRInppYFahObbIQOQK3UGxEnyQpltZLaPe75046NOZQikw==
+
+"@types/string-template@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@types/string-template/-/string-template-1.0.2.tgz#363b273c9b456705e3111e3571e9248f6474eba4"
+  integrity sha1-NjsnPJtFZwXjER41cekkj2R066Q=
+
+"@types/tough-cookie@*":
+  version "2.3.5"
+  resolved "https://registry.yarnpkg.com/@types/tough-cookie/-/tough-cookie-2.3.5.tgz#9da44ed75571999b65c37b60c9b2b88db54c585d"
+  integrity sha512-SCcK7mvGi3+ZNz833RRjFIxrn4gI1PPR3NtuIS+6vMkvmsGjosqTJwRt5bAEFLRz+wtJMWv8+uOnZf2hi2QXTg==
 
 "@types/unist@*", "@types/unist@^2.0.0":
   version "2.0.3"
@@ -6668,6 +6706,15 @@ form-data@^2.3.3, form-data@~2.3.2:
   version "2.3.3"
   resolved "https://registry.yarnpkg.com/form-data/-/form-data-2.3.3.tgz#dcce52c05f644f298c6a7ab936bd724ceffbf3a6"
   integrity sha512-1lLKB2Mu3aGP1Q/2eCOx0fNbRMe7XdwktwOruhfqqd0rIJWwN4Dh+E3hrPSlDCXnSR7UtZ1N38rVXm+6+MEhJQ==
+  dependencies:
+    asynckit "^0.4.0"
+    combined-stream "^1.0.6"
+    mime-types "^2.1.12"
+
+form-data@^2.5.0:
+  version "2.5.1"
+  resolved "https://registry.yarnpkg.com/form-data/-/form-data-2.5.1.tgz#f2cbec57b5e59e23716e128fe44d4e5dd23895f4"
+  integrity sha512-m21N3WOmEEURgk6B9GLOE4RuWOFf28Lhh9qGYeNlGq4VDXUlJy2th2slBNU8Gp8EzloYZOibZJ7t5ecIrFSjVA==
   dependencies:
     asynckit "^0.4.0"
     combined-stream "^1.0.6"
@@ -12341,6 +12388,16 @@ request-promise-native@^1.0.5:
     stealthy-require "^1.1.1"
     tough-cookie "^2.3.3"
 
+request-promise@^4.2.2:
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/request-promise/-/request-promise-4.2.4.tgz#1c5ed0d71441e38ad58c7ce4ea4ea5b06d54b310"
+  integrity sha512-8wgMrvE546PzbR5WbYxUQogUnUDfM0S7QIFZMID+J73vdFARkFy+HElj4T+MWYhpXwlLp0EQ8Zoj8xUA0he4Vg==
+  dependencies:
+    bluebird "^3.5.0"
+    request-promise-core "1.1.2"
+    stealthy-require "^1.1.1"
+    tough-cookie "^2.3.3"
+
 request@2.34:
   version "2.34.0"
   resolved "https://registry.yarnpkg.com/request/-/request-2.34.0.tgz#b5d8b9526add4a2d4629f4d417124573996445ae"
@@ -13316,6 +13373,11 @@ string-length@^2.0.0:
   dependencies:
     astral-regex "^1.0.0"
     strip-ansi "^4.0.0"
+
+string-template@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/string-template/-/string-template-1.0.0.tgz#9e9f2233dc00f218718ec379a28a5673ecca8b96"
+  integrity sha1-np8iM9wA8hhxjsN5oopWc+zKi5Y=
 
 string-width@^1.0.1, string-width@^1.0.2:
   version "1.0.2"
@@ -15300,6 +15362,18 @@ yauzl@2.4.1:
   integrity sha1-lSj0QtqxsihOWLQ3m7GU4i4MQAU=
   dependencies:
     fd-slicer "~1.0.1"
+
+youtrack-rest-client@^1.3.1:
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/youtrack-rest-client/-/youtrack-rest-client-1.3.1.tgz#940865e4a7fb2354f1e5f68867ea74d4c9c4d0b2"
+  integrity sha512-DnHuKy6Ihiw8FUf1GdURJRS2k1ianxZDuAe6mB+k+qUVXsWBdJyw5IXreqN+jpbEu4+Yr7ZVYRGWLpnqvEcHyQ==
+  dependencies:
+    "@types/request" "^2.48.0"
+    "@types/request-promise" "^4.1.42"
+    "@types/string-template" "^1.0.2"
+    request "^2.88.0"
+    request-promise "^4.2.2"
+    string-template "^1.0.0"
 
 yup@^0.27.0:
   version "0.27.0"

@@ -300,7 +300,8 @@
     "upath": "^1.1.0",
     "uuid": "^3.3.2",
     "wait-promise": "^0.4.1",
-    "xml2js": "^0.4.19"
+    "xml2js": "^0.4.19",
+    "youtrack-rest-client": "^1.3.1"
   },
   "devEngines": {
     "node": ">=7.x",
