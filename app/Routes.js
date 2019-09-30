@@ -30,6 +30,11 @@ export default () => (
         component={LoginForm}
       />
       <Redirect exact from="/" to={navigationConstants.NAVIGATION_WORKSPACES} />
+      <Route
+        exact
+        path={navigationConstants.NAVIGATION_SUBMIT_HELP_TICKET}
+        component={LoginForm}
+      />
       <PrivateRoute
         exact
         path={navigationConstants.NAVIGATION_BUNDLES}
