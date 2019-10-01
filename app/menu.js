@@ -284,6 +284,11 @@ export default class MenuBuilder {
         label: 'Help',
         submenu: [
           {
+            label: '&Report a Problem',
+            click: () =>
+              this.navigate(navigationConstants.NAVIGATION_SUBMIT_HELP_TICKET)
+          },
+          {
             label: 'Toggle &Developer Tools',
             accelerator: 'Shift+CmdOrCtrl+I',
             click: () => {
