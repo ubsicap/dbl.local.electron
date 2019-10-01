@@ -101,7 +101,7 @@ export default class SubmitHelpTicket extends React.Component {
         <nav className="nav">
           <button onClick={this.handleGetMdValue} >getMdValue</button>
           <button onClick={this.handleGetHtmlValue} >getHtmlValue</button>
-        </nav>;
+        </nav>
         <div className="editor-wrap" style={{ marginTop: '30px' }}>
           <MdEditor
             ref={node => this.mdEditor = node}
