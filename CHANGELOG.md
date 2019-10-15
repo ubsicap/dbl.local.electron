@@ -1,4 +1,13 @@
-### Version 0.47.3 (Fix Adding Audio Resources)
+### Version 0.47.5 (Fix logs)
+
+#### Fix
+
+- Fix Help > Open Log... to capture more logging information
+- Fix Help > Open Error Log... to limit to 1MB size and 3 backups
+- Fix storing user's email addresses with multiple periods
+- Fix Resources dialog with more detailed step-by-step instructions
+
+### Version 0.47.4 (Fix Adding Audio Resources)
 
 #### Fix
 
