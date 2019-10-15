@@ -4,8 +4,6 @@ import Store from 'electron-store';
 import childProcess from 'child_process';
 import xml2js from 'xml2js';
 import log from 'electron-log';
-// import * as winston from 'winston';
-// import { ConsoleForElectron } from 'winston-console-for-electron';
 import dblDotLocalConstants from '../constants/dblDotLocal.constants';
 import { authHeader } from '../helpers';
 import {
