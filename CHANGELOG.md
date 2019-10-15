@@ -1,3 +1,10 @@
+### Version 0.47.3 (Fix Adding Audio Resources)
+
+#### Fix
+
+- DDL crash `local variable 'canonical_elements' referenced before assignment when adding a resource`
+- Upgrade dbl_dot_local_app master: fix_for_randy (10/14/2019)
+
 ### Version 0.47.2 (Context Menu for Browser)
 
 #### Fix
