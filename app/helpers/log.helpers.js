@@ -57,7 +57,12 @@ function setupRendererErrorLogs() {
 
   log4js.configure({
     appenders: {
-      [generalAppenderId]: { type: 'file', filename: errorLogPath },
+      [generalAppenderId]: {
+        type: 'file',
+        filename: errorLogPath,
+        maxLogSize: 1048576,
+        backups: 3
+      },
       [ddlAppenderId]: { type: 'file', filename: errorLogPath }
     },
     categories: {
