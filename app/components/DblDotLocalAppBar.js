@@ -122,7 +122,7 @@ class DblDotLocalAppBar extends React.PureComponent {
 
   errorHook = (msg, transport) => {
     if (transport !== log.transports.file || msg.level !== 'error') {
-      return false;
+      return msg;
     }
     // just increment error count
     const { incrementAppErrorCount } = this.props;
