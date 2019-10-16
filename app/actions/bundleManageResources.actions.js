@@ -291,7 +291,13 @@ export function addManifestResources(
         dispatch(failure(_bundleId, error));
       }
     }
-    await updatePublications(() => gottenStateForPublications, _bundleId);
+    try {
+      await updatePublications(() => gottenStateForPublications, _bundleId);
+    } catch (error) {
+      const { status, statusText, url, message } = error;
+      const bodyText = await error.text();
+      log.error({ status, statusText, url, message, bodyText });
+    }
     await bundleService.waitStopCreateMode(_bundleId);
     dispatch(done(_bundleId));
     dispatch(saveMetadatFileToTempBundleFolder(_bundleId));
