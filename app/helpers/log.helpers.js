@@ -66,7 +66,7 @@ function setupRendererErrorLogs() {
       [ddlAppenderId]: { type: 'file', filename: errorLogPath }
     },
     categories: {
-      default: { appenders: [generalAppenderId, ddlAppenderId], level: 'error' }
+      default: { appenders: [generalAppenderId], level: 'error' }
     }
   });
 
