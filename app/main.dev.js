@@ -10,7 +10,7 @@
  *
  * @flow
  */
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, session } from 'electron';
 // import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import path from 'path';
@@ -18,6 +18,7 @@ import MenuBuilder from './menu';
 import { autoUpdaterServices } from './main-process/autoUpdater.services';
 import { navigationConstants } from './constants/navigation.constants';
 import { logHelpers } from './helpers/log.helpers';
+import dblDotLocalConstants from './constants/dblDotLocal.constants';
 
 /*
 export default class AppUpdater {
@@ -145,6 +146,32 @@ app.on('ready', async () => {
     mainWindow = null;
   });
 
+  session.defaultSession.webRequest.onCompleted(
+    {
+      urls: [`${dblDotLocalConstants.FLASK_API_DEFAULT}/publication/wizard/*`]
+    },
+    details => {
+      if (details.method === 'POST' && details.statusCode !== 200) {
+        // For some reason onErrorOccurred is not getting triggered for all POST errors?
+        log.error(details);
+      }
+    }
+  );
+
+  session.defaultSession.webRequest.onErrorOccurred(
+    {
+      urls: [`${dblDotLocalConstants.FLASK_API_DEFAULT}/*`]
+    },
+    details => {
+      if (details.error === 'net::ERR_CONNECTION_REFUSED') {
+        const { error, url } = details;
+        log.error({ error, url });
+        return;
+      }
+      log.error(details);
+    }
+  );
+
   /*
   mainWindow.onerror = err => {
     // log.error(JSON.stringify(err));
@@ -152,10 +179,6 @@ app.on('ready', async () => {
 
   process.on('uncaughtException', err => {
     // log.error(JSON.stringify(err));
-  });
-
-  session.defaultSession.webRequest.onErrorOccurred((details) => {
-    log.error(JSON.stringify(details));
   });
    */
   /*
