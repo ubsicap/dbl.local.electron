@@ -138,9 +138,22 @@ app.on('ready', async () => {
     attachDebugger();
   });
 
-  function sendErrorToMainWindow({ url, method, status, statusText }) {
+  function sendErrorToMainWindow({
+    url,
+    method,
+    status,
+    statusText,
+    mimeType
+  }) {
     return (err, data) => {
-      log.error({ method, url, status, statusText, responseBody: data.body });
+      log.error({
+        method,
+        url,
+        status,
+        statusText,
+        mimeType,
+        responseBody: data.body
+      });
     };
   }
 
@@ -161,7 +174,7 @@ app.on('ready', async () => {
         method === 'Network.responseReceived' &&
         params.response.status !== 200
       ) {
-        const { url, status, statusText } = params.response;
+        const { url, status, statusText, mimeType } = params.response;
         debug.sendCommand(
           'Network.getResponseBody',
           { requestId: params.requestId },
@@ -169,6 +182,7 @@ app.on('ready', async () => {
             url,
             status,
             statusText,
+            mimeType,
             method: params.response.requestHeadersText.split(' ')[0]
           })
           /*
