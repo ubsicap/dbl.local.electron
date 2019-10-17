@@ -10,7 +10,7 @@
  *
  * @flow
  */
-import { app, BrowserWindow, session } from 'electron';
+import { app, BrowserWindow } from 'electron';
 // import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import path from 'path';
@@ -18,7 +18,6 @@ import MenuBuilder from './menu';
 import { autoUpdaterServices } from './main-process/autoUpdater.services';
 import { navigationConstants } from './constants/navigation.constants';
 import { logHelpers } from './helpers/log.helpers';
-import dblDotLocalConstants from './constants/dblDotLocal.constants';
 
 /*
 export default class AppUpdater {
@@ -196,41 +195,6 @@ app.on('ready', async () => {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
-
-  function getAbbrErrorDetails(details) {
-    const { error, method, url } = details;
-    return { error, method, url };
-  }
-
-  session.defaultSession.webRequest.onCompleted(
-    {
-      urls: [`${dblDotLocalConstants.FLASK_API_DEFAULT}/*`]
-    },
-    details => {
-      if (details.method === 'POST' && details.statusCode !== 200) {
-        // For some reason onErrorOccurred is not getting triggered for all POST errors?
-        log.error(getAbbrErrorDetails(details));
-      }
-    }
-  );
-
-  session.defaultSession.webRequest.onErrorOccurred(
-    {
-      urls: [`${dblDotLocalConstants.FLASK_API_DEFAULT}/*`]
-    },
-    details => {
-      const abbrErrorDetails = getAbbrErrorDetails(details);
-      const detailsWithMaskedToken = abbrErrorDetails.url.startsWith(
-        `${dblDotLocalConstants.FLASK_API_DEFAULT}/events/`
-      )
-        ? {
-            ...abbrErrorDetails,
-            url: `${dblDotLocalConstants.FLASK_API_DEFAULT}/events/...`
-          }
-        : abbrErrorDetails;
-      log.error(detailsWithMaskedToken);
-    }
-  );
 
   /*
   mainWindow.onerror = err => {
