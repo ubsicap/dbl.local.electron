@@ -136,7 +136,58 @@ app.on('ready', async () => {
       // eslint-disable-next-line no-underscore-dangle
       `autoUpdater config path: ${myAutoUpdater._appUpdateConfigPath}`
     );
+    attachDebugger();
   });
+
+  function sendErrorToMainWindow({ url, method, status, statusText }) {
+    return (err, data) => {
+      log.error({ method, url, status, statusText, responseBody: data.body });
+    };
+  }
+
+  /* Adapted from https://discuss.atom.io/t/electron-intercept-http-request-response-on-browserwindow/21868/7 */
+  function attachDebugger() {
+    const debug = mainWindow.webContents.debugger;
+    debug.attach('1.1');
+    debug.on('message', (event, method, params) => {
+      //  outer context: let firstShotReloaded = false;
+      /*
+      if (!firstShotReloaded && method === 'Network.responseReceived') {
+        // XXX did not find any other way for first page load
+        firstShotReloaded = true;
+        mainWindow.webContents.reload();
+      }
+      */
+      if (
+        method === 'Network.responseReceived' &&
+        params.response.status !== 200
+      ) {
+        const { url, status, statusText } = params.response;
+        debug.sendCommand(
+          'Network.getResponseBody',
+          { requestId: params.requestId },
+          sendErrorToMainWindow({
+            url,
+            status,
+            statusText,
+            method: params.response.requestHeadersText.split(' ')[0]
+          })
+          /*
+          (err, data) => {
+            log.error({ err, data });
+            /*
+            if (err && err.code === undefined) {
+              // XXX may check data.base64encoded boolean and decode ? Maybe not here...
+              // if (data.base64encoded) ... Buffer.from(data.body, 'base64');
+              log.error({ err, data });
+              // this.$store.dispatch('updateStaticSource', data.body);
+            }
+          } */
+        );
+      }
+    });
+    debug.sendCommand('Network.enable');
+  }
 
   mainWindow.on('focus', () => {
     const menuBuilder = new MenuBuilder(mainWindow);
@@ -146,14 +197,19 @@ app.on('ready', async () => {
     mainWindow = null;
   });
 
+  function getAbbrErrorDetails(details) {
+    const { error, method, url } = details;
+    return { error, method, url };
+  }
+
   session.defaultSession.webRequest.onCompleted(
     {
-      urls: [`${dblDotLocalConstants.FLASK_API_DEFAULT}/publication/wizard/*`]
+      urls: [`${dblDotLocalConstants.FLASK_API_DEFAULT}/*`]
     },
     details => {
       if (details.method === 'POST' && details.statusCode !== 200) {
         // For some reason onErrorOccurred is not getting triggered for all POST errors?
-        log.error(details);
+        log.error(getAbbrErrorDetails(details));
       }
     }
   );
@@ -163,12 +219,16 @@ app.on('ready', async () => {
       urls: [`${dblDotLocalConstants.FLASK_API_DEFAULT}/*`]
     },
     details => {
-      if (details.error === 'net::ERR_CONNECTION_REFUSED') {
-        const { error, url } = details;
-        log.error({ error, url });
-        return;
-      }
-      log.error(details);
+      const abbrErrorDetails = getAbbrErrorDetails(details);
+      const detailsWithMaskedToken = abbrErrorDetails.url.startsWith(
+        `${dblDotLocalConstants.FLASK_API_DEFAULT}/events/`
+      )
+        ? {
+            ...abbrErrorDetails,
+            url: `${dblDotLocalConstants.FLASK_API_DEFAULT}/events/...`
+          }
+        : abbrErrorDetails;
+      log.error(detailsWithMaskedToken);
     }
   );
 
