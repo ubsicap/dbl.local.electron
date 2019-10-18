@@ -17,6 +17,7 @@ import path from 'path';
 import MenuBuilder from './menu';
 import { autoUpdaterServices } from './main-process/autoUpdater.services';
 import { navigationConstants } from './constants/navigation.constants';
+import { ipcRendererConstants } from './constants/ipcRenderer.constants';
 import { logHelpers } from './helpers/log.helpers';
 
 /*
@@ -135,7 +136,59 @@ app.on('ready', async () => {
       // eslint-disable-next-line no-underscore-dangle
       `autoUpdater config path: ${myAutoUpdater._appUpdateConfigPath}`
     );
+    attachDebugger();
   });
+
+  function sendErrorToMainWindow({
+    url,
+    method,
+    status,
+    statusText,
+    mimeType
+  }) {
+    return (err, data) => {
+      // XXX may check data.base64encoded boolean and decode ? Maybe not here...
+      // if (data.base64encoded) ... Buffer.from(data.body, 'base64');
+      const errorDetails = {
+        method,
+        url,
+        status,
+        statusText,
+        mimeType,
+        responseBody: data.body
+      };
+      mainWindow.webContents.send(
+        ipcRendererConstants.KEY_IPC_HTTP_ERROR_DATA,
+        errorDetails
+      );
+    };
+  }
+
+  /* Adapted from https://discuss.atom.io/t/electron-intercept-http-request-response-on-browserwindow/21868/7 */
+  function attachDebugger() {
+    const debug = mainWindow.webContents.debugger;
+    debug.attach('1.1');
+    debug.on('message', (event, method, params) => {
+      if (
+        method === 'Network.responseReceived' &&
+        params.response.status !== 200
+      ) {
+        const { url, status, statusText, mimeType } = params.response;
+        debug.sendCommand(
+          'Network.getResponseBody',
+          { requestId: params.requestId },
+          sendErrorToMainWindow({
+            url,
+            status,
+            statusText,
+            mimeType,
+            method: params.response.requestHeadersText.split(' ')[0]
+          })
+        );
+      }
+    });
+    debug.sendCommand('Network.enable');
+  }
 
   mainWindow.on('focus', () => {
     const menuBuilder = new MenuBuilder(mainWindow);
@@ -152,10 +205,6 @@ app.on('ready', async () => {
 
   process.on('uncaughtException', err => {
     // log.error(JSON.stringify(err));
-  });
-
-  session.defaultSession.webRequest.onErrorOccurred((details) => {
-    log.error(JSON.stringify(details));
   });
    */
   /*

@@ -3,6 +3,22 @@ import path from 'path';
 import log4js from 'log4js';
 import { browserWindowService } from '../services/browserWindow.service';
 import dblDotLocalConstants from '../constants/dblDotLocal.constants';
+import { ipcRendererConstants } from '../constants/ipcRenderer.constants';
+
+const { ipcRenderer } = require('electron');
+if (ipcRenderer) {
+  ipcRenderer.on(ipcRendererConstants.KEY_IPC_HTTP_ERROR_DATA, (event, errorDetails) => {
+    const detailsWithMaskedToken = errorDetails.url.startsWith(
+      `${dblDotLocalConstants.FLASK_API_DEFAULT}/events/`
+    )
+      ? {
+          ...errorDetails,
+          url: `${dblDotLocalConstants.FLASK_API_DEFAULT}/events/...`
+        }
+      : errorDetails;
+    log.error(detailsWithMaskedToken, { [dblDotLocalConstants.HTTP_ERROR_APPENDER_ID]: true });
+  });
+}
 
 export const logHelpers = {
   setupLogFile,
@@ -54,6 +70,7 @@ function setupRendererErrorLogs() {
   const errorLogPath = getErrorLogPath();
   const generalAppenderId = 'NAT';
   const ddlAppenderId = dblDotLocalConstants.DDL_APPENDER_ID;
+  const httpErrorAppenderId = dblDotLocalConstants.HTTP_ERROR_APPENDER_ID;
 
   log4js.configure({
     appenders: {
@@ -63,7 +80,8 @@ function setupRendererErrorLogs() {
         maxLogSize: 1048576,
         backups: 3
       },
-      [ddlAppenderId]: { type: 'file', filename: errorLogPath }
+      [ddlAppenderId]: { type: 'file', filename: errorLogPath },
+      [httpErrorAppenderId]: { type: 'file', filename: errorLogPath }
     },
     categories: {
       default: { appenders: [generalAppenderId], level: 'error' }
@@ -72,6 +90,7 @@ function setupRendererErrorLogs() {
 
   const generalErrorLogger = log4js.getLogger(generalAppenderId);
   const ddlErrorLogger = log4js.getLogger(ddlAppenderId);
+  const httpErrorLogger = log4js.getLogger(httpErrorAppenderId);
 
   function errorHook(msg, transport) {
     if (transport !== log.transports.file || msg.level !== 'error') {
@@ -79,10 +98,12 @@ function setupRendererErrorLogs() {
     }
     const msgData = msg.data[0];
     const tags = msg.data[1] || {};
-    if (
+    if (tags[httpErrorAppenderId]) {
+      httpErrorLogger.error(msgData);
+    } else if (
+      tags[ddlAppenderId] ||
       (typeof msgData === 'string' &&
-        msgData.startsWith(`${dblDotLocalConstants.DDL_APP_LOG_PREFIX}`)) ||
-      tags[ddlAppenderId]
+        msgData.startsWith(`${dblDotLocalConstants.DDL_APP_LOG_PREFIX}`))
     ) {
       ddlErrorLogger.error(msgData);
     } else {

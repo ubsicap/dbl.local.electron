@@ -1,3 +1,14 @@
+### Version 0.48.0 (Capture HTTP ERRORS in logs)
+
+#### Feature
+
+- Capture all HTTP ERRORS in logs
+
+#### Fix
+
+- (Really) Fix Help > Open Error Log... to not duplicate errors
+- Catch publication wizard error in Resources dialog to allow app to continue without spinning loading forever.
+
 ### Version 0.47.5 (Fix logs)
 
 #### Fix

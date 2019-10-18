@@ -476,7 +476,7 @@ function startEventSource(authToken, getState) {
   const eventSource = new EventSource(
     `${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/events/${authToken}`
   );
-  log.info(`SSE connected: ${authToken}`);
+  log.info(`SSE connected: ${authToken.substring(0, 16)}...`);
   eventSource.onmessage = event => {
     log.info(event);
   };
