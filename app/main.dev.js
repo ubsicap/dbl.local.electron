@@ -17,6 +17,7 @@ import path from 'path';
 import MenuBuilder from './menu';
 import { autoUpdaterServices } from './main-process/autoUpdater.services';
 import { navigationConstants } from './constants/navigation.constants';
+import { ipcRendererConstants } from './constants/ipcRenderer.constants';
 import { logHelpers } from './helpers/log.helpers';
 
 /*
@@ -146,14 +147,20 @@ app.on('ready', async () => {
     mimeType
   }) {
     return (err, data) => {
-      log.error({
+      // XXX may check data.base64encoded boolean and decode ? Maybe not here...
+      // if (data.base64encoded) ... Buffer.from(data.body, 'base64');
+      const errorDetails = {
         method,
         url,
         status,
         statusText,
         mimeType,
         responseBody: data.body
-      });
+      };
+      mainWindow.webContents.send(
+        ipcRendererConstants.KEY_IPC_HTTP_ERROR_DATA,
+        errorDetails
+      );
     };
   }
 
@@ -162,14 +169,6 @@ app.on('ready', async () => {
     const debug = mainWindow.webContents.debugger;
     debug.attach('1.1');
     debug.on('message', (event, method, params) => {
-      //  outer context: let firstShotReloaded = false;
-      /*
-      if (!firstShotReloaded && method === 'Network.responseReceived') {
-        // XXX did not find any other way for first page load
-        firstShotReloaded = true;
-        mainWindow.webContents.reload();
-      }
-      */
       if (
         method === 'Network.responseReceived' &&
         params.response.status !== 200
@@ -185,17 +184,6 @@ app.on('ready', async () => {
             mimeType,
             method: params.response.requestHeadersText.split(' ')[0]
           })
-          /*
-          (err, data) => {
-            log.error({ err, data });
-            /*
-            if (err && err.code === undefined) {
-              // XXX may check data.base64encoded boolean and decode ? Maybe not here...
-              // if (data.base64encoded) ... Buffer.from(data.body, 'base64');
-              log.error({ err, data });
-              // this.$store.dispatch('updateStaticSource', data.body);
-            }
-          } */
         );
       }
     });
