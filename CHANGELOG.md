@@ -1,3 +1,9 @@
+### Version 0.48.1 (Capture HTTP ERRORS in logs)
+
+#### Fix
+
+- try fix error "UnhandledRejection Error: Reducers may not dispatch actions." for "progress > 100%" error.
+
 ### Version 0.48.0 (Capture HTTP ERRORS in logs)
 
 #### Feature
