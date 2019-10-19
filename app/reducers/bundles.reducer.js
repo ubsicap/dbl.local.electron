@@ -643,7 +643,7 @@ function formatStatus(bundle) {
 function formatProgress(bundle) {
   const progress = bundle.progress ? bundle.progress : 0;
   if (typeof progress === 'number' && progress > 100) {
-    log.error(`progress > 100%`);
+    log.debug(`progress > 100%`);
     logBundleState(bundle);
   }
   return `(${progress}%)`;
