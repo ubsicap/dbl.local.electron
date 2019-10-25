@@ -1,3 +1,11 @@
+### Version 0.48.2 (DDL fix source element errors)
+
+#### Fix
+
+- Auto delete corrupted bundles when logging into dbl_dot_local_app
+- Fix metadata.xml validation errors caused by empty source/structure or source/canonicalContent elements.
+- dbl_dot_local_app (10/25/2019): mvh/fix_for_randy2
+
 ### Version 0.48.1 (Capture HTTP ERRORS in logs)
 
 #### Fix
