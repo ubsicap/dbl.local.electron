@@ -172,7 +172,7 @@ export function checkPublicationsHealth(_bundleId) {
       publicationInstanceIds
     );
     const message =
-      'The following publication structure wizards will be applied. After modifying the manifest, please click the Review button above to make sure you have the expected publication(s)';
+      "You may now modify the resource manifest. To add resource files to the entry's manifest: 1) Click the circled plus button (+) below. 2) Select `By File` or `By Folder`. 3) As needed, type in the 'Edit container' box to modify the container for selected files to match the wizard's expectation (see indented wizard description below). 4) After reviewing and selecting the files you want to add to your entry's manifest, click the red 'Add' button at the top right and wait for the files to be copied into your entry. 5) After adding manifest resource files, check your pubPath & role columns in the table below to make sure the wizard worked as expected. ** PLEASE NOTE **: Nothing is changed in DBL until you use the 'Upload to DBL' dialog in the side menu.)";
     const { wizardsResults } = bestPubWizards.reduce(
       (acc, bestPubWizard) => {
         const { wizard: wizardName } = bestPubWizard;
@@ -291,7 +291,13 @@ export function addManifestResources(
         dispatch(failure(_bundleId, error));
       }
     }
-    await updatePublications(() => gottenStateForPublications, _bundleId);
+    try {
+      await updatePublications(() => gottenStateForPublications, _bundleId);
+    } catch (error) {
+      const { status, statusText, url, message } = error;
+      const bodyText = await error.text();
+      log.error({ status, statusText, url, message, bodyText });
+    }
     await bundleService.waitStopCreateMode(_bundleId);
     dispatch(done(_bundleId));
     dispatch(saveMetadatFileToTempBundleFolder(_bundleId));

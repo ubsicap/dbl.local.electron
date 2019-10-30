@@ -1,3 +1,44 @@
+### Version 0.48.2 (DDL fix source element errors)
+
+#### Fix
+
+- Auto delete corrupted bundles when logging into dbl_dot_local_app
+- Fix metadata.xml validation errors caused by empty source/structure or source/canonicalContent elements.
+- dbl_dot_local_app (10/25/2019): mvh/fix_for_randy2
+
+### Version 0.48.1 (Capture HTTP ERRORS in logs)
+
+#### Fix
+
+- try fix error "UnhandledRejection Error: Reducers may not dispatch actions." for "progress > 100%" error.
+
+### Version 0.48.0 (Capture HTTP ERRORS in logs)
+
+#### Feature
+
+- Capture all HTTP ERRORS in logs
+
+#### Fix
+
+- (Really) Fix Help > Open Error Log... to not duplicate errors
+- Catch publication wizard error in Resources dialog to allow app to continue without spinning loading forever.
+
+### Version 0.47.5 (Fix logs)
+
+#### Fix
+
+- Fix Help > Open Log... to capture more logging information
+- Fix Help > Open Error Log... to limit to 1MB size and 3 backups
+- Fix storing user's email addresses with multiple periods
+- Fix Resources dialog with more detailed step-by-step instructions
+
+### Version 0.47.4 (Fix Adding Audio Resources)
+
+#### Fix
+
+- DDL crash `local variable 'canonical_elements' referenced before assignment when adding a resource`
+- Upgrade dbl_dot_local_app master: fix_for_randy (10/14/2019)
+
 ### Version 0.47.2 (Context Menu for Browser)
 
 #### Fix

@@ -4,16 +4,13 @@ import Store from 'electron-store';
 import childProcess from 'child_process';
 import xml2js from 'xml2js';
 import log from 'electron-log';
-// import * as winston from 'winston';
-// import { ConsoleForElectron } from 'winston-console-for-electron';
 import dblDotLocalConstants from '../constants/dblDotLocal.constants';
 import { authHeader } from '../helpers';
 import {
   servicesHelpers,
   getApp,
   getResourcePath,
-  parseAsJson,
-  getCurrentWindow
+  parseAsJson
 } from '../helpers/services';
 
 export const dblDotLocalService = {
@@ -24,8 +21,6 @@ export const dblDotLocalService = {
   createNewBundle,
   downloadMetadata,
   startDblDotLocal,
-  importConfigXml,
-  exportConfigXml,
   getDblDotLocalExecCwd,
   getConfigXmlFullPath,
   getDblDotLocalExecStatus,
@@ -241,18 +236,24 @@ function startDblDotLocalSubProcess(configXmlFile) {
     throw new Error(`Not found: ${dblDotLocalExecPath}`);
   }
   const cwd = getDblDotLocalExecCwd();
-  const subProcess = childProcess.spawn(dblDotLocalExecPath, [configXmlFile], {
-    cwd,
-    stdio: ['ignore', 'ignore', 'pipe'],
-    detached: false
-  });
+  const subProcess = childProcess.spawn(
+    dblDotLocalExecPath,
+    ['--delete-corrupted', configXmlFile],
+    {
+      cwd,
+      stdio: ['ignore', 'ignore', 'pipe'],
+      detached: false
+    }
+  );
   subProcess.stderr.on('data', data => {
     // log.error(data);
     log.info(`${dblDotLocalConstants.DDL_APP_LOG_PREFIX}: ${data}`);
   });
   ['error', 'close', 'exit'].forEach(event => {
     subProcess.on(event, code => {
-      const msg = `${dblDotLocalConstants.DDL_APP_LOG_PREFIX} (${event}): ${code}`;
+      const msg = `${
+        dblDotLocalConstants.DDL_APP_LOG_PREFIX
+      } (${event}): ${code}`;
       if (code === null) {
         log.info(msg);
         return;
@@ -267,8 +268,6 @@ function getDblDotLocalExecCwd() {
   return getResourcePath(['extraFiles', 'dbl_dot_local_app']);
 }
 
-const electron = require('electron');
-
 function getFileNameWithOsExtension(
   filename,
   extensionOptions = { win32: '.exe' }
@@ -280,56 +279,6 @@ function getFileNameWithOsExtension(
 function getDblDotLocalExecPath() {
   const execName = getFileNameWithOsExtension('dbl_dot_local_app');
   return path.join(getDblDotLocalExecCwd(), execName);
-}
-
-function getConfigXmlDefaultFolder() {
-  const app = getApp();
-  const downloadsFolder = app.getPath('downloads');
-  const defaultPath = path.join(downloadsFolder, 'config.xml');
-  return defaultPath;
-}
-
-function importConfigXml(destination) {
-  const browserWindow = getCurrentWindow();
-  const defaultPath = getConfigXmlDefaultFolder();
-  const dialog = getDialog();
-  const filePaths = dialog.showOpenDialog(browserWindow, {
-    title: 'Select template config.xml',
-    defaultPath,
-    filters: [
-      { name: 'XML files', extensions: ['xml'] },
-      { name: 'All Files', extensions: ['*'] }
-    ],
-    properties: ['openFile']
-  });
-  if (!filePaths) {
-    return;
-  }
-  const [newSourceFilePath] = filePaths;
-  const newConfigFile = fs.readFileSync(newSourceFilePath);
-  fs.writeFileSync(destination, newConfigFile);
-}
-
-function exportConfigXml(sourceFilePath) {
-  const browserWindow = getCurrentWindow();
-  const defaultPath = getConfigXmlDefaultFolder();
-  const dialog = getDialog();
-  const destinationFileName = dialog.showSaveDialog(browserWindow, {
-    title: 'Select folder to save config.xml',
-    buttonLabel: 'Save',
-    defaultPath,
-    filters: [
-      { name: 'XML files', extensions: ['xml'] },
-      { name: 'All Files', extensions: ['*'] }
-    ]
-  });
-  if (!destinationFileName) {
-    return;
-  }
-  const activeConfigFile = fs.readFileSync(sourceFilePath);
-  fs.writeFileSync(destinationFileName, activeConfigFile);
-  const { shell } = electron;
-  shell.showItemInFolder(destinationFileName);
 }
 
 function getConfigXmlFullPath(workspace) {
@@ -478,7 +427,7 @@ function startEventSource(authToken, getState) {
   const eventSource = new EventSource(
     `${dblDotLocalConstants.getHttpDblDotLocalBaseUrl()}/events/${authToken}`
   );
-  log.info(`SSE connected: ${authToken}`);
+  log.info(`SSE connected: ${authToken.substring(0, 16)}...`);
   eventSource.onmessage = event => {
     log.info(event);
   };
