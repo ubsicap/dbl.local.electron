@@ -1,3 +1,4 @@
+import upath from 'upath';
 import React from 'react';
 // import ReactDOM from 'react-dom';
 import MdEditor from 'react-markdown-editor-lite';
@@ -75,8 +76,11 @@ export default class SubmitHelpTicket extends React.Component {
       setTimeout(() => {
         // setTimeout 模拟oss异步上传图片;
         // 当oss异步上传获取图片地址后，执行calback回调（参数为imageUrl字符串），即可将图片地址写入markdown;
-        const url = 'https://avatars0.githubusercontent.com/u/21263805?s=80&v=4';
-        callback(url);
+        // C:/Users/PyleE/Pictures/audio%20listing.jpg
+        // reader.result; // base64
+        const u = new URL(`file:///${upath.normalize(file.path)}`);
+        const urlPath = u.href.replace('file://', '');
+        callback(urlPath);
       }, 1000);
     };
     reader.readAsDataURL(file);
