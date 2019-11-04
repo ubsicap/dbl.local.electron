@@ -1,4 +1,5 @@
 import upath from 'upath';
+import MenuAppBar from '../components/MenuAppBar';
 import TextField from '@material-ui/core/TextField';
 import React from 'react';
 // import ReactDOM from 'react-dom';
@@ -101,61 +102,63 @@ export default class SubmitHelpTicket extends React.Component {
 
   render() {
     return (
-      <div className="demo-wrap" style={{ paddingRight: '20px', paddingLeft: '20px', paddingTop: '10px' }}>
-        <h3>Report a Problem</h3>
-        <nav className="nav">
-          <TextField
-            id="title"
-            fullWidth
-            /* className={classes.textField} */
-            label="Title"
-            margin="normal"
-            variant="outlined"
-            placeholder="Provide a general summary of the issue"
-          />
-          {/*
-          <button onClick={this.handleGetMdValue} >getMdValue</button>
-          <button onClick={this.handleGetHtmlValue} >getHtmlValue</button>
-          */}
-        </nav>
-        <div className="editor-wrap" style={{ marginTop: '30px' }}>
-          <MdEditor
-            ref={node => this.mdEditor = node}
-            value={MOCK_DATA}
-            style={{ height: '500px', width: '100%' }}
-            renderHTML={(text) => this.mdParser.render(text)}
-            config={{
-              view: {
-                menu: true,
-                md: true,
-                html: true
-              },
-              table: {
-                maxRow: 5,
-                maxCol: 6
-              },
-              imageUrl: 'https://octodex.github.com/images/minion.png',
-            }}
-            onChange={this.handleEditorChange}
-            onImageUpload={this.handleImageUpload}
-          />
+      <React.Fragment>
+        <MenuAppBar title="Report a Problem" />
+        <div className="demo-wrap" style={{ paddingRight: '20px', paddingLeft: '20px', paddingTop: '10px' }}>
+          <nav className="nav">
+            <TextField
+              id="title"
+              fullWidth
+              /* className={classes.textField} */
+              label="Title"
+              margin="normal"
+              variant="outlined"
+              placeholder="Provide a general summary of the issue"
+            />
+            {/*
+            <button onClick={this.handleGetMdValue} >getMdValue</button>
+            <button onClick={this.handleGetHtmlValue} >getHtmlValue</button>
+            */}
+          </nav>
+          <div className="editor-wrap" style={{ marginTop: '30px' }}>
+            <MdEditor
+              ref={node => this.mdEditor = node}
+              value={MOCK_DATA}
+              style={{ height: '500px', width: '100%' }}
+              renderHTML={(text) => this.mdParser.render(text)}
+              config={{
+                view: {
+                  menu: true,
+                  md: true,
+                  html: true
+                },
+                table: {
+                  maxRow: 5,
+                  maxCol: 6
+                },
+                imageUrl: 'https://octodex.github.com/images/minion.png',
+              }}
+              onChange={this.handleEditorChange}
+              onImageUpload={this.handleImageUpload}
+            />
+          </div>
+          {/* <div style={{marginTop: '30px'}}>
+            <MdEditor;
+              value={MOCK_DATA}
+              style={{height: '200px', width: '100%'}}
+              config={{
+                view: {
+                  menu: true,
+                  md: true,
+                  html: true
+                },
+                imageUrl: 'https://octodex.github.com/images/minion.png';
+              }}
+              onChange={this.handleEditorChange}
+            />
+          </div> */}
         </div>
-        {/* <div style={{marginTop: '30px'}}>
-          <MdEditor;
-            value={MOCK_DATA}
-            style={{height: '200px', width: '100%'}}
-            config={{
-              view: {
-                menu: true,
-                md: true,
-                html: true
-              },
-              imageUrl: 'https://octodex.github.com/images/minion.png';
-            }}
-            onChange={this.handleEditorChange}
-          />
-        </div> */}
-      </div>
+      </React.Fragment>
     );
   };
 };
