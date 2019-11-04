@@ -18,7 +18,7 @@ import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-light.css';
 // import 'highlight.js/styles/github.css';
 // import content from './content.js';
-import content from './SubmitHelpTicket/help-ticket-template.js';
+import content from './SubmitHelpTicket/help-ticket-template';
 import './md-example/index.css';
 
 const MOCK_DATA = content;

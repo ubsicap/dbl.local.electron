@@ -188,6 +188,32 @@ export default class MenuBuilder {
     }
   }
 
+  openInNewWindow(routerPage) {
+    const newWindow = new BrowserWindow({
+      show: true,
+      width: 1024,
+      height: 728,
+      webPreferences: {
+        nativeWindowOpen: true
+      }
+    });
+    newWindow.webContents.on('dom-ready', () => {
+      /*
+      Don't automatically bring up devTools & Reduce spam from a bug:
+      https://github.com/electron/electron/issues/12438#issuecomment-390211011
+      https://github.com/electron/electron/issues/13008
+      [23580:0926/110237.459:ERROR:CONSOLE(24)] "Empty response arrived for script 'chrome-devtools://devtools/remote/serve_file/@67b778eb4e0214a7dd0d01c286f15c0fcb6b3a90/product_registry_impl/product_registry_impl_module.js'",
+  source: chrome-devtools://devtools/bundled/shell.js (24)
+  [23580:0926/110237.471:ERROR:CONSOLE(108)] "Uncaught (in promise) Error: Could not instantiate: ProductRegistryImpl.Registry", source: chrome-devtools://devtools/bundled/shell.js (108)
+       */
+      newWindow.webContents.closeDevTools();
+    });
+
+    newWindow.loadURL(
+      `file://${__dirname}/app.html#${routerPage}`
+    );
+  }
+
   buildDefaultTemplate() {
     const logFile = log.transports.file.file;
     const errorLogPath = logHelpers.getErrorLogPath();
@@ -286,7 +312,7 @@ export default class MenuBuilder {
           {
             label: '&Report a Problem',
             click: () =>
-              this.navigate(navigationConstants.NAVIGATION_SUBMIT_HELP_TICKET)
+              this.openInNewWindow(navigationConstants.NAVIGATION_SUBMIT_HELP_TICKET)
           },
           {
             label: 'Toggle &Developer Tools',
