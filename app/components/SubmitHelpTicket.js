@@ -1,4 +1,5 @@
 import upath from 'upath';
+import TextField from '@material-ui/core/TextField';
 import React from 'react';
 // import ReactDOM from 'react-dom';
 import MdEditor from 'react-markdown-editor-lite';
@@ -17,7 +18,7 @@ import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-light.css';
 // import 'highlight.js/styles/github.css';
 // import content from './content.js';
-import content from './md-example/content.1.js';
+import content from './SubmitHelpTicket/help-ticket-template.js';
 import './md-example/index.css';
 
 const MOCK_DATA = content;
@@ -100,11 +101,22 @@ export default class SubmitHelpTicket extends React.Component {
 
   render() {
     return (
-      <div className="demo-wrap">
-        <h3>react-markdown-editor-lite demo</h3>
+      <div className="demo-wrap" style={{ paddingRight: '20px', paddingLeft: '20px', paddingTop: '10px' }}>
+        <h3>Report a Problem</h3>
         <nav className="nav">
+          <TextField
+            id="title"
+            fullWidth
+            /* className={classes.textField} */
+            label="Title"
+            margin="normal"
+            variant="outlined"
+            placeholder="Provide a general summary of the issue"
+          />
+          {/*
           <button onClick={this.handleGetMdValue} >getMdValue</button>
           <button onClick={this.handleGetHtmlValue} >getHtmlValue</button>
+          */}
         </nav>
         <div className="editor-wrap" style={{ marginTop: '30px' }}>
           <MdEditor
