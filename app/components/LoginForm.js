@@ -197,7 +197,7 @@ class LoginForm extends React.Component {
     const { workspaceName } = this.props;
     return (
       <React.Fragment>
-        <MenuAppBar showSearch={false} workspaceName={workspaceName} />
+        <MenuAppBar showSearch={false} workspaceName={workspaceName} showLogout />
         {this.renderLoginForm()}
       </React.Fragment>
     );

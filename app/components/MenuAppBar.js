@@ -61,6 +61,7 @@ type Props = {
     workspaceName: ?string,
     showSearch?: boolean,
     showClipboard?: boolean,
+    showLogout?: boolean,
     clipboard: ?{},
     workspaceFullPath?: string,
     userEmail?: string,
@@ -144,7 +145,7 @@ class MenuAppBar extends React.PureComponent {
 
   render() {
     const {
-      classes, loggedIn, userName, workspaceName, showSearch, showClipboard, clipboard
+      classes, loggedIn, userName, workspaceName, showSearch, showClipboard, clipboard, showLogout
     } = this.props;
     const { anchorEl } = this.state;
     const open = Boolean(anchorEl);
@@ -192,7 +193,7 @@ class MenuAppBar extends React.PureComponent {
           }
           {workspaceName && (
             <div>
-              <Button color="inherit" onClick={this.handleMenu}>
+              <Button color="inherit" onClick={this.handleMenu} disabled={!showLogout}>
                 { workspaceName } / {loggedIn ? userName : 'Login' }
                 <AccountCircle className={classNames(classes.rightIcon, classes.iconSmall)} />
               </Button>
@@ -223,6 +224,7 @@ class MenuAppBar extends React.PureComponent {
 MenuAppBar.defaultProps = {
   showSearch: false,
   showClipboard: false,
+  showLogout: false,
   workspaceFullPath: undefined,
   userEmail: undefined,
   title: 'nathanael'
