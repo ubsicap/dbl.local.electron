@@ -1,4 +1,5 @@
 import upath from 'upath';
+import Button from '@material-ui/core/Button';
 import MenuAppBar from '../components/MenuAppBar';
 import TextField from '@material-ui/core/TextField';
 import React from 'react';
@@ -32,6 +33,9 @@ export default class SubmitHelpTicket extends React.Component {
 
   constructor(props) {
     super(props);
+    this.state = {
+      title: ''
+    };
     // initial a parser;
     this.mdParser = new MarkdownIt({
       html: true,
@@ -100,13 +104,35 @@ export default class SubmitHelpTicket extends React.Component {
     }
   };
 
+  handleTitleInputChange = event => {
+    const { target } = event;
+    const { value } = target;
+    this.setState({ title: value });
+  };
+
+  handleClickSendFeedback = event => {
+
+  };
+
   render() {
+    const { title } = this.state;
     return (
       <React.Fragment>
-        <MenuAppBar title="Report a Problem" />
+        <MenuAppBar title="Give feedback">
+          <div>
+            <Button
+              color="inherit"
+              onClick={this.handleClickSendFeedback}
+              disabled={title.trim().length < 3}
+            >
+              Send
+            </Button>
+          </div>
+        </MenuAppBar>
         <div className="demo-wrap" style={{ paddingRight: '20px', paddingLeft: '20px', paddingTop: '10px' }}>
           <nav className="nav">
             <TextField
+              required
               id="title"
               fullWidth
               /* className={classes.textField} */
@@ -114,6 +140,7 @@ export default class SubmitHelpTicket extends React.Component {
               margin="normal"
               variant="outlined"
               placeholder="Provide a general summary of the issue"
+              onChange={this.handleTitleInputChange}
             />
             {/*
             <button onClick={this.handleGetMdValue} >getMdValue</button>
