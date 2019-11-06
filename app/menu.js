@@ -4,6 +4,7 @@ import log from 'electron-log';
 import { logHelpers } from './helpers/log.helpers';
 import { ipcRendererConstants } from './constants/ipcRenderer.constants';
 import { navigationConstants } from './constants/navigation.constants';
+import { servicesHelpers } from './helpers/services';
 
 export default class MenuBuilder {
   mainWindow: BrowserWindow;
@@ -209,9 +210,7 @@ export default class MenuBuilder {
       newWindow.webContents.closeDevTools();
     });
 
-    newWindow.loadURL(
-      `file://${__dirname}/app.html#${routerPage}`
-    );
+    newWindow.loadURL(`file://${__dirname}/app.html#${routerPage}`);
   }
 
   buildDefaultTemplate() {
@@ -283,11 +282,12 @@ export default class MenuBuilder {
                   label: 'Toggle &Developer Tools',
                   accelerator: 'Alt+Ctrl+I',
                   click: () => {
-                    const opened: boolean = this.mainWindow.webContents.isDevToolsOpened();
+                    const currentWindow = servicesHelpers.getCurrentWindow();
+                    const opened: boolean = currentWindow.webContents.isDevToolsOpened();
                     if (opened) {
-                      this.mainWindow.webContents.closeDevTools();
+                      currentWindow.webContents.closeDevTools();
                     } else {
-                      this.mainWindow.webContents.openDevTools({
+                      currentWindow.webContents.openDevTools({
                         mode: 'right'
                       });
                     }
@@ -312,13 +312,16 @@ export default class MenuBuilder {
           {
             label: '&Report a Problem',
             click: () =>
-              this.openInNewWindow(navigationConstants.NAVIGATION_SUBMIT_HELP_TICKET)
+              this.openInNewWindow(
+                navigationConstants.NAVIGATION_SUBMIT_HELP_TICKET
+              )
           },
           {
             label: 'Toggle &Developer Tools',
             accelerator: 'Shift+CmdOrCtrl+I',
             click: () => {
-              this.mainWindow.toggleDevTools();
+              const currentWindow = servicesHelpers.getCurrentWindow();
+              currentWindow.toggleDevTools();
             }
           },
           {
