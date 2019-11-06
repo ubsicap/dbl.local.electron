@@ -1,4 +1,6 @@
+import log from 'electron-log';
 import upath from 'upath';
+import { Youtrack } from 'youtrack-rest-client';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import React from 'react';
@@ -20,11 +22,22 @@ import './md-example/index.css';
 import { servicesHelpers } from '../helpers/services';
 import MenuAppBar from './MenuAppBar';
 
+const config = {
+  baseUrl: 'https://paratext.myjetbrains.com/youtrack',
+  token: process.env.DBL_YOUTRACK_API_TOKEN
+};
+
+console.log(config);
+const youtrack = new Youtrack(config);
+
+const DBL_PROJECT_ID = '0-30';
+
 export default class SubmitHelpTicket extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      title: ''
+      title: '',
+      description: templateContent
     };
     // initial a parser;
     this.mdParser = new MarkdownIt({
@@ -57,7 +70,8 @@ export default class SubmitHelpTicket extends React.Component {
 
   mdParser = null;
 
-  handleEditorChange = (/* {  html, text  } */) => {
+  handleEditorChange = ({ text }) => {
+    this.setState({ description: text });
     // console.log('handleEditorChange', text);
   };
 
@@ -110,9 +124,23 @@ export default class SubmitHelpTicket extends React.Component {
     this.setState({ title: value });
   };
 
-  handleClickSendFeedback = () => {
-    const currentWindow = servicesHelpers.getCurrentWindow();
-    currentWindow.close();
+  handleClickSendFeedback = async () => {
+    const { title, description } = this.state;
+    try {
+      // create a new issue
+      await youtrack.issues.create({
+        summary: title,
+        description,
+        project: {
+          id: DBL_PROJECT_ID
+        },
+        usesMarkdown: true
+      });
+      const currentWindow = servicesHelpers.getCurrentWindow();
+      currentWindow.close();
+    } catch (error) {
+      log.error(error);
+    }
   };
 
   render() {
@@ -172,8 +200,7 @@ export default class SubmitHelpTicket extends React.Component {
                 table: {
                   maxRow: 5,
                   maxCol: 6
-                },
-                imageUrl: 'https://octodex.github.com/images/minion.png'
+                }
               }}
               onChange={this.handleEditorChange}
               onImageUpload={this.handleImageUpload}
