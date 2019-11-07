@@ -1,4 +1,8 @@
 import log from 'electron-log';
+import got from 'got';
+import FormData from 'form-data';
+import fs from 'fs-extra';
+import path from 'path';
 import upath from 'upath';
 import { Youtrack } from 'youtrack-rest-client';
 import Button from '@material-ui/core/Button';
@@ -21,16 +25,50 @@ import templateContent from './SubmitHelpTicket/help-ticket-template';
 import './md-example/index.css';
 import { servicesHelpers } from '../helpers/services';
 import MenuAppBar from './MenuAppBar';
+import { logHelpers } from '../helpers/log.helpers';
 
 const config = {
   baseUrl: 'https://paratext.myjetbrains.com/youtrack',
   token: process.env.DBL_YOUTRACK_API_TOKEN
 };
-
-console.log(config);
 const youtrack = new Youtrack(config);
 
 const DBL_PROJECT_ID = '0-30';
+
+function getAttachmentsForm() {
+  const logPath = log.transports.file.file;
+  const errorLogPath = logHelpers.getErrorLogPath();
+  const data = new FormData();
+  data.append('log', fs.createReadStream(logPath), path.basename(logPath));
+  data.append(
+    'error-log',
+    fs.createReadStream(errorLogPath),
+    path.basename(errorLogPath)
+  );
+  // log.old.log
+  // error-log.log.1
+  // for WORKSPACE context
+  // config.xml
+  // userSettings.json
+  // for ENTRY context
+  // metadata.xml
+  // bundle_status.xml
+  // job_spec.xml
+  return data;
+}
+
+async function postAttachmentsToIssue(issue) {
+  const data = getAttachmentsForm();
+  await got.post(`${config.baseUrl}/api/issues/${issue.id}/attachments`, {
+    headers: {
+      Authorization: `Bearer ${config.token}`,
+      Accept: 'application/json'
+    },
+    query: { fields: 'id,idReadable,summary,name' },
+    body: data /* use import FormData from 'form-data' */,
+    useElectronNet: false /* has issues https://github.com/sindresorhus/got/issues/315 and see https://github.com/sindresorhus/got/blob/dfb46ad0bf2427f387968f67ac943476597f0a3b/readme.md */
+  });
+}
 
 export default class SubmitHelpTicket extends React.Component {
   constructor(props) {
@@ -128,7 +166,7 @@ export default class SubmitHelpTicket extends React.Component {
     const { title, description } = this.state;
     try {
       // create a new issue
-      await youtrack.issues.create({
+      const issue = await youtrack.issues.create({
         summary: title,
         description,
         project: {
@@ -136,6 +174,8 @@ export default class SubmitHelpTicket extends React.Component {
         },
         usesMarkdown: true
       });
+      // try to upload attachment
+      await postAttachmentsToIssue(issue);
       const currentWindow = servicesHelpers.getCurrentWindow();
       currentWindow.close();
     } catch (error) {
