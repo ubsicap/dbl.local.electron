@@ -26,7 +26,7 @@ import './md-example/index.css';
 import { servicesHelpers } from '../helpers/services';
 import MenuAppBar from './MenuAppBar';
 import { logHelpers } from '../helpers/log.helpers';
-import { utilities } from '../utils/utilities';
+// import { utilities } from '../utils/utilities';
 
 const config = {
   baseUrl: 'https://paratext.myjetbrains.com/youtrack',
@@ -72,11 +72,41 @@ async function getAttachmentsForm() {
   return data;
 }
 
-function getMarkDownLocalFileImageLinks(markdown) {
+/*
+0: "![](C:/Users/PyleE/Pictures/audio%20listing.jpg)"
+1: "C:/Users/PyleE/Pictures/audio%20listing.jpg"
+2: undefined
+groups:
+  filename: "C:/Users/PyleE/Pictures/audio%20listing.jpg"
+  optionalpart: undefined
+index: 21
+input: "## Expected Behavior↵![](C:/Users/PyleE/Pictures/audio%20listing.jpg)↵<!--- If you're describing a bug, tell us what should happen -->↵<!--- If you're suggesting a change/improvement, tell us how it should work -->↵↵## Current Behavior↵↵<!--- If describing a bug, tell us what happens instead of the expected behavior -->↵<!--- If suggesting a change/improvement, explain the difference from current behavior -->↵↵## Possible Solution↵↵<!--- Not obligatory, but suggest a fix/reason for the bug, -->↵<!--- or ideas how to implement the addition or change -->↵↵## Steps to Reproduce (for bugs)↵↵<!--- Provide a video GIF screenshot, or an unambiguous set of steps to -->↵<!--- reproduce this bug. -->↵↵1.↵↵2.↵↵3.↵↵4.↵↵↵## DBL Role↵↵<!--- What DBL role were your trying to perform (archivist/publisher)? -->↵↵## DBL Entry/Revision/Draft↵↵<!--- Which DBL entry did you encounter your issue? (provide link to entry page or Entry ID) -->↵<!--- Which Entry revision were you working with? -->↵↵## Context↵↵<!--- How has this issue affected you? What are you trying to accomplish? -->↵<!--- Providing context helps us come up with a solution that is most useful in the real world -->↵↵## Your Environment↵↵<!--- Include as many relevant details about the environment you experienced the bug in -->↵↵- Nathanael Version :↵- Operating System and version :↵↵↵"
+length: 3
+__proto__: Array(0
+*/
+
+/* eslint-disable-next-line no-useless-escape */
+const imgPattern = /!\[(?<alttext>[^\]]*?)\]\((?<filename>.*?)(?=\"|\))(?<optionalpart>\".*\")?\)/gm;
+
+function replacer(match, alttext, filename, optionalpart /* , offset, str */) {
+  const quotedOptionalpartOrNot = optionalpart ? ` "${optionalpart}"` : '';
+  if (!alttext) {
+    return `![${decodeURIComponent(
+      filename
+    )}](${filename}${quotedOptionalpartOrNot})`;
+  }
+  return match;
+}
+
+function replaceEmptyAltTextWithFileName(markdown) {
+  return markdown.replace(imgPattern, replacer);
+}
+
+/*
+function getMarkDownLocalFileImageLinkMatches(markdown) {
   // ![](/C:/Users/PyleE/Pictures/audio%20listing.jpg)
+  const imageLinkMatches = [];
   const imageLinks = [];
-  /* eslint-disable no-useless-escape */
-  const imgPattern = /!\[[^\]]*\]\((?<filename>.*?)(?=\"|\))(?<optionalpart>\".*\")?\)/gm;
   let match = imgPattern.exec(markdown);
   while (match != null) {
     // matched text: match[0]
@@ -87,13 +117,15 @@ function getMarkDownLocalFileImageLinks(markdown) {
     const decodedFilename = decodeURIComponent(filename);
     if (fs.existsSync(decodedFilename)) {
       // file exists
+      imageLinkMatches.push({ ...match });
       imageLinks.push(decodedFilename);
     }
     match = imgPattern.exec(markdown);
   }
   console.log(imageLinks);
-  return utilities.distinct(imageLinks);
+  return { imageLinkMatches, imageLinks }; // utilities.distinct(imageLinks)
 }
+*/
 
 async function postAttachmentsToIssue(issue) {
   const data = await getAttachmentsForm();
@@ -147,8 +179,7 @@ export default class SubmitHelpTicket extends React.Component {
   mdParser = null;
 
   handleEditorChange = ({ text }) => {
-    this.setState({ description: text });
-    getMarkDownLocalFileImageLinks(text);
+    this.setState({ description: replaceEmptyAltTextWithFileName(text) });
     // console.log('handleEditorChange', text);
   };
 
@@ -229,7 +260,7 @@ export default class SubmitHelpTicket extends React.Component {
   };
 
   render() {
-    const { title } = this.state;
+    const { title, description } = this.state;
     return (
       <React.Fragment>
         <MenuAppBar title="Give feedback">
@@ -273,7 +304,7 @@ export default class SubmitHelpTicket extends React.Component {
               ref={node => {
                 this.mdEditor = node;
               }}
-              value={templateContent}
+              value={description}
               style={{ height: '500px', width: '100%' }}
               renderHTML={text => this.mdParser.render(text)}
               config={{
