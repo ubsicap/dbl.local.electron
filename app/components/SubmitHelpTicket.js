@@ -26,6 +26,7 @@ import './md-example/index.css';
 import { servicesHelpers } from '../helpers/services';
 import MenuAppBar from './MenuAppBar';
 import { logHelpers } from '../helpers/log.helpers';
+import { utilities } from '../utils/utilities';
 
 const config = {
   baseUrl: 'https://paratext.myjetbrains.com/youtrack',
@@ -35,18 +36,32 @@ const youtrack = new Youtrack(config);
 
 const DBL_PROJECT_ID = '0-30';
 
-function getAttachmentsForm() {
+async function appendOldLogName(data, logPathObj, oldLogName) {
+  const logOldLogPath = path.join(logPathObj.dir, oldLogName);
+  console.log(logOldLogPath);
+  if (await fs.exists(logOldLogPath)) {
+    data.append(oldLogName, fs.createReadStream(logOldLogPath), oldLogName);
+  }
+}
+
+async function getAttachmentsForm() {
   const logPath = log.transports.file.file;
+  const logPathObj = path.parse(logPath);
   const errorLogPath = logHelpers.getErrorLogPath();
+  const errorLogPathObj = path.parse(errorLogPath);
   const data = new FormData();
-  data.append('log', fs.createReadStream(logPath), path.basename(logPath));
+  data.append(logPathObj.base, fs.createReadStream(logPath), logPathObj.base);
   data.append(
-    'error-log',
+    errorLogPathObj.base,
     fs.createReadStream(errorLogPath),
-    path.basename(errorLogPath)
+    errorLogPathObj.base
   );
-  // log.old.log
-  // error-log.log.1
+  await appendOldLogName(
+    data,
+    logPathObj,
+    `${logPathObj.name}.old${logPathObj.ext}`
+  );
+  await appendOldLogName(data, errorLogPathObj, `${errorLogPathObj.base}.1`);
   // for WORKSPACE context
   // config.xml
   // userSettings.json
@@ -57,8 +72,31 @@ function getAttachmentsForm() {
   return data;
 }
 
+function getMarkDownLocalFileImageLinks(markdown) {
+  // ![](/C:/Users/PyleE/Pictures/audio%20listing.jpg)
+  const imageLinks = [];
+  /* eslint-disable no-useless-escape */
+  const imgPattern = /!\[[^\]]*\]\((?<filename>.*?)(?=\"|\))(?<optionalpart>\".*\")?\)/gm;
+  let match = imgPattern.exec(markdown);
+  while (match != null) {
+    // matched text: match[0]
+    // match start: match.index
+    // capturing group n: match[n]
+    console.log(match);
+    const { filename } = match.groups;
+    const decodedFilename = decodeURIComponent(filename);
+    if (fs.existsSync(decodedFilename)) {
+      // file exists
+      imageLinks.push(decodedFilename);
+    }
+    match = imgPattern.exec(markdown);
+  }
+  console.log(imageLinks);
+  return utilities.distinct(imageLinks);
+}
+
 async function postAttachmentsToIssue(issue) {
-  const data = getAttachmentsForm();
+  const data = await getAttachmentsForm();
   await got.post(`${config.baseUrl}/api/issues/${issue.id}/attachments`, {
     headers: {
       Authorization: `Bearer ${config.token}`,
@@ -110,13 +148,14 @@ export default class SubmitHelpTicket extends React.Component {
 
   handleEditorChange = ({ text }) => {
     this.setState({ description: text });
+    getMarkDownLocalFileImageLinks(text);
     // console.log('handleEditorChange', text);
   };
 
   handleImageUpload = (file, callback) => {
+    /*
     const reader = new FileReader();
     reader.onload = () => {
-      /*
       const convertBase64UrlToBlob = urlData => {
         const arr = urlData.split(',');
         const mime = arr[0].match(/:(.*?);/)[1];
@@ -130,16 +169,22 @@ export default class SubmitHelpTicket extends React.Component {
         return new Blob([u8arr], { type: mime });
       };
       const blob = convertBase64UrlToBlob(reader.result);
-      */
       setTimeout(() => {
         // C:/Users/PyleE/Pictures/audio%20listing.jpg
         // reader.result; // base64
-        const u = new URL(`file:///${upath.normalize(file.path)}`);
+        const u = new URL(`file://${upath.normalize(file.path)}`);
         const urlPath = u.href.replace('file://', '');
-        callback(urlPath);
+        const osUrlPath = process.platform === "win32" ? urlPath.substr(1) : urlPath;
+        callback(osUrlPath);
       }, 1000);
     };
     reader.readAsDataURL(file);
+    */
+    const u = new URL(`file://${upath.normalize(file.path)}`);
+    const urlPath = u.href.replace('file://', '');
+    const osUrlPath =
+      process.platform === 'win32' ? urlPath.substr(1) : urlPath;
+    callback(osUrlPath);
   };
 
   handleGetMdValue = () => {
