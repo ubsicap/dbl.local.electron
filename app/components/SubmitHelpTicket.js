@@ -26,7 +26,7 @@ import './md-example/index.css';
 import { servicesHelpers } from '../helpers/services';
 import MenuAppBar from './MenuAppBar';
 import { logHelpers } from '../helpers/log.helpers';
-// import { utilities } from '../utils/utilities';
+import { utilities } from '../utils/utilities';
 
 const config = {
   baseUrl: 'https://paratext.myjetbrains.com/youtrack',
@@ -36,6 +36,32 @@ const youtrack = new Youtrack(config);
 
 const DBL_PROJECT_ID = '0-30';
 
+/* eslint-disable-next-line no-useless-escape */
+const imgPattern = /!\[(?<alttext>[^\]]*?)\]\((?<filename>.*?) *(?=\"|\))(?<optionalpart>\".*\")?\)/gm;
+
+function getMarkDownLocalFileImageLinkMatches(markdown) {
+  // ![](/C:/Users/PyleE/Pictures/audio%20listing.jpg)
+  const imageLinkMatches = [];
+  const imageLinks = [];
+  let match = imgPattern.exec(markdown);
+  while (match != null) {
+    // matched text: match[0]
+    // match start: match.index
+    // capturing group n: match[n]
+    console.log(match);
+    const { filename } = match.groups;
+    const decodedFilename = decodeURIComponent(filename);
+    if (fs.existsSync(decodedFilename)) {
+      // file exists
+      imageLinkMatches.push({ ...match });
+      imageLinks.push(decodedFilename);
+    }
+    match = imgPattern.exec(markdown);
+  }
+  console.log(imageLinks);
+  return { imageLinkMatches, imageLinks }; // utilities.distinct(imageLinks)
+}
+
 async function appendOldLogName(data, logPathObj, oldLogName) {
   const logOldLogPath = path.join(logPathObj.dir, oldLogName);
   console.log(logOldLogPath);
@@ -44,7 +70,7 @@ async function appendOldLogName(data, logPathObj, oldLogName) {
   }
 }
 
-async function getAttachmentsForm() {
+async function getAttachmentsForm(markdown) {
   const logPath = log.transports.file.file;
   const logPathObj = path.parse(logPath);
   const errorLogPath = logHelpers.getErrorLogPath();
@@ -69,6 +95,12 @@ async function getAttachmentsForm() {
   // metadata.xml
   // bundle_status.xml
   // job_spec.xml
+  const { imageLinks } = getMarkDownLocalFileImageLinkMatches(markdown);
+  const distinctFilePaths = utilities.distinct(imageLinks);
+  distinctFilePaths.forEach(imageFile => {
+    const filename = path.basename(imageFile);
+    data.append(filename, fs.createReadStream(imageFile), filename);
+  });
   return data;
 }
 
@@ -85,49 +117,40 @@ length: 3
 __proto__: Array(0
 */
 
-/* eslint-disable-next-line no-useless-escape */
-const imgPattern = /!\[(?<alttext>[^\]]*?)\]\((?<filename>.*?)(?=\"|\))(?<optionalpart>\".*\")?\)/gm;
-
-function replacer(match, alttext, filename, optionalpart /* , offset, str */) {
-  const decodedFilename = decodeURIComponent(filename);
-  const quotedOptionalpartOrNot = ` "${optionalpart || decodedFilename}"`;
+function replaceEmptyAltTextWithFileName(
+  match,
+  alttext,
+  filename,
+  optionalpart /* , offset, str */
+) {
+  const decodedFilename = decodeURIComponent(path.basename(filename));
+  const quotedOptionalpart = `${optionalpart || `"${decodedFilename}"`}`;
   if (!alttext) {
-    return `![${decodedFilename}](${filename}${quotedOptionalpartOrNot})`;
+    return `![${decodedFilename}](${filename} ${quotedOptionalpart})`;
   }
   return match;
 }
 
-function replaceEmptyAltTextWithFileName(markdown) {
-  return markdown.replace(imgPattern, replacer);
-}
-
-/*
-function getMarkDownLocalFileImageLinkMatches(markdown) {
-  // ![](/C:/Users/PyleE/Pictures/audio%20listing.jpg)
-  const imageLinkMatches = [];
-  const imageLinks = [];
-  let match = imgPattern.exec(markdown);
-  while (match != null) {
-    // matched text: match[0]
-    // match start: match.index
-    // capturing group n: match[n]
-    console.log(match);
-    const { filename } = match.groups;
-    const decodedFilename = decodeURIComponent(filename);
-    if (fs.existsSync(decodedFilename)) {
-      // file exists
-      imageLinkMatches.push({ ...match });
-      imageLinks.push(decodedFilename);
-    }
-    match = imgPattern.exec(markdown);
+function replaceFilePathsWithFileNames(
+  match,
+  alttext,
+  filename,
+  optionalpart /* , offset, str */
+) {
+  if (
+    filename.search('/') === -1 ||
+    filename.startsWith('http://') ||
+    filename.startsWith('https://')
+  ) {
+    return match;
   }
-  console.log(imageLinks);
-  return { imageLinkMatches, imageLinks }; // utilities.distinct(imageLinks)
+  const decodedFilename = decodeURIComponent(path.basename(filename));
+  const quotedOptionalpartOrNot = optionalpart ? ` ${optionalpart}` : '';
+  return `![${alttext}](${decodedFilename}${quotedOptionalpartOrNot})`;
 }
-*/
 
-async function postAttachmentsToIssue(issue) {
-  const data = await getAttachmentsForm();
+async function postAttachmentsToIssue(issue, markdown) {
+  const data = await getAttachmentsForm(markdown);
   await got.post(`${config.baseUrl}/api/issues/${issue.id}/attachments`, {
     headers: {
       Authorization: `Bearer ${config.token}`,
@@ -178,7 +201,9 @@ export default class SubmitHelpTicket extends React.Component {
   mdParser = null;
 
   handleEditorChange = ({ text }) => {
-    this.setState({ description: replaceEmptyAltTextWithFileName(text) });
+    this.setState({
+      description: text.replace(imgPattern, replaceEmptyAltTextWithFileName)
+    });
     // console.log('handleEditorChange', text);
   };
 
@@ -243,14 +268,17 @@ export default class SubmitHelpTicket extends React.Component {
       // create a new issue
       const issue = await youtrack.issues.create({
         summary: title,
-        description,
+        description: description.replace(
+          imgPattern,
+          replaceFilePathsWithFileNames
+        ),
         project: {
           id: DBL_PROJECT_ID
         },
         usesMarkdown: true
       });
       // try to upload attachment
-      await postAttachmentsToIssue(issue);
+      await postAttachmentsToIssue(issue, description);
       const currentWindow = servicesHelpers.getCurrentWindow();
       currentWindow.close();
     } catch (error) {
