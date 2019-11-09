@@ -89,11 +89,10 @@ __proto__: Array(0
 const imgPattern = /!\[(?<alttext>[^\]]*?)\]\((?<filename>.*?)(?=\"|\))(?<optionalpart>\".*\")?\)/gm;
 
 function replacer(match, alttext, filename, optionalpart /* , offset, str */) {
-  const quotedOptionalpartOrNot = optionalpart ? ` "${optionalpart}"` : '';
+  const decodedFilename = decodeURIComponent(filename);
+  const quotedOptionalpartOrNot = ` "${optionalpart || decodedFilename}"`;
   if (!alttext) {
-    return `![${decodeURIComponent(
-      filename
-    )}](${filename}${quotedOptionalpartOrNot})`;
+    return `![${decodedFilename}](${filename}${quotedOptionalpartOrNot})`;
   }
   return match;
 }
