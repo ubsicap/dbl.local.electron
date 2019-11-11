@@ -1,9 +1,13 @@
+import { compose } from 'recompose';
+import { withStyles } from '@material-ui/core/styles';
 import log from 'electron-log';
 import got from 'got';
 import FormData from 'form-data';
 import fs from 'fs-extra';
 import path from 'path';
 import upath from 'upath';
+import CloudUpload from '@material-ui/icons/CloudUpload';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import { Youtrack } from 'youtrack-rest-client';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
@@ -27,6 +31,16 @@ import { servicesHelpers } from '../helpers/services';
 import MenuAppBar from './MenuAppBar';
 import { logHelpers } from '../helpers/log.helpers';
 import { utilities } from '../utils/utilities';
+import { ux } from '../utils/ux';
+import ConfirmButton from './ConfirmButton';
+
+const materialStyles = theme => ({
+  ...ux.getEntryUxStyles(theme)
+});
+
+type Props = {
+  classes: {},
+};
 
 const config = {
   baseUrl: 'https://paratext.myjetbrains.com/youtrack',
@@ -157,9 +171,9 @@ function replaceFilePathsWithFileNames(
   return `${imgOrLinkPart}[${alttext}](${decodedFilename}${quotedOptionalpartOrNot})`;
 }
 
-async function postAttachmentsToIssue(issue, markdown) {
+async function postAttachmentsToIssue(issue, markdown, handleProgress, handleError) {
   const data = await getAttachmentsForm(markdown);
-  await got.post(`${config.baseUrl}/api/issues/${issue.id}/attachments`, {
+  return await got.post(`${config.baseUrl}/api/issues/${issue.id}/attachments`, {
     headers: {
       Authorization: `Bearer ${config.token}`,
       Accept: 'application/json'
@@ -167,10 +181,11 @@ async function postAttachmentsToIssue(issue, markdown) {
     query: { fields: 'id,idReadable,summary,name' },
     body: data /* use import FormData from 'form-data' */,
     useElectronNet: false /* has issues https://github.com/sindresorhus/got/issues/315 and see https://github.com/sindresorhus/got/blob/dfb46ad0bf2427f387968f67ac943476597f0a3b/readme.md */
-  });
+  }).on('uploadProgress', handleProgress).on('error', handleError);
 }
 
-export default class SubmitHelpTicket extends React.Component {
+class SubmitHelpTicket extends React.Component<Props> {
+  props: Props;
   constructor(props) {
     super(props);
     this.state = {
@@ -270,6 +285,16 @@ export default class SubmitHelpTicket extends React.Component {
     this.setState({ title: value });
   };
 
+  handleProgress = progress => {
+    // Report upload progress
+    const isUploading = progress.transferred < progress.total;
+    this.setState({ isUploading });
+  };
+
+  handleError = (/* error, body, response */) => {
+    this.setState({ isUploading: false });
+  };
+
   handleClickSendFeedback = async () => {
     const { title, description } = this.state;
     try {
@@ -286,7 +311,7 @@ export default class SubmitHelpTicket extends React.Component {
         usesMarkdown: true
       });
       // try to upload attachment
-      await postAttachmentsToIssue(issue, description);
+      await postAttachmentsToIssue(issue, description, this.handleProgress, this.handleError);
       const currentWindow = servicesHelpers.getCurrentWindow();
       currentWindow.close();
     } catch (error) {
@@ -295,18 +320,30 @@ export default class SubmitHelpTicket extends React.Component {
   };
 
   render() {
-    const { title, description } = this.state;
+    const { title, description, isUploading } = this.state;
+    const { classes } = this.props;
     return (
       <React.Fragment>
         <MenuAppBar title="Give feedback">
           <div>
-            <Button
+            <ConfirmButton
+              key="btnSend"
               color="inherit"
+              classes={classes}
               onClick={this.handleClickSendFeedback}
-              disabled={title.trim().length < 3}
+              disabled={title.trim().length < 3 || isUploading}
             >
+              <CloudUpload style={{ marginRight: '10px'}} />
               Send
-            </Button>
+              {isUploading && (
+                <CircularProgress
+                  className={classes.buttonProgress}
+                  size={50}
+                  color="secondary"
+                  variant="indeterminate"
+                />
+              )}
+            </ConfirmButton>
           </div>
         </MenuAppBar>
         <div
@@ -377,3 +414,7 @@ export default class SubmitHelpTicket extends React.Component {
     );
   }
 }
+
+export default compose(
+  withStyles(materialStyles, { withTheme: true })
+)(SubmitHelpTicket);
