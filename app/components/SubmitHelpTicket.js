@@ -37,29 +37,28 @@ const youtrack = new Youtrack(config);
 const DBL_PROJECT_ID = '0-30';
 
 /* eslint-disable-next-line no-useless-escape */
-const imgPattern = /!\[(?<alttext>[^\]]*?)\]\((?<filename>.*?) *(?=\"|\))(?<optionalpart>\".*\")?\)/gm;
+const linkPattern = /!*\[(?<alttext>[^\]]*?)\]\((?<filename>.*?) *(?=\"|\))(?<optionalpart>\".*\")?\)/gm;
 
-function getMarkDownLocalFileImageLinkMatches(markdown) {
+function getMarkDownLocalFileLinkMatches(markdown) {
   // ![](/C:/Users/PyleE/Pictures/audio%20listing.jpg)
-  const imageLinkMatches = [];
-  const imageLinks = [];
-  let match = imgPattern.exec(markdown);
+  const linkMatches = [];
+  const links = [];
+  let match = linkPattern.exec(markdown);
   while (match != null) {
     // matched text: match[0]
     // match start: match.index
     // capturing group n: match[n]
-    console.log(match);
     const { filename } = match.groups;
     const decodedFilename = decodeURIComponent(filename);
     if (fs.existsSync(decodedFilename)) {
       // file exists
-      imageLinkMatches.push({ ...match });
-      imageLinks.push(decodedFilename);
+      linkMatches.push({ ...match });
+      links.push(decodedFilename);
     }
-    match = imgPattern.exec(markdown);
+    match = linkPattern.exec(markdown);
   }
-  console.log(imageLinks);
-  return { imageLinkMatches, imageLinks }; // utilities.distinct(imageLinks)
+  console.log(links);
+  return { linkMatches, links }; // utilities.distinct(links)
 }
 
 async function appendOldLogName(data, logPathObj, oldLogName) {
@@ -95,8 +94,8 @@ async function getAttachmentsForm(markdown) {
   // metadata.xml
   // bundle_status.xml
   // job_spec.xml
-  const { imageLinks } = getMarkDownLocalFileImageLinkMatches(markdown);
-  const distinctFilePaths = utilities.distinct(imageLinks);
+  const { links } = getMarkDownLocalFileLinkMatches(markdown);
+  const distinctFilePaths = utilities.distinct(links);
   distinctFilePaths.forEach(imageFile => {
     const filename = path.basename(imageFile);
     data.append(filename, fs.createReadStream(imageFile), filename);
@@ -117,16 +116,24 @@ length: 3
 __proto__: Array(0
 */
 
+function getImgOrLinkPart(decodedFilename) {
+  const isImage = ['.jpg', '.png', '.gif'].includes(
+    path.extname(decodedFilename)
+  );
+  return isImage ? '!' : '';
+}
+
 function replaceEmptyAltTextWithFileName(
   match,
   alttext,
   filename,
   optionalpart /* , offset, str */
 ) {
-  const decodedFilename = decodeURIComponent(path.basename(filename));
-  const quotedOptionalpart = `${optionalpart || `"${decodedFilename}"`}`;
   if (!alttext) {
-    return `![${decodedFilename}](${filename} ${quotedOptionalpart})`;
+    const decodedFilename = decodeURIComponent(path.basename(filename));
+    const quotedOptionalpart = `${optionalpart || `"${decodedFilename}"`}`;
+    const imgOrLinkPart = getImgOrLinkPart(decodedFilename);
+    return `${imgOrLinkPart}[${decodedFilename}](${filename} ${quotedOptionalpart})`;
   }
   return match;
 }
@@ -146,7 +153,8 @@ function replaceFilePathsWithFileNames(
   }
   const decodedFilename = decodeURIComponent(path.basename(filename));
   const quotedOptionalpartOrNot = optionalpart ? ` ${optionalpart}` : '';
-  return `![${alttext}](${decodedFilename}${quotedOptionalpartOrNot})`;
+  const imgOrLinkPart = getImgOrLinkPart(decodedFilename);
+  return `${imgOrLinkPart}[${alttext}](${decodedFilename}${quotedOptionalpartOrNot})`;
 }
 
 async function postAttachmentsToIssue(issue, markdown) {
@@ -202,7 +210,7 @@ export default class SubmitHelpTicket extends React.Component {
 
   handleEditorChange = ({ text }) => {
     this.setState({
-      description: text.replace(imgPattern, replaceEmptyAltTextWithFileName)
+      description: text.replace(linkPattern, replaceEmptyAltTextWithFileName)
     });
     // console.log('handleEditorChange', text);
   };
@@ -269,7 +277,7 @@ export default class SubmitHelpTicket extends React.Component {
       const issue = await youtrack.issues.create({
         summary: title,
         description: description.replace(
-          imgPattern,
+          linkPattern,
           replaceFilePathsWithFileNames
         ),
         project: {
