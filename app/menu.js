@@ -287,7 +287,7 @@ export default class MenuBuilder {
         label: 'Help',
         submenu: [
           {
-            label: '&Report a Problem',
+            label: 'Give &feedback',
             click: () =>
               browserWindowService.openInNewWindow(
                 navigationConstants.NAVIGATION_SUBMIT_HELP_TICKET
