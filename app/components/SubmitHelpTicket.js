@@ -9,7 +9,6 @@ import upath from 'upath';
 import CloudUpload from '@material-ui/icons/CloudUpload';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { Youtrack } from 'youtrack-rest-client';
-import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import React from 'react';
 import MdEditor from 'react-markdown-editor-lite';
@@ -39,7 +38,7 @@ const materialStyles = theme => ({
 });
 
 type Props = {
-  classes: {},
+  classes: {}
 };
 
 const config = {
@@ -171,21 +170,30 @@ function replaceFilePathsWithFileNames(
   return `${imgOrLinkPart}[${alttext}](${decodedFilename}${quotedOptionalpartOrNot})`;
 }
 
-async function postAttachmentsToIssue(issue, markdown, handleProgress, handleError) {
+async function postAttachmentsToIssue(
+  issue,
+  markdown,
+  handleProgress,
+  handleError
+) {
   const data = await getAttachmentsForm(markdown);
-  return await got.post(`${config.baseUrl}/api/issues/${issue.id}/attachments`, {
-    headers: {
-      Authorization: `Bearer ${config.token}`,
-      Accept: 'application/json'
-    },
-    query: { fields: 'id,idReadable,summary,name' },
-    body: data /* use import FormData from 'form-data' */,
-    useElectronNet: false /* has issues https://github.com/sindresorhus/got/issues/315 and see https://github.com/sindresorhus/got/blob/dfb46ad0bf2427f387968f67ac943476597f0a3b/readme.md */
-  }).on('uploadProgress', handleProgress).on('error', handleError);
+  return got
+    .post(`${config.baseUrl}/api/issues/${issue.id}/attachments`, {
+      headers: {
+        Authorization: `Bearer ${config.token}`,
+        Accept: 'application/json'
+      },
+      query: { fields: 'id,idReadable,summary,name' },
+      body: data /* use import FormData from 'form-data' */,
+      useElectronNet: false /* has issues https://github.com/sindresorhus/got/issues/315 and see https://github.com/sindresorhus/got/blob/dfb46ad0bf2427f387968f67ac943476597f0a3b/readme.md */
+    })
+    .on('uploadProgress', handleProgress)
+    .on('error', handleError);
 }
 
 class SubmitHelpTicket extends React.Component<Props> {
   props: Props;
+
   constructor(props) {
     super(props);
     this.state = {
@@ -311,7 +319,12 @@ class SubmitHelpTicket extends React.Component<Props> {
         usesMarkdown: true
       });
       // try to upload attachment
-      await postAttachmentsToIssue(issue, description, this.handleProgress, this.handleError);
+      await postAttachmentsToIssue(
+        issue,
+        description,
+        this.handleProgress,
+        this.handleError
+      );
       const currentWindow = servicesHelpers.getCurrentWindow();
       currentWindow.close();
     } catch (error) {
@@ -333,7 +346,7 @@ class SubmitHelpTicket extends React.Component<Props> {
               onClick={this.handleClickSendFeedback}
               disabled={title.trim().length < 3 || isUploading}
             >
-              <CloudUpload style={{ marginRight: '10px'}} />
+              <CloudUpload style={{ marginRight: '10px' }} />
               Send
               {isUploading && (
                 <CircularProgress
@@ -415,6 +428,6 @@ class SubmitHelpTicket extends React.Component<Props> {
   }
 }
 
-export default compose(
-  withStyles(materialStyles, { withTheme: true })
-)(SubmitHelpTicket);
+export default compose(withStyles(materialStyles, { withTheme: true }))(
+  SubmitHelpTicket
+);
