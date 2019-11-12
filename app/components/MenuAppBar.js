@@ -32,12 +32,14 @@ function mapStateToProps(state, props) {
   const { isSearchActive } = bundlesFilter;
   const { searchInputRaw } = bundlesFilter;
   const {
+    workspaceFullPath,
+    workspaceName: workspaceNameFromState
+  } = workspaceHelpers.getCurrentWorkspaceFullPath(state) || {};
+  const {
     loggedIn,
     whoami,
-    workspaceName = props.workspaceName
+    workspaceName = props.workspaceName || workspaceNameFromState
   } = authentication;
-  const { workspaceFullPath } =
-    workspaceHelpers.getCurrentWorkspaceFullPath(state) || {};
   const { display_name: userName = 'DEMO USER', email: userEmail } =
     whoami || {};
   return {
