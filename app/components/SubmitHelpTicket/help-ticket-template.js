@@ -1,53 +1,64 @@
-const content =  `## Expected Behavior
+export const helpTicketTemplateServices = {
+  getTemplate
+};
 
-<!--- If you're describing a bug, tell us what should happen -->
-<!--- If you're suggesting a change/improvement, tell us how it should work -->
+export default helpTicketTemplateServices;
 
-## Current Behavior
+function getTemplate({ attachments = [] } = {}) {
+  const template = `## Expected Behavior
 
-<!--- If describing a bug, tell us what happens instead of the expected behavior -->
-<!--- If suggesting a change/improvement, explain the difference from current behavior -->
+  <!--- If you're describing a bug, tell us what should happen -->
+  <!--- If you're suggesting a change/improvement, tell us how it should work -->
 
-## Possible Solution
+  ## Current Behavior
 
-<!--- Not obligatory, but suggest a fix/reason for the bug, -->
-<!--- or ideas how to implement the addition or change -->
+  <!--- If describing a bug, tell us what happens instead of the expected behavior -->
+  <!--- If suggesting a change/improvement, explain the difference from current behavior -->
 
-## Steps to Reproduce (for bugs)
+  ## Possible Solution
 
-<!--- Provide a video GIF screenshot, or an unambiguous set of steps to -->
-<!--- reproduce this bug. -->
+  <!--- Not obligatory, but suggest a fix/reason for the bug, -->
+  <!--- or ideas how to implement the addition or change -->
 
-1.
+  ## Steps to Reproduce (for bugs)
 
-2.
+  <!--- Provide a video GIF screenshot, or an unambiguous set of steps to -->
+  <!--- reproduce this bug. -->
 
-3.
+  1.
 
-4.
+  2.
 
+  3.
 
-## DBL Role
-
-<!--- What DBL role were your trying to perform (archivist/publisher)? -->
-
-## DBL Entry/Revision/Draft
-
-<!--- Which DBL entry did you encounter your issue? (provide link to entry page or Entry ID) -->
-<!--- Which Entry revision were you working with? -->
-
-## Context
-
-<!--- How has this issue affected you? What are you trying to accomplish? -->
-<!--- Providing context helps us come up with a solution that is most useful in the real world -->
-
-## Your Environment
-
-<!--- Include as many relevant details about the environment you experienced the bug in -->
-
-- Nathanael Version :
-- Operating System and version :
+  4.
 
 
-`
-export default content
+  ## DBL Role
+
+  <!--- What DBL role were your trying to perform (archivist/publisher)? -->
+
+  ## DBL Entry/Revision/Draft
+
+  <!--- Which DBL entry did you encounter your issue? (provide link to entry page or Entry ID) -->
+  <!--- Which Entry revision were you working with? -->
+
+  ## Context
+
+  <!--- How has this issue affected you? What are you trying to accomplish? -->
+  <!--- Providing context helps us come up with a solution that is most useful in the real world -->
+
+  ## Your Environment
+
+  <!--- Include as many relevant details about the environment you experienced the bug in -->
+
+  - Nathanael Version :
+  - Operating System and version :
+
+  ## Attachments
+  ${attachments
+    .map(attachment => `- [${attachment}](${attachment})`)
+    .join('\n')}
+  `;
+  return template;
+}

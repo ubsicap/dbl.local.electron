@@ -251,13 +251,14 @@ source: chrome-devtools://devtools/bundled/shell.js (24)
 
 function openInNewWindow(routerPage) {
   const newWindow = new BrowserWindow({
-    show: true,
+    show: false,
     width: 1024,
     height: 728,
     webPreferences: {
       nativeWindowOpen: true
     }
   });
+  newWindow.once('ready-to-show', () => newWindow.show());
   newWindow.webContents.on('dom-ready', () => {
     /*
     Don't automatically bring up devTools & Reduce spam from a bug:
@@ -268,6 +269,15 @@ source: chrome-devtools://devtools/bundled/shell.js (24)
 [23580:0926/110237.471:ERROR:CONSOLE(108)] "Uncaught (in promise) Error: Could not instantiate: ProductRegistryImpl.Registry", source: chrome-devtools://devtools/bundled/shell.js (108)
      */
     newWindow.webContents.closeDevTools();
+  });
+  newWindow.webContents.on('will-navigate', (event, url) => {
+    event.preventDefault();
+    const decodedUrl = decodeURIComponent(url);
+    if (!url.startsWith('http') && fs.existsSync(decodedUrl)) {
+      shell.showItemInFolder(decodedUrl);
+    } else {
+      shell.openExternal(url);
+    }
   });
 
   const appPage = path.join(__dirname, '..', 'app.html');

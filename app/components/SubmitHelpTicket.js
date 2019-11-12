@@ -24,8 +24,8 @@ import mark from 'markdown-it-mark';
 import tasklists from 'markdown-it-task-lists';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-light.css';
-import templateContent from './SubmitHelpTicket/help-ticket-template';
-import './md-example/index.css';
+import { helpTicketTemplateServices } from './SubmitHelpTicket/help-ticket-template';
+import './SubmitHelpTicket/index.css';
 import { servicesHelpers } from '../helpers/services';
 import MenuAppBar from './MenuAppBar';
 import { logHelpers } from '../helpers/log.helpers';
@@ -52,6 +52,13 @@ const DBL_PROJECT_ID = '0-30';
 /* eslint-disable-next-line no-useless-escape */
 const linkPattern = /!*\[(?<alttext>[^\]]*?)\]\((?<filename>.*?) *(?=\"|\))(?<optionalpart>\".*\")?\)/gm;
 
+function normalizeLinkPath(filepath) {
+  const u = new URL(`file://${upath.normalize(filepath)}`);
+  const urlPath = u.href.replace('file://', '');
+  const osUrlPath = process.platform === 'win32' ? urlPath.substr(1) : urlPath;
+  return osUrlPath;
+}
+
 function getMarkDownLocalFileLinkMatches(markdown) {
   // ![](/C:/Users/PyleE/Pictures/audio%20listing.jpg)
   const linkMatches = [];
@@ -74,32 +81,30 @@ function getMarkDownLocalFileLinkMatches(markdown) {
   return { linkMatches, links }; // utilities.distinct(links)
 }
 
-async function appendOldLogName(data, logPathObj, oldLogName) {
+async function appendOldLog(attachments, logPathObj, oldLogName) {
   const logOldLogPath = path.join(logPathObj.dir, oldLogName);
-  console.log(logOldLogPath);
   if (await fs.exists(logOldLogPath)) {
-    data.append(oldLogName, fs.createReadStream(logOldLogPath), oldLogName);
+    attachments.push(logOldLogPath);
   }
 }
 
-async function getAttachmentsForm(markdown) {
+async function getStandardAttachments() {
+  const attachments = [];
   const logPath = log.transports.file.file;
-  const logPathObj = path.parse(logPath);
   const errorLogPath = logHelpers.getErrorLogPath();
-  const errorLogPathObj = path.parse(errorLogPath);
-  const data = new FormData();
-  data.append(logPathObj.base, fs.createReadStream(logPath), logPathObj.base);
-  data.append(
-    errorLogPathObj.base,
-    fs.createReadStream(errorLogPath),
-    errorLogPathObj.base
-  );
-  await appendOldLogName(
-    data,
+  attachments.push(logPath, errorLogPath);
+  const logPathObj = path.parse(logPath);
+  await appendOldLog(
+    attachments,
     logPathObj,
     `${logPathObj.name}.old${logPathObj.ext}`
   );
-  await appendOldLogName(data, errorLogPathObj, `${errorLogPathObj.base}.1`);
+  const errorLogPathObj = path.parse(errorLogPath);
+  await appendOldLog(attachments, errorLogPathObj, `${errorLogPathObj.base}.1`);
+  return attachments.map(normalizeLinkPath);
+}
+
+async function getAttachmentsForm(markdown) {
   // for WORKSPACE context
   // config.xml
   // userSettings.json
@@ -108,6 +113,7 @@ async function getAttachmentsForm(markdown) {
   // bundle_status.xml
   // job_spec.xml
   const { links } = getMarkDownLocalFileLinkMatches(markdown);
+  const data = new FormData();
   const distinctFilePaths = utilities.distinct(links);
   distinctFilePaths.forEach(imageFile => {
     const filename = path.basename(imageFile);
@@ -198,7 +204,7 @@ class SubmitHelpTicket extends React.Component<Props> {
     super(props);
     this.state = {
       title: '',
-      description: templateContent
+      description: helpTicketTemplateServices.getTemplate({})
     };
     // initial a parser;
     this.mdParser = new MarkdownIt({
@@ -225,6 +231,12 @@ class SubmitHelpTicket extends React.Component<Props> {
       .use(insert)
       .use(mark)
       .use(tasklists, { enabled: this.taskLists });
+  }
+
+  async componentWillMount() {
+    const attachments = await getStandardAttachments();
+    const description = helpTicketTemplateServices.getTemplate({ attachments });
+    this.setState({ description });
   }
 
   mdEditor = null;
@@ -266,11 +278,8 @@ class SubmitHelpTicket extends React.Component<Props> {
     };
     reader.readAsDataURL(file);
     */
-    const u = new URL(`file://${upath.normalize(file.path)}`);
-    const urlPath = u.href.replace('file://', '');
-    const osUrlPath =
-      process.platform === 'win32' ? urlPath.substr(1) : urlPath;
-    callback(osUrlPath);
+    const urlPath = normalizeLinkPath(file.path);
+    callback(urlPath);
   };
 
   handleGetMdValue = () => {
@@ -360,7 +369,7 @@ class SubmitHelpTicket extends React.Component<Props> {
           </div>
         </MenuAppBar>
         <div
-          className="demo-wrap"
+          className="mdeditor"
           style={{
             paddingRight: '20px',
             paddingLeft: '20px',
