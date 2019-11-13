@@ -35,18 +35,17 @@ class App extends React.Component<Props> {
   componentWillMount() {
     ipcRenderer.on(ipcRendererConstants.KEY_IPC_OPEN_SEND_FEEDBACK, () => {
       const appPage = path.join(__dirname, 'app.html');
-      const feedbackWindow =
-        browserWindowService.openInNewWindow(
-          appPage,
-          navigationConstants.NAVIGATION_SUBMIT_HELP_TICKET
-        );
+      const feedbackWindow = browserWindowService.openInNewWindow(
+        appPage,
+        navigationConstants.NAVIGATION_SUBMIT_HELP_TICKET
+      );
       feedbackWindow.webContents.once('dom-ready', () => {
         const { appState } = this.props;
         feedbackWindow.webContents.send(
           ipcRendererConstants.KEY_IPC_ATTACH_APP_STATE_SNAPSHOT,
           appState
         );
-      })
+      });
     });
   }
 
@@ -56,6 +55,4 @@ class App extends React.Component<Props> {
   }
 }
 
-export default connect(
-  mapStateToProps
-)(App);
+export default connect(mapStateToProps)(App);

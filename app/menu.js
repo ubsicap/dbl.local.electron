@@ -5,7 +5,6 @@ import { logHelpers } from './helpers/log.helpers';
 import { ipcRendererConstants } from './constants/ipcRenderer.constants';
 import { navigationConstants } from './constants/navigation.constants';
 import { servicesHelpers } from './helpers/services';
-import { browserWindowService } from './services/browserWindow.service';
 
 export default class MenuBuilder {
   mainWindow: BrowserWindow;
@@ -292,7 +291,10 @@ export default class MenuBuilder {
           {
             label: 'Give &feedback',
             click: () =>
-              this.mainWindow.webContents.send(ipcRendererConstants.KEY_IPC_OPEN_SEND_FEEDBACK, '')
+              this.mainWindow.webContents.send(
+                ipcRendererConstants.KEY_IPC_OPEN_SEND_FEEDBACK,
+                ''
+              )
           },
           {
             label: 'Toggle &Developer Tools',

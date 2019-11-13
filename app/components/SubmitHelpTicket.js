@@ -237,16 +237,21 @@ class SubmitHelpTicket extends React.Component<Props> {
   }
 
   async componentWillMount() {
-    ipcRenderer.on(ipcRendererConstants.KEY_IPC_ATTACH_APP_STATE_SNAPSHOT, async (event, appState) => {
-      const { dispatchLoginSuccess } = this.props;
-      console.log(appState);
-      const { authentication } = appState;
-      const { user, whoami, workspaceName } = authentication;
-      dispatchLoginSuccess(user, whoami, workspaceName);
-      const attachments = await getStandardAttachments();
-      const description = helpTicketTemplateServices.getTemplate({ attachments });
-      this.setState({ description });
-    });
+    ipcRenderer.on(
+      ipcRendererConstants.KEY_IPC_ATTACH_APP_STATE_SNAPSHOT,
+      async (event, appState) => {
+        const { dispatchLoginSuccess } = this.props;
+        console.log(appState);
+        const { authentication } = appState;
+        const { user, whoami, workspaceName } = authentication;
+        dispatchLoginSuccess(user, whoami, workspaceName);
+        const attachments = await getStandardAttachments();
+        const description = helpTicketTemplateServices.getTemplate({
+          attachments
+        });
+        this.setState({ description });
+      }
+    );
   }
 
   mdEditor = null;

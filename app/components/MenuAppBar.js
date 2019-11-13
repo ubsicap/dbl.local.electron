@@ -31,10 +31,8 @@ function mapStateToProps(state, props) {
   const { isLoading: isLoadingSearch } = bundlesFilter;
   const { isSearchActive } = bundlesFilter;
   const { searchInputRaw } = bundlesFilter;
-  const {
-    workspaceFullPath,
-    workspaceName: workspaceNameFromState
-  } = workspaceHelpers.getCurrentWorkspaceFullPath(state) || {};
+  const { workspaceFullPath, workspaceName: workspaceNameFromState } =
+    workspaceHelpers.getCurrentWorkspaceFullPath(state) || {};
   const {
     loggedIn,
     whoami,
@@ -235,10 +233,7 @@ class MenuAppBar extends React.PureComponent {
           )}
           {workspaceName && (
             <div>
-              <Button
-                color="inherit"
-                onClick={this.handleMenu}
-              >
+              <Button color="inherit" onClick={this.handleMenu}>
                 {workspaceName} / {loggedIn ? userName : 'Login'}
                 <AccountCircle
                   className={classNames(classes.rightIcon, classes.iconSmall)}
