@@ -1,4 +1,6 @@
 import path from 'path';
+import os from 'os';
+import { servicesHelpers } from '../../helpers/services';
 
 export const helpTicketTemplateServices = {
   getTemplate
@@ -54,8 +56,11 @@ function getTemplate({ attachments = [] } = {}) {
 
   <!--- Include as many relevant details about the environment you experienced the bug in -->
 
-  - Nathanael Version :
-  - Operating System and version :
+  - Nathanael Version: ${servicesHelpers.getApp().getVersion()}
+  - Operating System: ${process.platform} ${os.type} ${os.release}
+  - Electron Version: ${process.versions.electron}
+  - Chrome Version: ${process.versions.chrome}
+  - Node Version: ${process.versions.node}
 
   ## Attachments
   ${attachments

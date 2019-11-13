@@ -196,7 +196,7 @@ class SubmitHelpTicket extends React.Component<Props> {
     super(props);
     this.state = {
       title: '',
-      description: helpTicketTemplateServices.getTemplate({})
+      description: ''
     };
     // initial a parser;
     this.mdParser = new MarkdownIt({
