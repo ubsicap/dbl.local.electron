@@ -5,7 +5,6 @@ import got from 'got';
 import FormData from 'form-data';
 import fs from 'fs-extra';
 import path from 'path';
-import upath from 'upath';
 import CloudUpload from '@material-ui/icons/CloudUpload';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { Youtrack } from 'youtrack-rest-client';
@@ -52,13 +51,6 @@ const DBL_PROJECT_ID = '0-30';
 /* eslint-disable-next-line no-useless-escape */
 const linkPattern = /!*\[(?<alttext>[^\]]*?)\]\((?<filename>.*?) *(?=\"|\))(?<optionalpart>\".*\")?\)/gm;
 
-function normalizeLinkPath(filepath) {
-  const u = new URL(`file://${upath.normalize(filepath)}`);
-  const urlPath = u.href.replace('file://', '');
-  const osUrlPath = process.platform === 'win32' ? urlPath.substr(1) : urlPath;
-  return osUrlPath;
-}
-
 function getMarkDownLocalFileLinkMatches(markdown) {
   // ![](/C:/Users/PyleE/Pictures/audio%20listing.jpg)
   const linkMatches = [];
@@ -101,7 +93,7 @@ async function getStandardAttachments() {
   );
   const errorLogPathObj = path.parse(errorLogPath);
   await appendOldLog(attachments, errorLogPathObj, `${errorLogPathObj.base}.1`);
-  return attachments.map(normalizeLinkPath);
+  return attachments.map(utilities.normalizeLinkPath);
 }
 
 async function getAttachmentsForm(markdown) {
@@ -278,7 +270,7 @@ class SubmitHelpTicket extends React.Component<Props> {
     };
     reader.readAsDataURL(file);
     */
-    const urlPath = normalizeLinkPath(file.path);
+    const urlPath = utilities.normalizeLinkPath(file.path);
     callback(urlPath);
   };
 

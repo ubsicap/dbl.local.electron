@@ -14,6 +14,7 @@ export const utilities = {
   haveEqualKeys,
   haveEqualKeysLength,
   onOpenLink,
+  normalizeLinkPath,
   sleep,
   union,
   intersect,
@@ -115,6 +116,15 @@ function onOpenLink(url) {
     event.stopPropagation();
     shell.openExternal(url);
   };
+}
+
+function normalizeLinkPath(filepath) {
+  const u = new URL(
+    `file://${upath.normalize(filepath.replace('file://', ''))}`
+  );
+  const urlPath = u.href.replace('file://', '');
+  const osUrlPath = process.platform === 'win32' ? urlPath.substr(1) : urlPath;
+  return osUrlPath;
 }
 
 function sleep(ms) {

@@ -1,3 +1,5 @@
+import path from 'path';
+
 export const helpTicketTemplateServices = {
   getTemplate
 };
@@ -57,7 +59,7 @@ function getTemplate({ attachments = [] } = {}) {
 
   ## Attachments
   ${attachments
-    .map(attachment => `- [${attachment}](${attachment})`)
+    .map(attachment => `- [${path.basename(attachment)}](${attachment})`)
     .join('\n')}
   `;
   return template;

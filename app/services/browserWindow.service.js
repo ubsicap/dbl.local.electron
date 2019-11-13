@@ -4,6 +4,7 @@ import path from 'path';
 import upath from 'upath';
 import prompt from 'electron-prompt';
 import { servicesHelpers } from '../helpers/services';
+import { utilities } from '../utils/utilities';
 
 const {
   BrowserWindow,
@@ -272,9 +273,14 @@ source: chrome-devtools://devtools/bundled/shell.js (24)
   });
   newWindow.webContents.on('will-navigate', (event, url) => {
     event.preventDefault();
-    const decodedUrl = decodeURIComponent(url);
-    if (!url.startsWith('http') && fs.existsSync(decodedUrl)) {
-      shell.showItemInFolder(decodedUrl);
+    const decodedUrl = utilities.normalizeLinkPath(decodeURIComponent(url));
+    const osPath =
+      process.platform === 'win32'
+        ? path.win32.normalize(decodedUrl)
+        : path.posix.normalize(decodedUrl);
+    log.debug({ decodedUrl, osPath });
+    if (!url.startsWith('http') && fs.existsSync(osPath)) {
+      shell.showItemInFolder(osPath);
     } else {
       shell.openExternal(url);
     }
