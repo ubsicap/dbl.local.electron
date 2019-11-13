@@ -142,7 +142,8 @@ function replaceEmptyAltTextWithFileName(
 ) {
   if (!alttext) {
     const decodedFilename = decodeURIComponent(path.basename(filename));
-    const quotedOptionalpart = `${optionalpart || `"${decodedFilename}"`}`;
+    const quotedOptionalpart = `${optionalpart ||
+      `"${utilities.convertUrlToLocalPath(filename)}"`}`;
     const imgOrLinkPart = getImgOrLinkPart(decodedFilename);
     return `${imgOrLinkPart}[${decodedFilename}](${filename} ${quotedOptionalpart})`;
   }
@@ -152,8 +153,8 @@ function replaceEmptyAltTextWithFileName(
 function replaceFilePathsWithFileNames(
   match,
   alttext,
-  filename,
-  optionalpart /* , offset, str */
+  filename
+  /* , optionalpart, offset, str */
 ) {
   if (
     filename.search('/') === -1 ||
@@ -163,8 +164,8 @@ function replaceFilePathsWithFileNames(
     return match;
   }
   const decodedFilename = decodeURIComponent(path.basename(filename));
-  const quotedOptionalpartOrNot = optionalpart ? ` ${optionalpart}` : '';
   const imgOrLinkPart = getImgOrLinkPart(decodedFilename);
+  const quotedOptionalpartOrNot = imgOrLinkPart ? ` "${decodedFilename}"` : '';
   return `${imgOrLinkPart}[${alttext}](${decodedFilename}${quotedOptionalpartOrNot})`;
 }
 

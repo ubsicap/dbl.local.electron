@@ -1,5 +1,6 @@
 import path from 'path';
 import os from 'os';
+import { utilities } from '../../utils/utilities';
 import { servicesHelpers } from '../../helpers/services';
 
 export const helpTicketTemplateServices = {
@@ -64,7 +65,12 @@ function getTemplate({ attachments = [] } = {}) {
 
   ## Attachments
   ${attachments
-    .map(attachment => `- [${path.basename(attachment)}](${attachment})`)
+    .map(
+      attachment =>
+        `- [${path.basename(
+          attachment
+        )}](${attachment} "${utilities.convertUrlToLocalPath(attachment)}")`
+    )
     .join('\n')}
   `;
   return template;

@@ -273,12 +273,7 @@ source: chrome-devtools://devtools/bundled/shell.js (24)
   });
   newWindow.webContents.on('will-navigate', (event, url) => {
     event.preventDefault();
-    const decodedUrl = utilities.normalizeLinkPath(decodeURIComponent(url));
-    const osPath =
-      process.platform === 'win32'
-        ? path.win32.normalize(decodedUrl)
-        : path.posix.normalize(decodedUrl);
-    log.debug({ decodedUrl, osPath });
+    const osPath = utilities.convertUrlToLocalPath(url);
     if (!url.startsWith('http') && fs.existsSync(osPath)) {
       shell.showItemInFolder(osPath);
     } else {

@@ -15,6 +15,7 @@ export const utilities = {
   haveEqualKeysLength,
   onOpenLink,
   normalizeLinkPath,
+  convertUrlToLocalPath,
   sleep,
   union,
   intersect,
@@ -125,6 +126,15 @@ function normalizeLinkPath(filepath) {
   const urlPath = u.href.replace('file://', '');
   const osUrlPath = process.platform === 'win32' ? urlPath.substr(1) : urlPath;
   return osUrlPath;
+}
+
+function convertUrlToLocalPath(url) {
+  const decodedUrl = normalizeLinkPath(decodeURIComponent(url));
+  const osPath =
+    process.platform === 'win32'
+      ? path.win32.normalize(decodedUrl)
+      : path.posix.normalize(decodedUrl);
+  return osPath;
 }
 
 function sleep(ms) {
