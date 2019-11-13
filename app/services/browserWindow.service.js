@@ -274,7 +274,7 @@ source: chrome-devtools://devtools/bundled/shell.js (24)
   newWindow.webContents.on('will-navigate', (event, url) => {
     event.preventDefault();
     const osPath = utilities.convertUrlToLocalPath(url);
-    if (!url.startsWith('http') && fs.existsSync(osPath)) {
+    if (!url.includes('://') && fs.existsSync(osPath)) {
       shell.showItemInFolder(osPath);
     } else {
       shell.openExternal(url);

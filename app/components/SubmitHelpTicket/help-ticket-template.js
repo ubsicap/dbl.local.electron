@@ -9,7 +9,12 @@ export const helpTicketTemplateServices = {
 
 export default helpTicketTemplateServices;
 
-function getTemplate({ attachments = [] } = {}) {
+function getTemplate({
+  userName = '',
+  userEmail = '',
+  workspaceName = '',
+  attachments = []
+} = {}) {
   const template = `## Expected Behavior
 
   <!--- If you're describing a bug, tell us what should happen -->
@@ -39,9 +44,12 @@ function getTemplate({ attachments = [] } = {}) {
   4.
 
 
-  ## DBL Role
+  ## DBL User Role / Workspace / Org
 
   <!--- What DBL role were your trying to perform (archivist/publisher)? -->
+  - User name: ${userName}
+  - User email: [${userEmail}](mailto://${userEmail})
+  - Workspace: ${workspaceName}
 
   ## DBL Entry/Revision/Draft
 

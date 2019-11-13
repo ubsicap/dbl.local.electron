@@ -6,6 +6,7 @@ import got from 'got';
 import FormData from 'form-data';
 import fs from 'fs-extra';
 import path from 'path';
+import uuidv1 from 'uuid/v1';
 import CloudUpload from '@material-ui/icons/CloudUpload';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { Youtrack } from 'youtrack-rest-client';
@@ -168,8 +169,7 @@ function replaceFilePathsWithFileNames(
 ) {
   if (
     filename.search('/') === -1 ||
-    filename.startsWith('http://') ||
-    filename.startsWith('https://')
+    filename.includes('://')
   ) {
     return match;
   }
@@ -242,12 +242,25 @@ class SubmitHelpTicket extends React.Component<Props> {
       async (event, appState) => {
         const { dispatchLoginSuccess } = this.props;
         console.log(appState);
+        /*
+        const app = servicesHelpers.getApp();
+        const tempPath = app.getAppPath('temp');
+        const uuid1 = uuidv1();
+        const uid = uuid1.substr(0, 5);
+        const appStateFilePath = path.join(tempPath, `appState-${uid}.json`);
+        console.log(appStateFilePath);
+        fs.writeFileSync(appStateFilePath, appState);
+        */
         const { authentication } = appState;
         const { user, whoami, workspaceName } = authentication;
         dispatchLoginSuccess(user, whoami, workspaceName);
+        const { display_name: userName, email: userEmail } = whoami || {};
         const attachments = await getStandardAttachments();
         const description = helpTicketTemplateServices.getTemplate({
-          attachments
+          userName,
+          userEmail,
+          workspaceName,
+          attachments: [...attachments]
         });
         this.setState({ description });
       }
