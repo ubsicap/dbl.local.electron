@@ -1,3 +1,5 @@
+import { persistReducer } from 'redux-persist';
+import createElectronStorage from 'redux-persist-electron-storage';
 import { createStore, applyMiddleware, compose } from 'redux';
 import thunk from 'redux-thunk';
 import { createHashHistory } from 'history';
@@ -11,6 +13,12 @@ import type { counterStateType } from '../reducers/types';
 const history = createHashHistory();
 
 const rootReducer = createRootReducer(history);
+
+const persistConfig = {
+  key: 'root',
+  storage: createElectronStorage(),
+};
+const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 const configureStore = (initialState?: counterStateType) => {
   // Redux Configuration
@@ -57,13 +65,13 @@ const configureStore = (initialState?: counterStateType) => {
   const enhancer = composeEnhancers(...enhancers);
 
   // Create Store
-  const store = createStore(rootReducer, initialState, enhancer);
+  const store = createStore(persistedReducer, initialState, enhancer);
 
   if (module.hot) {
     module.hot.accept(
       '../reducers',
       // eslint-disable-next-line global-require
-      () => store.replaceReducer(require('../reducers').default)
+      () => store.replaceReducer(persistReducer(persistConfig, require('../reducers').default))
     );
   }
 
