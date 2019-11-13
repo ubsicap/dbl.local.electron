@@ -250,7 +250,7 @@ source: chrome-devtools://devtools/bundled/shell.js (24)
   return browserWin;
 }
 
-function openInNewWindow(routerPage) {
+function openInNewWindow(appPage, routerPage) {
   const newWindow = new BrowserWindow({
     show: false,
     width: 1024,
@@ -280,7 +280,6 @@ source: chrome-devtools://devtools/bundled/shell.js (24)
       shell.openExternal(url);
     }
   });
-
-  const appPage = path.join(__dirname, '..', 'app.html');
   newWindow.loadURL(`file://${appPage}#${routerPage}`);
+  return newWindow;
 }

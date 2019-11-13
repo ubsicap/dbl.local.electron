@@ -174,7 +174,7 @@ class MenuAppBar extends React.PureComponent {
       children
     } = this.props;
     const { anchorEl } = this.state;
-    const open = Boolean(anchorEl);
+    const open = showLogout && Boolean(anchorEl);
     const clipboardMedium = clipboard.bundleId ? clipboard.getMedium() : '';
     const clipboardTooltip = ux.getClipboardTooltip(clipboard);
     return (
@@ -238,7 +238,6 @@ class MenuAppBar extends React.PureComponent {
               <Button
                 color="inherit"
                 onClick={this.handleMenu}
-                disabled={!showLogout}
               >
                 {workspaceName} / {loggedIn ? userName : 'Login'}
                 <AccountCircle

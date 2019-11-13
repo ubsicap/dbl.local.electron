@@ -18,6 +18,7 @@ const { remote = {} } = electron;
 
 export const userActions = {
   login,
+  loginSuccess,
   logout,
   getAll
 };
@@ -51,7 +52,7 @@ function login(username, password, _workspaceName) {
       const workspacesLocation = dblDotLocalService.getWorkspacesDir();
       const workspaceFullPath = path.join(workspacesLocation, _workspaceName);
       workspaceUserSettingsStoreServices.saveUserLogin(workspaceFullPath, username);
-      dispatch(success(user, whoami, _workspaceName));
+      dispatch(loginSuccess(user, whoami, _workspaceName));
       dispatch(connectSSE(user.auth_token));
       dispatch(startPowerMonitor());
       history.push(navigationConstants.NAVIGATION_BUNDLES);
@@ -66,14 +67,15 @@ function login(username, password, _workspaceName) {
   function request(user, workspaceName) {
     return { type: userConstants.LOGIN_REQUEST, user, workspaceName };
   }
-  function success(user, whoami, workspaceName) {
-    return {
-      type: userConstants.LOGIN_SUCCESS, user, whoami, workspaceName
-    };
-  }
   function failure(error) {
     return { type: userConstants.LOGIN_FAILURE, error };
   }
+}
+
+function loginSuccess(user, whoami, workspaceName) {
+  return {
+    type: userConstants.LOGIN_SUCCESS, user, whoami, workspaceName
+  };
 }
 
 function connectSSE(authToken) {

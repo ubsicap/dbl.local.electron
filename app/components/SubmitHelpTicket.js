@@ -1,4 +1,5 @@
 import { compose } from 'recompose';
+import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import log from 'electron-log';
 import got from 'got';
@@ -31,13 +32,22 @@ import { logHelpers } from '../helpers/log.helpers';
 import { utilities } from '../utils/utilities';
 import { ux } from '../utils/ux';
 import ConfirmButton from './ConfirmButton';
+import { ipcRendererConstants } from '../constants/ipcRenderer.constants';
+import { userActions } from '../actions/user.actions';
+
+const { ipcRenderer } = require('electron');
 
 const materialStyles = theme => ({
   ...ux.getEntryUxStyles(theme)
 });
 
 type Props = {
-  classes: {}
+  classes: {},
+  dispatchLoginSuccess: () => {}
+};
+
+const mapDispatchToProps = {
+  dispatchLoginSuccess: userActions.loginSuccess
 };
 
 const config = {
@@ -227,9 +237,16 @@ class SubmitHelpTicket extends React.Component<Props> {
   }
 
   async componentWillMount() {
-    const attachments = await getStandardAttachments();
-    const description = helpTicketTemplateServices.getTemplate({ attachments });
-    this.setState({ description });
+    ipcRenderer.on(ipcRendererConstants.KEY_IPC_ATTACH_APP_STATE_SNAPSHOT, async (event, appState) => {
+      const { dispatchLoginSuccess } = this.props;
+      console.log(appState);
+      const { authentication } = appState;
+      const { user, whoami, workspaceName } = authentication;
+      dispatchLoginSuccess(user, whoami, workspaceName);
+      const attachments = await getStandardAttachments();
+      const description = helpTicketTemplateServices.getTemplate({ attachments });
+      this.setState({ description });
+    });
   }
 
   mdEditor = null;
@@ -430,6 +447,10 @@ class SubmitHelpTicket extends React.Component<Props> {
   }
 }
 
-export default compose(withStyles(materialStyles, { withTheme: true }))(
-  SubmitHelpTicket
-);
+export default compose(
+  withStyles(materialStyles, { withTheme: true }),
+  connect(
+    null,
+    mapDispatchToProps
+  )
+)(SubmitHelpTicket);

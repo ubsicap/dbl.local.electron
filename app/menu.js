@@ -243,15 +243,17 @@ export default class MenuBuilder {
                   label: '&Reload',
                   accelerator: 'Ctrl+R',
                   click: () => {
-                    this.mainWindow.webContents.reload();
+                    const currentWindow = servicesHelpers.getCurrentWindow();
+                    currentWindow.webContents.reload();
                   }
                 },
                 {
                   label: 'Toggle &Full Screen',
                   accelerator: 'F11',
                   click: () => {
-                    this.mainWindow.setFullScreen(
-                      !this.mainWindow.isFullScreen()
+                    const currentWindow = servicesHelpers.getCurrentWindow();
+                    currentWindow.setFullScreen(
+                      !this.currentWindow.isFullScreen()
                     );
                   }
                 },
@@ -276,8 +278,9 @@ export default class MenuBuilder {
                   label: 'Toggle &Full Screen',
                   accelerator: 'F11',
                   click: () => {
-                    this.mainWindow.setFullScreen(
-                      !this.mainWindow.isFullScreen()
+                    const currentWindow = servicesHelpers.getCurrentWindow();
+                    currentWindow.setFullScreen(
+                      !this.currentWindow.isFullScreen()
                     );
                   }
                 }
@@ -289,9 +292,7 @@ export default class MenuBuilder {
           {
             label: 'Give &feedback',
             click: () =>
-              browserWindowService.openInNewWindow(
-                navigationConstants.NAVIGATION_SUBMIT_HELP_TICKET
-              )
+              this.mainWindow.webContents.send(ipcRendererConstants.KEY_IPC_OPEN_SEND_FEEDBACK, '')
           },
           {
             label: 'Toggle &Developer Tools',
