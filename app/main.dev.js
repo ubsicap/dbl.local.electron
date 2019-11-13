@@ -167,6 +167,9 @@ app.on('ready', async () => {
   /* Adapted from https://discuss.atom.io/t/electron-intercept-http-request-response-on-browserwindow/21868/7 */
   function attachDebugger() {
     const debug = mainWindow.webContents.debugger;
+    if (debug.isAttached()) {
+      debug.detach();
+    }
     debug.attach('1.1');
     debug.on('message', (event, method, params) => {
       if (
