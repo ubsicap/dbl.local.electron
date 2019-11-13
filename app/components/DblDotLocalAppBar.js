@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import { compose } from 'recompose';
-import { Set } from 'immutable';
+import immutableJs from 'immutable';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
@@ -74,7 +74,7 @@ type Props = {
   isSearchActive: boolean,
   downloadQueue: {},
   uploadQueue: {},
-  starredEntries: Set,
+  starredEntries: immutableJs.Set,
   showStarredEntries: boolean,
   loginSessionErrorCount: number,
   incrementAppErrorCount: () => {},
