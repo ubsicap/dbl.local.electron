@@ -16,7 +16,7 @@ const rootReducer = createRootReducer(history);
 
 const persistConfig = {
   key: 'root',
-  storage: createElectronStorage(),
+  storage: createElectronStorage()
 };
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 
@@ -68,10 +68,10 @@ const configureStore = (initialState?: counterStateType) => {
   const store = createStore(persistedReducer, initialState, enhancer);
 
   if (module.hot) {
-    module.hot.accept(
-      '../reducers',
-      // eslint-disable-next-line global-require
-      () => store.replaceReducer(persistReducer(persistConfig, require('../reducers').default))
+    module.hot.accept('../reducers', () =>
+      store.replaceReducer(
+        persistReducer(persistConfig, createRootReducer.default)
+      )
     );
   }
 
