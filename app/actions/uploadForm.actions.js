@@ -40,7 +40,7 @@ export function closeUploadForm(bundleId) {
     dispatch({
       type: navigationConstants.NAVIGATION_ACTIVITY,
       url: navigationConstants.NAVIGATION_BUNDLES,
-      bundle: null
+      bundle: bundleId /* assume user would want to send feedback for uploads */
     });
     history.push(navigationConstants.NAVIGATION_BUNDLES);
     dispatch({ type: uploadFormConstants.UPLOAD_FORM_CLOSED, bundleId });
