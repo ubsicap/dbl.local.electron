@@ -216,18 +216,3 @@ app.on('ready', async () => {
   new AppUpdater();
   */
 });
-
-app.on('web-contents-created', (event, contents) => {
-  contents.on('dom-ready', () => {
-    if (
-      contents
-        .getURL()
-        .endsWith(navigationConstants.NAVIGATION_SUBMIT_HELP_TICKET)
-    ) {
-      // See https://github.com/electron/electron/issues/1378#issuecomment-265207386
-      contents.on('will-navigate', evt => {
-        evt.preventDefault();
-      });
-    }
-  });
-});

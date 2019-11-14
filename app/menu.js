@@ -290,11 +290,30 @@ export default class MenuBuilder {
         submenu: [
           {
             label: 'Give &feedback',
-            click: () =>
+            click: () => {
               this.mainWindow.webContents.send(
                 ipcRendererConstants.KEY_IPC_OPEN_SEND_FEEDBACK,
                 ''
-              )
+              );
+              // NOTE: preventDefault will not work from renderer.
+              // Needs to be handled in Main processes app.on('web-contents-created'
+              // See https://github.com/electron/electron/issues/1378#issuecomment-265207386
+              app.on('web-contents-created', (event, contents) => {
+                contents.on('dom-ready', () => {
+                  if (
+                    contents
+                      .getURL()
+                      .endsWith(
+                        navigationConstants.NAVIGATION_SUBMIT_HELP_TICKET
+                      )
+                  ) {
+                    contents.on('will-navigate', evt => {
+                      evt.preventDefault();
+                    });
+                  }
+                });
+              });
+            }
           },
           {
             label: 'Toggle &Developer Tools',
