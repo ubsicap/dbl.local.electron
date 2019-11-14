@@ -13,6 +13,7 @@ function getTemplate({
   userName = '',
   userEmail = '',
   workspaceName = '',
+  router = {},
   attachments = []
 } = {}) {
   const template = `## Expected Behavior
@@ -47,29 +48,34 @@ function getTemplate({
   ## DBL User Role / Workspace / Org
 
   <!--- What DBL role were your trying to perform (archivist/publisher)? -->
-  - User name: ${userName}
-  - User email: [${userEmail}](mailto://${userEmail})
-  - Workspace: ${workspaceName}
+  - User name: \`${userName}\`
+  - User email: **[${userEmail}](mailto://${userEmail})**
+  - Workspace: \`${workspaceName}\`
+  - Organization: ${workspaceName}
 
   ## DBL Entry/Revision/Draft
 
   <!--- Which DBL entry did you encounter your issue? (provide link to entry page or Entry ID) -->
   <!--- Which Entry revision were you working with? -->
+  - Entry Info:
+  - Revision:
+  - URL:
 
   ## Context
 
   <!--- How has this issue affected you? What are you trying to accomplish? -->
   <!--- Providing context helps us come up with a solution that is most useful in the real world -->
+  - Navigation: \`${router.location.pathname}\`
 
   ## Your Environment
 
   <!--- Include as many relevant details about the environment you experienced the bug in -->
 
-  - Nathanael Version: ${servicesHelpers.getApp().getVersion()}
-  - Operating System: ${process.platform} ${os.type} ${os.release}
-  - Electron Version: ${process.versions.electron}
-  - Chrome Version: ${process.versions.chrome}
-  - Node Version: ${process.versions.node}
+  - Nathanael Version: \`${servicesHelpers.getApp().getVersion()}\`
+  - Operating System: \`${process.platform} ${os.type} ${os.release}\`
+  - Electron Version: \`${process.versions.electron}\`
+  - Chrome Version: \`${process.versions.chrome}\`
+  - Node Version: \`${process.versions.node}\`
 
   ## Attachments
   ${attachments

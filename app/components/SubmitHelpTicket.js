@@ -167,10 +167,7 @@ function replaceFilePathsWithFileNames(
   filename
   /* , optionalpart, offset, str */
 ) {
-  if (
-    filename.search('/') === -1 ||
-    filename.includes('://')
-  ) {
+  if (filename.search('/') === -1 || filename.includes('://')) {
     return match;
   }
   const decodedFilename = decodeURIComponent(path.basename(filename));
@@ -242,16 +239,16 @@ class SubmitHelpTicket extends React.Component<Props> {
       async (event, appState) => {
         const { dispatchLoginSuccess } = this.props;
         console.log(appState);
-        /*
         const app = servicesHelpers.getApp();
-        const tempPath = app.getAppPath('temp');
+        const tempPath = app.getPath('temp');
         const uuid1 = uuidv1();
         const uid = uuid1.substr(0, 5);
-        const appStateFilePath = path.join(tempPath, `appState-${uid}.json`);
+        const appStateFilePath = utilities.normalizeLinkPath(
+          path.join(tempPath, `appState-${uid}.json`)
+        );
         console.log(appStateFilePath);
-        fs.writeFileSync(appStateFilePath, appState);
-        */
-        const { authentication } = appState;
+        await fs.writeFile(appStateFilePath, JSON.stringify(appState, null, 4));
+        const { authentication, router } = appState;
         const { user, whoami, workspaceName } = authentication;
         dispatchLoginSuccess(user, whoami, workspaceName);
         const { display_name: userName, email: userEmail } = whoami || {};
@@ -260,7 +257,8 @@ class SubmitHelpTicket extends React.Component<Props> {
           userName,
           userEmail,
           workspaceName,
-          attachments: [...attachments]
+          router,
+          attachments: [...attachments, appStateFilePath]
         });
         this.setState({ description });
       }
