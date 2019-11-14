@@ -33,8 +33,8 @@ type Props = {
   modeUi: {},
   actionButton: React.Node,
   secondaryActionButton?: React.Node,
-  openEntryDrawer: () => {},
-  resetEntryAppBar: () => {},
+  openEntryActionDrawer: () => {},
+  refreshEntryAppBar: () => {},
   handleClose: () => {}
 };
 
@@ -59,14 +59,7 @@ const getActiveBundle = createSelector(
 const getEntryPageUrl = createSelector(
   [getDblBaseUrl, getActiveBundle],
   (dblBaseUrl, origBundle) => {
-    const { dblId, revision, parent } = origBundle;
-    const revisionNum = bundleService.getRevisionOrParentRevision(
-      dblId,
-      revision,
-      parent
-    );
-    const revisionQuery = revisionNum ? `&revision=${revisionNum}` : '';
-    const url = `${dblBaseUrl}/entry?id=${dblId}${revisionQuery}`;
+    const url = bundleService.getEntryRevisionUrl(dblBaseUrl, origBundle);
     return url;
   }
 );
@@ -79,20 +72,25 @@ function mapStateToProps(state, props) {
 }
 
 const mapDispatchToProps = {
-  openEntryDrawer,
-  resetEntryAppBar
+  openEntryActionDrawer: openEntryDrawer,
+  refreshEntryAppBar: resetEntryAppBar
 };
 
 class EntryAppBar extends Component<Props> {
   props: Props;
 
   componentDidMount() {
-    this.props.resetEntryAppBar();
+    this.refreshAppBar();
   }
 
   componentWillUnmount() {
-    this.props.resetEntryAppBar();
+    this.refreshAppBar();
   }
+
+  refreshAppBar = () => {
+    const { refreshEntryAppBar } = this.props;
+    refreshEntryAppBar();
+  };
 
   onOpenDBLEntryLink = event => {
     const { entryPageUrl } = this.props;
@@ -109,7 +107,8 @@ class EntryAppBar extends Component<Props> {
       actionButton,
       secondaryActionButton,
       entryPageUrl,
-      handleClose
+      handleClose,
+      openEntryActionDrawer
     } = this.props;
     const { displayAs = {} } = origBundle;
     const { revision } = displayAs;
@@ -182,7 +181,7 @@ class EntryAppBar extends Component<Props> {
           {actionButton}
           <IconButton
             aria-label="Open drawer"
-            onClick={this.props.openEntryDrawer}
+            onClick={openEntryActionDrawer}
             className={classNames(
               classes.menuButton,
               openDrawer && classes.hide

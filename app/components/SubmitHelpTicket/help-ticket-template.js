@@ -10,10 +10,11 @@ export const helpTicketTemplateServices = {
 export default helpTicketTemplateServices;
 
 function getTemplate({
-  userName = '',
-  userEmail = '',
-  workspaceName = '',
+  userName,
+  userEmail,
+  workspaceName,
   router = {},
+  bundleInfo = {},
   attachments = []
 } = {}) {
   const template = `## Expected Behavior
@@ -57,9 +58,16 @@ function getTemplate({
 
   <!--- Which DBL entry did you encounter your issue? (provide link to entry page or Entry ID) -->
   <!--- Which Entry revision were you working with? -->
-  - Entry Info:
-  - Revision:
-  - URL:
+  - Entry Name: \`${bundleInfo.name}\`
+  - Status Label: \`${bundleInfo.status}\`
+  - Revision Label: \`${bundleInfo.revision}\`
+  - Entry/Revision Url: [http://${bundleInfo.entryRevisionUrl}](http://${
+    bundleInfo.entryRevisionUrl
+  })
+  - Language and Country: \`${bundleInfo.languageAndCountry}\`
+  - Rightsholders: \`${bundleInfo.rightsHolders}\`
+  - License: \`${bundleInfo.license}\`
+  - Bundle: \`${bundleInfo.bundleId}\`
 
   ## Context
 

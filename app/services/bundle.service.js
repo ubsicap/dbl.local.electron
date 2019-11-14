@@ -62,6 +62,7 @@ export const bundleService = {
   getSubsystemDownloadQueue,
   getSubsystemUploadQueue,
   getRevisionOrParentRevision,
+  getEntryRevisionUrl,
   getMapperOverwrites,
   getTempFolderForFile
 };
@@ -829,4 +830,15 @@ function getRevisionOrParentRevision(dblId, revision, parent) {
     parseInt(revision, 10) ||
     parseInt(parent && parent.dblId === dblId ? parent.revision : 0, 10)
   );
+}
+
+function getEntryRevisionUrl(dblBaseUrl, bundle) {
+  if (!bundle) {
+    return '';
+  }
+  const { dblId, revision, parent } = bundle;
+  const revisionNum = getRevisionOrParentRevision(dblId, revision, parent);
+  const revisionQuery = revisionNum ? `&revision=${revisionNum}` : '';
+  const url = `${dblBaseUrl}/entry?id=${dblId}${revisionQuery}`;
+  return url;
 }

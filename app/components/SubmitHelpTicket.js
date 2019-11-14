@@ -35,6 +35,7 @@ import { ux } from '../utils/ux';
 import ConfirmButton from './ConfirmButton';
 import { ipcRendererConstants } from '../constants/ipcRenderer.constants';
 import { userActions } from '../actions/user.actions';
+import { bundleService } from '../services/bundle.service';
 
 const { ipcRenderer } = require('electron');
 
@@ -248,16 +249,37 @@ class SubmitHelpTicket extends React.Component<Props> {
         );
         console.log(appStateFilePath);
         await fs.writeFile(appStateFilePath, JSON.stringify(appState, null, 4));
-        const { authentication, router } = appState;
+        const {
+          authentication,
+          router,
+          navigation,
+          bundles,
+          dblDotLocalConfig
+        } = appState;
         const { user, whoami, workspaceName } = authentication;
         dispatchLoginSuccess(user, whoami, workspaceName);
         const { display_name: userName, email: userEmail } = whoami || {};
+        const { addedByBundleIds = {} } = bundles;
+        const { bundle: bundleId } = navigation.slice(-1).pop() || {};
+        // const { workspaceFullPath, email } = workspaceHelpers.getCurrentWorkspaceFullPath(appState);
+        const activeBundle = bundleId ? addedByBundleIds[bundleId] : null;
+        const { displayAs = {} } = activeBundle || {};
+        const { dblBaseUrl } = dblDotLocalConfig;
+        const entryRevisionUrl = bundleService.getEntryRevisionUrl(
+          dblBaseUrl,
+          activeBundle
+        );
         const attachments = await getStandardAttachments();
         const description = helpTicketTemplateServices.getTemplate({
           userName,
           userEmail,
           workspaceName,
           router,
+          bundleInfo: {
+            bundleId,
+            ...displayAs,
+            entryRevisionUrl
+          },
           attachments: [...attachments, appStateFilePath]
         });
         this.setState({ description });
