@@ -282,7 +282,7 @@ class SubmitHelpTicket extends React.Component<Props> {
           },
           attachments: [...attachments, appStateFilePath]
         });
-        this.setState({ description });
+        this.setState({ description, appStateFilePath });
       }
     );
   }
@@ -382,6 +382,10 @@ class SubmitHelpTicket extends React.Component<Props> {
         this.handleProgress,
         this.handleError
       );
+      const { appStateFilePath } = this.state;
+      if (await fs.exists(appStateFilePath)) {
+        await fs.remove(appStateFilePath);
+      }
       const currentWindow = servicesHelpers.getCurrentWindow();
       currentWindow.close();
     } catch (error) {

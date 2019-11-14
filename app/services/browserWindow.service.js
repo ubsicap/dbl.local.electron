@@ -271,15 +271,20 @@ source: chrome-devtools://devtools/bundled/shell.js (24)
      */
     newWindow.webContents.closeDevTools();
   });
+  newWindow.loadURL(`file://${appPage}#${routerPage}`);
   newWindow.webContents.on('will-navigate', (event, url) => {
+    // NOTE: preventDefault will not work from renderer.
+    // Needs to be handled in Main processes app.on('web-contents-created'
+    // See https://github.com/electron/electron/issues/1378#issuecomment-265207386
     event.preventDefault();
-    const osPath = utilities.convertUrlToLocalPath(url);
-    if (!url.includes('://') && fs.existsSync(osPath)) {
-      shell.showItemInFolder(osPath);
-    } else {
+    if (url.startsWith('http:') || url.startsWith('https:')) {
       shell.openExternal(url);
+      return;
+    }
+    const osPath = utilities.convertUrlToLocalPath(url);
+    if (fs.existsSync(osPath)) {
+      shell.showItemInFolder(osPath);
     }
   });
-  newWindow.loadURL(`file://${appPage}#${routerPage}`);
   return newWindow;
 }

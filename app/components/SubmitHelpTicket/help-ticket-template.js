@@ -61,7 +61,7 @@ function getTemplate({
   - Entry Name: \`${bundleInfo.name}\`
   - Status Label: \`${bundleInfo.status}\`
   - Revision Label: \`${bundleInfo.revision}\`
-  - Entry/Revision Url: [http://${bundleInfo.entryRevisionUrl}](http://${
+  - Entry/Revision Url: [${bundleInfo.entryRevisionUrl}](${
     bundleInfo.entryRevisionUrl
   })
   - Language and Country: \`${bundleInfo.languageAndCountry}\`
