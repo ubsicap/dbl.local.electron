@@ -8,6 +8,7 @@ import { ipcRendererConstants } from '../constants/ipcRenderer.constants';
 import { logHelpers } from '../helpers/log.helpers';
 import { browserWindowService } from '../services/browserWindow.service';
 import { navigationConstants } from '../constants/navigation.constants';
+import { servicesHelpers } from '../helpers/services';
 
 const { ipcRenderer } = require('electron');
 
@@ -35,6 +36,14 @@ class App extends React.Component<Props> {
   componentWillMount() {
     ipcRenderer.on(ipcRendererConstants.KEY_IPC_OPEN_SEND_FEEDBACK, () => {
       const appPage = path.join(__dirname, 'app.html');
+      const currentWindow = servicesHelpers.getCurrentWindow();
+      if (
+        currentWindow.webContents
+          .getURL()
+          .includes(navigationConstants.NAVIGATION_SUBMIT_HELP_TICKET)
+      ) {
+        return; // don't open a new window
+      }
       const feedbackWindow = browserWindowService.openInNewWindow(
         appPage,
         navigationConstants.NAVIGATION_SUBMIT_HELP_TICKET

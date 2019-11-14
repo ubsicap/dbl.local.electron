@@ -60,12 +60,19 @@ export function openResourceManager(_bundleId, _mode) {
     };
   }
   function navigate(bundleId, mode) {
-    const manageResourcesUrl = utilities.buildRouteUrl(
-      navigationConstants.NAVIGATION_BUNDLE_MANAGE_RESOURCES,
-      { bundleId, mode }
-    );
-    history.push(manageResourcesUrl);
-    return success(bundleId, mode);
+    return dispatch => {
+      const manageResourcesUrl = utilities.buildRouteUrl(
+        navigationConstants.NAVIGATION_BUNDLE_MANAGE_RESOURCES,
+        { bundleId, mode }
+      );
+      dispatch({
+        type: navigationConstants.NAVIGATION_ACTIVITY,
+        url: manageResourcesUrl,
+        bundle: bundleId
+      });
+      history.push(manageResourcesUrl);
+      dispatch(success(bundleId, mode));
+    };
   }
 }
 
@@ -81,8 +88,15 @@ export function closeResourceManager(_bundleId) {
     };
   }
   function navigate(bundleId) {
-    history.push(navigationConstants.NAVIGATION_BUNDLES);
-    return success(bundleId);
+    return dispatch => {
+      dispatch({
+        type: navigationConstants.NAVIGATION_ACTIVITY,
+        url: navigationConstants.NAVIGATION_BUNDLES,
+        bundle: null
+      });
+      history.push(navigationConstants.NAVIGATION_BUNDLES);
+      dispatch(success(bundleId));
+    };
   }
 }
 

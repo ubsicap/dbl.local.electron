@@ -22,14 +22,26 @@ export function openEntryReports(bundleId) {
       navigationConstants.NAVIGATION_ENTRY_REPORTS,
       { bundleId }
     );
+    dispatch({
+      type: navigationConstants.NAVIGATION_ACTIVITY,
+      url,
+      bundle: bundleId
+    });
     history.push(url);
     dispatch({ type: reportConstants.ENTRY_REPORTS_OPENED, bundleId });
   };
 }
 
 export function closeEntryReports(bundleId) {
-  history.push(navigationConstants.NAVIGATION_BUNDLES);
-  return { type: reportConstants.ENTRY_REPORTS_CLOSED, bundleId };
+  return dispatch => {
+    dispatch({
+      type: navigationConstants.NAVIGATION_ACTIVITY,
+      url: navigationConstants.NAVIGATION_BUNDLES,
+      bundle: null
+    });
+    history.push(navigationConstants.NAVIGATION_BUNDLES);
+    dispatch({ type: reportConstants.ENTRY_REPORTS_CLOSED, bundleId });
+  };
 }
 
 export function setupReportListeners() {

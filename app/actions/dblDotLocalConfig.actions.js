@@ -54,6 +54,11 @@ export function gotoWorkspaceLoginPage(workspace) {
   return async dispatch => {
     try {
       if (!workspace) {
+        dispatch({
+          type: navigationConstants.NAVIGATION_ACTIVITY,
+          url: navigationConstants.NAVIGATION_UNKNOWN_WORKSPACE_LOGIN,
+          workspace: 'UNKNOWN_WORKSPACE'
+        });
         history.push(navigationConstants.NAVIGATION_UNKNOWN_WORKSPACE_LOGIN);
         return;
       }
@@ -96,6 +101,11 @@ export function gotoWorkspaceLoginPage(workspace) {
           navigationConstants.NAVIGATION_WORKSPACE_LOGIN,
           { workspaceName }
         );
+        dispatch({
+          type: navigationConstants.NAVIGATION_ACTIVITY,
+          url: loginUrl,
+          workspace: workspaceName
+        });
         history.push(loginUrl);
       });
     } catch (error) {

@@ -56,6 +56,11 @@ function login(username, password, _workspaceName) {
       dispatch(loginSuccess(user, whoami, _workspaceName));
       dispatch(connectSSE(user.auth_token));
       dispatch(startPowerMonitor());
+      dispatch({
+        type: navigationConstants.NAVIGATION_ACTIVITY,
+        url: navigationConstants.NAVIGATION_BUNDLES,
+        bundle: null
+      });
       history.push(navigationConstants.NAVIGATION_BUNDLES);
     } catch (error) {
       dispatch(failure(error));
