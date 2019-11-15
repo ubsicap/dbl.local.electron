@@ -37,6 +37,7 @@ import { ipcRendererConstants } from '../constants/ipcRenderer.constants';
 import { userActions } from '../actions/user.actions';
 import { bundleService } from '../services/bundle.service';
 import { workspaceHelpers } from '../helpers/workspaces.helpers';
+import { dblDotLocalService } from '../services/dbl_dot_local.service';
 
 const { ipcRenderer } = require('electron');
 
@@ -198,6 +199,19 @@ async function postAttachmentsToIssue(
     .on('error', handleError);
 }
 
+async function getConfigXmlSettings(appState) {
+  const { workspace } =
+    workspaceHelpers.getCurrentWorkspaceFullPath(appState) || {};
+  if (!workspace) {
+    return {};
+  }
+  const configXmlSettings = await dblDotLocalService.convertConfigXmlToJson(
+    workspace
+  );
+  const organizationType = configXmlSettings.settings.dbl[0].organizationType[0].toUpperCase();
+  return { organizationType };
+}
+
 class SubmitHelpTicket extends React.Component<Props> {
   props: Props;
 
@@ -238,88 +252,89 @@ class SubmitHelpTicket extends React.Component<Props> {
     ipcRenderer.on(
       ipcRendererConstants.KEY_IPC_ATTACH_APP_STATE_SNAPSHOT,
       async (event, appState) => {
-        const { dispatchLoginSuccess } = this.props;
-        const app = servicesHelpers.getApp();
-        const tempPath = app.getPath('temp');
-        const uuid1 = uuidv1();
-        const uid = uuid1.substr(0, 5);
-        const appStateFilePath = utilities.normalizeLinkPath(
-          path.join(tempPath, `appState-${uid}.json`)
-        );
-        await fs.writeFile(appStateFilePath, JSON.stringify(appState, null, 4));
-        const {
-          authentication,
-          router,
-          navigation,
-          bundles,
-          dblDotLocalConfig
-        } = appState;
-        const { workspaceFullPath, workspaceName: workspace } =
-          workspaceHelpers.getCurrentWorkspaceFullPath(appState) || {};
-        const { user, whoami, workspaceName = workspace } = authentication;
-        dispatchLoginSuccess(user, whoami, workspaceName);
-        const { display_name: userName, email: userEmail } = whoami || {};
-        const configXmlPath = workspaceFullPath
-          ? path.join(workspaceFullPath, 'config.xml')
-          : undefined;
-        const workspaceAttachments = workspaceFullPath
-          ? [configXmlPath].map(utilities.normalizeLinkPath)
-          : [];
-        const { addedByBundleIds = {} } = bundles;
-        const { bundle: bundleId } = navigation.slice(-1).pop() || {};
-        const bundleStatusPath = bundleId
-          ? path.join(
-              workspaceFullPath,
-              'bundles',
-              bundleId,
-              'bundle_status.xml'
-            )
-          : undefined;
-        const jobSpecPath = bundleId
-          ? path.join(workspaceFullPath, 'bundles', bundleId, 'job_spec.xml')
-          : undefined;
-        const metadataXmlPath = bundleId
-          ? path.join(
-              workspaceFullPath,
-              'bundles',
-              bundleId,
-              'storer',
-              'metadata.xml'
-            )
-          : undefined;
-        const bundleAttachments = bundleId
-          ? [bundleStatusPath, jobSpecPath, metadataXmlPath].map(
-              utilities.normalizeLinkPath
-            )
-          : [];
-        const activeBundle = bundleId ? addedByBundleIds[bundleId] : null;
-        const { displayAs = {} } = activeBundle || {};
-        const { dblBaseUrl } = dblDotLocalConfig;
-        const entryRevisionUrl = bundleService.getEntryRevisionUrl(
-          dblBaseUrl,
-          activeBundle
-        );
-        const attachments = await getStandardAttachments();
-        const description = helpTicketTemplateServices.getTemplate({
-          userName,
-          userEmail,
-          workspaceName,
-          router,
-          bundleInfo: {
-            bundleId,
-            ...displayAs,
-            entryRevisionUrl
-          },
-          attachments: [
-            ...attachments,
-            appStateFilePath,
-            ...workspaceAttachments,
-            ...bundleAttachments
-          ]
-        });
-        this.setState({ description, appStateFilePath });
+        try {
+          await this.refreshMarkdownDescription(appState);
+        } catch (error) {
+          log.error(error);
+        }
       }
     );
+    const currentWindow = servicesHelpers.getCurrentWindow();
+    currentWindow.on('close', async () => {
+      try {
+        await this.removeTempFiles();
+      } catch (error) {
+        log.error(error);
+      }
+    });
+  }
+
+  async componentWillUnmount() {
+    await this.removeTempFiles();
+  }
+
+  async refreshMarkdownDescription(appState) {
+    const { dispatchLoginSuccess } = this.props;
+    const appStateFilePath = await createAppStateAttachment(appState);
+    const {
+      authentication,
+      router,
+      navigation,
+      bundles,
+      dblDotLocalConfig
+    } = appState;
+    const { workspaceFullPath, workspaceName: workspace } =
+      workspaceHelpers.getCurrentWorkspaceFullPath(appState) || {};
+    const { user, whoami, workspaceName = workspace } = authentication;
+    dispatchLoginSuccess(user, whoami, workspaceName);
+    const { display_name: userName, email: userEmail } = whoami || {};
+    const workspaceAttachments = getWorkspaceAttachments(workspaceFullPath);
+    const { bundle: bundleId } = navigation.slice(-1).pop() || {};
+    const bundleAttachments = getBundleAttachments(bundleId, workspaceFullPath);
+    const { addedByBundleIds = {} } = bundles;
+    const activeBundle = bundleId ? addedByBundleIds[bundleId] : null;
+    const { displayAs = {} } = activeBundle || {};
+    const { dblBaseUrl } = dblDotLocalConfig;
+    const entryRevisionUrl = bundleService.getEntryRevisionUrl(
+      dblBaseUrl,
+      activeBundle
+    );
+    const activeBundleAttachment = await createActiveBundleAttachment(
+      activeBundle
+    );
+    const [activeBundleFilePath] = activeBundleAttachment;
+    const configXmlSettings = await getConfigXmlSettings(appState);
+    const attachments = await getStandardAttachments();
+    const description = helpTicketTemplateServices.getTemplate({
+      userName,
+      userEmail,
+      workspaceName,
+      configXmlSettings,
+      router,
+      bundleInfo: {
+        bundleId,
+        ...displayAs,
+        entryRevisionUrl
+      },
+      attachments: [
+        ...attachments,
+        appStateFilePath,
+        ...workspaceAttachments,
+        ...activeBundleAttachment,
+        ...bundleAttachments
+      ]
+    });
+    this.setState({ description, appStateFilePath, activeBundleFilePath });
+  }
+
+  async removeTempFiles() {
+    const { appStateFilePath, activeBundleFilePath } = this.state;
+    if (await fs.exists(appStateFilePath)) {
+      await fs.remove(appStateFilePath);
+    }
+    if (activeBundleFilePath && (await fs.exists(activeBundleFilePath))) {
+      await fs.remove(activeBundleFilePath);
+    }
   }
 
   mdEditor = null;
@@ -417,10 +432,6 @@ class SubmitHelpTicket extends React.Component<Props> {
         this.handleProgress,
         this.handleError
       );
-      const { appStateFilePath } = this.state;
-      if (await fs.exists(appStateFilePath)) {
-        await fs.remove(appStateFilePath);
-      }
       const currentWindow = servicesHelpers.getCurrentWindow();
       currentWindow.close();
     } catch (error) {
@@ -531,3 +542,67 @@ export default compose(
     mapDispatchToProps
   )
 )(SubmitHelpTicket);
+
+function getBundleAttachments(bundleId, workspaceFullPath) {
+  const bundleStatusPath = bundleId
+    ? path.join(workspaceFullPath, 'bundles', bundleId, 'bundle_status.xml')
+    : undefined;
+  const jobSpecPath = bundleId
+    ? path.join(workspaceFullPath, 'bundles', bundleId, 'job_spec.xml')
+    : undefined;
+  const metadataXmlPath = bundleId
+    ? path.join(
+        workspaceFullPath,
+        'bundles',
+        bundleId,
+        'storer',
+        'metadata.xml'
+      )
+    : undefined;
+  const bundleAttachments = bundleId
+    ? [bundleStatusPath, jobSpecPath, metadataXmlPath].map(
+        utilities.normalizeLinkPath
+      )
+    : [];
+  return bundleAttachments;
+}
+
+function getWorkspaceAttachments(workspaceFullPath) {
+  const configXmlPath = workspaceFullPath
+    ? path.join(workspaceFullPath, 'config.xml')
+    : undefined;
+  const workspaceAttachments = workspaceFullPath
+    ? [configXmlPath].map(utilities.normalizeLinkPath)
+    : [];
+  return workspaceAttachments;
+}
+
+async function createAppStateAttachment(appState) {
+  const app = servicesHelpers.getApp();
+  const tempPath = app.getPath('temp');
+  const uuid1 = uuidv1();
+  const uid = uuid1.substr(0, 5);
+  const appStateFilePath = utilities.normalizeLinkPath(
+    path.join(tempPath, `appState-${uid}.json`)
+  );
+  await fs.writeFile(appStateFilePath, JSON.stringify(appState, null, 4));
+  return appStateFilePath;
+}
+
+async function createActiveBundleAttachment(activeBundle) {
+  if (!activeBundle) {
+    return [];
+  }
+  const app = servicesHelpers.getApp();
+  const tempPath = app.getPath('temp');
+  const uuid1 = uuidv1();
+  const uid = uuid1.substr(0, 5);
+  const activeBundleFilePath = utilities.normalizeLinkPath(
+    path.join(tempPath, `activeBundle-${activeBundle.id}-${uid}.json`)
+  );
+  await fs.writeFile(
+    activeBundleFilePath,
+    JSON.stringify(activeBundle, null, 4)
+  );
+  return [activeBundleFilePath];
+}

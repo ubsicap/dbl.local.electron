@@ -13,6 +13,7 @@ function getTemplate({
   userName,
   userEmail,
   workspaceName,
+  configXmlSettings = {},
   router = {},
   bundleInfo = {},
   attachments = []
@@ -46,16 +47,17 @@ function getTemplate({
   4.
 
 
-  ## DBL Org / User Role / Workspace
+  ## DBL Role / Org / Workspace / User
 
   <!--- What DBL role were your trying to perform (archivist/publisher)? -->
-  - Organization: ${workspaceName}
+  - Role: \`undefined\`
+  - Organization: \`${workspaceName}\`
+  - Organization Type: \`${configXmlSettings.organizationType}\`
   - Workspace: \`${workspaceName}\`
   - User name: \`${userName}\`
   - User email: **[${userEmail}](mailto://${userEmail})**
-  - Role:
 
-  ## DBL Entry/Revision/Draft
+  ## DBL Entry / Revision / Bundle
 
   <!--- Which DBL entry did you encounter your issue? (provide link to entry page or Entry ID) -->
   <!--- Which Entry revision were you working with? -->
