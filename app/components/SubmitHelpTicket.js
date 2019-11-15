@@ -82,7 +82,6 @@ function getMarkDownLocalFileLinkMatches(markdown) {
     }
     match = linkPattern.exec(markdown);
   }
-  console.log(links);
   return { linkMatches, links }; // utilities.distinct(links)
 }
 
@@ -240,7 +239,6 @@ class SubmitHelpTicket extends React.Component<Props> {
       ipcRendererConstants.KEY_IPC_ATTACH_APP_STATE_SNAPSHOT,
       async (event, appState) => {
         const { dispatchLoginSuccess } = this.props;
-        console.log(appState);
         const app = servicesHelpers.getApp();
         const tempPath = app.getPath('temp');
         const uuid1 = uuidv1();
@@ -248,7 +246,6 @@ class SubmitHelpTicket extends React.Component<Props> {
         const appStateFilePath = utilities.normalizeLinkPath(
           path.join(tempPath, `appState-${uid}.json`)
         );
-        console.log(appStateFilePath);
         await fs.writeFile(appStateFilePath, JSON.stringify(appState, null, 4));
         const {
           authentication,
