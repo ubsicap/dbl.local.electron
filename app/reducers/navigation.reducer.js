@@ -17,11 +17,16 @@ export function navigation(state = initialState, action) {
     case navigationConstants.NAVIGATION_ACTIVITY: {
       const { type, ...activity } = action;
       const prevActivity = state[state.length - 1];
-      if (!prevActivity || !activity.bundle && activity.workspace !== undefined) {
+      if (
+        !prevActivity ||
+        (!activity.bundle && activity.workspace !== undefined)
+      ) {
         return [...state, activity]; // workspace navigation
       }
       const bundleActivity = {
         ...activity,
+        bundle:
+          activity.bundle === undefined ? prevActivity.bundle : activity.bundle,
         workspace: prevActivity.workspace
       };
       return [...state, bundleActivity];

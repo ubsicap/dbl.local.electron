@@ -91,8 +91,8 @@ export function closeResourceManager(_bundleId) {
     return dispatch => {
       dispatch({
         type: navigationConstants.NAVIGATION_ACTIVITY,
-        url: navigationConstants.NAVIGATION_BUNDLES,
-        bundle: null
+        url: navigationConstants.NAVIGATION_BUNDLES
+        /* bundle: leave the same. we may have switched revisions */
       });
       history.push(navigationConstants.NAVIGATION_BUNDLES);
       dispatch(success(bundleId));

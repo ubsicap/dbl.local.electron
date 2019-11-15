@@ -271,7 +271,9 @@ source: chrome-devtools://devtools/bundled/shell.js (24)
      */
     newWindow.webContents.closeDevTools();
   });
-  newWindow.loadURL(`file://${appPage}#${routerPage}`);
+  const newWindowUrl = `file://${appPage}#${routerPage}`;
+  log.info({ newWindowUrl });
+  newWindow.loadURL(newWindowUrl);
   newWindow.webContents.on('will-navigate', (event, url) => {
     // NOTE: preventDefault will not work from renderer.
     // Needs to be handled in Main processes app.on('web-contents-created'

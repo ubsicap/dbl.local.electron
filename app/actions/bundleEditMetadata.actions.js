@@ -300,7 +300,7 @@ export function closeEditMetadata(bundleId) {
       type: bundleEditMetadataConstants.CLOSE_EDIT_METADATA,
       bundleId
     });
-    dispatch(switchBackToBundlesPage);
+    dispatch(switchBackToBundlesPage(bundleId));
   };
 }
 
@@ -405,15 +405,15 @@ export function deleteForm(bundleId, formKey, shouldReloadActiveForm) {
   }
 }
 
-function switchBackToBundlesPage() {
+function switchBackToBundlesPage(bundleId) {
   return dispatch => {
     dispatch({
       type: navigationConstants.NAVIGATION_ACTIVITY,
       url: navigationConstants.NAVIGATION_BUNDLES,
-      bundle: null
+      bundle: bundleId
     });
     history.push(navigationConstants.NAVIGATION_BUNDLES);
-  }
+  };
 }
 
 export function reloadActiveForm(shouldUpdateBundleFormErrors = false) {
