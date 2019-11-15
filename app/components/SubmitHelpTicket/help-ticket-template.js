@@ -46,13 +46,14 @@ function getTemplate({
   4.
 
 
-  ## DBL User Role / Workspace / Org
+  ## DBL Org / User Role / Workspace
 
   <!--- What DBL role were your trying to perform (archivist/publisher)? -->
+  - Organization: ${workspaceName}
+  - Workspace: \`${workspaceName}\`
   - User name: \`${userName}\`
   - User email: **[${userEmail}](mailto://${userEmail})**
-  - Workspace: \`${workspaceName}\`
-  - Organization: ${workspaceName}
+  - Role:
 
   ## DBL Entry/Revision/Draft
 

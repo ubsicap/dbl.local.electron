@@ -38,7 +38,7 @@ function mapStateToProps(state, props) {
     whoami,
     workspaceName = props.workspaceName || workspaceNameFromState
   } = authentication;
-  const { display_name: userName = 'DEMO USER', email: userEmail } =
+  const { display_name: userName = 'UNDEFINED USER', email: userEmail } =
     whoami || {};
   return {
     loggedIn,
