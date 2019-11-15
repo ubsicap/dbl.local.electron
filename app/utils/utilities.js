@@ -128,7 +128,7 @@ function normalizeLinkPath(filepath) {
 }
 
 function convertUrlToLocalPath(url) {
-  const decodedUrl = normalizeLinkPath(decodeURIComponent(url));
+  const decodedUrl = decodeURIComponent(normalizeLinkPath(url));
   const osPath =
     process.platform === 'win32'
       ? path.win32.normalize(decodedUrl)
