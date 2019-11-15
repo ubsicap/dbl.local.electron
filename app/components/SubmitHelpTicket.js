@@ -36,6 +36,7 @@ import ConfirmButton from './ConfirmButton';
 import { ipcRendererConstants } from '../constants/ipcRenderer.constants';
 import { userActions } from '../actions/user.actions';
 import { bundleService } from '../services/bundle.service';
+import { workspaceHelpers } from '../helpers/workspaces.helpers';
 
 const { ipcRenderer } = require('electron');
 
@@ -256,12 +257,44 @@ class SubmitHelpTicket extends React.Component<Props> {
           bundles,
           dblDotLocalConfig
         } = appState;
-        const { user, whoami, workspaceName } = authentication;
+        const { workspaceFullPath, workspaceName: workspace } =
+          workspaceHelpers.getCurrentWorkspaceFullPath(appState) || {};
+        const { user, whoami, workspaceName = workspace } = authentication;
         dispatchLoginSuccess(user, whoami, workspaceName);
         const { display_name: userName, email: userEmail } = whoami || {};
+        const configXmlPath = workspaceFullPath
+          ? path.join(workspaceFullPath, 'config.xml')
+          : undefined;
+        const workspaceAttachments = workspaceFullPath
+          ? [configXmlPath].map(utilities.normalizeLinkPath)
+          : [];
         const { addedByBundleIds = {} } = bundles;
         const { bundle: bundleId } = navigation.slice(-1).pop() || {};
-        // const { workspaceFullPath, email } = workspaceHelpers.getCurrentWorkspaceFullPath(appState);
+        const bundleStatusPath = bundleId
+          ? path.join(
+              workspaceFullPath,
+              'bundles',
+              bundleId,
+              'bundle_status.xml'
+            )
+          : undefined;
+        const jobSpecPath = bundleId
+          ? path.join(workspaceFullPath, 'bundles', bundleId, 'job_spec.xml')
+          : undefined;
+        const metadataXmlPath = bundleId
+          ? path.join(
+              workspaceFullPath,
+              'bundles',
+              bundleId,
+              'storer',
+              'metadata.xml'
+            )
+          : undefined;
+        const bundleAttachments = bundleId
+          ? [bundleStatusPath, jobSpecPath, metadataXmlPath].map(
+              utilities.normalizeLinkPath
+            )
+          : [];
         const activeBundle = bundleId ? addedByBundleIds[bundleId] : null;
         const { displayAs = {} } = activeBundle || {};
         const { dblBaseUrl } = dblDotLocalConfig;
@@ -280,7 +313,12 @@ class SubmitHelpTicket extends React.Component<Props> {
             ...displayAs,
             entryRevisionUrl
           },
-          attachments: [...attachments, appStateFilePath]
+          attachments: [
+            ...attachments,
+            appStateFilePath,
+            ...workspaceAttachments,
+            ...bundleAttachments
+          ]
         });
         this.setState({ description, appStateFilePath });
       }

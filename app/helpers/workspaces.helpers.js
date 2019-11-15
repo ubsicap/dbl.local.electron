@@ -11,7 +11,8 @@ export default workspaceHelpers;
 
 // state helper
 function getCurrentWorkspaceFullPath(state) {
-  const { workspaceName, user } = state.authentication;
+  const { workspace = undefined } = state.navigation.slice(-1).pop() || {};
+  const { workspaceName = workspace, user } = state.authentication;
   if (!workspaceName) {
     return undefined;
   }

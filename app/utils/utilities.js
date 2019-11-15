@@ -120,9 +120,8 @@ function onOpenLink(url) {
 }
 
 function normalizeLinkPath(filepath) {
-  const u = new URL(
-    `file://${upath.normalize(filepath.replace('file://', ''))}`
-  );
+  const normalized = upath.normalize(filepath.replace('file://', ''));
+  const u = new URL(`file://${normalized}`);
   const urlPath = u.href.replace('file://', '');
   const osUrlPath = process.platform === 'win32' ? urlPath.substr(1) : urlPath;
   return osUrlPath;
