@@ -34,9 +34,7 @@ function getTemplate({
   <!--- or ideas how to implement the addition or change -->
 
   ## Steps to Reproduce (for bugs)
-
-  <!--- Provide a video GIF screenshot, or an unambiguous set of steps to -->
-  <!--- reproduce this bug. -->
+  ###### (Provide a screenshot/[video screen-capture](https://www.screentogif.com/), or an unambiguous set of steps to reproduce this bug.)
 
   1.
 
