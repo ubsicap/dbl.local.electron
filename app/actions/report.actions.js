@@ -12,56 +12,78 @@ export const reportActions = {
   setupReportListeners,
   startReport,
   selectReportsToRun,
-  startSelectedReports,
+  startSelectedReports
 };
 
 export function openEntryReports(bundleId) {
   return dispatch => {
-    const url =
-    utilities.buildRouteUrl(
+    const url = utilities.buildRouteUrl(
       navigationConstants.NAVIGATION_ENTRY_REPORTS,
       { bundleId }
     );
+    dispatch({
+      type: navigationConstants.NAVIGATION_ACTIVITY,
+      url,
+      bundle: bundleId
+    });
     history.push(url);
     dispatch({ type: reportConstants.ENTRY_REPORTS_OPENED, bundleId });
   };
 }
 
 export function closeEntryReports(bundleId) {
-  history.push(navigationConstants.NAVIGATION_BUNDLES);
-  return { type: reportConstants.ENTRY_REPORTS_CLOSED, bundleId };
+  return dispatch => {
+    dispatch({
+      type: navigationConstants.NAVIGATION_ACTIVITY,
+      url: navigationConstants.NAVIGATION_BUNDLES,
+      bundle: bundleId
+    });
+    history.push(navigationConstants.NAVIGATION_BUNDLES);
+    dispatch({ type: reportConstants.ENTRY_REPORTS_CLOSED, bundleId });
+  };
 }
 
 export function setupReportListeners() {
   return (dispatch, getState) => {
-    const { authentication: { eventSource } } = getState();
+    const {
+      authentication: { eventSource }
+    } = getState();
     if (!eventSource) {
       console.error('EventSource undefined');
       return;
     }
-    const dispatchListenStorerReport = (e) => dispatch(listenStorerReport(e));
+    const dispatchListenStorerReport = e => dispatch(listenStorerReport(e));
 
     const listeners = {
       'storer/report': dispatchListenStorerReport
     };
-    Object.keys(listeners).forEach((evType) => {
+    Object.keys(listeners).forEach(evType => {
       const handler = listeners[evType];
       eventSource.addEventListener(evType, handler);
     });
-    return dispatch({ type: reportConstants.REPORT_LISTENERS_STARTED, listeners });
+    return dispatch({
+      type: reportConstants.REPORT_LISTENERS_STARTED,
+      listeners
+    });
   };
 }
 
 export function startReport(bundleId, reportType) {
-  return async (dispatch) => {
+  return async dispatch => {
     const uuid1 = uuidv1();
     const referenceToken = uuid1.substr(0, 5);
     dispatch({
-      type: reportConstants.REPORT_STARTED, bundleId, referenceToken, reportType
+      type: reportConstants.REPORT_STARTED,
+      bundleId,
+      referenceToken,
+      reportType
     });
     switch (reportType) {
       case reportConstants.ChecksUseContent: {
-        await reportService.checksUseContent({ bundleId, reference: referenceToken });
+        await reportService.checksUseContent({
+          bundleId,
+          reference: referenceToken
+        });
         break;
       }
       default: {
@@ -93,18 +115,30 @@ function listenStorerReport(event) {
     const { bundleId } = reportsStarted[referenceToken];
     const { addedByBundleIds } = getState().bundles;
     const bundle = addedByBundleIds[bundleId];
-    const {
-      name, dblId, revision, languageAndCountry
-    } = bundle.displayAs;
-    const title = `Report - Checks - ${bundle.medium} (${languageAndCountry}) ${name} ${dblId}, ${revision}`;
-    const reportFilePath = await reportService.saveReportToFile(bundleId, referenceToken, reportId, title);
+    const { name, dblId, revision, languageAndCountry } = bundle.displayAs;
+    const title = `Report - Checks - ${
+      bundle.medium
+    } (${languageAndCountry}) ${name} ${dblId}, ${revision}`;
+    const reportFilePath = await reportService.saveReportToFile(
+      bundleId,
+      referenceToken,
+      reportId,
+      title
+    );
     browserWindowService.openFileInChromeBrowser(reportFilePath, false);
     dispatch({
-      type: reportConstants.REPORT_COMPLETED, referenceToken, reportId, date: Date.now()
+      type: reportConstants.REPORT_COMPLETED,
+      referenceToken,
+      reportId,
+      date: Date.now()
     });
   };
 }
 
 export function selectReportsToRun(bundleId, selectedReportIds) {
-  return { type: reportConstants.REPORTS_SELECTED_TO_RUN, bundleId, selectedReportIds };
+  return {
+    type: reportConstants.REPORTS_SELECTED_TO_RUN,
+    bundleId,
+    selectedReportIds
+  };
 }

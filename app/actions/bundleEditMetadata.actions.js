@@ -268,13 +268,20 @@ export function openEditMetadata(_bundleId, _moveNextStep) {
     };
   }
   function navigate(bundleToEdit, moveNextStep) {
-    const { id: bundleId } = bundleToEdit;
-    const editMetadataPageWithBundleId = utilities.buildRouteUrl(
-      navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA,
-      { bundleId }
-    );
-    history.push(editMetadataPageWithBundleId);
-    return success(bundleToEdit, moveNextStep);
+    return dispatch => {
+      const { id: bundleId } = bundleToEdit;
+      const editMetadataPageWithBundleId = utilities.buildRouteUrl(
+        navigationConstants.NAVIGATION_BUNDLE_EDIT_METADATA,
+        { bundleId }
+      );
+      dispatch({
+        type: navigationConstants.NAVIGATION_ACTIVITY,
+        url: editMetadataPageWithBundleId,
+        bundle: bundleId
+      });
+      history.push(editMetadataPageWithBundleId);
+      dispatch(success(bundleToEdit, moveNextStep));
+    };
   }
   function failure(bundleId, error, moveNextStep) {
     return {
@@ -293,7 +300,7 @@ export function closeEditMetadata(bundleId) {
       type: bundleEditMetadataConstants.CLOSE_EDIT_METADATA,
       bundleId
     });
-    dispatch(switchBackToBundlesPage);
+    dispatch(switchBackToBundlesPage(bundleId));
   };
 }
 
@@ -398,8 +405,15 @@ export function deleteForm(bundleId, formKey, shouldReloadActiveForm) {
   }
 }
 
-function switchBackToBundlesPage() {
-  history.push(navigationConstants.NAVIGATION_BUNDLES);
+function switchBackToBundlesPage(bundleId) {
+  return dispatch => {
+    dispatch({
+      type: navigationConstants.NAVIGATION_ACTIVITY,
+      url: navigationConstants.NAVIGATION_BUNDLES,
+      bundle: bundleId
+    });
+    history.push(navigationConstants.NAVIGATION_BUNDLES);
+  };
 }
 
 export function reloadActiveForm(shouldUpdateBundleFormErrors = false) {

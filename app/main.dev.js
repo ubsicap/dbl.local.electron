@@ -83,9 +83,11 @@ app.on('ready', async () => {
     }
   });
 
-  mainWindow.loadURL(
-    `file://${__dirname}/app.html#${navigationConstants.NAVIGATION_WORKSPACES}`
-  );
+  const mainWindowUrl = `file://${__dirname}/app.html#${
+    navigationConstants.NAVIGATION_WORKSPACES
+  }`;
+  log.info({ mainWindowUrl });
+  mainWindow.loadURL(mainWindowUrl);
 
   /*
      waiting until 'dom-ready' avoids startup errors related to devtools server extension
@@ -167,6 +169,9 @@ app.on('ready', async () => {
   /* Adapted from https://discuss.atom.io/t/electron-intercept-http-request-response-on-browserwindow/21868/7 */
   function attachDebugger() {
     const debug = mainWindow.webContents.debugger;
+    if (debug.isAttached()) {
+      debug.detach();
+    }
     debug.attach('1.1');
     debug.on('message', (event, method, params) => {
       if (

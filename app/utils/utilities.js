@@ -14,6 +14,8 @@ export const utilities = {
   haveEqualKeys,
   haveEqualKeysLength,
   onOpenLink,
+  normalizeLinkPath,
+  convertUrlToLocalPath,
   sleep,
   union,
   intersect,
@@ -115,6 +117,23 @@ function onOpenLink(url) {
     event.stopPropagation();
     shell.openExternal(url);
   };
+}
+
+function normalizeLinkPath(filepath) {
+  const normalized = upath.normalize(filepath.replace('file://', ''));
+  const u = new URL(`file://${normalized}`);
+  const urlPath = u.href.replace('file://', '');
+  const osUrlPath = process.platform === 'win32' ? urlPath.substr(1) : urlPath;
+  return osUrlPath.replace(/\(/g, '%28').replace(/\)/g, '%29');
+}
+
+function convertUrlToLocalPath(url) {
+  const decodedUrl = decodeURIComponent(normalizeLinkPath(url));
+  const osPath =
+    process.platform === 'win32'
+      ? path.win32.normalize(decodedUrl)
+      : path.posix.normalize(decodedUrl);
+  return osPath;
 }
 
 function sleep(ms) {

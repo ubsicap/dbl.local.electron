@@ -1,0 +1,13 @@
+.mdeditor {
+  padding: 20px;
+}
+.mdeditor.nav {
+  margin: 10px 0 10px 0;
+}
+.mdeditor.nav button {
+  margin-right: 10px;
+}
+.mdeditor.editor-wrap {
+  width: 100%;
+  height: 500px;
+}

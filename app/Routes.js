@@ -10,6 +10,8 @@ import { navigationConstants } from './constants/navigation.constants';
 import WorkspacesPage from './containers/WorkspacesPage';
 import EntryReports from './components/EntryReports';
 import EntryUploadForm from './components/EntryUploadForm';
+import SubmitHelpTicket from './components/SubmitHelpTicket';
+
 
 export default () => (
   <App>
@@ -30,6 +32,11 @@ export default () => (
         component={LoginForm}
       />
       <Redirect exact from="/" to={navigationConstants.NAVIGATION_WORKSPACES} />
+      <Route
+        exact
+        path={navigationConstants.NAVIGATION_SUBMIT_HELP_TICKET}
+        component={SubmitHelpTicket}
+      />
       <PrivateRoute
         exact
         path={navigationConstants.NAVIGATION_BUNDLES}

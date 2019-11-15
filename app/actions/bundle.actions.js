@@ -17,6 +17,7 @@ import {
 } from '../helpers/bundle.helpers';
 import dblDotLocalConstants from '../constants/dblDotLocal.constants';
 import { utilities } from '../utils/utilities';
+import { navigationConstants } from '../constants/navigation.constants';
 
 export const bundleActions = {
   fetchAll,
@@ -785,20 +786,37 @@ function removeBundleSuccess(id) {
 }
 
 export function toggleSelectEntry(selectedBundle) {
-  return {
-    type: bundleConstants.TOGGLE_SELECT,
-    selectedBundle,
-    selectedDBLEntryId: selectedBundle.dblId
+  return dispatch => {
+    dispatch({
+      type: navigationConstants.NAVIGATION_ACTIVITY,
+      url: navigationConstants.NAVIGATION_BUNDLES,
+      bundle: selectedBundle.id,
+      action: 'toggleSelectEntry'
+    });
+    dispatch({
+      type: bundleConstants.TOGGLE_SELECT,
+      selectedBundle,
+      selectedDBLEntryId: selectedBundle.dblId
+    });
   };
 }
 
 export function selectBundleEntryRevision(bundle) {
-  return {
-    type: bundleConstants.SELECT_BUNDLE_ENTRY_REVISION,
-    bundle,
-    id: bundle.id,
-    dblId: bundle.dblId,
-    revision: bundle.revision
+  return dispatch => {
+    dispatch({
+      type: navigationConstants.NAVIGATION_ACTIVITY,
+      url: navigationConstants.NAVIGATION_BUNDLES,
+      bundle: bundle.id,
+      revision: bundle.revision,
+      action: 'selectBundleEntryRevision'
+    });
+    dispatch({
+      type: bundleConstants.SELECT_BUNDLE_ENTRY_REVISION,
+      bundle,
+      id: bundle.id,
+      dblId: bundle.dblId,
+      revision: bundle.revision
+    });
   };
 }
 

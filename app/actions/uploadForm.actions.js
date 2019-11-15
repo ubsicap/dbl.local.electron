@@ -13,11 +13,16 @@ export const uploadFormActions = {
 export function openUploadForm(bundleId) {
   return (dispatch, getState) => {
     dispatch(fetchActiveFormInputs(bundleId, '/archiveStatus'));
-    const url = utilities.buildRouteUrl(
+    const openUploadFormUrl = utilities.buildRouteUrl(
       navigationConstants.NAVIGATION_ENTRY_UPLOAD_FORM,
       { bundleId }
     );
-    history.push(url);
+    dispatch({
+      type: navigationConstants.NAVIGATION_ACTIVITY,
+      url: openUploadFormUrl,
+      bundle: bundleId
+    });
+    history.push(openUploadFormUrl);
     const bundleToEdit = bundleService.getCurrentBundleState(
       getState,
       bundleId
@@ -31,6 +36,13 @@ export function openUploadForm(bundleId) {
 }
 
 export function closeUploadForm(bundleId) {
-  history.push(navigationConstants.NAVIGATION_BUNDLES);
-  return { type: uploadFormConstants.UPLOAD_FORM_CLOSED, bundleId };
+  return dispatch => {
+    dispatch({
+      type: navigationConstants.NAVIGATION_ACTIVITY,
+      url: navigationConstants.NAVIGATION_BUNDLES,
+      bundle: bundleId /* assume user would want to send feedback for uploads */
+    });
+    history.push(navigationConstants.NAVIGATION_BUNDLES);
+    dispatch({ type: uploadFormConstants.UPLOAD_FORM_CLOSED, bundleId });
+  };
 }

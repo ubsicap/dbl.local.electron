@@ -1,6 +1,8 @@
 export const navigationConstants = {
+  NAVIGATION_ACTIVITY: 'NAVIGATION_ACTIVITY',
   NAVIGATION_WORKSPACES: '/workspaces',
   NAVIGATION_WORKSPACE_LOGIN: '/workspaces/:workspaceName/login',
+  NAVIGATION_SUBMIT_HELP_TICKET: '/workspaces/helpTicket',
   NAVIGATION_UNKNOWN_WORKSPACE_LOGIN: '/unknown/workspace/login',
   NAVIGATION_BUNDLES: '/bundles',
   NAVIGATION_BUNDLE_EDIT_METADATA: '/bundles/:bundleId/edit-metadata',

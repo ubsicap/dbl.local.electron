@@ -4,6 +4,7 @@ import log from 'electron-log';
 import { logHelpers } from './helpers/log.helpers';
 import { ipcRendererConstants } from './constants/ipcRenderer.constants';
 import { navigationConstants } from './constants/navigation.constants';
+import { servicesHelpers } from './helpers/services';
 
 export default class MenuBuilder {
   mainWindow: BrowserWindow;
@@ -241,15 +242,17 @@ export default class MenuBuilder {
                   label: '&Reload',
                   accelerator: 'Ctrl+R',
                   click: () => {
-                    this.mainWindow.webContents.reload();
+                    const currentWindow = servicesHelpers.getCurrentWindow();
+                    currentWindow.webContents.reload();
                   }
                 },
                 {
                   label: 'Toggle &Full Screen',
                   accelerator: 'F11',
                   click: () => {
-                    this.mainWindow.setFullScreen(
-                      !this.mainWindow.isFullScreen()
+                    const currentWindow = servicesHelpers.getCurrentWindow();
+                    currentWindow.setFullScreen(
+                      !this.currentWindow.isFullScreen()
                     );
                   }
                 },
@@ -257,11 +260,12 @@ export default class MenuBuilder {
                   label: 'Toggle &Developer Tools',
                   accelerator: 'Alt+Ctrl+I',
                   click: () => {
-                    const opened: boolean = this.mainWindow.webContents.isDevToolsOpened();
+                    const currentWindow = servicesHelpers.getCurrentWindow();
+                    const opened: boolean = currentWindow.webContents.isDevToolsOpened();
                     if (opened) {
-                      this.mainWindow.webContents.closeDevTools();
+                      currentWindow.webContents.closeDevTools();
                     } else {
-                      this.mainWindow.webContents.openDevTools({
+                      currentWindow.webContents.openDevTools({
                         mode: 'right'
                       });
                     }
@@ -273,8 +277,9 @@ export default class MenuBuilder {
                   label: 'Toggle &Full Screen',
                   accelerator: 'F11',
                   click: () => {
-                    this.mainWindow.setFullScreen(
-                      !this.mainWindow.isFullScreen()
+                    const currentWindow = servicesHelpers.getCurrentWindow();
+                    currentWindow.setFullScreen(
+                      !this.currentWindow.isFullScreen()
                     );
                   }
                 }
@@ -284,10 +289,38 @@ export default class MenuBuilder {
         label: 'Help',
         submenu: [
           {
+            label: 'Give &feedback',
+            click: () => {
+              this.mainWindow.webContents.send(
+                ipcRendererConstants.KEY_IPC_OPEN_SEND_FEEDBACK,
+                ''
+              );
+              // NOTE: preventDefault will not work from renderer.
+              // Needs to be handled in Main processes app.on('web-contents-created'
+              // See https://github.com/electron/electron/issues/1378#issuecomment-265207386
+              app.on('web-contents-created', (event, contents) => {
+                contents.on('dom-ready', () => {
+                  if (
+                    contents
+                      .getURL()
+                      .endsWith(
+                        navigationConstants.NAVIGATION_SUBMIT_HELP_TICKET
+                      )
+                  ) {
+                    contents.on('will-navigate', evt => {
+                      evt.preventDefault();
+                    });
+                  }
+                });
+              });
+            }
+          },
+          {
             label: 'Toggle &Developer Tools',
             accelerator: 'Shift+CmdOrCtrl+I',
             click: () => {
-              this.mainWindow.toggleDevTools();
+              const currentWindow = servicesHelpers.getCurrentWindow();
+              currentWindow.toggleDevTools();
             }
           },
           {

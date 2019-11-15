@@ -4,8 +4,20 @@ import { AppContainer as ReactHotAppContainer } from 'react-hot-loader';
 import Root from './containers/Root';
 import { configureStore, history } from './store/configureStore';
 import './app.global.css';
+import { navigationConstants } from './constants/navigation.constants';
 
 const store = configureStore();
+
+const unlisten = history.listen((location, action) => {
+  // location is an object like window.location
+  if (location.pathname === navigationConstants.NAVIGATION_WORKSPACES) {
+    store.dispatch({
+      type: navigationConstants.NAVIGATION_ACTIVITY,
+      url: navigationConstants.NAVIGATION_WORKSPACES,
+      workspace: null
+    });
+  }
+});
 
 const AppContainer = process.env.PLAIN_HMR ? Fragment : ReactHotAppContainer;
 
