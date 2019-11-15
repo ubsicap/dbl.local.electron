@@ -1,3 +1,14 @@
+### Version 0.49.0 (Help > Give feedback (YouTrack))
+
+#### Feature
+
+- Added `Help > Give feedback` to send user feedback and attachments to YouTrack
+
+#### Fix
+
+- Fix `File > Switch Workspace`
+- Detach and reattach debugger if already attached
+
 ### Version 0.48.2 (DDL fix source element errors)
 
 #### Fix
