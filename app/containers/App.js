@@ -35,7 +35,6 @@ class App extends React.Component<Props> {
 
   componentWillMount() {
     ipcRenderer.on(ipcRendererConstants.KEY_IPC_OPEN_SEND_FEEDBACK, () => {
-      const appPage = path.join(__dirname, 'app.html');
       const currentWindow = servicesHelpers.getCurrentWindow();
       if (
         currentWindow.webContents
@@ -44,9 +43,15 @@ class App extends React.Component<Props> {
       ) {
         return; // don't open a new window
       }
+      const app = servicesHelpers.getApp();
+      const appPath =
+        process.env.NODE_ENV === 'production'
+          ? path.join(app.getAppPath(), 'app')
+          : `${__dirname}`;
       const feedbackWindow = browserWindowService.openInNewWindow(
-        appPage,
-        navigationConstants.NAVIGATION_SUBMIT_HELP_TICKET
+        `file://${appPath}/app.html#${
+          navigationConstants.NAVIGATION_SUBMIT_HELP_TICKET
+        }`
       );
       feedbackWindow.webContents.once('dom-ready', () => {
         const { appState } = this.props;

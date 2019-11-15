@@ -250,7 +250,7 @@ source: chrome-devtools://devtools/bundled/shell.js (24)
   return browserWin;
 }
 
-function openInNewWindow(appPage, routerPage) {
+function openInNewWindow(newWindowUrl) {
   const newWindow = new BrowserWindow({
     show: false,
     width: 1024,
@@ -271,7 +271,6 @@ source: chrome-devtools://devtools/bundled/shell.js (24)
      */
     newWindow.webContents.closeDevTools();
   });
-  const newWindowUrl = `file://${appPage}#${routerPage}`;
   log.info({ newWindowUrl });
   newWindow.loadURL(newWindowUrl);
   newWindow.webContents.on('will-navigate', (event, url) => {

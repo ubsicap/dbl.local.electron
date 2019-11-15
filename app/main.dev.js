@@ -83,9 +83,11 @@ app.on('ready', async () => {
     }
   });
 
-  mainWindow.loadURL(
-    `file://${__dirname}/app.html#${navigationConstants.NAVIGATION_WORKSPACES}`
-  );
+  const mainWindowUrl = `file://${__dirname}/app.html#${
+    navigationConstants.NAVIGATION_WORKSPACES
+  }`;
+  log.info({ mainWindowUrl });
+  mainWindow.loadURL(mainWindowUrl);
 
   /*
      waiting until 'dom-ready' avoids startup errors related to devtools server extension
