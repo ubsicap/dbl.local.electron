@@ -254,6 +254,7 @@ class SubmitHelpTicket extends React.Component<Props> {
       async (event, appState) => {
         try {
           await this.refreshMarkdownDescription(appState);
+          this.setState({ appState });
         } catch (error) {
           log.error(error);
         }
@@ -410,16 +411,41 @@ class SubmitHelpTicket extends React.Component<Props> {
     this.setState({ isUploading: false });
   };
 
+  getFinalDescription = () => {
+    const { description, appState } = this.state;
+    const descriptionWithServerLinks = description.replace(
+      linkPattern,
+      replaceFilePathsWithFileNames
+    );
+    const app = servicesHelpers.getApp();
+    const appName = app.getName();
+    const appVersion = app.getVersion();
+    const { authentication } = appState;
+    const { whoami } = authentication;
+    const { display_name: userName, email: userEmail } = whoami || {};
+    const finalDescription = `${descriptionWithServerLinks}
+    -----------
+    \`\`\`
+      Product Name: ${appName}
+      Product Version: ${appVersion}
+      Feedback Type: BugReport
+      Email: ${userEmail || ''}
+      Keep Informed: True
+      User: ${userName || ''}
+    \`\`\`
+    ------------
+    `;
+    return finalDescription;
+  };
+
   handleClickSendFeedback = async () => {
-    const { title, description } = this.state;
+    const { title } = this.state;
     try {
+      const description = this.getFinalDescription();
       // create a new issue
       const issue = await youtrack.issues.create({
         summary: title,
-        description: description.replace(
-          linkPattern,
-          replaceFilePathsWithFileNames
-        ),
+        description,
         project: {
           id: DBL_PROJECT_ID
         },
