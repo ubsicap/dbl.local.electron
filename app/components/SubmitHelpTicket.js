@@ -76,7 +76,11 @@ function getMarkDownLocalFileLinkMatches(markdown) {
     // capturing group n: match[n]
     const { filename } = match.groups;
     const decodedFilename = decodeURIComponent(filename);
-    if (fs.existsSync(decodedFilename)) {
+    if (decodedFilename &&
+      !decodedFilename.startsWith('http:') &&
+      !decodedFilename.startsWith('https:') &&
+      !decodedFilename.startsWith('mailto:') &&
+      fs.existsSync(decodedFilename)) {
       // file exists
       linkMatches.push({ ...match });
       links.push(decodedFilename);
@@ -196,6 +200,30 @@ async function postAttachmentsToIssue(
       useElectronNet: false /* has issues https://github.com/sindresorhus/got/issues/315 and see https://github.com/sindresorhus/got/blob/dfb46ad0bf2427f387968f67ac943476597f0a3b/readme.md */
     })
     .on('uploadProgress', handleProgress)
+    .on('error', handleError);
+}
+
+async function postTagsToIssue(
+  issue,
+  handleError
+) {
+  const NATHANAEL_TAG_ID = '5-170';
+  return got
+    .post(`${config.baseUrl}/api/issueTags/${NATHANAEL_TAG_ID}`, {
+      headers: {
+        Authorization: `Bearer ${config.token}`,
+        Accept: 'application/json'
+      },
+      /*
+      query: {
+        fields: 'name,issues,color,untagOnResolve,owner,visibleFor,updateableBy'
+      },
+      */
+      json: {
+        issues: [{ id: issue.id }]
+      },
+      useElectronNet: false /* has issues https://github.com/sindresorhus/got/issues/315 and see https://github.com/sindresorhus/got/blob/dfb46ad0bf2427f387968f67ac943476597f0a3b/readme.md */
+    })
     .on('error', handleError);
 }
 
@@ -330,7 +358,7 @@ class SubmitHelpTicket extends React.Component<Props> {
 
   async removeTempFiles() {
     const { appStateFilePath, activeBundleFilePath } = this.state;
-    if (await fs.exists(appStateFilePath)) {
+    if (appStateFilePath && await fs.exists(appStateFilePath)) {
       await fs.remove(appStateFilePath);
     }
     if (activeBundleFilePath && (await fs.exists(activeBundleFilePath))) {
@@ -407,7 +435,8 @@ class SubmitHelpTicket extends React.Component<Props> {
     this.setState({ isUploading });
   };
 
-  handleError = (/* error, body, response */) => {
+  handleError = (error /* , body, response */) => {
+    log.error(error);
     this.setState({ isUploading: false });
   };
 
@@ -430,7 +459,7 @@ class SubmitHelpTicket extends React.Component<Props> {
       Product Version: ${appVersion}
       Feedback Type: BugReport
       Email: ${userEmail || ''}
-      Keep Informed: True
+      ${userEmail ? 'Keep Informed: True' : ''}
       User: ${userName || ''}
     \`\`\`
     ------------
@@ -439,13 +468,13 @@ class SubmitHelpTicket extends React.Component<Props> {
   };
 
   handleClickSendFeedback = async () => {
-    const { title } = this.state;
+    const { title, description: sourceDescription } = this.state;
     try {
-      const description = this.getFinalDescription();
+      const finalDescription = this.getFinalDescription();
       // create a new issue
       const issue = await youtrack.issues.create({
         summary: title,
-        description,
+        description: finalDescription,
         project: {
           id: DBL_PROJECT_ID
         },
@@ -454,10 +483,12 @@ class SubmitHelpTicket extends React.Component<Props> {
       // try to upload attachment
       await postAttachmentsToIssue(
         issue,
-        description,
+        sourceDescription,
         this.handleProgress,
         this.handleError
       );
+      const tagResponse = await postTagsToIssue(issue, this.handleError);
+      console.log(tagResponse);
       const currentWindow = servicesHelpers.getCurrentWindow();
       currentWindow.close();
     } catch (error) {
