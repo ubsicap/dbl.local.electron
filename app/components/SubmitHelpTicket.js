@@ -1,6 +1,10 @@
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
+import FormControl from '@material-ui/core/FormControl';
+import InputLabel from '@material-ui/core/InputLabel';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
 import log from 'electron-log';
 import got from 'got';
 import FormData from 'form-data';
@@ -60,7 +64,11 @@ const config = {
 };
 const youtrack = new Youtrack(config);
 
-const DBL_SUPPORT_PROJECT_ID = 'DBLS';
+const DBL_SUPPORT_PROJECT_ID = '0-31'; // Digital Bible Library Support (DBLS)
+
+function splitCamelCaseToSpaced(str) {
+  return str.split(/(?=[A-Z])/).join(' ');
+}
 
 /* eslint-disable-next-line no-useless-escape */
 const linkPattern = /!*\[(?<alttext>[^\]]*?)\]\((?<filename>.*?) *(?=\"|\))(?<optionalpart>\".*\")?\)/gm;
@@ -374,6 +382,10 @@ class SubmitHelpTicket extends React.Component<Props> {
 
   mdParser = null;
 
+  handleFeedbackTypeChange = event => {
+    this.setState({ feedbackType: event.target.value });
+  };
+
   handleEditorChange = ({ text }) => {
     this.setState({
       description: text.replace(linkPattern, replaceEmptyAltTextWithFileName)
@@ -445,7 +457,7 @@ class SubmitHelpTicket extends React.Component<Props> {
   };
 
   getFinalDescription = () => {
-    const { description, appState } = this.state;
+    const { description, appState, feedbackType = 'BugReport' } = this.state;
     const descriptionWithServerLinks = description.replace(
       linkPattern,
       replaceFilePathsWithFileNames
@@ -461,7 +473,7 @@ class SubmitHelpTicket extends React.Component<Props> {
     \`\`\`
       Product Name: ${appName}
       Product Version: ${appVersion}
-      Feedback Type: BugReport
+      Feedback Type: ${feedbackType}
       Email: ${userEmail || ''}
       Keep Informed: ${userEmail ? 'True' : ''}
       User: ${userName || ''}
@@ -500,7 +512,12 @@ class SubmitHelpTicket extends React.Component<Props> {
   };
 
   render() {
-    const { title, description, isUploading } = this.state;
+    const {
+      title,
+      description,
+      isUploading,
+      feedbackType = 'BugReport'
+    } = this.state;
     const { classes } = this.props;
     return (
       <React.Fragment>
@@ -514,7 +531,7 @@ class SubmitHelpTicket extends React.Component<Props> {
               disabled={title.trim().length < 3 || isUploading}
             >
               <CloudUpload style={{ marginRight: '10px' }} />
-              Send
+              Send {splitCamelCaseToSpaced(feedbackType)}
               {isUploading && (
                 <CircularProgress
                   className={classes.buttonProgress}
@@ -535,6 +552,16 @@ class SubmitHelpTicket extends React.Component<Props> {
           }}
         >
           <nav className="nav">
+            <FormControl fullWidth>
+              <InputLabel color="secondary">Type of Feedback</InputLabel>
+              <Select
+                value={feedbackType}
+                onChange={this.handleFeedbackTypeChange}
+              >
+                <MenuItem value="BugReport">Bug Report</MenuItem>
+                <MenuItem value="FeatureRequest">Feature Request</MenuItem>
+              </Select>
+            </FormControl>
             <TextField
               required
               id="title"
