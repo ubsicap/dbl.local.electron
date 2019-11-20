@@ -1,3 +1,12 @@
+### Version 0.50.0 (Help > Give feedback (YouTrack))
+
+#### Feature
+
+- Allow user to select Feedback type (Bug Report or Feature Request)
+- Submit feedback to "Digital Bible Library Support" YouTrack group
+- Add user to "All relevant emails" lists in YouTrack issue
+- Add `Nathanael` tag to youtrack issues
+
 ### Version 0.49.0 (Help > Give feedback (YouTrack))
 
 #### Feature

@@ -1,6 +1,10 @@
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
+import FormControl from '@material-ui/core/FormControl';
+import InputLabel from '@material-ui/core/InputLabel';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
 import log from 'electron-log';
 import got from 'got';
 import FormData from 'form-data';
@@ -60,7 +64,11 @@ const config = {
 };
 const youtrack = new Youtrack(config);
 
-const DBL_PROJECT_ID = '0-30';
+const DBL_SUPPORT_PROJECT_ID = '0-31'; // Digital Bible Library Support (DBLS)
+
+function splitCamelCaseToSpaced(str) {
+  return str.split(/(?=[A-Z])/).join(' ');
+}
 
 /* eslint-disable-next-line no-useless-escape */
 const linkPattern = /!*\[(?<alttext>[^\]]*?)\]\((?<filename>.*?) *(?=\"|\))(?<optionalpart>\".*\")?\)/gm;
@@ -76,7 +84,13 @@ function getMarkDownLocalFileLinkMatches(markdown) {
     // capturing group n: match[n]
     const { filename } = match.groups;
     const decodedFilename = decodeURIComponent(filename);
-    if (fs.existsSync(decodedFilename)) {
+    if (
+      decodedFilename &&
+      !decodedFilename.startsWith('http:') &&
+      !decodedFilename.startsWith('https:') &&
+      !decodedFilename.startsWith('mailto:') &&
+      fs.existsSync(decodedFilename)
+    ) {
       // file exists
       linkMatches.push({ ...match });
       links.push(decodedFilename);
@@ -199,6 +213,32 @@ async function postAttachmentsToIssue(
     .on('error', handleError);
 }
 
+async function postTagsToIssue(issue) {
+  const NATHANAEL_TAG_ID = '5-170';
+  try {
+    const json = { issues: [{ id: issue.id }] };
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${config.token}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(json)
+    };
+    const fields =
+      'name,issues,color,untagOnResolve,owner,visibleFor,updateableBy';
+    const query = `fields=${fields}`;
+    const response = await fetch(
+      `${config.baseUrl}/api/issueTags/${NATHANAEL_TAG_ID}?${query}`,
+      requestOptions
+    );
+    return response;
+  } catch (error) {
+    log.error(error);
+  }
+}
+
 async function getConfigXmlSettings(appState) {
   const { workspace } =
     workspaceHelpers.getCurrentWorkspaceFullPath(appState) || {};
@@ -254,6 +294,7 @@ class SubmitHelpTicket extends React.Component<Props> {
       async (event, appState) => {
         try {
           await this.refreshMarkdownDescription(appState);
+          this.setState({ appState });
         } catch (error) {
           log.error(error);
         }
@@ -329,7 +370,7 @@ class SubmitHelpTicket extends React.Component<Props> {
 
   async removeTempFiles() {
     const { appStateFilePath, activeBundleFilePath } = this.state;
-    if (await fs.exists(appStateFilePath)) {
+    if (appStateFilePath && (await fs.exists(appStateFilePath))) {
       await fs.remove(appStateFilePath);
     }
     if (activeBundleFilePath && (await fs.exists(activeBundleFilePath))) {
@@ -340,6 +381,10 @@ class SubmitHelpTicket extends React.Component<Props> {
   mdEditor = null;
 
   mdParser = null;
+
+  handleFeedbackTypeChange = event => {
+    this.setState({ feedbackType: event.target.value });
+  };
 
   handleEditorChange = ({ text }) => {
     this.setState({
@@ -406,32 +451,59 @@ class SubmitHelpTicket extends React.Component<Props> {
     this.setState({ isUploading });
   };
 
-  handleError = (/* error, body, response */) => {
+  handleError = (error /* , body, response */) => {
+    log.error(error);
     this.setState({ isUploading: false });
   };
 
+  getFinalDescription = () => {
+    const { description, appState, feedbackType = 'BugReport' } = this.state;
+    const descriptionWithServerLinks = description.replace(
+      linkPattern,
+      replaceFilePathsWithFileNames
+    );
+    const app = servicesHelpers.getApp();
+    const appName = app.getName();
+    const appVersion = app.getVersion();
+    const { authentication } = appState;
+    const { whoami } = authentication;
+    const { display_name: userName, email: userEmail } = whoami || {};
+    const finalDescription = `${descriptionWithServerLinks}
+    -----------
+    \`\`\`
+      Product Name: ${appName}
+      Product Version: ${appVersion}
+      Feedback Type: ${feedbackType}
+      Email: ${userEmail || ''}
+      Keep Informed: ${userEmail ? 'True' : ''}
+      User: ${userName || ''}
+    \`\`\`
+    ------------
+    `;
+    return finalDescription;
+  };
+
   handleClickSendFeedback = async () => {
-    const { title, description } = this.state;
+    const { title, description: sourceDescription } = this.state;
     try {
+      const finalDescription = this.getFinalDescription();
       // create a new issue
       const issue = await youtrack.issues.create({
         summary: title,
-        description: description.replace(
-          linkPattern,
-          replaceFilePathsWithFileNames
-        ),
+        description: finalDescription,
         project: {
-          id: DBL_PROJECT_ID
+          id: DBL_SUPPORT_PROJECT_ID
         },
         usesMarkdown: true
       });
       // try to upload attachment
       await postAttachmentsToIssue(
         issue,
-        description,
+        sourceDescription,
         this.handleProgress,
         this.handleError
       );
+      await postTagsToIssue(issue);
       const currentWindow = servicesHelpers.getCurrentWindow();
       currentWindow.close();
     } catch (error) {
@@ -440,7 +512,12 @@ class SubmitHelpTicket extends React.Component<Props> {
   };
 
   render() {
-    const { title, description, isUploading } = this.state;
+    const {
+      title,
+      description,
+      isUploading,
+      feedbackType = 'BugReport'
+    } = this.state;
     const { classes } = this.props;
     return (
       <React.Fragment>
@@ -454,7 +531,7 @@ class SubmitHelpTicket extends React.Component<Props> {
               disabled={title.trim().length < 3 || isUploading}
             >
               <CloudUpload style={{ marginRight: '10px' }} />
-              Send
+              Send {splitCamelCaseToSpaced(feedbackType)}
               {isUploading && (
                 <CircularProgress
                   className={classes.buttonProgress}
@@ -475,6 +552,16 @@ class SubmitHelpTicket extends React.Component<Props> {
           }}
         >
           <nav className="nav">
+            <FormControl fullWidth>
+              <InputLabel color="secondary">Type of Feedback</InputLabel>
+              <Select
+                value={feedbackType}
+                onChange={this.handleFeedbackTypeChange}
+              >
+                <MenuItem value="BugReport">Bug Report</MenuItem>
+                <MenuItem value="FeatureRequest">Feature Request</MenuItem>
+              </Select>
+            </FormControl>
             <TextField
               required
               id="title"
