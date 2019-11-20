@@ -60,7 +60,7 @@ const config = {
 };
 const youtrack = new Youtrack(config);
 
-const DBL_PROJECT_ID = '0-30';
+const DBL_SUPPORT_PROJECT_ID = 'DBLS';
 
 /* eslint-disable-next-line no-useless-escape */
 const linkPattern = /!*\[(?<alttext>[^\]]*?)\]\((?<filename>.*?) *(?=\"|\))(?<optionalpart>\".*\")?\)/gm;
@@ -76,11 +76,13 @@ function getMarkDownLocalFileLinkMatches(markdown) {
     // capturing group n: match[n]
     const { filename } = match.groups;
     const decodedFilename = decodeURIComponent(filename);
-    if (decodedFilename &&
+    if (
+      decodedFilename &&
       !decodedFilename.startsWith('http:') &&
       !decodedFilename.startsWith('https:') &&
       !decodedFilename.startsWith('mailto:') &&
-      fs.existsSync(decodedFilename)) {
+      fs.existsSync(decodedFilename)
+    ) {
       // file exists
       linkMatches.push({ ...match });
       links.push(decodedFilename);
@@ -203,28 +205,30 @@ async function postAttachmentsToIssue(
     .on('error', handleError);
 }
 
-async function postTagsToIssue(
-  issue,
-  handleError
-) {
+async function postTagsToIssue(issue) {
   const NATHANAEL_TAG_ID = '5-170';
-  return got
-    .post(`${config.baseUrl}/api/issueTags/${NATHANAEL_TAG_ID}`, {
+  try {
+    const json = { issues: [{ id: issue.id }] };
+    const requestOptions = {
+      method: 'POST',
       headers: {
         Authorization: `Bearer ${config.token}`,
-        Accept: 'application/json'
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
       },
-      /*
-      query: {
-        fields: 'name,issues,color,untagOnResolve,owner,visibleFor,updateableBy'
-      },
-      */
-      json: {
-        issues: [{ id: issue.id }]
-      },
-      useElectronNet: false /* has issues https://github.com/sindresorhus/got/issues/315 and see https://github.com/sindresorhus/got/blob/dfb46ad0bf2427f387968f67ac943476597f0a3b/readme.md */
-    })
-    .on('error', handleError);
+      body: JSON.stringify(json)
+    };
+    const fields =
+      'name,issues,color,untagOnResolve,owner,visibleFor,updateableBy';
+    const query = `fields=${fields}`;
+    const response = await fetch(
+      `${config.baseUrl}/api/issueTags/${NATHANAEL_TAG_ID}?${query}`,
+      requestOptions
+    );
+    return response;
+  } catch (error) {
+    log.error(error);
+  }
 }
 
 async function getConfigXmlSettings(appState) {
@@ -358,7 +362,7 @@ class SubmitHelpTicket extends React.Component<Props> {
 
   async removeTempFiles() {
     const { appStateFilePath, activeBundleFilePath } = this.state;
-    if (appStateFilePath && await fs.exists(appStateFilePath)) {
+    if (appStateFilePath && (await fs.exists(appStateFilePath))) {
       await fs.remove(appStateFilePath);
     }
     if (activeBundleFilePath && (await fs.exists(activeBundleFilePath))) {
@@ -459,7 +463,7 @@ class SubmitHelpTicket extends React.Component<Props> {
       Product Version: ${appVersion}
       Feedback Type: BugReport
       Email: ${userEmail || ''}
-      ${userEmail ? 'Keep Informed: True' : ''}
+      Keep Informed: ${userEmail ? 'True' : ''}
       User: ${userName || ''}
     \`\`\`
     ------------
@@ -476,7 +480,7 @@ class SubmitHelpTicket extends React.Component<Props> {
         summary: title,
         description: finalDescription,
         project: {
-          id: DBL_PROJECT_ID
+          id: DBL_SUPPORT_PROJECT_ID
         },
         usesMarkdown: true
       });
@@ -487,8 +491,7 @@ class SubmitHelpTicket extends React.Component<Props> {
         this.handleProgress,
         this.handleError
       );
-      const tagResponse = await postTagsToIssue(issue, this.handleError);
-      console.log(tagResponse);
+      await postTagsToIssue(issue);
       const currentWindow = servicesHelpers.getCurrentWindow();
       currentWindow.close();
     } catch (error) {
