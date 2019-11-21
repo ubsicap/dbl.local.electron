@@ -216,7 +216,21 @@ async function postAttachmentsToIssue(
 async function postTagsToIssue(issue) {
   const NATHANAEL_TAG_ID = '5-170';
   try {
-    const json = { issues: [{ id: issue.id }] };
+    const getRequestOptions = {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${config.token}`,
+        Accept: 'application/json'
+      }
+    };
+    const getResponse = await fetch(
+      `${config.baseUrl}/api/issueTags/${NATHANAEL_TAG_ID}/issues?fields=id`,
+      getRequestOptions
+    );
+    const nathanaelTaggedIssues = await servicesHelpers
+      .handleResponseAsReadable(getResponse)
+      .json();
+    const json = { issues: [{ id: issue.id }, ...nathanaelTaggedIssues] };
     const requestOptions = {
       method: 'POST',
       headers: {
@@ -229,11 +243,14 @@ async function postTagsToIssue(issue) {
     const fields =
       'name,issues,color,untagOnResolve,owner,visibleFor,updateableBy';
     const query = `fields=${fields}`;
-    const response = await fetch(
+    const postResponse = await fetch(
       `${config.baseUrl}/api/issueTags/${NATHANAEL_TAG_ID}?${query}`,
       requestOptions
     );
-    return response;
+    const postJson = await servicesHelpers
+      .handleResponseAsReadable(postResponse)
+      .json();
+    return postJson;
   } catch (error) {
     log.error(error);
   }
