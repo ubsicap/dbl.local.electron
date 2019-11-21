@@ -1,3 +1,9 @@
+### Version 0.50.1 (Help > Give feedback (YouTrack))
+
+#### Fix
+
+- Fix Nathanael issueTags
+
 ### Version 0.50.0 (Help > Give feedback (YouTrack))
 
 #### Feature
