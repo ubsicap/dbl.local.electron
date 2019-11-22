@@ -1,3 +1,14 @@
+### Version 0.51.0 (Help > Give feedback (YouTrack))
+
+#### Feature
+
+- Add `Help > Give feedback` to other browser windows
+- dbl_dot_local_app (11/22/2019): mvh/return_to_the_wizards (peripheral name support)
+
+#### Fix
+
+- dbl_dot_local_app (11/22/2019): mvh/return_to_the_wizards (don't crash due to desktop.ini)
+
 ### Version 0.50.1 (Help > Give feedback (YouTrack))
 
 #### Fix
