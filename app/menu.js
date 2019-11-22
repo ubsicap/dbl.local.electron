@@ -5,6 +5,7 @@ import { logHelpers } from './helpers/log.helpers';
 import { ipcRendererConstants } from './constants/ipcRenderer.constants';
 import { navigationConstants } from './constants/navigation.constants';
 import { servicesHelpers } from './helpers/services';
+import { browserWindowService } from './services/browserWindow.service';
 
 export default class MenuBuilder {
   mainWindow: BrowserWindow;
@@ -288,33 +289,7 @@ export default class MenuBuilder {
       {
         label: 'Help',
         submenu: [
-          {
-            label: 'Give &feedback',
-            click: () => {
-              this.mainWindow.webContents.send(
-                ipcRendererConstants.KEY_IPC_OPEN_SEND_FEEDBACK,
-                ''
-              );
-              // NOTE: preventDefault will not work from renderer.
-              // Needs to be handled in Main processes app.on('web-contents-created'
-              // See https://github.com/electron/electron/issues/1378#issuecomment-265207386
-              app.on('web-contents-created', (event, contents) => {
-                contents.on('dom-ready', () => {
-                  if (
-                    contents
-                      .getURL()
-                      .endsWith(
-                        navigationConstants.NAVIGATION_SUBMIT_HELP_TICKET
-                      )
-                  ) {
-                    contents.on('will-navigate', evt => {
-                      evt.preventDefault();
-                    });
-                  }
-                });
-              });
-            }
-          },
+          browserWindowService.getGiveFeedbackMenuItem(this.mainWindow),
           {
             label: 'Toggle &Developer Tools',
             accelerator: 'Shift+CmdOrCtrl+I',

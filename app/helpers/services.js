@@ -7,13 +7,17 @@ export const servicesHelpers = {
   getIsMainProcess,
   getDialog,
   getCurrentWindow,
-  getElectronShared
+  getElectronShared,
+  getMainWindow
 };
 export default servicesHelpers;
 
 function handleResponseAsReadable(response) {
   if (!response.ok) {
-    if (response.message === 'Failed to fetch' || typeof response.text !== 'function') {
+    if (
+      response.message === 'Failed to fetch' ||
+      typeof response.text !== 'function'
+    ) {
       const error = { text: () => response.message };
       return Promise.reject(error);
     }
@@ -21,7 +25,6 @@ function handleResponseAsReadable(response) {
   }
   return response;
 }
-
 
 const electron = require('electron');
 
@@ -53,6 +56,10 @@ export function getCurrentWindow() {
   return remote.getCurrentWindow();
 }
 
+export function getMainWindow() {
+  return getElectronShared().BrowserWindow.getAllWindows()[0];
+}
+
 export function getDialog() {
   const { dialog } = getElectronShared();
   return dialog;
@@ -65,9 +72,16 @@ export function getResourcePath(extraFilesPath: array) {
   const resourcesPath = path.resolve(app.getAppPath(), '../');
   const anotherParentDirectory = isMainProcess ? '..' : '';
   // console.log(resourcesPath);
-  const reportsCssPath = (process.env.NODE_ENV === 'production' ?
-    path.join(resourcesPath, ...extraFilesPath) :
-    path.join(__dirname, anotherParentDirectory, '..', 'resources', ...extraFilesPath));
+  const reportsCssPath =
+    process.env.NODE_ENV === 'production'
+      ? path.join(resourcesPath, ...extraFilesPath)
+      : path.join(
+          __dirname,
+          anotherParentDirectory,
+          '..',
+          'resources',
+          ...extraFilesPath
+        );
   // console.log(cwd);
   return reportsCssPath;
 }

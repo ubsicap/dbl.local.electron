@@ -5,6 +5,8 @@ import upath from 'upath';
 import prompt from 'electron-prompt';
 import { servicesHelpers } from '../helpers/services';
 import { utilities } from '../utils/utilities';
+import { ipcRendererConstants } from '../constants/ipcRenderer.constants';
+import { navigationConstants } from '../constants/navigation.constants';
 
 const {
   BrowserWindow,
@@ -16,7 +18,8 @@ const {
 
 export const browserWindowService = {
   openFileInChromeBrowser,
-  openInNewWindow
+  openInNewWindow,
+  getGiveFeedbackMenuItem
 };
 
 export default browserWindowService;
@@ -115,7 +118,7 @@ function findInPageMenuItem(
   };
 }
 
-function buildBrowserTemplate(browserWin) {
+function buildBrowserTemplate(browserWin, mainWindow) {
   // console.log('menu/buildDefaultTemplate');
   // console.log(loginLabel);
   const templateBrowser = [
@@ -158,15 +161,15 @@ function buildBrowserTemplate(browserWin) {
     },
     {
       label: 'Help',
-      submenu: [{ role: 'toggleDevTools' }]
+      submenu: [getGiveFeedbackMenuItem(mainWindow), { role: 'toggleDevTools' }]
     }
   ];
 
   return templateBrowser;
 }
 
-function buildBrowserMenu(browserWin) {
-  const template = buildBrowserTemplate(browserWin);
+function buildBrowserMenu(browserWin, mainWindow) {
+  const template = buildBrowserTemplate(browserWin, mainWindow);
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
   return menu;
@@ -206,7 +209,8 @@ source: chrome-devtools://devtools/bundled/shell.js (24)
   });
   browserWin.loadURL(url);
   browserWin.on('focus', () => {
-    buildBrowserMenu(browserWin);
+    const mainWindow = servicesHelpers.getMainWindow();
+    buildBrowserMenu(browserWin, mainWindow);
   });
   browserWin.on('closed', () => {
     fs.unwatchFile(filePath);
@@ -231,7 +235,8 @@ source: chrome-devtools://devtools/bundled/shell.js (24)
     const { activeMatchOrdinal, matches } = result;
     lastSearchResults = matches;
     lastSearchIndex = activeMatchOrdinal;
-    buildBrowserMenu(browserWin);
+    const mainWindow = servicesHelpers.getMainWindow();
+    buildBrowserMenu(browserWin, mainWindow);
   });
   browserWin.webContents.on('context-menu', (event, params) => {
     const { selectionText } = params;
@@ -248,6 +253,34 @@ source: chrome-devtools://devtools/bundled/shell.js (24)
     ]).popup(browserWin);
   });
   return browserWin;
+}
+
+function getGiveFeedbackMenuItem(mainWindow) {
+  return {
+    label: 'Give &feedback',
+    click: () => {
+      mainWindow.webContents.send(
+        ipcRendererConstants.KEY_IPC_OPEN_SEND_FEEDBACK,
+        ''
+      );
+      // NOTE: preventDefault will not work from renderer.
+      // Needs to be handled in Main processes app.on('web-contents-created'
+      // See https://github.com/electron/electron/issues/1378#issuecomment-265207386
+      app.on('web-contents-created', (event, contents) => {
+        contents.on('dom-ready', () => {
+          if (
+            contents
+              .getURL()
+              .endsWith(navigationConstants.NAVIGATION_SUBMIT_HELP_TICKET)
+          ) {
+            contents.on('will-navigate', evt => {
+              evt.preventDefault();
+            });
+          }
+        });
+      });
+    }
+  };
 }
 
 function openInNewWindow(newWindowUrl) {
