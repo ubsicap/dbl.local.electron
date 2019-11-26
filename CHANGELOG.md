@@ -1,3 +1,9 @@
+### Version 0.51.1 (Help > Give feedback (YouTrack))
+
+#### Fix
+
+- dbl_dot_local_app (11/26/2019): mvh/return_to_the_wizards (Set up peripheral names for video)
+
 ### Version 0.51.0 (Help > Give feedback (YouTrack))
 
 #### Feature
