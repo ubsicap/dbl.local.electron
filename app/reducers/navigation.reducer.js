@@ -1,4 +1,5 @@
 // @flow
+import log from 'electron-log';
 import { navigationConstants } from '../constants/navigation.constants';
 
 /*
@@ -21,6 +22,7 @@ export function navigation(state = initialState, action) {
         !prevActivity ||
         (!activity.bundle && activity.workspace !== undefined)
       ) {
+        log.info({ navigation: activity });
         return [...state, activity]; // workspace navigation
       }
       const bundleActivity = {
@@ -29,6 +31,7 @@ export function navigation(state = initialState, action) {
           activity.bundle === undefined ? prevActivity.bundle : activity.bundle,
         workspace: prevActivity.workspace
       };
+      log.info({ navigation: bundleActivity });
       return [...state, bundleActivity];
     }
     default:

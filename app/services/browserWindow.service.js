@@ -207,12 +207,14 @@ source: chrome-devtools://devtools/bundled/shell.js (24)
      */
     browserWin.webContents.closeDevTools();
   });
+  log.info(`Opened browser window for ${filePath}`);
   browserWin.loadURL(url);
   browserWin.on('focus', () => {
     const mainWindow = servicesHelpers.getMainWindow();
     buildBrowserMenu(browserWin, mainWindow);
   });
   browserWin.on('closed', () => {
+    log.info(`Closed browser window for ${filePath}`);
     fs.unwatchFile(filePath);
   });
   currentWindow.on('close', () => {
@@ -306,6 +308,9 @@ source: chrome-devtools://devtools/bundled/shell.js (24)
   });
   log.info({ newWindowUrl });
   newWindow.loadURL(newWindowUrl);
+  newWindow.on('closed', () => {
+    log.info(`Closed browser window for ${newWindowUrl}`);
+  });
   newWindow.webContents.on('will-navigate', (event, url) => {
     // NOTE: preventDefault will not work from renderer.
     // Needs to be handled in Main processes app.on('web-contents-created'
