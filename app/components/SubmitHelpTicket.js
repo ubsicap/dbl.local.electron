@@ -276,7 +276,8 @@ class SubmitHelpTicket extends React.Component<Props> {
     super(props);
     this.state = {
       title: '',
-      description: ''
+      description: '',
+      isLoadingAppStateFile: true
     };
     // initial a parser;
     this.mdParser = new MarkdownIt({
@@ -308,10 +309,9 @@ class SubmitHelpTicket extends React.Component<Props> {
   async componentWillMount() {
     ipcRenderer.on(
       ipcRendererConstants.KEY_IPC_ATTACH_APP_STATE_SNAPSHOT,
-      async (event, appState) => {
+      async (event, appStateFilePath) => {
         try {
-          await this.refreshMarkdownDescription(appState);
-          this.setState({ appState });
+          await this.refreshMarkdownDescription(appStateFilePath);
         } catch (error) {
           log.error(error);
         }
@@ -331,9 +331,9 @@ class SubmitHelpTicket extends React.Component<Props> {
     await this.removeTempFiles();
   }
 
-  async refreshMarkdownDescription(appState) {
+  async refreshMarkdownDescription(appStateFilePath) {
     const { dispatchLoginSuccess } = this.props;
-    const appStateFilePath = await createAppStateAttachment(appState);
+    const appState = await deserializeAppState(appStateFilePath);
     const {
       authentication,
       router,
@@ -382,7 +382,13 @@ class SubmitHelpTicket extends React.Component<Props> {
         ...bundleAttachments
       ]
     });
-    this.setState({ description, appStateFilePath, activeBundleFilePath });
+    this.setState({
+      description,
+      appStateFilePath,
+      appState,
+      activeBundleFilePath,
+      isLoadingAppStateFile: false
+    });
   }
 
   async removeTempFiles() {
@@ -404,6 +410,10 @@ class SubmitHelpTicket extends React.Component<Props> {
   };
 
   handleEditorChange = ({ text }) => {
+    const { isLoadingAppStateFile } = this.state;
+    if (isLoadingAppStateFile) {
+      return;
+    }
     this.setState({
       description: text.replace(linkPattern, replaceEmptyAltTextWithFileName)
     });
@@ -533,8 +543,10 @@ class SubmitHelpTicket extends React.Component<Props> {
       title,
       description,
       isUploading,
+      isLoadingAppStateFile,
       feedbackType = 'BugReport'
     } = this.state;
+    const isLoading = isLoadingAppStateFile || isUploading;
     const { classes } = this.props;
     return (
       <React.Fragment>
@@ -545,11 +557,11 @@ class SubmitHelpTicket extends React.Component<Props> {
               color="inherit"
               classes={classes}
               onClick={this.handleClickSendFeedback}
-              disabled={title.trim().length < 3 || isUploading}
+              disabled={title.trim().length < 3 || isLoading}
             >
               <CloudUpload style={{ marginRight: '10px' }} />
               Send {splitCamelCaseToSpaced(feedbackType)}
-              {isUploading && (
+              {isLoading && (
                 <CircularProgress
                   className={classes.buttonProgress}
                   size={50}
@@ -569,7 +581,7 @@ class SubmitHelpTicket extends React.Component<Props> {
           }}
         >
           <nav className="nav">
-            <FormControl fullWidth>
+            <FormControl fullWidth disabled={isLoading}>
               <InputLabel color="secondary">Type of Feedback</InputLabel>
               <Select
                 value={feedbackType}
@@ -589,6 +601,7 @@ class SubmitHelpTicket extends React.Component<Props> {
               variant="outlined"
               placeholder="Provide a general summary of the issue"
               onChange={this.handleTitleInputChange}
+              disabled={isLoading}
             />
             {/*
             <button onClick={this.handleGetMdValue} >getMdValue</button>
@@ -600,6 +613,7 @@ class SubmitHelpTicket extends React.Component<Props> {
               ref={node => {
                 this.mdEditor = node;
               }}
+              disabled={isLoading}
               value={description}
               style={{ height: '500px', width: '100%' }}
               renderHTML={text => this.mdParser.render(text)}
@@ -681,16 +695,9 @@ function getWorkspaceAttachments(workspaceFullPath) {
   return workspaceAttachments;
 }
 
-async function createAppStateAttachment(appState) {
-  const app = servicesHelpers.getApp();
-  const tempPath = app.getPath('temp');
-  const uuid1 = uuidv1();
-  const uid = uuid1.substr(0, 5);
-  const appStateFilePath = utilities.normalizeLinkPath(
-    path.join(tempPath, `appState-${uid}.json`)
-  );
-  await fs.writeFile(appStateFilePath, JSON.stringify(appState, null, 4));
-  return appStateFilePath;
+async function deserializeAppState(appStateFilePath) {
+  const fileContents = await fs.readFile(appStateFilePath, 'utf8');
+  return JSON.parse(fileContents);
 }
 
 async function createActiveBundleAttachment(activeBundle) {
