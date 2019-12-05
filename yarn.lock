@@ -11921,9 +11921,9 @@ react-lifecycles-compat@^3.0.2, react-lifecycles-compat@^3.0.4:
   integrity sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==
 
 react-markdown-editor-lite@^0.4.3:
-  version "0.4.3"
-  resolved "https://registry.yarnpkg.com/react-markdown-editor-lite/-/react-markdown-editor-lite-0.4.3.tgz#f0a58dd9347e3031f4f0d127145b43a38f2e0d59"
-  integrity sha512-smFvtL4/jkJ7oLYKKZUw3aneaxUMkPy0NDBLcv1oJIDIP4U5Cg5hK6mG0kVOUW6jh7GhmbdtsC4KMjSIYrmAcA==
+  version "0.4.8"
+  resolved "https://registry.yarnpkg.com/react-markdown-editor-lite/-/react-markdown-editor-lite-0.4.8.tgz#f3a7e18c773138fea5bdd45e71b5a3dade37c8c0"
+  integrity sha512-1jPp4+c6TGs60XCawX1Rc6drvKrUcj61oFYk6frbIZjwjRmo+JUEonrxYT6OcCAVHhcOrMnT75ixJUzCZB22LA==
 
 react-perf-devtool@^3.1.8:
   version "3.1.8"
