@@ -1,3 +1,10 @@
+### Version 0.51.3 (Help > Give feedback (YouTrack))
+
+#### Fix
+
+- Make separate menu for Give feedback
+- Provide more screen area for markdown editor
+
 ### Version 0.51.2 (Help > Give feedback (YouTrack))
 
 #### Fix
