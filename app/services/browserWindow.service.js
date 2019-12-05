@@ -168,8 +168,21 @@ function buildBrowserTemplate(browserWin, mainWindow) {
   return templateBrowser;
 }
 
-function buildBrowserMenu(browserWin, mainWindow) {
-  const template = buildBrowserTemplate(browserWin, mainWindow);
+function buildGiveFeedbackTemplate() {
+  // console.log('menu/buildDefaultTemplate');
+  // console.log(loginLabel);
+  const templateBrowser = [
+    {
+      label: '&View',
+      submenu: [{ role: 'toggleDevTools' }]
+    }
+  ];
+
+  return templateBrowser;
+}
+
+function buildBrowserMenu(browserWin, mainWindow, buildTemplate) {
+  const template = buildTemplate(browserWin, mainWindow);
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
   return menu;
@@ -211,7 +224,7 @@ source: chrome-devtools://devtools/bundled/shell.js (24)
   browserWin.loadURL(url);
   browserWin.on('focus', () => {
     const mainWindow = servicesHelpers.getMainWindow();
-    buildBrowserMenu(browserWin, mainWindow);
+    buildBrowserMenu(browserWin, mainWindow, buildBrowserTemplate);
   });
   browserWin.on('closed', () => {
     log.info(`Closed browser window for ${filePath}`);
@@ -238,7 +251,7 @@ source: chrome-devtools://devtools/bundled/shell.js (24)
     lastSearchResults = matches;
     lastSearchIndex = activeMatchOrdinal;
     const mainWindow = servicesHelpers.getMainWindow();
-    buildBrowserMenu(browserWin, mainWindow);
+    buildBrowserMenu(browserWin, mainWindow, buildBrowserTemplate);
   });
   browserWin.webContents.on('context-menu', (event, params) => {
     const { selectionText } = params;
@@ -294,6 +307,10 @@ function openInNewWindow(newWindowUrl) {
       nativeWindowOpen: true
     }
   });
+  newWindow.on('focus', () => {
+    const mainWindow = servicesHelpers.getMainWindow();
+    buildBrowserMenu(newWindow, mainWindow, buildGiveFeedbackTemplate);
+  });
   newWindow.once('ready-to-show', () => newWindow.show());
   newWindow.webContents.on('dom-ready', () => {
     /*
@@ -308,6 +325,7 @@ source: chrome-devtools://devtools/bundled/shell.js (24)
   });
   log.info({ newWindowUrl });
   newWindow.loadURL(newWindowUrl);
+  newWindow.focus();
   newWindow.on('closed', () => {
     log.info(`Closed browser window for ${newWindowUrl}`);
   });
