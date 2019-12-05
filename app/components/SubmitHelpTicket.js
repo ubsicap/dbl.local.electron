@@ -615,13 +615,21 @@ class SubmitHelpTicket extends React.Component<Props> {
               }}
               disabled={isLoading}
               value={description}
-              style={{ height: '500px', width: '100%' }}
+              style={{
+                width: '100%',
+                height: '65%',
+                position: 'fixed',
+                left: '0',
+                top: '230px',
+                zIndex: '1000'
+              }}
               renderHTML={text => this.mdParser.render(text)}
               config={{
                 view: {
                   menu: true,
                   md: true,
-                  html: true
+                  html: true,
+                  fullScreen: false
                 },
                 table: {
                   maxRow: 5,
