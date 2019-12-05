@@ -1,3 +1,10 @@
+### Version 0.51.2 (Help > Give feedback (YouTrack))
+
+#### Fix
+
+- Don't crash `Help > Give feedback` for many entries
+- Add navigation actions to log
+
 ### Version 0.51.1 (Help > Give feedback (YouTrack))
 
 #### Fix
