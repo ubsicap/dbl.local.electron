@@ -1,3 +1,9 @@
+### Version 0.51.4 (Help > Give feedback (YouTrack))
+
+#### Fix
+
+- dbl_dot_local_app (12/9/2019) : mvh/return_to_the_wizards (Video wizard and checks support mpg and mp4)
+
 ### Version 0.51.3 (Help > Give feedback (YouTrack))
 
 #### Fix
