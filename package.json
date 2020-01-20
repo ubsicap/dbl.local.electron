@@ -1,7 +1,7 @@
 {
   "name": "nathanael",
   "productName": "nathanael",
-  "version": "0.51.4",
+  "version": "0.51.5",
   "description": "Electron frontend to DBL dot Local",
   "scripts": {
     "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",

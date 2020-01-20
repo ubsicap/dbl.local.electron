@@ -1,3 +1,9 @@
+### Version 0.51.5 (Help > Give feedback (YouTrack))
+
+#### Fix
+
+- dbl_dot_local_app (1/17/2020) : edp/fix_wizard_remove_existing_source_structure
+
 ### Version 0.51.4 (Help > Give feedback (YouTrack))
 
 #### Fix
