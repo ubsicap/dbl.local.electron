@@ -155,7 +155,8 @@ function apiBundleHasMetadata(apiBundle) {
 function convertBundleApiListToBundles(apiBundles) {
   const bundles = Object.values(apiBundles)
     .filter(apiBundleHasMetadata)
-    .map(apiBundle => convertApiBundleToNathanaelBundle(apiBundle));
+    .map(apiBundle => convertApiBundleToNathanaelBundle(apiBundle))
+    .filter(b => b !== null);
   return bundles;
 }
 
@@ -207,51 +208,60 @@ function getRawBundleResourcesDetails(rawBundle) {
 }
 
 function convertApiBundleToNathanaelBundle(apiBundle, lazyLoads = {}) {
-  const { mode, metadata, dbl, upload } = apiBundle;
-  const { formsErrorStatus = {} } = lazyLoads;
-  const { jobId: uploadJob } = upload || {};
-  const { parent } = dbl;
-  const bundleId = apiBundle.local_id;
-  const initTaskStatus = getInitialTaskAndStatus(apiBundle);
-  const { task } = initTaskStatus;
-  let { status } = initTaskStatus;
-  const { storedResourcePaths, storedFiles } = getResourceFileStoredCount(
-    apiBundle
-  );
-  if (storedResourcePaths.length) {
-    if (task === 'DOWNLOAD' && mode === 'store') {
-      status = 'COMPLETED'; // even if only some are stored
+  try {
+    const { mode, metadata, dbl, upload } = apiBundle;
+    const { formsErrorStatus = {} } = lazyLoads;
+    const { jobId: uploadJob } = upload || {};
+    const { parent } = dbl;
+    const bundleId = apiBundle.local_id;
+    const initTaskStatus = getInitialTaskAndStatus(apiBundle);
+    const { task } = initTaskStatus;
+    let { status } = initTaskStatus;
+    const { storedResourcePaths, storedFiles } = getResourceFileStoredCount(
+      apiBundle
+    );
+    if (storedResourcePaths.length) {
+      if (task === 'DOWNLOAD' && mode === 'store') {
+        status = 'COMPLETED'; // even if only some are stored
+      }
     }
+    const sep = '/';
+    const manifestResources = getRawBundleResourcesDetails(apiBundle);
+    const manifestResourcePaths = Object.keys(manifestResources) || [];
+    return {
+      id: bundleId,
+      name: metadata.identification.name || '',
+      revision: dbl.currentRevision,
+      dblId: dbl.id,
+      medium: dbl.medium,
+      countryIso: Object.keys(metadata.countries).join(sep) || '',
+      languageIso: metadata.language.iso || '',
+      rightsHolders:
+        metadata.agencies
+          .filter(a => a.type === 'rightsHolder')
+          .map(a => a.abbr)
+          .join(sep) || '',
+      license: dbl.license || 'owned',
+      mode,
+      task,
+      status,
+      uploadJob,
+      manifestResources,
+      storedFiles,
+      storedResourcePaths,
+      manifestResourcePaths,
+      parent,
+      formsErrorStatus,
+      raw: apiBundle
+    };
+  } catch (error) {
+    log.error(
+      `An error occurred when converting apiBundle ${
+        apiBundle.local_id
+      } for DBL ${apiBundle.dbl.id}: ${error}`
+    );
   }
-  const sep = '/';
-  const manifestResources = getRawBundleResourcesDetails(apiBundle);
-  const manifestResourcePaths = Object.keys(manifestResources) || [];
-  return {
-    id: bundleId,
-    name: metadata.identification.name || '',
-    revision: dbl.currentRevision,
-    dblId: dbl.id,
-    medium: dbl.medium,
-    countryIso: Object.keys(metadata.countries).join(sep) || '',
-    languageIso: metadata.language.iso || '',
-    rightsHolders:
-      metadata.agencies
-        .filter(a => a.type === 'rightsHolder')
-        .map(a => a.abbr)
-        .join(sep) || '',
-    license: dbl.license || 'owned',
-    mode,
-    task,
-    status,
-    uploadJob,
-    manifestResources,
-    storedFiles,
-    storedResourcePaths,
-    manifestResourcePaths,
-    parent,
-    formsErrorStatus,
-    raw: apiBundle
-  };
+  return null;
 }
 
 async function fetchById(id) {

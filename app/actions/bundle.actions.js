@@ -194,6 +194,7 @@ export function fetchAll() {
     return { type: bundleConstants.FETCH_SUCCESS, bundles, newMediaTypes };
   }
   function failure(error) {
+    log.error(`An error occurred when converting apiBundles: ${error}`);
     return { type: bundleConstants.FETCH_FAILURE, error };
   }
 }
