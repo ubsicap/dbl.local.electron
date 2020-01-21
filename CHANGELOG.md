@@ -1,3 +1,9 @@
+### Version 0.51.6 (Help > Give feedback (YouTrack))
+
+#### Fix
+
+- fix empty workspace list (catch and log errors that happen during apiBundle conversion)
+
 ### Version 0.51.5 (Help > Give feedback (YouTrack))
 
 #### Fix
