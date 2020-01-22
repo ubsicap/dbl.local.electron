@@ -1,7 +1,7 @@
 {
   "name": "nathanael",
   "productName": "nathanael",
-  "version": "0.51.6",
+  "version": "0.51.7",
   "description": "Electron frontend to DBL dot Local",
   "scripts": {
     "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",
@@ -107,7 +107,7 @@
     "publish": {
       "provider": "github",
       "owner": "ubsicap",
-      "repo": "dbl.local.electron",
+      "repo": "nathanael-app",
       "private": false
     },
     "extraFiles": [
@@ -116,7 +116,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ubsicap/dbl.local.electron.git"
+    "url": "git+https://github.com/ubsicap/nathanael-app.git"
   },
   "author": {
     "name": "Eric Pyle",
@@ -125,7 +125,7 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ubsicap/dbl.local.electron/issues"
+    "url": "https://github.com/ubsicap/nathanael-app/issues"
   },
   "keywords": [
     "electron",
@@ -133,7 +133,7 @@
     "uploader",
     "downloader"
   ],
-  "homepage": "https://github.com/ubsicap/dbl.local.electron",
+  "homepage": "https://github.com/ubsicap/nathanael-app",
   "jest": {
     "testURL": "http://localhost/",
     "moduleNameMapper": {

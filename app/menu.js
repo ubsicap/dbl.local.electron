@@ -302,23 +302,21 @@ export default class MenuBuilder {
             label: 'See Nathanael releases',
             click() {
               shell.openExternal(
-                'https://github.com/ubsicap/dbl.local.electron/releases'
+                'https://github.com/ubsicap/nathanael-app/releases'
               );
             }
           },
           {
             label: 'Learn More',
             click() {
-              shell.openExternal(
-                'https://github.com/ubsicap/dbl.local.electron'
-              );
+              shell.openExternal('https://github.com/ubsicap/nathanael-app');
             }
           },
           {
-            label: 'Documentation (dbl.local.electron)',
+            label: 'Documentation (nathanael-app)',
             click() {
               shell.openExternal(
-                'https://github.com/ubsicap/dbl.local.electron/blob/master/README.md'
+                'https://github.com/ubsicap/nathanael-app/blob/master/README.md'
               );
             }
           },
@@ -334,7 +332,7 @@ export default class MenuBuilder {
             label: 'Search Issues',
             click() {
               shell.openExternal(
-                'https://github.com/ubsicap/dbl.local.electron/issues'
+                'https://github.com/ubsicap/nathanael-app/issues'
               );
             }
           },

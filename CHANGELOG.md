@@ -1,3 +1,9 @@
+### Version 0.51.7 (Help > Give feedback (YouTrack))
+
+#### Fix
+
+- update nathanael release app url to https://github.com/ubsicap/nathanael-app/releases
+
 ### Version 0.51.6 (Help > Give feedback (YouTrack))
 
 #### Fix
